@@ -1,0 +1,27 @@
+.shell {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 4rem 1.25rem;
+}
+
+.brand {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--color-brand);
+  margin-bottom: 1.5rem;
+}
+
+.title {
+  font-size: clamp(2.2rem, 5vw, 3.4rem);
+  max-width: 14ch;
+  margin-bottom: 1rem;
+  line-height: 1.1;
+}
+
+.lede {
+  font-size: 1.1rem;
+  color: var(--color-muted);
+  max-width: 32rem;
+  line-height: 1.5;
+}

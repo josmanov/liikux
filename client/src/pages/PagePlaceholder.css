@@ -1,0 +1,14 @@
+.page {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 3rem 1.25rem;
+}
+
+.page h1 {
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.page p {
+  color: var(--color-muted);
+}

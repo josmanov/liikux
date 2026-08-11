@@ -1,84 +1,32 @@
-/* Gymfinder design tokens — Finnish, modern, calm */
-
 :root {
-  /* Color */
   --color-bg: #f3f6f4;
-  --color-bg-elevated: #ffffff;
-  --color-surface: #e8eee9;
   --color-text: #14201a;
-  --color-text-muted: #5a6b62;
-  --color-border: #d4ddd7;
+  --color-muted: #5a6b62;
   --color-brand: #0c3d2e;
-  --color-brand-soft: #1a5c45;
   --color-accent: #c45c26;
-  --color-accent-hover: #a84c1e;
-  --color-focus: #2a7a5c;
-
-  /* Typography */
   --font-display: "Syne", system-ui, sans-serif;
   --font-body: "Manrope", system-ui, sans-serif;
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.35rem;
-  --text-2xl: 1.75rem;
-  --text-3xl: 2.25rem;
-  --text-hero: clamp(2.25rem, 5vw, 3.5rem);
-
-  /* Space */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.5rem;
-  --space-6: 2rem;
-  --space-8: 3rem;
-  --space-10: 4rem;
-
-  /* Layout */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1.25rem;
-  --shadow-soft: 0 8px 30px rgba(20, 32, 26, 0.08);
-  --max-width: 72rem;
-  --header-height: 4rem;
+  --max-width: 1100px;
 }
 
-*,
-*::before,
-*::after {
+* {
   box-sizing: border-box;
-}
-
-html {
-  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
   font-family: var(--font-body);
-  font-size: var(--text-base);
-  line-height: 1.5;
   color: var(--color-text);
-  background:
-    radial-gradient(ellipse 80% 50% at 10% -10%, #d8e8df 0%, transparent 55%),
-    radial-gradient(ellipse 60% 40% at 100% 0%, #e6ddd2 0%, transparent 45%),
-    var(--color-bg);
+  background: var(--color-bg);
 }
 
 #root {
   min-height: 100vh;
 }
 
-h1,
-h2,
-h3 {
+h1, h2, h3 {
   font-family: var(--font-display);
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
   margin: 0;
 }
 
@@ -87,20 +35,9 @@ p {
 }
 
 a {
-  color: var(--color-brand-soft);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.15em;
-}
-
-a:hover {
   color: var(--color-brand);
 }
 
 button {
   font-family: inherit;
-}
-
-:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
 }
