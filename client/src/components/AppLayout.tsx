@@ -1,10 +1,11 @@
 import { Outlet } from "react-router-dom";
 import "./AppLayout.css";
+import Header from "./Header";
 
 function AppLayout() {
   return (
     <div className="layout">
-      <p className="layout-note">Menoksi</p>
+      <Header />
       <Outlet />
     </div>
   );
