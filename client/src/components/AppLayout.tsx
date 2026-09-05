@@ -4,7 +4,7 @@ import "./AppLayout.css";
 function AppLayout() {
   return (
     <div className="layout">
-      <p className="layout-note">GymFinder</p>
+      <p className="layout-note">Menoksi</p>
       <Outlet />
     </div>
   );
