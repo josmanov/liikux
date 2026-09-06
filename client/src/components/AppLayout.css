@@ -1,4 +1,11 @@
 .layout {
-    min-height: 100vh;
-background-image: radial-gradient( circle farthest-corner at 50% 52.5%,  rgba(14,53,92,1) 0%, rgba(16,14,72,1) 90% );
+  position: relative;
+  min-height: 100vh;
+  background-image: linear-gradient(60deg, #29323c 0%, #485563 100%);
+}
+
+.layout-content {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
 }

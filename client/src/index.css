@@ -1,8 +1,11 @@
 :root {
+  --brand-a: #B6FF00;
+  --brand-b: #00E5FF;
+  --brand-gradient: linear-gradient(90deg, var(--brand-a), var(--brand-b));
   --color-bg: #f3f6f4;
   --color-text: #14201a;
   --color-muted: #5a6b62;
-  --color-brand: #feffff;
+  --color-brand: #ffffff;
   --color-accent: #c45c26;
   --font-display: "Syne", system-ui, sans-serif;
   --font-body: "Manrope", system-ui, sans-serif;
@@ -18,7 +21,7 @@ body {
   min-height: 100vh;
   font-family: var(--font-body);
   color: var(--color-text);
-  background: var(--color-bg);
+  background: #29323c;
 }
 
 #root {
