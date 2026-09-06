@@ -3,7 +3,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    padding: 0.75rem 1.25rem;;
+    padding: 1.5rem 2rem;;
     background-color: #040000;
     border-bottom: 1px solid #d8e0db;
 }
@@ -11,12 +11,12 @@
 .header-left {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 1.5rem;
 }
 
 .header-logo {
     font-family: var(--font-display);
-    font-size: 1.5rem;
+    font-size: 2rem;
     font-weight: 700;
     color: var(--color-brand);
     text-decoration: none;
@@ -33,7 +33,7 @@
 }
 
 .header-area::placeholder {
-    color: var(--color-mutated);
+    color: var(--color-muted);
 }
 .header-area:focus {
     outline: 2px solid var(--color-brand);
@@ -47,9 +47,9 @@
 }
 
 .header-right a,
-.header-lan {
+.header-lang {
     text-decoration: none;
-    color: var(--color-text);
+    color: var(--color-brand);
     font-size: 0.95rem;
     background: none;
     border: none;

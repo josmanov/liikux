@@ -9,9 +9,11 @@ function Header () {
 						<Link to="/" className="header-logo">Liikux</Link>
 						<input className="header-area" placeholder="Alue" />
 					</div>
+					<div className="header-right">
 						<Link to="/gyms">Selaa</Link>
-						<button type="button" aria-labe="Kieli">🇫🇮</button>
+						<button type="button" className="header-lang" aria-label="Kieli">🇫🇮</button>
 						<Link to="/login">Kirjaudu</Link>
+					</div>
         </header>
     )
 }
