@@ -18,7 +18,7 @@ function Header () {
 					<div className="header-right">
 						<Link to="/gyms">Selaa</Link>
 						<button type="button" className="header-lang" aria-label="Kieli">🇫🇮</button>
-						<Link to="/login">Kirjaudu</Link>
+						<Link to="/login" className="header-login">Kirjaudu</Link>
 					</div>
         </header>
     )
