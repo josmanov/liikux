@@ -5,14 +5,13 @@ import "./Header.css"
 function Header () {
     return (
         <header className="header">
-            <p className="header-logo">Menoksi</p>
-
-            <nav className="header-nav">
-                <Link className="header-link" to="/gyms">Haku</Link>
-                <Link className="header-link" to="/favorites">Suosikit</Link>
-                <Link className="header-link" to="/login">Kirjaudu</Link>
-                <Link className="header-link" to="/register">Luo tili</Link>
-            </nav>
+					<div className="header-left">
+						<Link to="/" className="header-logo">Liikux</Link>
+						<input className="header-area" placeholder="Alue" />
+					</div>
+						<Link to="/gyms">Selaa</Link>
+						<button type="button" aria-labe="Kieli">🇫🇮</button>
+						<Link to="/login">Kirjaudu</Link>
         </header>
     )
 }
