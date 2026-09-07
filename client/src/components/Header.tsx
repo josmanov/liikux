@@ -7,7 +7,6 @@ import "./Header.css";
 function Header() {
   return (
     <header className="header">
-      <div className="header-frost" />
       <div className="header-left">
         <Link to="/" className="header-logo">
           <img src="/liikux-logo.png" alt="Liikux" />

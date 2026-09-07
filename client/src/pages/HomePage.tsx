@@ -23,8 +23,10 @@ function HomePage() {
     <main className="shell">
       <section className="hero">
         <SponsorSlider />
-        <h1 className="title">Löydä paikka liikkua</h1>
-        <p className="lede">Kuntosali, kiipeily tai joku muu harrastus</p>
+        <h1 className="title">
+          <img className="hero-logo" src="/liikux-logo.png" alt="Liikux" />
+        </h1>
+        <p className="lede">Löydä paikka liikkua</p>
 
         <div className="hero-search" id="input">
           <input

@@ -21,18 +21,20 @@
 
 .hero .sponsor-slider {
   align-self: center;
-  width: 60%;
+  width: 42%;
 }
 
 .title {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: clamp(2.2rem, 5vw, 3.4rem);
-  color: #fff;
-  margin: 0 0 0.7rem;
-  line-height: 1.1;
+  margin: 0 0 0.55rem;
+  line-height: 0;
   width: max-content;
   max-width: 100%;
+}
+
+.hero-logo {
+  display: block;
+  height: 117px;
+  width: auto;
 }
 
 .lede {
