@@ -59,7 +59,7 @@
 .header-right a,
 .header-lang {
     font-family: var(--font-body);
-    font-weight: 600;
+    font-weight: 700;
     text-decoration: none;
     color: #fff;
     font-size: 0.95rem;
@@ -99,7 +99,7 @@
 }
 
 .header-right a.header-login:hover {
-  transform: translateY(-3px);
+  transform: scale(1.1);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
 
