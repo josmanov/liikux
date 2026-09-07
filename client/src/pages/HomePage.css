@@ -1,35 +1,53 @@
 .shell {
-  min-height: 100vh;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin: 0 auto;
-  padding: 4rem 1.25rem;
+  padding: 2rem 1.25rem;
+  width: 100%;
 }
 
 .hero {
-  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: max-content;
+  max-width: 100%;
   margin: 0 auto;
   text-align: center;
+  overflow: visible;
+}
+
+.hero .sponsor-slider {
+  align-self: center;
+  width: 60%;
 }
 
 .title {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 800;
   font-size: clamp(2.2rem, 5vw, 3.4rem);
   color: #fff;
-  margin-bottom: 0.75rem;
+  margin: 0 0 0.7rem;
   line-height: 1.1;
+  width: max-content;
+  max-width: 100%;
 }
 
 .lede {
   font-weight: 500;
   font-size: 1.15rem;
   color: #c5d0c9;
-  margin-bottom: 2rem;
+  margin-bottom: 1.6rem;
   line-height: 1.4;
 }
 
 .hero-search {
   position: relative;
   text-align: left;
+  width: min(420px, 100%);
+  align-self: center;
 }
 
 .hero-search-input {
@@ -56,13 +74,14 @@
 }
 
 .hero-search-input:hover {
-  border-color: var(--brand-b);
+  border-color: #111;
 }
 
-.hero-search-input:focus {
-  outline: 2px solid var(--brand-a);
-  outline-offset: 0;
-  border-color: transparent;
+.hero-search-input:focus,
+.hero-search-input:focus-visible {
+  outline: none;
+  border-color: #111;
+  box-shadow: 0 0 0 2px #111;
 }
 
 .hero-search-label {
@@ -93,4 +112,22 @@
   top: 13px;
   right: 12px;
   pointer-events: none;
+}
+
+.hero-picks {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 1.25rem;
+  padding: 0.35rem 0.4rem 0.85rem;
+  width: max-content;
+  max-width: 100%;
+}
+
+.hero-picks-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.85rem;
 }

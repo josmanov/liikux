@@ -1,0 +1,40 @@
+.deck {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  height: 220px;
+  margin: 0 auto;
+}
+
+.fan-card {
+  position: absolute;
+  top: 0;
+  width: 76px;
+  height: 180px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  cursor: pointer;
+}
+
+.fan-card:hover {
+  transform: translateY(-16px) scale(1.05);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.45);
+  z-index: 50 !important;
+}
+
+.fan-card .icon {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+}

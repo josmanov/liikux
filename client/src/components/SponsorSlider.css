@@ -1,0 +1,119 @@
+.sponsor-slider {
+  position: relative;
+  width: 100%;
+  height: 130px;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 2px solid #fff;
+}
+
+.sponsor-slide {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.sponsor-slide.is-on {
+  opacity: 1;
+}
+
+.sponsor-slide img {
+  display: block;
+  min-width: 0;
+  min-height: 0;
+  max-width: 72%;
+  max-height: 58%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.sponsor-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  height: 5px;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.sponsor-progress-bar {
+  height: 100%;
+  width: 0;
+  background: #fff;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+  animation: sponsor-fill 4s linear forwards;
+}
+
+@keyframes sponsor-fill {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+.sponsor-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.38);
+  color: #fff;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.sponsor-arrow:hover {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.sponsor-arrow-left {
+  left: 10px;
+}
+
+.sponsor-arrow-right {
+  right: 10px;
+}
+
+.sponsor-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0 0.55rem;
+}
+
+.sponsor-dot {
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
+.sponsor-dot.is-on {
+  background: var(--color-brand);
+}

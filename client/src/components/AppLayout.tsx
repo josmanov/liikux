@@ -5,8 +5,8 @@ import Header from "./Header";
 function AppLayout() {
   return (
     <div className="layout">
+      <Header />
       <div className="layout-content">
-        <Header />
         <Outlet />
       </div>
     </div>

@@ -1,9 +1,28 @@
+import {
+  Dumbbell,
+  Footprints,
+  Mountain,
+  Plus,
+  Swords,
+  Waves,
+} from "lucide-react";
+import SponsorSlider from "../components/SponsorSlider";
+import "../components/uiverse-playstore.css";
 import "./HomePage.css";
+
+const pickRow1 = [
+  { name: "Kuntosali", Icon: Dumbbell },
+  { name: "Kiipeily", Icon: Mountain },
+  { name: "Uinti", Icon: Waves },
+  { name: "Nyrkkeily", Icon: Swords },
+  { name: "Juoksu", Icon: Footprints },
+];
 
 function HomePage() {
   return (
     <main className="shell">
       <section className="hero">
+        <SponsorSlider />
         <h1 className="title">Löydä paikka liikkua</h1>
         <p className="lede">Kuntosali, kiipeily tai joku muu harrastus</p>
 
@@ -35,6 +54,27 @@ function HomePage() {
                 x="12.2469"
               ></rect>
             </svg>
+          </div>
+        </div>
+
+        <div className="hero-picks">
+          <div className="hero-picks-row">
+            {pickRow1.map(({ name, Icon }) => (
+              <button key={name} type="button" className="playstore-button">
+                <Icon className="icon" size={24} />
+                <span className="texts">
+                  <span className="text-2">{name}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="hero-picks-row">
+            <button type="button" className="playstore-button">
+              <Plus className="icon" size={24} />
+              <span className="texts">
+                <span className="text-2">Lisää harrastuksia</span>
+              </span>
+            </button>
           </div>
         </div>
       </section>

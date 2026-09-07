@@ -1,14 +1,14 @@
 :root {
-  --brand-a: #B6FF00;
-  --brand-b: #00E5FF;
-  --brand-gradient: linear-gradient(90deg, var(--brand-a), var(--brand-b));
+  --brand-a: #FFCC00;
+  --brand-b: #FFCC00;
+  --brand-gradient: linear-gradient(90deg, #FFCC00, #e6b800);
   --color-bg: #f3f6f4;
   --color-text: #14201a;
   --color-muted: #5a6b62;
-  --color-brand: #ffffff;
+  --color-brand: #FFCC00;
   --color-accent: #c45c26;
-  --font-display: "Fredoka", system-ui, sans-serif;
-  --font-body: "Fredoka", system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", system-ui, sans-serif;
   --max-width: 1100px;
 }
 

@@ -1,0 +1,49 @@
+.playstore-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  border-radius: 9999px;
+  background-color: #000;
+  padding: 0.625rem 1.5rem;
+  text-align: center;
+  color: #fff;
+  outline: 0;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.playstore-button:hover {
+  background-color: var(--color-brand);
+  color: #000;
+  border-color: #fff;
+}
+
+.playstore-button .icon {
+  height: 1.5rem;
+  width: 1.5rem;
+  flex-shrink: 0;
+}
+
+.playstore-button .texts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1;
+}
+
+.playstore-button .icon + .texts {
+  margin-left: 1rem;
+}
+
+.playstore-button .text-1 {
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+
+.playstore-button .text-2 {
+  font-weight: 600;
+}
