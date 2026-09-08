@@ -28,6 +28,64 @@
   transform-origin: center center;
 }
 
+@keyframes hero-enter {
+  from {
+    opacity: 0;
+    transform: translateY(1.4rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.title,
+.lede,
+.hero-search,
+.hero-picks {
+  animation: hero-enter 0.8s ease-out both;
+}
+
+.lede {
+  animation-delay: 0.12s;
+}
+
+.hero-search {
+  animation-delay: 0.24s;
+}
+
+.hero-picks {
+  animation-delay: 0.36s;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(1.5rem);
+  transition:
+    opacity 0.85s ease-out,
+    transform 0.85s ease-out;
+}
+
+.reveal.is-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title,
+  .lede,
+  .hero-search,
+  .hero-picks {
+    animation: none;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
 .title {
   font-family: var(--font-display);
   font-weight: 800;

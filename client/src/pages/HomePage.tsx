@@ -17,6 +17,7 @@ import {
 import HoverIcon, { usePickHover } from "../components/HoverIcon";
 import { gymsInCity } from "../data/mockPlaces";
 import { lajiGifUrl } from "../data/lajiGifs";
+import { useInView } from "../hooks/useInView";
 import "./HomePage.css";
 
 const city = "Helsinki";
@@ -136,6 +137,8 @@ function HomePage() {
   const [step, setStep] = useState(0);
   const viewportRef = useRef<HTMLDivElement>(null);
   const maxStart = Math.max(0, suositutSalit.length - VISIBLE);
+  const railReveal = useInView<HTMLDivElement>();
+  const lajitReveal = useInView<HTMLDivElement>();
 
   useEffect(() => {
     function measure() {
@@ -207,7 +210,10 @@ function HomePage() {
       </section>
 
       <section className="discover" aria-label="Suositukset">
-        <div className="rail">
+        <div
+          className={`rail reveal ${railReveal.inView ? "is-in" : ""}`}
+          ref={railReveal.ref}
+        >
           <div className="rail-head">
             <h2 className="rail-title">Suositut kuntosalit {cityIn}</h2>
             <div className="rail-arrows">
@@ -263,7 +269,10 @@ function HomePage() {
           </div>
         </div>
 
-        <div className="lajit">
+        <div
+          className={`lajit reveal ${lajitReveal.inView ? "is-in" : ""}`}
+          ref={lajitReveal.ref}
+        >
           <div className="rail-head">
             <h2 className="rail-title">Suositut harrastukset Suomessa</h2>
             <Link to="/harjoitukset" className="lajit-all">
