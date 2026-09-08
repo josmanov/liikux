@@ -1,12 +1,15 @@
 :root {
-  --brand-a: #FFCC00;
-  --brand-b: #FFCC00;
-  --brand-gradient: linear-gradient(90deg, #FFCC00, #e6b800);
-  --color-bg: #f3f6f4;
-  --color-text: #14201a;
-  --color-muted: #5a6b62;
-  --color-brand: #FFCC00;
-  --color-accent: #c45c26;
+  --brand-a: #84cc16;
+  --brand-b: #65a30d;
+  --brand-gradient: linear-gradient(90deg, #84cc16, #65a30d);
+  --color-bg: #0f172a;
+  --color-surface: #1e293b;
+  --color-border: #334155;
+  --color-text: #ffffff;
+  --color-muted: #94a3b8;
+  --color-brand: #84cc16;
+  --color-accent: #22c55e;
+  --color-on-brand: #0f172a;
   --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
   --font-body: "Plus Jakarta Sans", system-ui, sans-serif;
   --max-width: 1100px;
@@ -21,7 +24,7 @@ body {
   min-height: 100vh;
   font-family: var(--font-body);
   color: var(--color-text);
-  background: #29323c;
+  background: var(--color-bg);
 }
 
 #root {

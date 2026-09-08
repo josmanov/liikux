@@ -2,12 +2,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid #fff;
+  border: 2px solid var(--color-border);
   border-radius: 9999px;
-  background-color: #000;
+  background-color: var(--color-surface);
   padding: 0.625rem 1.5rem;
   text-align: center;
-  color: #fff;
+  color: var(--color-text);
   outline: 0;
   transition: all 0.2s ease;
   text-decoration: none;
@@ -17,8 +17,21 @@
 
 .playstore-button:hover {
   background-color: var(--color-brand);
-  color: #000;
-  border-color: #fff;
+  color: var(--color-on-brand);
+  border-color: var(--color-brand);
+}
+
+.playstore-button.is-plain {
+  border: 0;
+  background: transparent;
+  padding: 0.4rem 0.55rem;
+  color: var(--color-text);
+}
+
+.playstore-button.is-plain:hover {
+  background: transparent;
+  color: var(--color-brand);
+  transform: scale(1.06);
 }
 
 .playstore-button .icon {

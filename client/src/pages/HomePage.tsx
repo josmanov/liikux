@@ -1,32 +1,78 @@
-import {
-  Dumbbell,
-  Footprints,
-  Mountain,
-  Plus,
-  Swords,
-  Waves,
-} from "lucide-react";
-import SponsorSlider from "../components/SponsorSlider";
-import "../components/uiverse-playstore.css";
+import { Link } from "react-router-dom";
+import HoverIcon, { usePickHover } from "../components/HoverIcon";
 import "./HomePage.css";
 
-const pickRow1 = [
-  { name: "Kuntosali", Icon: Dumbbell },
-  { name: "Kiipeily", Icon: Mountain },
-  { name: "Uinti", Icon: Waves },
-  { name: "Nyrkkeily", Icon: Swords },
-  { name: "Juoksu", Icon: Footprints },
+const picks = [
+  {
+    name: "Kaikki",
+    to: "/",
+    icon: "/picks/kaikki.gif",
+    still: "/picks/kaikki-still.png",
+    animated: true,
+  },
+  {
+    name: "Kuntosalit",
+    to: "/gyms",
+    icon: "/picks/kuntosalit.gif",
+    still: "/picks/kuntosalit-still.png",
+    animated: true,
+  },
+  {
+    name: "Harrastukset",
+    to: "/harjoitukset",
+    icon: "/picks/harrastukset.gif",
+    still: "/picks/harrastukset-still.png",
+    animated: true,
+  },
+  {
+    name: "Palvelut",
+    to: "/gyms",
+    icon: "/picks/palvelut.gif",
+    still: "/picks/palvelut-still.png",
+    animated: true,
+  },
 ];
+
+function PickLink({
+  pick,
+}: {
+  pick: {
+    name: string;
+    to: string;
+    icon: string;
+    still?: string;
+    animated?: boolean;
+  };
+}) {
+  const hover = usePickHover();
+
+  return (
+    <Link
+      to={pick.to}
+      className="hero-pick"
+      onMouseEnter={pick.animated ? hover.onMouseEnter : undefined}
+      onMouseLeave={pick.animated ? hover.onMouseLeave : undefined}
+    >
+      <HoverIcon
+        src={pick.icon}
+        stillSrc={pick.still}
+        animated={pick.animated}
+        playing={hover.playing}
+        playKey={hover.playKey}
+      />
+      <span>{pick.name}</span>
+    </Link>
+  );
+}
 
 function HomePage() {
   return (
     <main className="shell">
       <section className="hero">
-        <SponsorSlider />
-        <h1 className="title">
-          <img className="hero-logo" src="/liikux-logo.png" alt="Liikux" />
-        </h1>
-        <p className="lede">Löydä paikka liikkua</p>
+        <h1 className="title">Löydä paikka liikkua</h1>
+        <p className="lede">
+          Etsi alueesi kuntosalit, urheiluseurat ja harrastuspaikat
+        </p>
 
         <div className="hero-search" id="input">
           <input
@@ -60,24 +106,9 @@ function HomePage() {
         </div>
 
         <div className="hero-picks">
-          <div className="hero-picks-row">
-            {pickRow1.map(({ name, Icon }) => (
-              <button key={name} type="button" className="playstore-button">
-                <Icon className="icon" size={24} />
-                <span className="texts">
-                  <span className="text-2">{name}</span>
-                </span>
-              </button>
-            ))}
-          </div>
-          <div className="hero-picks-row">
-            <button type="button" className="playstore-button">
-              <Plus className="icon" size={24} />
-              <span className="texts">
-                <span className="text-2">Lisää harrastuksia</span>
-              </span>
-            </button>
-          </div>
+          {picks.map((pick) => (
+            <PickLink key={pick.name} pick={pick} />
+          ))}
         </div>
       </section>
     </main>

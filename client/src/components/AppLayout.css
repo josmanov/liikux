@@ -3,18 +3,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #1a0108;
-  background-image: linear-gradient(60deg, #1a0108 0%, #0e0505 100%);
-}
-
-.layout-pattern {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image: url("/bg-pattern.svg");
-  background-size: 600px 600px;
-  background-repeat: repeat;
+  background-color: var(--color-bg);
 }
 
 .layout-content {
