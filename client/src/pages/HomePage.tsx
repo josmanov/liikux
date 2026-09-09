@@ -62,7 +62,7 @@ const lajit: {
   Icon?: LucideIcon;
 }[] = [
   { name: "Kuntosali", to: "/gyms", Icon: Dumbbell },
-  { name: "Jalkapallo", to: "/harjoitukset", Icon: Goal },
+  { name: "Jalkapallo", to: "/harjoitukset/", Icon: Goal },
   { name: "Juoksu", to: "/harjoitukset", Icon: Footprints },
   { name: "Pyöräily", to: "/harjoitukset", Icon: Bike },
   { name: "Uinti", to: "/harjoitukset", Icon: Waves },
@@ -127,6 +127,28 @@ function LocateButton() {
             aria-hidden="true"
           />
         ) : null}
+      </span>
+    </button>
+  );
+}
+
+function SearchButton() {
+  const hover = usePickHover();
+
+  return (
+    <button
+      type="button"
+      className="hero-locate"
+      aria-label="Käytä sijaintiani"
+      onMouseEnter={hover.onMouseEnter}
+      onMouseLeave={hover.onMouseLeave}
+    >
+      <span className="hero-locate-gif">
+        <img
+          className="hero-locate-still"
+          src="/picks/search.png"
+          alt=""
+        />
       </span>
     </button>
   );
@@ -208,11 +230,13 @@ function HomePage() {
             className="hero-search-input"
             id="address_input"
             type="text"
-            placeholder="Syötä osoite.."
+            placeholder=""
           />
           <label className="hero-search-label" htmlFor="address_input">
             Syötä osoite..
           </label>
+          <span className="hero-search-divider" aria-hidden="true" />
+          <SearchButton />
           <span className="hero-search-divider" aria-hidden="true" />
           <LocateButton />
         </div>
