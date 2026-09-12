@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="fi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"
+    />
+    <title>Liikux</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@700&family=Plus+Jakarta+Sans:wght@600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="page">
+      <img class="logo" src="liikux-logo-light.png" alt="Liikux" />
+      <div class="clock" id="clock"></div>
+      <p class="when" id="when"></p>
+    </main>
+    <script>
+      const start = new Date("2026-09-10T21:00:00+03:00");
+      const target = new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+      document.getElementById("when").textContent = target.toLocaleDateString(
+        "fi-FI",
+      );
+
+      function pad(n) {
+        return String(n).padStart(2, "0");
+      }
+
+      function tick() {
+        const box = document.getElementById("clock");
+        const ms = target.getTime() - Date.now();
+
+        if (ms <= 0) {
+          box.innerHTML =
+            '<div class="unit"><span class="num">0</span><span class="label">pv</span></div>' +
+            '<div class="unit"><span class="num">00</span><span class="label">h</span></div>' +
+            '<div class="unit"><span class="num">00</span><span class="label">min</span></div>' +
+            '<div class="unit"><span class="num">00</span><span class="label">s</span></div>';
+          return;
+        }
+
+        const s = Math.floor(ms / 1000);
+        const d = Math.floor(s / 86400);
+        const h = Math.floor((s % 86400) / 3600);
+        const m = Math.floor((s % 3600) / 60);
+        const sec = s % 60;
+
+        box.innerHTML =
+          '<div class="unit"><span class="num">' +
+          d +
+          '</span><span class="label">pv</span></div>' +
+          '<div class="unit"><span class="num">' +
+          pad(h) +
+          '</span><span class="label">h</span></div>' +
+          '<div class="unit"><span class="num">' +
+          pad(m) +
+          '</span><span class="label">min</span></div>' +
+          '<div class="unit"><span class="num">' +
+          pad(sec) +
+          '</span><span class="label">s</span></div>';
+      }
+
+      function fitPage() {
+        const page = document.querySelector(".page");
+        page.style.transform = "none";
+        const view = window.visualViewport;
+        const vw = view ? view.width : window.innerWidth;
+        const vh = view ? view.height : window.innerHeight;
+        const s = Math.min(
+          1,
+          (vw * 0.9) / page.offsetWidth,
+          (vh * 0.86) / page.offsetHeight,
+        );
+        page.style.transform = "scale(" + s + ")";
+      }
+
+      tick();
+      setInterval(tick, 1000);
+      fitPage();
+      window.addEventListener("load", fitPage);
+      window.addEventListener("resize", fitPage);
+      document.querySelector(".logo").addEventListener("load", fitPage);
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", fitPage);
+      }
+    </script>
+  </body>
+</html>
