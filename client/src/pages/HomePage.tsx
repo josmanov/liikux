@@ -27,13 +27,6 @@ const VISIBLE = 6;
 
 const picks = [
   {
-    name: "Kaikki",
-    to: "/",
-    icon: "/picks/kaikki.gif",
-    still: "/picks/kaikki-still.png",
-    animated: true,
-  },
-  {
     name: "Kuntosalit",
     to: "/gyms",
     icon: "/picks/kuntosalit.gif",
@@ -45,13 +38,6 @@ const picks = [
     to: "/harjoitukset",
     icon: "/picks/harrastukset.gif",
     still: "/picks/harrastukset-still.png",
-    animated: true,
-  },
-  {
-    name: "Palvelut",
-    to: "/gyms",
-    icon: "/picks/palvelut.gif",
-    still: "/picks/palvelut-still.png",
     animated: true,
   },
 ];
@@ -220,35 +206,31 @@ function HomePage() {
   return (
     <main className="shell">
       <section className="hero">
-        <h1 className="title">Löydä paikka liikkua</h1>
-        <p className="lede">
-          Etsi alueesi kuntosalit, urheiluseurat ja harrastuspaikat
-        </p>
+        <div className="hero-top">
+          <h1 className="title">Löydä paikka liikkua</h1>
+          <div className="hero-search" id="input">
+            <input
+              className="hero-search-input"
+              id="address_input"
+              type="text"
+              placeholder=""
+            />
+            <label className="hero-search-label" htmlFor="address_input">
+              Syötä osoite..
+            </label>
+            <span className="hero-search-divider" aria-hidden="true" />
+            <SearchButton />
+            <span className="hero-search-divider" aria-hidden="true" />
+            <LocateButton />
+          </div>
 
-        <div className="hero-search" id="input">
-          <input
-            className="hero-search-input"
-            id="address_input"
-            type="text"
-            placeholder=""
-          />
-          <label className="hero-search-label" htmlFor="address_input">
-            Syötä osoite..
-          </label>
-          <span className="hero-search-divider" aria-hidden="true" />
-          <SearchButton />
-          <span className="hero-search-divider" aria-hidden="true" />
-          <LocateButton />
+          <div className="hero-picks">
+            {picks.map((pick) => (
+              <PickLink key={pick.name} pick={pick} />
+            ))}
+          </div>
         </div>
 
-        <div className="hero-picks">
-          {picks.map((pick) => (
-            <PickLink key={pick.name} pick={pick} />
-          ))}
-        </div>
-      </section>
-
-      <section className="discover" aria-label="Suositukset">
         <div
           className={`rail reveal ${railReveal.inView ? "is-in" : ""}`}
           ref={railReveal.ref}
@@ -256,24 +238,9 @@ function HomePage() {
           <div className="rail-head">
             <h2 className="rail-title">Suositut kuntosalit {cityIn}</h2>
             <div className="rail-arrows">
-              <button
-                type="button"
-                className="rail-arrow"
-                aria-label="Edellinen"
-                onClick={prev}
-                disabled={start <= 0}
-              >
-                <ChevronLeft size={22} strokeWidth={2.4} />
-              </button>
-              <button
-                type="button"
-                className="rail-arrow"
-                aria-label="Seuraava"
-                onClick={next}
-                disabled={start >= maxStart}
-              >
-                <ChevronRight size={22} strokeWidth={2.4} />
-              </button>
+                          <Link to="/harjoitukset" className="lajit-all">
+              Kaikki kuntosalit
+            </Link>
             </div>
           </div>
           <div className="rail-viewport" ref={viewportRef}>
@@ -307,7 +274,9 @@ function HomePage() {
             </div>
           </div>
         </div>
+      </section>
 
+      <section className="discover" aria-label="Harrastukset">
         <div
           className={`lajit reveal ${lajitReveal.inView ? "is-in" : ""}`}
           ref={lajitReveal.ref}

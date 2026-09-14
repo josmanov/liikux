@@ -9,23 +9,29 @@
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
-  gap: 0;
+  gap: 4rem;
 }
 
 .hero {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  gap: 1rem;
   width: 100%;
-  min-height: calc(100dvh - 5.5rem);
+  min-height: calc(100dvh - 90px);
   margin: 0;
-  padding: 2rem 1.25rem;
+  padding: 4rem 1.25rem 3rem;
   text-align: center;
   overflow: visible;
-  transform: scale(1.15);
-  transform-origin: center center;
+}
+
+.hero-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  width: 100%;
 }
 
 @keyframes hero-enter {
@@ -40,14 +46,9 @@
 }
 
 .title,
-.lede,
 .hero-search,
 .hero-picks {
   animation: hero-enter 0.8s ease-out both;
-}
-
-.lede {
-  animation-delay: 0.12s;
 }
 
 .hero-search {
@@ -73,7 +74,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .title,
-  .lede,
   .hero-search,
   .hero-picks {
     animation: none;
@@ -91,20 +91,11 @@
   font-weight: 800;
   font-size: clamp(2.4rem, 5.4vw, 3.7rem);
   color: var(--color-text);
-  margin: 0 0 0.65rem;
+  margin: 0;
   line-height: 1.08;
   letter-spacing: -0.03em;
   width: max-content;
   max-width: 100%;
-}
-
-.lede {
-  font-weight: 500;
-  font-size: 1.08rem;
-  color: var(--color-muted);
-  margin: 0 0 1.5rem;
-  line-height: 1.45;
-  max-width: 30rem;
 }
 
 .hero-search {
@@ -112,7 +103,7 @@
   display: flex;
   align-items: center;
   text-align: left;
-  width: min(400px, calc((100% - 2.5rem) / 1.15));
+  width: min(400px, calc(100% - 2.5rem));
   align-self: center;
   height: 50px;
   padding: 0 0.35rem 0 0;
@@ -241,7 +232,7 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: 0.75rem;
-  margin-top: 1.25rem;
+  margin-top: 0;
   width: max-content;
   max-width: 100%;
 }
@@ -307,15 +298,18 @@
   max-width: 100%;
   overflow-x: hidden;
   margin: 0;
-  padding: 2.25rem 0 3rem;
-  border-top: 1px solid var(--color-border);
+  padding: 0 0 3rem;
   background: var(--color-bg);
+}
+
+.hero .rail {
+  margin-top: auto;
 }
 
 .rail {
   width: 100%;
   margin: 0;
-  padding: 0 0 2rem;
+  padding: 0;
 }
 
 .rail-head {
@@ -509,7 +503,7 @@
   height: 100%;
   object-fit: cover;
   object-position: center center;
-  transform: none;
+  transform: scale(1.5);
   margin: 0;
 }
 
@@ -535,7 +529,7 @@
 }
 
 .place-card-media.logo-liikku {
-  background: #84cc16;
+  background: #4DA10F;
 }
 
 .place-card-media.logo-liikku img {

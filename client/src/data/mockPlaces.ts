@@ -55,15 +55,6 @@ export const mockPlaces: Place[] = [
     logoClass: "logo-gofitness",
   },
   {
-    id: "6",
-    name: "Ole.fit",
-    city: "Helsinki",
-    type: "kuntosali",
-    image: "/brands/olefit.png",
-    logoFit: "contain",
-    logoClass: "logo-olefit",
-  },
-  {
     id: "7",
     name: "Liikku",
     city: "Helsinki",
