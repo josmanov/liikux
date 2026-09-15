@@ -3,8 +3,6 @@ import { Link } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
   Bike,
-  ChevronLeft,
-  ChevronRight,
   Dumbbell,
   Footprints,
   Goal,
@@ -23,7 +21,6 @@ import "./HomePage.css";
 const city = "Helsinki";
 const cityIn = "Helsingissä";
 const suositutSalit = gymsInCity(city);
-const VISIBLE = 6;
 
 const picks = [
   {
@@ -173,12 +170,12 @@ function PickLink({
 }
 
 function HomePage() {
-  const [start, setStart] = useState(0);
   const [step, setStep] = useState(0);
   const viewportRef = useRef<HTMLDivElement>(null);
-  const maxStart = Math.max(0, suositutSalit.length - VISIBLE);
   const railReveal = useInView<HTMLDivElement>();
   const lajitReveal = useInView<HTMLDivElement>();
+  const gymsAllHover = usePickHover();
+  const start = 0;
 
   useEffect(() => {
     function measure() {
@@ -194,14 +191,6 @@ function HomePage() {
     window.addEventListener("resize", measure);
     return () => window.removeEventListener("resize", measure);
   }, []);
-
-  function prev() {
-    setStart((n) => Math.max(0, n - 1));
-  }
-
-  function next() {
-    setStart((n) => Math.min(maxStart, n + 1));
-  }
 
   return (
     <main className="shell">
@@ -219,15 +208,7 @@ function HomePage() {
               Syötä osoite..
             </label>
             <span className="hero-search-divider" aria-hidden="true" />
-            <SearchButton />
-            <span className="hero-search-divider" aria-hidden="true" />
             <LocateButton />
-          </div>
-
-          <div className="hero-picks">
-            {picks.map((pick) => (
-              <PickLink key={pick.name} pick={pick} />
-            ))}
           </div>
         </div>
 
@@ -236,11 +217,23 @@ function HomePage() {
           ref={railReveal.ref}
         >
           <div className="rail-head">
-            <h2 className="rail-title">Suositut kuntosalit {cityIn}</h2>
+            <h2 className="rail-title">Suositut kuntosaliketjut</h2>
             <div className="rail-arrows">
-                          <Link to="/harjoitukset" className="lajit-all">
-              Kaikki kuntosalit
-            </Link>
+              <Link
+                to="/gyms"
+                className="lajit-all"
+                onMouseEnter={gymsAllHover.onMouseEnter}
+                onMouseLeave={gymsAllHover.onMouseLeave}
+              >
+                <HoverIcon
+                  src="/picks/kuntosalit.gif"
+                  stillSrc="/picks/kuntosalit-still.png"
+                  animated
+                  playing={gymsAllHover.playing}
+                  playKey={gymsAllHover.playKey}
+                />
+                <span>Kaikki kuntosaliketjut</span>
+              </Link>
             </div>
           </div>
           <div className="rail-viewport" ref={viewportRef}>
@@ -276,6 +269,7 @@ function HomePage() {
         </div>
       </section>
 
+      {/*
       <section className="discover" aria-label="Harrastukset">
         <div
           className={`lajit reveal ${lajitReveal.inView ? "is-in" : ""}`}
@@ -300,6 +294,7 @@ function HomePage() {
           </div>
         </div>
       </section>
+      */}
     </main>
   );
 }

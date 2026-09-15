@@ -17,7 +17,7 @@ function Header() {
       <div className="header-right">
         <Link to="/gyms" className="playstore-button is-plain">
           <span className="texts">
-            <span className="text-2">Selaa</span>
+            <span className="text-2">Selaa kuntosaleja</span>
           </span>
         </Link>
         <button type="button" className="playstore-button is-plain header-lang" aria-label="Suomi">
