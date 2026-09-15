@@ -13,19 +13,6 @@
     overflow: visible;
 }
 
-.header::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background-image: url("/bg-pattern.svg");
-    background-size: 520px 520px;
-    background-repeat: repeat;
-    filter: brightness(10);
-    opacity: 0.06;
-}
-
 .header-left,
 .header-right {
     position: relative;

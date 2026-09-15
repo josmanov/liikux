@@ -9,10 +9,30 @@
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
-  gap: 4rem;
+  gap: 0;
 }
 
+/*
+  BG PATTERN — muokkaa vain näitä
+  Tiedosto: client/src/pages/HomePage.css (.hero)
+
+  --bg-opacity   himmeys 0–1
+  --bg-color     ikonien väri
+  --bg-width     kuvan leveys (100% = täysi hero, 120% = zoom in, 80% = zoom out)
+  --bg-height    kuvan korkeus (auto = säilyttää 1920x1080 suhteen)
+  --bg-x         vasen/oikea: 0% = vasen, 50% = keskellä, 100% = oikea
+  --bg-y         ylös/alas: 0% = heti headerin alla, isompi % = alemmas
+  --bg-area-h    kuinka korkealle pattern-alue yltää herossa (60% = ei mene salikortteihin)
+*/
 .hero {
+  --bg-image: url("/bg-pattern-gym.png");
+  --bg-color: #ffffff;
+  --bg-width: 100%;
+  --bg-height: auto;
+  --bg-x: 50%;
+  --bg-y: 40%;
+  --bg-area-h: 70%;
+
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -24,7 +44,36 @@
   margin: 0;
   padding: 1.5rem 1.25rem 2rem;
   text-align: center;
-  overflow: visible;
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: var(--bg-area-h);
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--bg-opacity);
+  background-color: var(--bg-color);
+  -webkit-mask-image: var(--bg-image);
+  mask-image: var(--bg-image);
+  -webkit-mask-size: var(--bg-width) var(--bg-height);
+  mask-size: var(--bg-width) var(--bg-height);
+  -webkit-mask-position: var(--bg-x) var(--bg-y);
+  mask-position: var(--bg-x) var(--bg-y);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+.hero-top,
+.hero .rail {
+  position: relative;
+  z-index: 1;
 }
 
 .hero-top {
@@ -303,7 +352,7 @@
   overflow-x: hidden;
   margin: 0;
   padding: 0 0 3rem;
-  background: var(--color-bg);
+  background: transparent;
 }
 
 .hero .rail {
