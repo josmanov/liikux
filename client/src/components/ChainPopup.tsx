@@ -1,4 +1,8 @@
+import { createPortal } from "react-dom";
 import "./ChainPopup.css";
+import { mockPlaces } from "../data/mockPlaces";
+
+const chains = mockPlaces.slice(0, 3);
 
 type Props = {
   open: boolean;
@@ -8,7 +12,7 @@ type Props = {
 function ChainPopup({ open, onClose }: Props) {
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div className="chain-popup-overlay" onClick={onClose}>
       <div
         className="chain-popup-card"
@@ -29,8 +33,34 @@ function ChainPopup({ open, onClose }: Props) {
             placeholder="Etsi ketjua..."
           />
         </div>
+
+        <ul className="chain-popup-list">
+          {chains.map((chain) => (
+            <li key={chain.id} className="chain-popup-row">
+              <span
+                className={[
+                  "chain-popup-media",
+                  chain.logoFit === "contain" ? "is-logo" : "",
+                  chain.logoClass || "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                <img src={chain.image} alt="" />
+              </span>
+              <div className="chain-popup-text">
+                <strong>{chain.name}</strong>
+                <span>{chain.city}</span>
+              </div>
+              <button type="button" className="chain-popup-btn">
+                Etsi
+              </button>
+            </li>
+          ))}
+        </ul>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

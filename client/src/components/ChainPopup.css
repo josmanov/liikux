@@ -1,35 +1,37 @@
 .chain-popup-overlay {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 1000;
   background: rgba(0, 0, 0, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
+  box-sizing: border-box;
 }
 
 .chain-popup-card {
-  width: min(520px, 100%);
-  max-height: min(70vh, 600px);
-  min-height: 450px;
-  border-radius: 30px;
+  width: min(720px, 100%);
+  max-height: min(85vh, 820px);
+  min-height: min(70vh, 560px);
+  border-radius: 24px;
   background: #1c1b1b;
   box-shadow:
     15px 15px 30px #000000,
     -15px -15px 30px #000000;
   overflow: auto;
-  padding: 1.25rem;
+  padding: 1.5rem;
+  box-sizing: border-box;
 }
 
 .chain-popup-card .inputBox_container {
   display: flex;
   align-items: center;
   flex-direction: row;
-  max-width: 14em;
-  width: fit-content;
+  max-width: 22em;
+  width: 100%;
   height: fit-content;
-  margin: 0 auto 1rem;
+  margin: 0 auto 1.5rem;
   background-color: #5c6370;
   border-radius: 0.8em;
   overflow: hidden;
@@ -54,4 +56,141 @@
 
 .chain-popup-card .inputBox::placeholder {
   color: #abb2bf;
+}
+
+.chain-popup-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.chain-popup-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.35rem 0.25rem;
+}
+
+.chain-popup-media {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 160px;
+  flex-shrink: 0;
+  aspect-ratio: 16 / 10;
+  border-radius: 10px;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.chain-popup-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.chain-popup-media.is-logo {
+  background: var(--color-surface);
+  padding: 0;
+}
+
+.chain-popup-media.is-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.chain-popup-media.logo-easyfit {
+  background: #fef164;
+}
+
+.chain-popup-media.logo-easyfit img {
+  transform: scale(2);
+  object-position: center;
+}
+
+.chain-popup-media.logo-elixia {
+  background: #fff;
+  padding: 0.45rem 0.55rem;
+}
+
+.chain-popup-media.logo-elixia img {
+  transform: scale(1);
+  object-position: center;
+}
+
+.chain-popup-media.logo-fressi {
+  background: #2a2a2a;
+}
+
+.chain-popup-media.logo-fressi img {
+  transform: scale(1.5);
+  object-position: center;
+}
+
+.chain-popup-media.logo-fitness24 {
+  background: #002d54;
+}
+
+.chain-popup-media.logo-fitness24 img {
+  object-fit: cover;
+  object-position: center center;
+  transform: scale(1.5);
+}
+
+.chain-popup-media.logo-gofitness {
+  background: #fff;
+  padding: 0.45rem 0.55rem;
+}
+
+.chain-popup-media.logo-gofitness img {
+  transform: scale(1);
+  object-position: center;
+}
+
+.chain-popup-media.logo-liikku {
+  background: #4da10f;
+}
+
+.chain-popup-media.logo-liikku img {
+  transform: scale(1);
+  object-position: center;
+}
+
+.chain-popup-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  color: #fff;
+  min-width: 0;
+}
+
+.chain-popup-text strong {
+  font-size: 1.05rem;
+}
+
+.chain-popup-text span {
+  opacity: 0.7;
+  font-size: 0.9rem;
+}
+
+.chain-popup-btn {
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.55rem 1.25rem;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.95rem;
+  background: #f5c518;
+  color: #111;
 }
