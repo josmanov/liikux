@@ -717,6 +717,7 @@
   font-weight: 700;
   text-decoration: none;
   flex-shrink: 0;
+  cursor: pointer;
   transition:
     background 0.2s ease,
     border-color 0.2s ease,
