@@ -63,6 +63,42 @@ export const mockPlaces: Place[] = [
     logoFit: "contain",
     logoClass: "logo-liikku",
   },
+  {
+    id: "8",
+    name: "EasyFit",
+    city: "Vantaa",
+    type: "kuntosali",
+    image: "/brands/easyfit.png",
+    logoFit: "contain",
+    logoClass: "logo-easyfit",
+  },
+  {
+    id: "9",
+    name: "Elixia",
+    city: "Vantaa",
+    type: "kuntosali",
+    image: "/brands/elixia.png",
+    logoFit: "contain",
+    logoClass: "logo-elixia",
+  },
+  {
+    id: "10",
+    name: "Fressi",
+    city: "Espoo",
+    type: "kuntosali",
+    image: "/brands/fressi.png",
+    logoFit: "contain",
+    logoClass: "logo-fressi",
+  },
+  {
+    id: "11",
+    name: "Go Fitness",
+    city: "Espoo",
+    type: "kuntosali",
+    image: "/brands/gofitness.png",
+    logoFit: "contain",
+    logoClass: "logo-gofitness",
+  },
 ];
 
 export function gymsInCity(city: string) {

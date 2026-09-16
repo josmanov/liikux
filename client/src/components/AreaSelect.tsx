@@ -4,9 +4,15 @@ import "./AreaSelect.css";
 
 const areas = ["Helsinki", "Espoo", "Vantaa", "Tampere", "Turku", "Oulu"];
 
-function AreaSelect() {
+type Props = {
+  value?: string;
+  onChange?: (area: string) => void;
+};
+
+function AreaSelect({ value, onChange }: Props) {
   const [open, setOpen] = useState(false);
-  const [area, setArea] = useState("Helsinki");
+  const [internalArea, setInternalArea] = useState("Helsinki");
+  const area = value ?? internalArea;
 
   useEffect(() => {
     if (!open) return;
@@ -16,6 +22,12 @@ function AreaSelect() {
     window.addEventListener("click", close);
     return () => window.removeEventListener("click", close);
   }, [open]);
+
+  function pick(name: string) {
+    if (onChange) onChange(name);
+    else setInternalArea(name);
+    setOpen(false);
+  }
 
   return (
     <div className="area-select" onClick={(e) => e.stopPropagation()}>
@@ -39,10 +51,7 @@ function AreaSelect() {
                 className={name === area ? "is-on" : ""}
                 role="option"
                 aria-selected={name === area}
-                onClick={() => {
-                  setArea(name);
-                  setOpen(false);
-                }}
+                onClick={() => pick(name)}
               >
                 {name}
               </button>
