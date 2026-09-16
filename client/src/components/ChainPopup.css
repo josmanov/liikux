@@ -1,0 +1,57 @@
+.chain-popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.chain-popup-card {
+  width: min(520px, 100%);
+  max-height: min(70vh, 600px);
+  min-height: 450px;
+  border-radius: 30px;
+  background: #1c1b1b;
+  box-shadow:
+    15px 15px 30px #000000,
+    -15px -15px 30px #000000;
+  overflow: auto;
+  padding: 1.25rem;
+}
+
+.chain-popup-card .inputBox_container {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  max-width: 14em;
+  width: fit-content;
+  height: fit-content;
+  margin: 0 auto 1rem;
+  background-color: #5c6370;
+  border-radius: 0.8em;
+  overflow: hidden;
+}
+
+.chain-popup-card .search_icon {
+  height: 1em;
+  padding: 0 0.5em 0 0.8em;
+  fill: #abb2bf;
+  flex-shrink: 0;
+}
+
+.chain-popup-card .inputBox {
+  background-color: transparent;
+  color: #ffffff;
+  outline: none;
+  width: 100%;
+  border: 0;
+  padding: 0.5em 1.5em 0.5em 0;
+  font-size: 1em;
+}
+
+.chain-popup-card .inputBox::placeholder {
+  color: #abb2bf;
+}

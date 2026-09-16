@@ -1,3 +1,4 @@
+import "./HomePage.css";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
@@ -16,7 +17,7 @@ import HoverIcon, { usePickHover } from "../components/HoverIcon";
 import { gymsInCity } from "../data/mockPlaces";
 import { lajiGifUrl } from "../data/lajiGifs";
 import { useInView } from "../hooks/useInView";
-import "./HomePage.css";
+import ChainPopup from "../components/ChainPopup";
 
 const city = "Helsinki";
 const cityIn = "Helsingissä";
@@ -176,6 +177,7 @@ function HomePage() {
   const lajitReveal = useInView<HTMLDivElement>();
   const gymsAllHover = usePickHover();
   const start = 0;
+  const [chainPopupOpen, setChainPopupOpen] = useState(false);
 
   useEffect(() => {
     function measure() {
@@ -219,9 +221,10 @@ function HomePage() {
           <div className="rail-head">
             <h2 className="rail-title">Suositut kuntosaliketjut</h2>
             <div className="rail-arrows">
-              <Link
-                to="/gyms"
+              <button
+                type="button"
                 className="lajit-all"
+                onClick={() => setChainPopupOpen(true)}
                 onMouseEnter={gymsAllHover.onMouseEnter}
                 onMouseLeave={gymsAllHover.onMouseLeave}
               >
@@ -233,7 +236,7 @@ function HomePage() {
                   playKey={gymsAllHover.playKey}
                 />
                 <span>Kaikki kuntosaliketjut</span>
-              </Link>
+              </button>
             </div>
           </div>
           <div className="rail-viewport" ref={viewportRef}>
@@ -295,6 +298,10 @@ function HomePage() {
         </div>
       </section>
       */}
+      <ChainPopup
+        open={chainPopupOpen}
+        onClose={() => setChainPopupOpen(false)}
+      />
     </main>
   );
 }
