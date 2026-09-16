@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { Link } from "react-router-dom";
+import { X } from "lucide-react";
 import "./ChainPopup.css";
 import AreaSelect from "./AreaSelect";
 import { gymsInCity } from "../data/mockPlaces";
@@ -43,50 +45,59 @@ function ChainPopup({ open, onClose }: Props) {
       >
         <div className="chain-popup-top">
           <AreaSelect value={area} onChange={setArea} />
-          <div className="inputBox_container">
-            <svg
-              className="search_icon"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 48 48"
-              aria-hidden="true"
-            >
-              <path d="M46.599 46.599a4.498 4.498 0 0 1-6.363 0l-7.941-7.941C29.028 40.749 25.167 42 21 42 9.402 42 0 32.598 0 21S9.402 0 21 0s21 9.402 21 21c0 4.167-1.251 8.028-3.342 11.295l7.941 7.941a4.498 4.498 0 0 1 0 6.363zM21 6C12.717 6 6 12.714 6 21s6.717 15 15 15c8.286 0 15-6.714 15-15S29.286 6 21 6z" />
+          <div className="group">
+            <svg viewBox="0 0 24 24" aria-hidden="true" className="search-icon">
+              <g>
+                <path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
+              </g>
             </svg>
             <input
-              className="inputBox"
-              type="text"
+              className="input"
+              type="search"
               placeholder="Etsi ketjua..."
+              name="searchbar"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
+          <button
+            type="button"
+            className="chain-popup-close"
+            onClick={onClose}
+            aria-label="Sulje"
+          >
+            <X size={20} strokeWidth={2.4} />
+          </button>
         </div>
 
         <ul className="chain-popup-list">
           {chains.map((chain) => (
-            <li key={chain.id} className="chain-popup-row">
-              <span
-                className={[
-                  "chain-popup-media",
-                  chain.logoFit === "contain" ? "is-logo" : "",
-                  chain.logoClass || "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
+            <li key={chain.id}>
+              <Link
+                to={`/gyms/${chain.id}`}
+                className="chain-popup-row"
+                onClick={onClose}
               >
-                <img src={chain.image} alt="" />
-              </span>
-              <div className="chain-popup-text">
-                <strong>{chain.name}</strong>
-                <span>{chain.city}</span>
-                <p className="chain-popup-blurb">
-                  Laaja saliverkosto, ryhmäliikuntaa ja joustavat aukioloajat.
-                  Katso ketjun salit kartalla ja vertaa sijainteja alueellasi.
-                </p>
-              </div>
-              <button type="button" className="chain-popup-btn">
-                Etsi
-              </button>
+                <span
+                  className={[
+                    "chain-popup-media",
+                    chain.logoFit === "contain" ? "is-logo" : "",
+                    chain.logoClass || "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
+                  <img src={chain.image} alt="" />
+                </span>
+                <div className="chain-popup-text">
+                  <strong>{chain.name}</strong>
+                  <span>{chain.city}</span>
+                  <p className="chain-popup-blurb">
+                    Laaja saliverkosto, ryhmäliikuntaa ja joustavat aukioloajat.
+                    Katso ketjun salit kartalla ja vertaa sijainteja alueellasi.
+                  </p>
+                </div>
+              </Link>
             </li>
           ))}
           {chains.length === 0 ? (
