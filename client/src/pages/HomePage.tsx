@@ -14,16 +14,16 @@ import {
   Waves,
 } from "lucide-react";
 import HoverIcon, { usePickHover } from "../components/HoverIcon";
-import { gymsInCity, mockPlaces } from "../data/mockPlaces";
+import { chains, gyms } from "../data/mockPlaces";
 import { lajiGifUrl } from "../data/lajiGifs";
 import { useInView } from "../hooks/useInView";
 import ChainPopup from "../components/ChainPopup";
 
-const city = "Helsinki";
-const cityIn = "Helsingissä";
-const suositutSalit = gymsInCity(city);
-const chainCount = new Set(mockPlaces.map((p) => p.name)).size;
-const cityCount = new Set(mockPlaces.map((p) => p.city)).size;
+const suositutKetjut = chains.slice(0, 6);
+
+const chainCount = chains.length;
+const cityCount = new Set(gyms.map((g) => g.city)).size;
+
 
 const picks = [
   {
@@ -58,13 +58,7 @@ const lajit: {
   { name: "Tennis", to: "/harjoitukset", Icon: Target },
   { name: "Padeli", to: "/harjoitukset", Icon: Trophy },
 ];
-function LajiIcon({
-  name,
-  Icon,
-}: {
-  name: string;
-  Icon?: LucideIcon;
-}) {
+function LajiIcon({ name, Icon }: { name: string; Icon?: LucideIcon }) {
   const gif = lajiGifUrl(name);
   const [broken, setBroken] = useState(false);
 
@@ -82,7 +76,6 @@ function LajiIcon({
   if (Icon) {
     return <Icon className="laji-icon" strokeWidth={2} />;
   }
-
   return null;
 }
 
@@ -130,11 +123,7 @@ function SearchButton() {
       onMouseLeave={hover.onMouseLeave}
     >
       <span className="hero-locate-gif">
-        <img
-          className="hero-locate-still"
-          src="/picks/search.png"
-          alt=""
-        />
+        <img className="hero-locate-still" src="/picks/search.png" alt="" />
       </span>
     </button>
   );
@@ -226,7 +215,7 @@ function HomePage() {
           ref={railReveal.ref}
         >
           <div className="rail-head">
-            <h2 className="rail-title">Suositut kuntosaliketjut</h2>
+            <h2 className="rail-title">Suomen suosituimmat</h2>
             <div className="rail-arrows">
               <button
                 type="button"
@@ -253,25 +242,25 @@ function HomePage() {
                 transform: `translateX(-${start * step}px)`,
               }}
             >
-              {suositutSalit.map((place) => (
+              {suositutKetjut.map((chain) => (
                 <Link
-                  key={place.id}
-                  to={`/gyms/${place.id}`}
+                  key={chain.id}
+                  to={`/fi/ketju/${chain.slug}`}
                   className="place-card"
                 >
                   <span
                     className={[
                       "place-card-media",
-                      place.logoFit === "contain" ? "is-logo" : "",
-                      place.logoClass || "",
+                      chain.logoFit === "contain" ? "is-logo" : "",
+                      chain.logoClass || "",
                     ]
                       .filter(Boolean)
                       .join(" ")}
                   >
                     <span className="place-card-shine" aria-hidden="true" />
-                    <img src={place.image} alt="" />
+                    <img src={chain.image} alt="" />
                   </span>
-                  <span className="place-card-name">{place.name}</span>
+                  <span className="place-card-name">{chain.name}</span>
                 </Link>
               ))}
             </div>

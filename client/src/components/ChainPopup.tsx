@@ -3,8 +3,7 @@ import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { X } from "lucide-react";
 import "./ChainPopup.css";
-import AreaSelect from "./AreaSelect";
-import { gymsInCity } from "../data/mockPlaces";
+import { chains } from "../data/mockPlaces";
 
 type Props = {
   open: boolean;
@@ -12,7 +11,6 @@ type Props = {
 };
 
 function ChainPopup({ open, onClose }: Props) {
-  const [area, setArea] = useState("Helsinki");
   const [query, setQuery] = useState("");
 
   useEffect(() => {
@@ -33,18 +31,15 @@ function ChainPopup({ open, onClose }: Props) {
   if (!open) return null;
 
   const q = query.trim().toLowerCase();
-  const chains = gymsInCity(area).filter((chain) =>
+  const list = chains.filter((chain) =>
     q ? chain.name.toLowerCase().includes(q) : true,
   );
 
   return createPortal(
     <div className="chain-popup-overlay" onClick={onClose}>
-      <div
-        className="chain-popup-card"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="chain-popup-card" onClick={(e) => e.stopPropagation()}>
         <div className="chain-popup-top">
-          <AreaSelect value={area} onChange={setArea} />
+          {/* AreaSelect deaktivoitu — popup näyttää kaikki ketjut; alue myöhemmin */}
           <div className="group">
             <svg viewBox="0 0 24 24" aria-hidden="true" className="search-icon">
               <g>
@@ -71,10 +66,10 @@ function ChainPopup({ open, onClose }: Props) {
         </div>
 
         <ul className="chain-popup-list">
-          {chains.map((chain) => (
+          {list.map((chain) => (
             <li key={chain.id}>
               <Link
-                to={`/gyms/${chain.id}`}
+                to={`/fi/ketju/${chain.slug}`}
                 className="chain-popup-row"
                 onClick={onClose}
               >
@@ -91,7 +86,6 @@ function ChainPopup({ open, onClose }: Props) {
                 </span>
                 <div className="chain-popup-text">
                   <strong>{chain.name}</strong>
-                  <span>{chain.city}</span>
                   <p className="chain-popup-blurb">
                     Laaja saliverkosto, ryhmäliikuntaa ja joustavat aukioloajat.
                     Katso ketjun salit kartalla ja vertaa sijainteja alueellasi.
@@ -100,10 +94,9 @@ function ChainPopup({ open, onClose }: Props) {
               </Link>
             </li>
           ))}
-          {chains.length === 0 ? (
+          {list.length === 0 ? (
             <li className="chain-popup-empty">
-              Ei ketjuja alueella {area}
-              {q ? ` haulla “${query}”` : ""}.
+              Ei ketjuja{q ? ` haulla “${query}”` : ""}.
             </li>
           ) : null}
         </ul>

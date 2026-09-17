@@ -1,108 +1,120 @@
-export type Place = {
+
+export type Chain = {
   id: string;
+  slug: string;
   name: string;
-  city: string;
-  type: "kuntosali" | "kiipeily";
   image: string;
   logoFit?: "contain";
   logoClass?: string;
 };
 
-export const mockPlaces: Place[] = [
+export type Gym = {
+  id: string;
+  slug: string;
+  name: string;
+  city: string;
+  address: string;
+  chainId: string;
+};
+
+export const chains: Chain[] = [
   {
-    id: "1",
+    id: "c1",
+    slug: "easyfit",
     name: "EasyFit",
-    city: "Helsinki",
-    type: "kuntosali",
     image: "/brands/easyfit.png",
     logoFit: "contain",
     logoClass: "logo-easyfit",
   },
   {
-    id: "2",
+    id: "c2",
+    slug: "elixia",
     name: "Elixia",
-    city: "Helsinki",
-    type: "kuntosali",
     image: "/brands/elixia.png",
     logoFit: "contain",
     logoClass: "logo-elixia",
   },
   {
-    id: "3",
+    id: "c3",
+    slug: "fressi",
     name: "Fressi",
-    city: "Helsinki",
-    type: "kuntosali",
     image: "/brands/fressi.png",
     logoFit: "contain",
     logoClass: "logo-fressi",
   },
   {
-    id: "4",
+    id: "c4",
+    slug: "fitness24seven",
     name: "Fitness24Seven",
-    city: "Helsinki",
-    type: "kuntosali",
     image: "/brands/fitness24.png?v=2",
     logoFit: "contain",
     logoClass: "logo-fitness24",
   },
   {
-    id: "5",
+    id: "c5",
+    slug: "go-fitness",
     name: "Go Fitness",
-    city: "Helsinki",
-    type: "kuntosali",
     image: "/brands/gofitness.png",
     logoFit: "contain",
     logoClass: "logo-gofitness",
   },
   {
-    id: "7",
+    id: "c6",
+    slug: "liikku",
     name: "Liikku",
-    city: "Helsinki",
-    type: "kuntosali",
     image: "/brands/liikku.png",
     logoFit: "contain",
     logoClass: "logo-liikku",
   },
-  {
-    id: "8",
-    name: "EasyFit",
-    city: "Vantaa",
-    type: "kuntosali",
-    image: "/brands/easyfit.png",
-    logoFit: "contain",
-    logoClass: "logo-easyfit",
-  },
-  {
-    id: "9",
-    name: "Elixia",
-    city: "Vantaa",
-    type: "kuntosali",
-    image: "/brands/elixia.png",
-    logoFit: "contain",
-    logoClass: "logo-elixia",
-  },
-  {
-    id: "10",
-    name: "Fressi",
-    city: "Espoo",
-    type: "kuntosali",
-    image: "/brands/fressi.png",
-    logoFit: "contain",
-    logoClass: "logo-fressi",
-  },
-  {
-    id: "11",
-    name: "Go Fitness",
-    city: "Espoo",
-    type: "kuntosali",
-    image: "/brands/gofitness.png",
-    logoFit: "contain",
-    logoClass: "logo-gofitness",
-  },
 ];
 
-export function gymsInCity(city: string) {
-  return mockPlaces.filter(
-    (p) => p.type === "kuntosali" && p.city === city,
-  );
-}
+export const gyms: Gym[] = [
+  {
+    id: "g1",
+    slug: "elixia-redi",
+    name: "Elixia Redi",
+    city: "Helsinki",
+    address: "Hermannin rantatie 5, Helsinki",
+    chainId: "c2",
+  },
+  {
+    id: "g2",
+    slug: "elixia-itis",
+    name: "Elixia Itis",
+    city: "Helsinki",
+    address: "Itäkatu 1-7, Helsinki",
+    chainId: "c2",
+  },
+  {
+    id: "g3",
+    slug: "easyfit-kamppi",
+    name: "EasyFit Kamppi",
+    city: "Helsinki",
+    address: "Urho Kekkosen katu 1, Helsinki",
+    chainId: "c1",
+  },
+  {
+    id: "g4",
+    slug: "easyfit-tikkurila",
+    name: "EasyFit Tikkurila",
+    city: "Vantaa",
+    address: "Ratatie 11, Vantaa",
+    chainId: "c1",
+  },
+  {
+    id: "g5",
+    slug: "fressi-tapiola",
+    name: "Fressi Tapiola",
+    city: "Espoo",
+    address: "Länsituuli 7, Espoo",
+    chainId: "c3",
+  },
+  {
+    id: "g6",
+    slug: "liikku-pasila",
+    name: "Liikku Pasila",
+    city: "Helsinki",
+    address: "Pasilankatu 2, Helsinki",
+    chainId: "c6",
+  },
+];
