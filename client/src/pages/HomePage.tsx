@@ -14,7 +14,7 @@ import {
   Waves,
 } from "lucide-react";
 import HoverIcon, { usePickHover } from "../components/HoverIcon";
-import { gymsInCity } from "../data/mockPlaces";
+import { gymsInCity, mockPlaces } from "../data/mockPlaces";
 import { lajiGifUrl } from "../data/lajiGifs";
 import { useInView } from "../hooks/useInView";
 import ChainPopup from "../components/ChainPopup";
@@ -22,6 +22,8 @@ import ChainPopup from "../components/ChainPopup";
 const city = "Helsinki";
 const cityIn = "Helsingissä";
 const suositutSalit = gymsInCity(city);
+const chainCount = new Set(mockPlaces.map((p) => p.name)).size;
+const cityCount = new Set(mockPlaces.map((p) => p.city)).size;
 
 const picks = [
   {
@@ -199,18 +201,23 @@ function HomePage() {
       <section className="hero">
         <div className="hero-top">
           <h1 className="title">Löydä paikka liikkua</h1>
-          <div className="hero-search" id="input">
-            <input
-              className="hero-search-input"
-              id="address_input"
-              type="text"
-              placeholder=""
-            />
-            <label className="hero-search-label" htmlFor="address_input">
-              Syötä osoite..
-            </label>
-            <span className="hero-search-divider" aria-hidden="true" />
-            <LocateButton />
+          <div className="hero-search-wrap">
+            <div className="hero-search" id="input">
+              <input
+                className="hero-search-input"
+                id="address_input"
+                type="text"
+                placeholder=""
+              />
+              <label className="hero-search-label" htmlFor="address_input">
+                Syötä osoite..
+              </label>
+              <span className="hero-search-divider" aria-hidden="true" />
+              <LocateButton />
+            </div>
+            <p className="hero-stats">
+              {chainCount} kuntosaliketjua · {cityCount} kaupunkia
+            </p>
           </div>
         </div>
 

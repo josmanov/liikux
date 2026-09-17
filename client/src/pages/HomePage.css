@@ -13,26 +13,11 @@
 }
 
 /*
-  BG PATTERN — muokkaa vain näitä
-  Tiedosto: client/src/pages/HomePage.css (.hero)
-
-  --bg-opacity   himmeys 0–1
-  --bg-color     ikonien väri
-  --bg-width     kuvan leveys (100% = täysi hero, 120% = zoom in, 80% = zoom out)
-  --bg-height    kuvan korkeus (auto = säilyttää 1920x1080 suhteen)
-  --bg-x         vasen/oikea: 0% = vasen, 50% = keskellä, 100% = oikea
-  --bg-y         ylös/alas: 0% = heti headerin alla, isompi % = alemmas
-  --bg-area-h    kuinka korkealle pattern-alue yltää herossa (60% = ei mene salikortteihin)
+  BG PATTERN — DEAKTIVOITU (älä poista)
+  Laita takaisin: poista kommentit .hero::before -blokista
+  ja palauta --bg-* muuttujat .hero-lohkoon.
 */
 .hero {
-  --bg-image: url("/bg-pattern-gym.png");
-  --bg-color: #ffffff;
-  --bg-width: 100%;
-  --bg-height: auto;
-  --bg-x: 50%;
-  --bg-y: 40%;
-  --bg-area-h: 70%;
-
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -47,6 +32,18 @@
   overflow: hidden;
   position: relative;
   isolation: isolate;
+}
+
+/*
+.hero {
+  --bg-image: url("/bg-pattern-gym.png");
+  --bg-color: #ffffff;
+  --bg-opacity: 0.1;
+  --bg-width: 100%;
+  --bg-height: auto;
+  --bg-x: 50%;
+  --bg-y: 40%;
+  --bg-area-h: 70%;
 }
 
 .hero::before {
@@ -69,6 +66,7 @@
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
 }
+*/
 
 .hero-top,
 .hero .rail {
@@ -99,12 +97,12 @@
 }
 
 .title,
-.hero-search,
+.hero-search-wrap,
 .hero-picks {
   animation: hero-enter 0.8s ease-out both;
 }
 
-.hero-search {
+.hero-search-wrap {
   animation-delay: 0.24s;
 }
 
@@ -164,6 +162,23 @@
   border: 1.5px solid var(--color-border);
   border-radius: 8px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hero-search-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.hero-stats {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--color-muted);
+  letter-spacing: 0.01em;
 }
 
 .hero-search:hover {
