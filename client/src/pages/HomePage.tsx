@@ -22,7 +22,7 @@ import ChainPopup from "../components/ChainPopup";
 const picks = [
   {
     name: "Kuntosalit",
-    to: "/gyms",
+    to: "/fi/kuntosalit",
     icon: "/picks/kuntosalit.gif",
     still: "/picks/kuntosalit-still.png",
     animated: true,
@@ -41,7 +41,7 @@ const lajit: {
   to: string;
   Icon?: LucideIcon;
 }[] = [
-  { name: "Kuntosali", to: "/gyms", Icon: Dumbbell },
+  { name: "Kuntosali", to: "/fi/kuntosalit", Icon: Dumbbell },
   { name: "Jalkapallo", to: "/harjoitukset/", Icon: Goal },
   { name: "Juoksu", to: "/harjoitukset", Icon: Footprints },
   { name: "Pyöräily", to: "/harjoitukset", Icon: Bike },

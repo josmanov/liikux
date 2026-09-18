@@ -15,12 +15,16 @@ function Header() {
       </div>
 
       <div className="header-right">
-        <Link to="/gyms" className="playstore-button is-plain">
+        <Link to="/fi/kuntosalit" className="playstore-button is-plain">
           <span className="texts">
             <span className="text-2">Selaa kuntosaleja</span>
           </span>
         </Link>
-        <button type="button" className="playstore-button is-plain header-lang" aria-label="Suomi">
+        <button
+          type="button"
+          className="playstore-button is-plain header-lang"
+          aria-label="Suomi"
+        >
           <span className="fi fi-fi"></span>
         </button>
         <Link to="/login" className="header-login">
