@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { X } from "lucide-react";
 import "./ChainPopup.css";
-import { chains } from "../data/mockPlaces";
+import { type Chain } from "../data/mockPlaces";
 
 type Props = {
   open: boolean;
@@ -12,6 +12,7 @@ type Props = {
 
 function ChainPopup({ open, onClose }: Props) {
   const [query, setQuery] = useState("");
+  const [chains, setChains] = useState<Chain[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -27,6 +28,13 @@ function ChainPopup({ open, onClose }: Props) {
       setQuery("");
     }
   }, [open]);
+
+  useEffect(() => {
+    fetch("http://localhost:3001/api/chains")
+      .then((r) => r.json())
+      .then((data: Chain[]) => setChains(data))
+      .catch(() => setChains([]));
+  }, []);
 
   if (!open) return null;
 
