@@ -61,6 +61,8 @@ const gymRows = [
     city: "Helsinki",
     address: "Hermannin rantatie 5, Helsinki",
     chainId: "c2",
+    lat: 60.1879,
+    lng: 24.9782,
   },
   {
     id: "g2",
@@ -69,6 +71,8 @@ const gymRows = [
     city: "Helsinki",
     address: "Itäkatu 1-7, Helsinki",
     chainId: "c2",
+    lat: 60.212,
+    lng: 25.0831,
   },
   {
     id: "g3",
@@ -77,6 +81,8 @@ const gymRows = [
     city: "Helsinki",
     address: "Urho Kekkosen katu 1, Helsinki",
     chainId: "c1",
+    lat: 60.1694,
+    lng: 24.9335,
   },
   {
     id: "g4",
@@ -85,6 +91,8 @@ const gymRows = [
     city: "Vantaa",
     address: "Ratatie 11, Vantaa",
     chainId: "c1",
+    lat: 60.293,
+    lng: 25.0438,
   },
   {
     id: "g5",
@@ -93,6 +101,8 @@ const gymRows = [
     city: "Espoo",
     address: "Länsituuli 7, Espoo",
     chainId: "c3",
+    lat: 60.1754,
+    lng: 24.8021,
   },
   {
     id: "g6",
@@ -101,6 +111,8 @@ const gymRows = [
     city: "Helsinki",
     address: "Pasilankatu 2, Helsinki",
     chainId: "c6",
+    lat: 60.1956,
+    lng: 24.9289,
   },
 ];
 

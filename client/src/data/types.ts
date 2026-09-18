@@ -14,4 +14,6 @@ export type Gym = {
   city: string;
   address: string;
   chainId: string;
+  lat: number;
+  lng: number;
 };

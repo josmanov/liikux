@@ -1,4 +1,4 @@
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, doublePrecision } from "drizzle-orm/pg-core";
 
 export const chains = pgTable("chains", {
     id: varchar("id", { length: 64 }).primaryKey(),
@@ -18,4 +18,6 @@ export const gyms = pgTable("gyms", {
     chainId: varchar("chain_id", { length: 64 })
         .notNull()
         .references(() => chains.id),
+    lat: doublePrecision("lat").notNull(),
+    lng: doublePrecision("lng").notNull(),
 });
