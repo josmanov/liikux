@@ -1,10 +1,33 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Map } from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
 import { type Chain, type Gym } from "../data/types";
 import "./GymsPage.css";
 
 function GymsPage() {
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [chains, setChains] = useState<Chain[]>([]);
+  const mapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const map = new Map({
+      container: mapRef.current,
+      style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+      center: [24.94, 60.17],
+      zoom: 12,
+    });
+
+    map.on("load", () => {
+      map.resize();
+    });
+
+    return () => {
+      map.remove();
+    };
+  }, []);
+
 
   useEffect(() => {
     Promise.all([
@@ -55,9 +78,7 @@ function GymsPage() {
           })}
         </ul>
       </section>
-      <aside className="browse-map" aria-label="Kartta">
-        <p>Kartta tulee tähän</p>
-      </aside>
+      <aside className="browse-map" aria-label="Kartta" ref={mapRef} />
     </main>
   );
 }
