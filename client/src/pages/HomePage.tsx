@@ -14,12 +14,10 @@ import {
   Waves,
 } from "lucide-react";
 import HoverIcon, { usePickHover } from "../components/HoverIcon";
-import { gyms, type Chain } from "../data/mockPlaces";
+import { type Chain, type Gym } from "../data/types";
 import { lajiGifUrl } from "../data/lajiGifs";
 import { useInView } from "../hooks/useInView";
 import ChainPopup from "../components/ChainPopup";
-
-const cityCount = new Set(gyms.map((g) => g.city)).size;
 
 const picks = [
   {
@@ -166,6 +164,7 @@ function HomePage() {
   const start = 0;
   const [chainPopupOpen, setChainPopupOpen] = useState(false);
   const [chains, setChains] = useState<Chain[]>([]);
+  const [gyms, setGyms] = useState<Gym[]>([]);
 
   useEffect(() => {
     function measure() {
@@ -189,8 +188,16 @@ function HomePage() {
       .catch(() => setChains([]));
   }, []);
 
+  useEffect(() => {
+    fetch("http://localhost:3001/api/gyms")
+      .then((r) => r.json())
+      .then((data: Gym[]) => setGyms(data))
+      .catch(() => setGyms([]));
+  }, []);
+
   const suositutKetjut = chains.slice(0, 6);
   const chainCount = chains.length;
+  const cityCount = new Set(gyms.map((g) => g.city)).size;
 
   return (
     <main className="shell">

@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { X } from "lucide-react";
 import "./ChainPopup.css";
-import { type Chain } from "../data/mockPlaces";
+import { type Chain } from "../data/types";
 
 type Props = {
   open: boolean;
