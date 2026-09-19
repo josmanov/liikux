@@ -4,6 +4,11 @@ import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { LngLatBounds, Map, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type Chain, type Gym } from "../data/types";
+import {
+  formatDistanceKm,
+  formatPriceFrom,
+  getGymCardMock,
+} from "../data/gymCardMock";
 
 const sortOptions = [
   { id: "nearest", label: "Lähimmät ensin" },
@@ -285,6 +290,7 @@ function GymsPage() {
           <ul className="browse-rows">
             {visibleGyms.map((gym) => {
               const chain = chains.find((c) => c.id === gym.chainId);
+              const card = getGymCardMock(gym.slug);
               return (
                 <li key={gym.id}>
                   <button
@@ -312,10 +318,34 @@ function GymsPage() {
                       {chain?.image ? <img src={chain.image} alt="" /> : null}
                     </span>
                     <div className="browse-row-text">
-                      <strong>{gym.name}</strong>
-                      <span>
-                        {gym.city} · {gym.address}
+                      <div className="browse-row-top">
+                        <strong>{gym.name}</strong>
+                        <span className="browse-row-distance">
+                          {formatDistanceKm(card.distanceKm)}
+                        </span>
+                      </div>
+                      <span className="browse-row-city">{gym.city}</span>
+                      <span className="browse-row-address">
+                        {gym.address
+                          .replace(new RegExp(`,\\s*${gym.city}\\s*$`, "i"), "")
+                          .trim()}
                       </span>
+                      <span className="browse-row-price">
+                        {formatPriceFrom(card.priceFrom)}
+                      </span>
+                      <div className="browse-row-tags">
+                        {card.is247 ? (
+                          <span className="browse-tag is-247">24/7</span>
+                        ) : null}
+                        {card.openNow && !card.is247 ? (
+                          <span className="browse-tag is-open">Auki nyt</span>
+                        ) : null}
+                        {card.freeTrial ? (
+                          <span className="browse-tag is-trial">
+                            Ilmainen kokeilu
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                   </button>
                 </li>
