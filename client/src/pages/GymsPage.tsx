@@ -11,6 +11,8 @@ import {
 } from "../data/gymCardMock";
 import { extraGymsMock } from "../data/extraGymsMock";
 
+const PIN_TOUCH_PX = 40;
+
 const sortOptions = [
   { id: "nearest", label: "Lähimmät ensin" },
   { id: "name-asc", label: "Nimi A–Ö" },
@@ -69,10 +71,13 @@ function GymsPage() {
   const [audienceFilter, setAudienceFilter] = useState("all");
   const [distanceFilter, setDistanceFilter] = useState("all");
   const [priceFilter, setPriceFilter] = useState("all");
+  const [mapReady, setMapReady] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<Map | null>(null);
   const markersRef = useRef(new globalThis.Map<string, Marker>());
   const selectFromMapRef = useRef(false);
+  const hoveredIdRef = useRef<string | null>(null);
+  const selectedIdRef = useRef<string | null>(null);
 
   const sortLabel =
     sortOptions.find((o) => o.id === sortId)?.label ?? "Lähimmät ensin";
@@ -112,6 +117,8 @@ function GymsPage() {
     const start = (safePage - 1) * PAGE_SIZE;
     return visibleGyms.slice(start, start + PAGE_SIZE);
   }, [visibleGyms, safePage]);
+  const pageGymsRef = useRef(pageGyms);
+  pageGymsRef.current = pageGyms;
 
   useEffect(() => {
     setPage(1);
@@ -184,9 +191,11 @@ function GymsPage() {
 
     map.on("load", () => {
       map.resize();
+      setMapReady(true);
     });
 
     return () => {
+      setMapReady(false);
       markersRef.current.forEach((m) => m.remove());
       markersRef.current.clear();
       mapInstanceRef.current = null;
@@ -211,65 +220,144 @@ function GymsPage() {
 
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map) return;
+    if (!map || !mapReady) return;
 
-    const addMarkers = () => {
+    function clearMarkers() {
       markersRef.current.forEach((m) => m.remove());
       markersRef.current.clear();
+    }
 
-      if (pageGyms.length === 0) {
-        map.resize();
-        return;
+    function syncPins() {
+      clearMarkers();
+
+      const gyms = pageGymsRef.current.filter(
+        (g) => g.lng != null && g.lat != null,
+      );
+      if (gyms.length === 0) return;
+
+      const pts = gyms.map((g, i) => ({
+        i,
+        g,
+        p: map.project([g.lng as number, g.lat as number]),
+      }));
+
+      const parent = pts.map((_, i) => i);
+      function find(a: number) {
+        while (parent[a] !== a) {
+          parent[a] = parent[parent[a]];
+          a = parent[a];
+        }
+        return a;
+      }
+      function union(a: number, b: number) {
+        a = find(a);
+        b = find(b);
+        if (a !== b) parent[a] = b;
       }
 
-      const bounds = new LngLatBounds();
+      const touch2 = PIN_TOUCH_PX * PIN_TOUCH_PX;
+      for (let i = 0; i < pts.length; i++) {
+        for (let j = i + 1; j < pts.length; j++) {
+          const dx = pts[i].p.x - pts[j].p.x;
+          const dy = pts[i].p.y - pts[j].p.y;
+          if (dx * dx + dy * dy < touch2) union(i, j);
+        }
+      }
 
-      pageGyms.forEach((gym) => {
-        if (gym.lng == null || gym.lat == null) return;
+      const groups = new globalThis.Map<number, typeof pts>();
+      for (const pt of pts) {
+        const root = find(pt.i);
+        const list = groups.get(root);
+        if (list) list.push(pt);
+        else groups.set(root, [pt]);
+      }
 
-        const el = document.createElement("div");
-        el.className = "gym-pin";
-        el.dataset.gymId = gym.id;
+      let clusterN = 0;
+      groups.forEach((group) => {
+        if (group.length === 1) {
+          const { g } = group[0];
+          const el = document.createElement("div");
+          el.className = "gym-pin";
+          el.dataset.gymId = g.id;
 
-        const hit = document.createElement("button");
-        hit.type = "button";
-        hit.className = "gym-pin-hit";
-        hit.setAttribute("aria-label", gym.name);
+          const hit = document.createElement("button");
+          hit.type = "button";
+          hit.className = "gym-pin-hit";
+          if (g.id === selectedIdRef.current) hit.classList.add("is-selected");
+          if (g.id === hoveredIdRef.current) hit.classList.add("is-hovered");
+          hit.setAttribute("aria-label", g.name);
 
-        const img = document.createElement("img");
-        img.src = "/pins/gym-pin.png";
-        img.alt = "";
-        hit.appendChild(img);
-        el.appendChild(hit);
+          const img = document.createElement("img");
+          img.src = "/pins/gym-pin.png";
+          img.alt = "";
+          hit.appendChild(img);
+          el.appendChild(hit);
 
-        hit.addEventListener("mouseenter", () => setHoveredId(gym.id));
-        hit.addEventListener("mouseleave", () => setHoveredId(null));
-        hit.addEventListener("click", () => {
-          selectFromMapRef.current = true;
-          setSelectedId(gym.id);
+          hit.addEventListener("mouseenter", () => setHoveredId(g.id));
+          hit.addEventListener("mouseleave", () => setHoveredId(null));
+          hit.addEventListener("click", () => {
+            selectFromMapRef.current = true;
+            setSelectedId(g.id);
+          });
+
+          const marker = new Marker({ element: el })
+            .setLngLat([g.lng as number, g.lat as number])
+            .addTo(map);
+          markersRef.current.set(g.id, marker);
+          return;
+        }
+
+        let lng = 0;
+        let lat = 0;
+        group.forEach((pt) => {
+          lng += pt.g.lng as number;
+          lat += pt.g.lat as number;
+        });
+        lng /= group.length;
+        lat /= group.length;
+
+        const el = document.createElement("button");
+        el.type = "button";
+        el.className = "gym-cluster";
+        el.textContent = String(group.length);
+        el.setAttribute("aria-label", `${group.length} salia`);
+        el.addEventListener("click", () => {
+          const bounds = new LngLatBounds();
+          group.forEach((pt) => {
+            bounds.extend([pt.g.lng as number, pt.g.lat as number]);
+          });
+          map.fitBounds(bounds, { padding: 72, maxZoom: 16 });
         });
 
         const marker = new Marker({ element: el })
-          .setLngLat([gym.lng, gym.lat])
+          .setLngLat([lng, lat])
           .addTo(map);
-
-        markersRef.current.set(gym.id, marker);
-        bounds.extend([gym.lng, gym.lat]);
+        markersRef.current.set(`cluster-${clusterN}`, marker);
+        clusterN += 1;
       });
-
-      if (!bounds.isEmpty()) {
-        map.fitBounds(bounds, { padding: 72, maxZoom: 12 });
-      }
-
-      map.resize();
-    };
-
-    if (map.loaded()) {
-      addMarkers();
-    } else {
-      map.once("load", addMarkers);
     }
-  }, [pageGyms]);
+
+    function fitToGyms() {
+      const gyms = pageGyms.filter((g) => g.lng != null && g.lat != null);
+      if (gyms.length === 0) return;
+      const bounds = new LngLatBounds();
+      gyms.forEach((g) => bounds.extend([g.lng as number, g.lat as number]));
+      map.fitBounds(bounds, { padding: 72, maxZoom: 12 });
+    }
+
+    syncPins();
+    fitToGyms();
+    map.resize();
+
+    map.on("moveend", syncPins);
+    map.on("zoomend", syncPins);
+
+    return () => {
+      map.off("moveend", syncPins);
+      map.off("zoomend", syncPins);
+      clearMarkers();
+    };
+  }, [pageGyms, mapReady]);
 
   useEffect(() => {
     markersRef.current.forEach((marker, id) => {
@@ -278,12 +366,13 @@ function GymsPage() {
       hit.classList.toggle("is-hovered", id === hoveredId);
       hit.classList.toggle("is-selected", id === selectedId);
     });
+    hoveredIdRef.current = hoveredId;
+    selectedIdRef.current = selectedId;
   }, [hoveredId, selectedId]);
 
   return (
     <main className="browse">
       <div className="browse-body">
-        <section className="browse-list-col">
           <div className="browse-list-sticky">
           <div
             className="browse-list-tools"
@@ -349,103 +438,6 @@ function GymsPage() {
             <p className="browse-list-count">{visibleGyms.length} paikkaa</p>
           </header>
           </div>
-
-          <ul className="browse-rows">
-            {pageGyms.map((gym) => {
-              const chain = chains.find((c) => c.id === gym.chainId);
-              const card = getGymCardMock(gym.slug);
-              return (
-                <li key={gym.id}>
-                  <button
-                    type="button"
-                    data-gym-id={gym.id}
-                    className={[
-                      "browse-row",
-                      hoveredId === gym.id ? "is-hovered" : "",
-                      selectedId === gym.id ? "is-selected" : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                    onMouseEnter={() => setHoveredId(gym.id)}
-                    onMouseLeave={() => setHoveredId(null)}
-                    onClick={() => {
-                      selectFromMapRef.current = false;
-                      setSelectedId(gym.id);
-                    }}
-                  >
-                    <span
-                      className={[
-                        "browse-row-media",
-                        chain?.logoFit === "contain" ? "is-logo" : "",
-                        chain?.logoClass || "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                    >
-                      {chain?.image ? <img src={chain.image} alt="" /> : null}
-                    </span>
-                    <div className="browse-row-text">
-                      <div className="browse-row-top">
-                        <strong>{gym.name}</strong>
-                        <span className="browse-row-distance">
-                          {formatDistanceKm(card.distanceKm)}
-                        </span>
-                      </div>
-                      <span className="browse-row-city">{gym.city}</span>
-                      <span className="browse-row-address">
-                        {gym.address
-                          .replace(new RegExp(`,\\s*${gym.city}\\s*$`, "i"), "")
-                          .trim()}
-                      </span>
-                      <span className="browse-row-price">
-                        {formatPriceFrom(card.priceFrom)}
-                      </span>
-                      <div className="browse-row-tags">
-                        {card.is247 ? (
-                          <span className="browse-tag is-247">24/7</span>
-                        ) : null}
-                        {card.openNow && !card.is247 ? (
-                          <span className="browse-tag is-open">Auki nyt</span>
-                        ) : null}
-                        {card.freeTrial ? (
-                          <span className="browse-tag is-trial">
-                            Ilmainen kokeilu
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-
-          {visibleGyms.length > PAGE_SIZE ? (
-            <nav className="browse-pager" aria-label="Sivutus">
-              <button
-                type="button"
-                className="browse-pager-btn"
-                disabled={safePage <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                <ChevronLeft size={18} strokeWidth={2.2} />
-                <span>Edellinen</span>
-              </button>
-              <p className="browse-pager-status">
-                Sivu {safePage} / {pageCount}
-              </p>
-              <button
-                type="button"
-                className="browse-pager-btn"
-                disabled={safePage >= pageCount}
-                onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-              >
-                <span>Seuraava</span>
-                <ChevronRight size={18} strokeWidth={2.2} />
-              </button>
-            </nav>
-          ) : null}
-        </section>
 
         <section className="browse-map-col">
           <div
@@ -638,6 +630,104 @@ function GymsPage() {
           <div className="browse-map-frame">
             <div className="browse-map" aria-label="Kartta" ref={mapRef} />
           </div>
+        </section>
+
+        <section className="browse-list-main">
+          <ul className="browse-rows">
+            {pageGyms.map((gym) => {
+              const chain = chains.find((c) => c.id === gym.chainId);
+              const card = getGymCardMock(gym.slug);
+              return (
+                <li key={gym.id}>
+                  <button
+                    type="button"
+                    data-gym-id={gym.id}
+                    className={[
+                      "browse-row",
+                      hoveredId === gym.id ? "is-hovered" : "",
+                      selectedId === gym.id ? "is-selected" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    onMouseEnter={() => setHoveredId(gym.id)}
+                    onMouseLeave={() => setHoveredId(null)}
+                    onClick={() => {
+                      selectFromMapRef.current = false;
+                      setSelectedId(gym.id);
+                    }}
+                  >
+                    <span
+                      className={[
+                        "browse-row-media",
+                        chain?.logoFit === "contain" ? "is-logo" : "",
+                        chain?.logoClass || "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                    >
+                      {chain?.image ? <img src={chain.image} alt="" /> : null}
+                    </span>
+                    <div className="browse-row-text">
+                      <div className="browse-row-top">
+                        <strong>{gym.name}</strong>
+                        <span className="browse-row-distance">
+                          {formatDistanceKm(card.distanceKm)}
+                        </span>
+                      </div>
+                      <span className="browse-row-city">{gym.city}</span>
+                      <span className="browse-row-address">
+                        {gym.address
+                          .replace(new RegExp(`,\\s*${gym.city}\\s*$`, "i"), "")
+                          .trim()}
+                      </span>
+                      <span className="browse-row-price">
+                        {formatPriceFrom(card.priceFrom)}
+                      </span>
+                      <div className="browse-row-tags">
+                        {card.is247 ? (
+                          <span className="browse-tag is-247">24/7</span>
+                        ) : null}
+                        {card.openNow && !card.is247 ? (
+                          <span className="browse-tag is-open">Auki nyt</span>
+                        ) : null}
+                        {card.freeTrial ? (
+                          <span className="browse-tag is-trial">
+                            Ilmainen kokeilu
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+
+          {visibleGyms.length > PAGE_SIZE ? (
+            <nav className="browse-pager" aria-label="Sivutus">
+              <button
+                type="button"
+                className="browse-pager-btn"
+                disabled={safePage <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                <ChevronLeft size={18} strokeWidth={2.2} />
+                <span>Edellinen</span>
+              </button>
+              <p className="browse-pager-status">
+                Sivu {safePage} / {pageCount}
+              </p>
+              <button
+                type="button"
+                className="browse-pager-btn"
+                disabled={safePage >= pageCount}
+                onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+              >
+                <span>Seuraava</span>
+                <ChevronRight size={18} strokeWidth={2.2} />
+              </button>
+            </nav>
+          ) : null}
         </section>
       </div>
     </main>

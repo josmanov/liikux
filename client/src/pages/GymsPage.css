@@ -11,27 +11,33 @@
   align-items: start;
 }
 
-.browse-list-col,
-.browse-map-col {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.browse-list-col {
-  position: relative;
-  z-index: 2;
-  isolation: isolate;
-}
-
 .browse-list-sticky {
+  grid-column: 1;
+  grid-row: 1;
   position: sticky;
   top: var(--browse-sticky-top);
+  align-self: start;
   z-index: 2;
   isolation: isolate;
-  background: var(--color-bg);
-  padding-bottom: 0.15rem;
+  height: calc(100dvh - (55px + 2.2rem + 1px) - 1.25rem);
+  max-height: calc(100dvh - (55px + 2.2rem + 1px) - 1.25rem);
+  pointer-events: none;
+  background: transparent;
   transform: translateZ(0);
+}
+
+.browse-list-sticky > * {
+  pointer-events: auto;
+  background: var(--color-bg);
+}
+
+.browse-list-main {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+  padding-top: 7.5rem;
 }
 
 .browse-list-sticky::before {
@@ -458,6 +464,11 @@
 }
 
 .browse-map-col {
+  grid-column: 2;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
   position: sticky;
   top: var(--browse-sticky-top);
   align-self: start;
@@ -688,6 +699,24 @@
   position: relative;
 }
 
+.gym-cluster {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 2px solid #0b1220;
+  border-radius: 999px;
+  background: #f7ff09;
+  color: #0b1220;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .gym-pin-hit {
   display: block;
   width: 40px;
@@ -717,7 +746,7 @@
 .gym-pin-hit.is-hovered {
   transform: scale(1.25);
   box-shadow:
-    0 0 0 2px #F7FF09,
+    0 0 0 2px #000000,
     0 4px 12px rgba(0, 0, 0, 0.4);
   z-index: 2;
 }
@@ -728,7 +757,7 @@
   box-sizing: border-box;
   background: #F7FF09;
   box-shadow:
-    0 0 0 2px #F7FF09,
+    0 0 0 2px #000000,
     0 5px 14px rgba(0, 0, 0, 0.45);
   z-index: 3;
 }
@@ -752,16 +781,36 @@
   }
 
   .browse-list-sticky {
+    grid-column: 1;
+    grid-row: auto;
     position: static;
     top: auto;
+    height: auto;
+    max-height: none;
+    pointer-events: auto;
+    background: var(--color-bg);
+    order: 1;
+  }
+
+  .browse-list-sticky > * {
+    background: transparent;
+  }
+
+  .browse-list-main {
+    grid-column: 1;
+    grid-row: auto;
+    padding-top: 0;
+    order: 2;
   }
 
   .browse-map-col {
+    grid-column: 1;
+    grid-row: auto;
     position: relative;
     top: auto;
     height: 42vh;
     max-height: 42vh;
-    order: -1;
+    order: 0;
   }
 
   .browse-rows {
