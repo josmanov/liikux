@@ -72,6 +72,7 @@ function GymsPage() {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<Map | null>(null);
   const markersRef = useRef(new globalThis.Map<string, Marker>());
+  const selectFromMapRef = useRef(false);
 
   const sortLabel =
     sortOptions.find((o) => o.id === sortId)?.label ?? "Lähimmät ensin";
@@ -119,6 +120,15 @@ function GymsPage() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [safePage]);
+
+  useEffect(() => {
+    if (!selectedId || !selectFromMapRef.current) return;
+    selectFromMapRef.current = false;
+    const el = document.querySelector<HTMLElement>(
+      `[data-gym-id="${selectedId}"]`,
+    );
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [selectedId]);
 
   useEffect(() => {
     if (!openFilter) return;
@@ -207,7 +217,10 @@ function GymsPage() {
 
         hit.addEventListener("mouseenter", () => setHoveredId(gym.id));
         hit.addEventListener("mouseleave", () => setHoveredId(null));
-        hit.addEventListener("click", () => setSelectedId(gym.id));
+        hit.addEventListener("click", () => {
+          selectFromMapRef.current = true;
+          setSelectedId(gym.id);
+        });
 
         const marker = new Marker({ element: el })
           .setLngLat([gym.lng, gym.lat])
@@ -318,6 +331,7 @@ function GymsPage() {
                 <li key={gym.id}>
                   <button
                     type="button"
+                    data-gym-id={gym.id}
                     className={[
                       "browse-row",
                       hoveredId === gym.id ? "is-hovered" : "",
@@ -327,7 +341,10 @@ function GymsPage() {
                       .join(" ")}
                     onMouseEnter={() => setHoveredId(gym.id)}
                     onMouseLeave={() => setHoveredId(null)}
-                    onClick={() => setSelectedId(gym.id)}
+                    onClick={() => {
+                      selectFromMapRef.current = false;
+                      setSelectedId(gym.id);
+                    }}
                   >
                     <span
                       className={[

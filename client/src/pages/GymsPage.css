@@ -429,6 +429,7 @@
   color: inherit;
   border-radius: 14px;
   box-sizing: border-box;
+  scroll-margin-top: 12rem;
 }
 
 .browse-row.is-hovered {
@@ -702,7 +703,7 @@
 .gym-pin-hit.is-hovered {
   transform: scale(1.25);
   box-shadow:
-    0 0 0 3px #84cc16,
+    0 0 0 2px #F7FF09,
     0 4px 12px rgba(0, 0, 0, 0.4);
   z-index: 2;
 }
@@ -711,16 +712,16 @@
   transform: scale(1.35);
   padding: 3px;
   box-sizing: border-box;
-  background: #3f6212;
+  background: #F7FF09;
   box-shadow:
-    0 0 0 2px #3f6212,
+    0 0 0 2px #F7FF09,
     0 5px 14px rgba(0, 0, 0, 0.45);
   z-index: 3;
 }
 
 .gym-pin-hit.is-hovered.is-selected {
   transform: scale(1.4);
-  background: #3f6212;
+  background: #F7FF09;
 }
 
 .gym-pin-hit.is-selected img {
