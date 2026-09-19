@@ -165,20 +165,24 @@ function GymsPage() {
       visibleGyms.forEach((gym) => {
         if (gym.lng == null || gym.lat == null) return;
 
-        const el = document.createElement("button");
-        el.type = "button";
+        const el = document.createElement("div");
         el.className = "gym-pin";
         el.dataset.gymId = gym.id;
-        el.setAttribute("aria-label", gym.name);
+
+        const hit = document.createElement("button");
+        hit.type = "button";
+        hit.className = "gym-pin-hit";
+        hit.setAttribute("aria-label", gym.name);
 
         const img = document.createElement("img");
         img.src = "/pins/gym-pin.png";
         img.alt = "";
-        el.appendChild(img);
+        hit.appendChild(img);
+        el.appendChild(hit);
 
-        el.addEventListener("mouseenter", () => setHoveredId(gym.id));
-        el.addEventListener("mouseleave", () => setHoveredId(null));
-        el.addEventListener("click", () => setSelectedId(gym.id));
+        hit.addEventListener("mouseenter", () => setHoveredId(gym.id));
+        hit.addEventListener("mouseleave", () => setHoveredId(null));
+        hit.addEventListener("click", () => setSelectedId(gym.id));
 
         const marker = new Marker({ element: el })
           .setLngLat([gym.lng, gym.lat])
@@ -204,9 +208,10 @@ function GymsPage() {
 
   useEffect(() => {
     markersRef.current.forEach((marker, id) => {
-      const el = marker.getElement();
-      el.classList.toggle("is-hovered", id === hoveredId);
-      el.classList.toggle("is-selected", id === selectedId);
+      const hit = marker.getElement().querySelector(".gym-pin-hit");
+      if (!hit) return;
+      hit.classList.toggle("is-hovered", id === hoveredId);
+      hit.classList.toggle("is-selected", id === selectedId);
     });
   }, [hoveredId, selectedId]);
 
