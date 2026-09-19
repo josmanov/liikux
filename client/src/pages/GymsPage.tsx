@@ -1,17 +1,124 @@
 import "./GymsPage.css";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { LngLatBounds, Map, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type Chain, type Gym } from "../data/types";
+
+const sortOptions = [
+  { id: "nearest", label: "Lähimmät ensin" },
+  { id: "name-asc", label: "Nimi A–Ö" },
+  { id: "name-desc", label: "Nimi Ö–A" },
+];
+
+const chainFilterOptions = [
+  { id: "all", label: "Kaikki ketjut" },
+  { id: "elixia", label: "Elixia" },
+  { id: "easyfit", label: "EasyFit" },
+  { id: "fressi", label: "Fressi" },
+  { id: "fitness24", label: "Fitness24Seven" },
+  { id: "gofitness", label: "GoFitness" },
+  { id: "olefit", label: "Ole.Fit" },
+  { id: "liikku", label: "Liikku" },
+];
+
+const audienceOptions = [
+  { id: "all", label: "Kaikille" },
+  { id: "men", label: "Miehille" },
+  { id: "women", label: "Naisille" },
+  { id: "kids", label: "Lapsille" },
+  { id: "seniors", label: "Seniori" },
+];
+
+const serviceOptions = [
+  { id: "all", label: "Kaikki palvelut" },
+  { id: "sauna", label: "Sauna" },
+  { id: "group", label: "Ryhmäliikunta" },
+  { id: "pt", label: "Personal trainer" },
+  { id: "parking", label: "Pysäköinti" },
+  { id: "shower", label: "Suihkut" },
+  { id: "cafe", label: "Kahvila" },
+];
+
+const hoursOptions = [
+  { id: "all", label: "Kaikki aukiolo" },
+  { id: "247", label: "Auki 24/7" },
+  { id: "evening", label: "Auki illalla" },
+  { id: "weekend", label: "Auki viikonloppuna" },
+];
+
+const distanceOptions = [
+  { id: "all", label: "Etäisyys" },
+  { id: "1", label: "Alle 1 km" },
+  { id: "3", label: "Alle 3 km" },
+  { id: "5", label: "Alle 5 km" },
+  { id: "10", label: "Alle 10 km" },
+];
+
+type FilterKey = "chains" | "audience" | "services" | "hours" | "distance" | "sort";
 
 function GymsPage() {
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [chains, setChains] = useState<Chain[]>([]);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [sortId, setSortId] = useState("nearest");
+  const [openFilter, setOpenFilter] = useState<FilterKey | null>(null);
+  const [chainFilter, setChainFilter] = useState("all");
+  const [audienceFilter, setAudienceFilter] = useState("all");
+  const [serviceFilter, setServiceFilter] = useState("all");
+  const [hoursFilter, setHoursFilter] = useState("all");
+  const [distanceFilter, setDistanceFilter] = useState("all");
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<Map | null>(null);
   const markersRef = useRef(new globalThis.Map<string, Marker>());
+
+  const sortLabel =
+    sortOptions.find((o) => o.id === sortId)?.label ?? "Lähimmät ensin";
+  const chainLabel =
+    chainFilterOptions.find((o) => o.id === chainFilter)?.label ?? "Ketjut";
+  const audienceLabel =
+    audienceOptions.find((o) => o.id === audienceFilter)?.label ?? "Kenelle";
+  const serviceLabel =
+    serviceOptions.find((o) => o.id === serviceFilter)?.label ?? "Palvelut";
+  const hoursLabel =
+    hoursOptions.find((o) => o.id === hoursFilter)?.label ?? "Aukiolo";
+  const distanceLabel =
+    distanceOptions.find((o) => o.id === distanceFilter)?.label ?? "Etäisyys";
+
+  const visibleGyms = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    let list = gyms.filter((gym) => {
+      if (!q) return true;
+      return (
+        gym.name.toLowerCase().includes(q) ||
+        gym.city.toLowerCase().includes(q) ||
+        gym.address.toLowerCase().includes(q)
+      );
+    });
+
+    if (sortId === "name-asc") {
+      list = [...list].sort((a, b) => a.name.localeCompare(b.name, "fi"));
+    } else if (sortId === "name-desc") {
+      list = [...list].sort((a, b) => b.name.localeCompare(a.name, "fi"));
+    }
+
+    return list;
+  }, [gyms, query, sortId]);
+
+  useEffect(() => {
+    if (!openFilter) return;
+    function close() {
+      setOpenFilter(null);
+    }
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [openFilter]);
+
+  function toggleFilter(key: FilterKey) {
+    setOpenFilter((cur) => (cur === key ? null : key));
+  }
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -54,15 +161,20 @@ function GymsPage() {
 
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map || gyms.length === 0) return;
+    if (!map) return;
 
     const addMarkers = () => {
       markersRef.current.forEach((m) => m.remove());
       markersRef.current.clear();
 
+      if (visibleGyms.length === 0) {
+        map.resize();
+        return;
+      }
+
       const bounds = new LngLatBounds();
 
-      gyms.forEach((gym) => {
+      visibleGyms.forEach((gym) => {
         if (gym.lng == null || gym.lat == null) return;
 
         const el = document.createElement("button");
@@ -100,7 +212,7 @@ function GymsPage() {
     } else {
       map.once("load", addMarkers);
     }
-  }, [gyms]);
+  }, [visibleGyms]);
 
   useEffect(() => {
     markersRef.current.forEach((marker, id) => {
@@ -114,12 +226,71 @@ function GymsPage() {
     <main className="browse">
       <div className="browse-body">
         <section className="browse-list-col">
+          <div
+            className="browse-list-tools"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="browse-search">
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                className="browse-search-icon"
+              >
+                <path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
+              </svg>
+              <input
+                className="browse-search-input"
+                type="search"
+                placeholder="Hae nimellä tai osoitteella..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+
+            <div className="browse-sort">
+              <button
+                type="button"
+                className="browse-sort-btn"
+                aria-expanded={openFilter === "sort"}
+                aria-haspopup="listbox"
+                onClick={() => toggleFilter("sort")}
+              >
+                <span className="browse-sort-label">{sortLabel}</span>
+                <ChevronDown
+                  className="browse-sort-chevron"
+                  size={16}
+                  strokeWidth={2.2}
+                />
+              </button>
+              {openFilter === "sort" ? (
+                <ul className="browse-sort-menu" role="listbox">
+                  {sortOptions.map((opt) => (
+                    <li key={opt.id}>
+                      <button
+                        type="button"
+                        className={opt.id === sortId ? "is-on" : ""}
+                        role="option"
+                        aria-selected={opt.id === sortId}
+                        onClick={() => {
+                          setSortId(opt.id);
+                          setOpenFilter(null);
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          </div>
+
           <header className="browse-list-head">
             <h1>Kuntosalit</h1>
-            <p>{gyms.length} paikkaa</p>
+            <p className="browse-list-count">{visibleGyms.length} paikkaa</p>
           </header>
           <ul className="browse-rows">
-            {gyms.map((gym) => {
+            {visibleGyms.map((gym) => {
               const chain = chains.find((c) => c.id === gym.chainId);
               return (
                 <li key={gym.id}>
@@ -161,7 +332,186 @@ function GymsPage() {
         </section>
 
         <section className="browse-map-col">
-          <header className="browse-map-head" aria-label="Kartan suodattimet" />
+          <div
+            className="browse-map-filters"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="browse-sep" aria-hidden="true" />
+
+            <div className="browse-filter">
+              <button
+                type="button"
+                className="browse-filter-btn"
+                aria-expanded={openFilter === "chains"}
+                aria-haspopup="listbox"
+                onClick={() => toggleFilter("chains")}
+              >
+                <span className="browse-filter-label">
+                  {chainFilter === "all" ? "Ketjut" : chainLabel}
+                </span>
+                <ChevronDown size={16} strokeWidth={2.2} />
+              </button>
+              {openFilter === "chains" ? (
+                <ul className="browse-filter-menu" role="listbox">
+                  {chainFilterOptions.map((opt) => (
+                    <li key={opt.id}>
+                      <button
+                        type="button"
+                        className={opt.id === chainFilter ? "is-on" : ""}
+                        role="option"
+                        aria-selected={opt.id === chainFilter}
+                        onClick={() => {
+                          setChainFilter(opt.id);
+                          setOpenFilter(null);
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+
+            <div className="browse-filter">
+              <button
+                type="button"
+                className="browse-filter-btn"
+                aria-expanded={openFilter === "audience"}
+                aria-haspopup="listbox"
+                onClick={() => toggleFilter("audience")}
+              >
+                <span className="browse-filter-label">
+                  {audienceFilter === "all" ? "Kenelle" : audienceLabel}
+                </span>
+                <ChevronDown size={16} strokeWidth={2.2} />
+              </button>
+              {openFilter === "audience" ? (
+                <ul className="browse-filter-menu" role="listbox">
+                  {audienceOptions.map((opt) => (
+                    <li key={opt.id}>
+                      <button
+                        type="button"
+                        className={opt.id === audienceFilter ? "is-on" : ""}
+                        role="option"
+                        aria-selected={opt.id === audienceFilter}
+                        onClick={() => {
+                          setAudienceFilter(opt.id);
+                          setOpenFilter(null);
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+
+            <div className="browse-filter">
+              <button
+                type="button"
+                className="browse-filter-btn"
+                aria-expanded={openFilter === "services"}
+                aria-haspopup="listbox"
+                onClick={() => toggleFilter("services")}
+              >
+                <span className="browse-filter-label">
+                  {serviceFilter === "all" ? "Palvelut" : serviceLabel}
+                </span>
+                <ChevronDown size={16} strokeWidth={2.2} />
+              </button>
+              {openFilter === "services" ? (
+                <ul className="browse-filter-menu" role="listbox">
+                  {serviceOptions.map((opt) => (
+                    <li key={opt.id}>
+                      <button
+                        type="button"
+                        className={opt.id === serviceFilter ? "is-on" : ""}
+                        role="option"
+                        aria-selected={opt.id === serviceFilter}
+                        onClick={() => {
+                          setServiceFilter(opt.id);
+                          setOpenFilter(null);
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+
+            <div className="browse-filter">
+              <button
+                type="button"
+                className="browse-filter-btn"
+                aria-expanded={openFilter === "hours"}
+                aria-haspopup="listbox"
+                onClick={() => toggleFilter("hours")}
+              >
+                <span className="browse-filter-label">
+                  {hoursFilter === "all" ? "Aukiolo" : hoursLabel}
+                </span>
+                <ChevronDown size={16} strokeWidth={2.2} />
+              </button>
+              {openFilter === "hours" ? (
+                <ul className="browse-filter-menu" role="listbox">
+                  {hoursOptions.map((opt) => (
+                    <li key={opt.id}>
+                      <button
+                        type="button"
+                        className={opt.id === hoursFilter ? "is-on" : ""}
+                        role="option"
+                        aria-selected={opt.id === hoursFilter}
+                        onClick={() => {
+                          setHoursFilter(opt.id);
+                          setOpenFilter(null);
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+
+            <div className="browse-filter">
+              <button
+                type="button"
+                className="browse-filter-btn"
+                aria-expanded={openFilter === "distance"}
+                aria-haspopup="listbox"
+                onClick={() => toggleFilter("distance")}
+              >
+                <span className="browse-filter-label">{distanceLabel}</span>
+                <ChevronDown size={16} strokeWidth={2.2} />
+              </button>
+              {openFilter === "distance" ? (
+                <ul className="browse-filter-menu" role="listbox">
+                  {distanceOptions.map((opt) => (
+                    <li key={opt.id}>
+                      <button
+                        type="button"
+                        className={opt.id === distanceFilter ? "is-on" : ""}
+                        role="option"
+                        aria-selected={opt.id === distanceFilter}
+                        onClick={() => {
+                          setDistanceFilter(opt.id);
+                          setOpenFilter(null);
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          </div>
+
           <div className="browse-map-frame">
             <div className="browse-map" aria-label="Kartta" ref={mapRef} />
           </div>
