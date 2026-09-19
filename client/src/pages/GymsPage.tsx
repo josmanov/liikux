@@ -1,6 +1,6 @@
 import "./GymsPage.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, LocateFixed, SlidersHorizontal } from "lucide-react";
 import { LngLatBounds, Map, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type Chain, type Gym } from "../data/types";
@@ -239,6 +239,11 @@ function GymsPage() {
                 onChange={(e) => setQuery(e.target.value)}
               />
             </div>
+
+            <button type="button" className="browse-near-btn">
+              <LocateFixed size={16} strokeWidth={2.2} />
+              <span>Lähellä minua</span>
+            </button>
 
             <div className="browse-sort">
               <button
@@ -491,10 +496,25 @@ function GymsPage() {
               ) : null}
             </div>
 
-            <button type="button" className="browse-filters-more">
-              <SlidersHorizontal size={16} strokeWidth={2.2} />
-              <span>Suodattimet</span>
-            </button>
+            <div className="browse-filters-actions">
+              <button type="button" className="browse-filters-more">
+                <SlidersHorizontal size={16} strokeWidth={2.2} />
+                <span>Suodattimet</span>
+              </button>
+              <button
+                type="button"
+                className="browse-filters-clear"
+                onClick={() => {
+                  setChainFilter("all");
+                  setAudienceFilter("all");
+                  setDistanceFilter("all");
+                  setPriceFilter("all");
+                  setOpenFilter(null);
+                }}
+              >
+                Tyhjennä
+              </button>
+            </div>
           </div>
 
           <div className="browse-map-frame">
