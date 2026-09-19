@@ -1,6 +1,6 @@
 import "./GymsPage.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { LngLatBounds, Map, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type Chain, type Gym } from "../data/types";
@@ -30,32 +30,23 @@ const audienceOptions = [
   { id: "seniors", label: "Seniori" },
 ];
 
-const serviceOptions = [
-  { id: "all", label: "Kaikki palvelut" },
-  { id: "sauna", label: "Sauna" },
-  { id: "group", label: "Ryhmäliikunta" },
-  { id: "pt", label: "Personal trainer" },
-  { id: "parking", label: "Pysäköinti" },
-  { id: "shower", label: "Suihkut" },
-  { id: "cafe", label: "Kahvila" },
-];
-
-const hoursOptions = [
-  { id: "all", label: "Kaikki aukiolo" },
-  { id: "247", label: "Auki 24/7" },
-  { id: "evening", label: "Auki illalla" },
-  { id: "weekend", label: "Auki viikonloppuna" },
-];
-
 const distanceOptions = [
-  { id: "all", label: "Etäisyys" },
+  { id: "all", label: "Kaikki etäisyydet" },
   { id: "1", label: "Alle 1 km" },
   { id: "3", label: "Alle 3 km" },
   { id: "5", label: "Alle 5 km" },
   { id: "10", label: "Alle 10 km" },
 ];
 
-type FilterKey = "chains" | "audience" | "services" | "hours" | "distance" | "sort";
+const priceOptions = [
+  { id: "all", label: "Kaikki hinnat" },
+  { id: "cheap", label: "Alle 30 €/kk" },
+  { id: "mid", label: "30–50 €/kk" },
+  { id: "premium", label: "Yli 50 €/kk" },
+  { id: "daypass", label: "Päivälippu" },
+];
+
+type FilterKey = "chains" | "audience" | "distance" | "price" | "sort";
 
 function GymsPage() {
   const [gyms, setGyms] = useState<Gym[]>([]);
@@ -67,9 +58,8 @@ function GymsPage() {
   const [openFilter, setOpenFilter] = useState<FilterKey | null>(null);
   const [chainFilter, setChainFilter] = useState("all");
   const [audienceFilter, setAudienceFilter] = useState("all");
-  const [serviceFilter, setServiceFilter] = useState("all");
-  const [hoursFilter, setHoursFilter] = useState("all");
   const [distanceFilter, setDistanceFilter] = useState("all");
+  const [priceFilter, setPriceFilter] = useState("all");
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<Map | null>(null);
   const markersRef = useRef(new globalThis.Map<string, Marker>());
@@ -80,12 +70,10 @@ function GymsPage() {
     chainFilterOptions.find((o) => o.id === chainFilter)?.label ?? "Ketjut";
   const audienceLabel =
     audienceOptions.find((o) => o.id === audienceFilter)?.label ?? "Kenelle";
-  const serviceLabel =
-    serviceOptions.find((o) => o.id === serviceFilter)?.label ?? "Palvelut";
-  const hoursLabel =
-    hoursOptions.find((o) => o.id === hoursFilter)?.label ?? "Aukiolo";
   const distanceLabel =
     distanceOptions.find((o) => o.id === distanceFilter)?.label ?? "Etäisyys";
+  const priceLabel =
+    priceOptions.find((o) => o.id === priceFilter)?.label ?? "Hinta";
 
   const visibleGyms = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -346,6 +334,11 @@ function GymsPage() {
                 aria-haspopup="listbox"
                 onClick={() => toggleFilter("chains")}
               >
+                <img
+                  className="browse-filter-icon"
+                  src="/icons/ketjut.png"
+                  alt=""
+                />
                 <span className="browse-filter-label">
                   {chainFilter === "all" ? "Ketjut" : chainLabel}
                 </span>
@@ -381,6 +374,11 @@ function GymsPage() {
                 aria-haspopup="listbox"
                 onClick={() => toggleFilter("audience")}
               >
+                <img
+                  className="browse-filter-icon"
+                  src="/icons/kenelle.png"
+                  alt=""
+                />
                 <span className="browse-filter-label">
                   {audienceFilter === "all" ? "Kenelle" : audienceLabel}
                 </span>
@@ -412,81 +410,18 @@ function GymsPage() {
               <button
                 type="button"
                 className="browse-filter-btn"
-                aria-expanded={openFilter === "services"}
-                aria-haspopup="listbox"
-                onClick={() => toggleFilter("services")}
-              >
-                <span className="browse-filter-label">
-                  {serviceFilter === "all" ? "Palvelut" : serviceLabel}
-                </span>
-                <ChevronDown size={16} strokeWidth={2.2} />
-              </button>
-              {openFilter === "services" ? (
-                <ul className="browse-filter-menu" role="listbox">
-                  {serviceOptions.map((opt) => (
-                    <li key={opt.id}>
-                      <button
-                        type="button"
-                        className={opt.id === serviceFilter ? "is-on" : ""}
-                        role="option"
-                        aria-selected={opt.id === serviceFilter}
-                        onClick={() => {
-                          setServiceFilter(opt.id);
-                          setOpenFilter(null);
-                        }}
-                      >
-                        {opt.label}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </div>
-
-            <div className="browse-filter">
-              <button
-                type="button"
-                className="browse-filter-btn"
-                aria-expanded={openFilter === "hours"}
-                aria-haspopup="listbox"
-                onClick={() => toggleFilter("hours")}
-              >
-                <span className="browse-filter-label">
-                  {hoursFilter === "all" ? "Aukiolo" : hoursLabel}
-                </span>
-                <ChevronDown size={16} strokeWidth={2.2} />
-              </button>
-              {openFilter === "hours" ? (
-                <ul className="browse-filter-menu" role="listbox">
-                  {hoursOptions.map((opt) => (
-                    <li key={opt.id}>
-                      <button
-                        type="button"
-                        className={opt.id === hoursFilter ? "is-on" : ""}
-                        role="option"
-                        aria-selected={opt.id === hoursFilter}
-                        onClick={() => {
-                          setHoursFilter(opt.id);
-                          setOpenFilter(null);
-                        }}
-                      >
-                        {opt.label}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </div>
-
-            <div className="browse-filter">
-              <button
-                type="button"
-                className="browse-filter-btn"
                 aria-expanded={openFilter === "distance"}
                 aria-haspopup="listbox"
                 onClick={() => toggleFilter("distance")}
               >
-                <span className="browse-filter-label">{distanceLabel}</span>
+                <img
+                  className="browse-filter-icon"
+                  src="/icons/etaisyys.png"
+                  alt=""
+                />
+                <span className="browse-filter-label">
+                  {distanceFilter === "all" ? "Etäisyys" : distanceLabel}
+                </span>
                 <ChevronDown size={16} strokeWidth={2.2} />
               </button>
               {openFilter === "distance" ? (
@@ -510,6 +445,51 @@ function GymsPage() {
                 </ul>
               ) : null}
             </div>
+
+            <div className="browse-filter">
+              <button
+                type="button"
+                className="browse-filter-btn"
+                aria-expanded={openFilter === "price"}
+                aria-haspopup="listbox"
+                onClick={() => toggleFilter("price")}
+              >
+                <img
+                  className="browse-filter-icon"
+                  src="/icons/hinta.png"
+                  alt=""
+                />
+                <span className="browse-filter-label">
+                  {priceFilter === "all" ? "Hinta" : priceLabel}
+                </span>
+                <ChevronDown size={16} strokeWidth={2.2} />
+              </button>
+              {openFilter === "price" ? (
+                <ul className="browse-filter-menu" role="listbox">
+                  {priceOptions.map((opt) => (
+                    <li key={opt.id}>
+                      <button
+                        type="button"
+                        className={opt.id === priceFilter ? "is-on" : ""}
+                        role="option"
+                        aria-selected={opt.id === priceFilter}
+                        onClick={() => {
+                          setPriceFilter(opt.id);
+                          setOpenFilter(null);
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+
+            <button type="button" className="browse-filters-more">
+              <SlidersHorizontal size={16} strokeWidth={2.2} />
+              <span>Suodattimet</span>
+            </button>
           </div>
 
           <div className="browse-map-frame">

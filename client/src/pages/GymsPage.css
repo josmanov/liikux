@@ -80,9 +80,40 @@
   border-color: var(--color-brand);
 }
 
+.browse-filters-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+  height: 45px;
+  padding: 0.35rem 0.95rem;
+  border: 1.5px solid var(--color-brand);
+  border-radius: 999px;
+  background: rgba(132, 204, 22, 0.12);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.browse-filters-more:hover {
+  background: rgba(132, 204, 22, 0.22);
+}
+
 .browse-filter-label {
   line-height: 1;
   white-space: nowrap;
+}
+
+.browse-filter-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex-shrink: 0;
+  object-fit: contain;
+  display: block;
 }
 
 .browse-filter-menu {
