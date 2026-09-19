@@ -124,11 +124,38 @@ function GymsPage() {
   useEffect(() => {
     if (!selectedId || !selectFromMapRef.current) return;
     selectFromMapRef.current = false;
+
     const el = document.querySelector<HTMLElement>(
       `[data-gym-id="${selectedId}"]`,
     );
-    el?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [selectedId]);
+    if (!el) return;
+
+    const index = pageGyms.findIndex((g) => g.id === selectedId);
+    const nearEnd = index >= 0 && index >= pageGyms.length - 2;
+
+    if (!nearEnd) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    const footer = document.querySelector<HTMLElement>(".footer");
+    const sticky = document.querySelector<HTMLElement>(".browse-list-sticky");
+    const header = document.querySelector<HTMLElement>(".header");
+    const topPad =
+      (header?.offsetHeight ?? 0) + (sticky?.offsetHeight ?? 0) + 12;
+    const footerH = footer?.offsetHeight ?? 0;
+    const elTop = el.getBoundingClientRect().top + window.scrollY;
+    const ideal = elTop - topPad;
+    const maxScroll = Math.max(
+      0,
+      document.documentElement.scrollHeight - window.innerHeight - footerH - 8,
+    );
+
+    window.scrollTo({
+      top: Math.min(ideal, maxScroll),
+      behavior: "smooth",
+    });
+  }, [selectedId, pageGyms]);
 
   useEffect(() => {
     if (!openFilter) return;
