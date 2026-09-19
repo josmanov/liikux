@@ -244,6 +244,7 @@ function GymsPage() {
     <main className="browse">
       <div className="browse-body">
         <section className="browse-list-col">
+          <div className="browse-list-sticky">
           <div
             className="browse-list-tools"
             onClick={(e) => e.stopPropagation()}
@@ -307,6 +308,8 @@ function GymsPage() {
             <h1>Kuntosalit</h1>
             <p className="browse-list-count">{visibleGyms.length} paikkaa</p>
           </header>
+          </div>
+
           <ul className="browse-rows">
             {pageGyms.map((gym) => {
               const chain = chains.find((c) => c.id === gym.chainId);
