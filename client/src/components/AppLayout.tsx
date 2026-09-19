@@ -2,16 +2,19 @@ import { Outlet } from "react-router-dom";
 import "./AppLayout.css";
 import Header from "./Header";
 import Footer from "./Footer";
+import { LocationProvider } from "../context/LocationContext";
 
 function AppLayout() {
   return (
-    <div className="layout">
-      <Header />
-      <div className="layout-content">
-        <Outlet />
+    <LocationProvider>
+      <div className="layout">
+        <Header />
+        <div className="layout-content">
+          <Outlet />
+        </div>
+        <Footer />
       </div>
-      <Footer />
-    </div>
+    </LocationProvider>
   );
 }
 

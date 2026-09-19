@@ -1,6 +1,6 @@
 import "./GymsPage.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, LocateFixed, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { LngLatBounds, Map, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type Chain, type Gym } from "../data/types";
@@ -239,11 +239,6 @@ function GymsPage() {
                 onChange={(e) => setQuery(e.target.value)}
               />
             </div>
-
-            <button type="button" className="browse-near-btn">
-              <LocateFixed size={16} strokeWidth={2.2} />
-              <span>Lähellä minua</span>
-            </button>
 
             <div className="browse-sort">
               <button

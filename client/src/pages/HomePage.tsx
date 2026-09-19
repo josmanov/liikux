@@ -18,6 +18,7 @@ import { type Chain, type Gym } from "../data/types";
 import { lajiGifUrl } from "../data/lajiGifs";
 import { useInView } from "../hooks/useInView";
 import ChainPopup from "../components/ChainPopup";
+import { useAppLocation } from "../context/LocationContext";
 
 const picks = [
   {
@@ -75,12 +76,14 @@ function LajiIcon({ name, Icon }: { name: string; Icon?: LucideIcon }) {
 
 function LocateButton() {
   const hover = usePickHover();
+  const { useMyLocation } = useAppLocation();
 
   return (
     <button
       type="button"
       className="hero-locate"
       aria-label="Käytä sijaintiani"
+      onClick={useMyLocation}
       onMouseEnter={hover.onMouseEnter}
       onMouseLeave={hover.onMouseLeave}
     >
@@ -165,6 +168,16 @@ function HomePage() {
   const [chainPopupOpen, setChainPopupOpen] = useState(false);
   const [chains, setChains] = useState<Chain[]>([]);
   const [gyms, setGyms] = useState<Gym[]>([]);
+  const { label, setLabel } = useAppLocation();
+  const [addressDraft, setAddressDraft] = useState("");
+
+  useEffect(() => {
+    if (label === "Helsinki" || label === "Lähellä minua") {
+      setAddressDraft("");
+    } else {
+      setAddressDraft(label);
+    }
+  }, [label]);
 
   useEffect(() => {
     function measure() {
@@ -210,7 +223,19 @@ function HomePage() {
                 className="hero-search-input"
                 id="address_input"
                 type="text"
-                placeholder=""
+                placeholder=" "
+                value={addressDraft}
+                onChange={(e) => setAddressDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setLabel(addressDraft.trim() || "Helsinki");
+                  }
+                }}
+                onBlur={() => {
+                  if (addressDraft.trim()) {
+                    setLabel(addressDraft.trim());
+                  }
+                }}
               />
               <label className="hero-search-label" htmlFor="address_input">
                 Syötä osoite..
