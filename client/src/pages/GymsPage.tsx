@@ -1,6 +1,6 @@
 import "./GymsPage.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
 import { LngLatBounds, Map, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type Chain, type Gym } from "../data/types";
@@ -9,6 +9,7 @@ import {
   formatPriceFrom,
   getGymCardMock,
 } from "../data/gymCardMock";
+import { extraGymsMock } from "../data/extraGymsMock";
 
 const sortOptions = [
   { id: "nearest", label: "Lähimmät ensin" },
@@ -53,6 +54,8 @@ const priceOptions = [
 
 type FilterKey = "chains" | "audience" | "distance" | "price" | "sort";
 
+const PAGE_SIZE = 24;
+
 function GymsPage() {
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [chains, setChains] = useState<Chain[]>([]);
@@ -60,6 +63,7 @@ function GymsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [sortId, setSortId] = useState("nearest");
+  const [page, setPage] = useState(1);
   const [openFilter, setOpenFilter] = useState<FilterKey | null>(null);
   const [chainFilter, setChainFilter] = useState("all");
   const [audienceFilter, setAudienceFilter] = useState("all");
@@ -99,6 +103,22 @@ function GymsPage() {
 
     return list;
   }, [gyms, query, sortId]);
+
+  const pageCount = Math.max(1, Math.ceil(visibleGyms.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount);
+
+  const pageGyms = useMemo(() => {
+    const start = (safePage - 1) * PAGE_SIZE;
+    return visibleGyms.slice(start, start + PAGE_SIZE);
+  }, [visibleGyms, safePage]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, sortId]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [safePage]);
 
   useEffect(() => {
     if (!openFilter) return;
@@ -143,7 +163,7 @@ function GymsPage() {
       fetch("http://localhost:3001/api/chains").then((r) => r.json()),
     ])
       .then(([gymData, chainData]: [Gym[], Chain[]]) => {
-        setGyms(gymData);
+        setGyms([...gymData, ...extraGymsMock]);
         setChains(chainData);
       })
       .catch(() => {
@@ -160,14 +180,14 @@ function GymsPage() {
       markersRef.current.forEach((m) => m.remove());
       markersRef.current.clear();
 
-      if (visibleGyms.length === 0) {
+      if (pageGyms.length === 0) {
         map.resize();
         return;
       }
 
       const bounds = new LngLatBounds();
 
-      visibleGyms.forEach((gym) => {
+      pageGyms.forEach((gym) => {
         if (gym.lng == null || gym.lat == null) return;
 
         const el = document.createElement("div");
@@ -209,7 +229,7 @@ function GymsPage() {
     } else {
       map.once("load", addMarkers);
     }
-  }, [visibleGyms]);
+  }, [pageGyms]);
 
   useEffect(() => {
     markersRef.current.forEach((marker, id) => {
@@ -288,7 +308,7 @@ function GymsPage() {
             <p className="browse-list-count">{visibleGyms.length} paikkaa</p>
           </header>
           <ul className="browse-rows">
-            {visibleGyms.map((gym) => {
+            {pageGyms.map((gym) => {
               const chain = chains.find((c) => c.id === gym.chainId);
               const card = getGymCardMock(gym.slug);
               return (
@@ -352,6 +372,32 @@ function GymsPage() {
               );
             })}
           </ul>
+
+          {visibleGyms.length > PAGE_SIZE ? (
+            <nav className="browse-pager" aria-label="Sivutus">
+              <button
+                type="button"
+                className="browse-pager-btn"
+                disabled={safePage <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                <ChevronLeft size={18} strokeWidth={2.2} />
+                <span>Edellinen</span>
+              </button>
+              <p className="browse-pager-status">
+                Sivu {safePage} / {pageCount}
+              </p>
+              <button
+                type="button"
+                className="browse-pager-btn"
+                disabled={safePage >= pageCount}
+                onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+              >
+                <span>Seuraava</span>
+                <ChevronRight size={18} strokeWidth={2.2} />
+              </button>
+            </nav>
+          ) : null}
         </section>
 
         <section className="browse-map-col">

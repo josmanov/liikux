@@ -51,16 +51,23 @@ const bySlug: Record<string, GymCardMock> = {
   },
 };
 
-const fallback: GymCardMock = {
-  distanceKm: 3.5,
-  priceFrom: 35,
-  is247: false,
-  freeTrial: false,
-  openNow: true,
-};
+function cardMockFromSlug(slug: string): GymCardMock {
+  let h = 0;
+  for (let i = 0; i < slug.length; i++) {
+    h = (h * 31 + slug.charCodeAt(i)) >>> 0;
+  }
+  const prices = [29, 35, 39, 49, 59];
+  return {
+    distanceKm: Math.round((0.5 + (h % 140) / 10) * 10) / 10,
+    priceFrom: prices[h % prices.length],
+    is247: h % 3 === 0,
+    freeTrial: h % 2 === 0,
+    openNow: h % 5 !== 0,
+  };
+}
 
 export function getGymCardMock(slug: string): GymCardMock {
-  return bySlug[slug] ?? fallback;
+  return bySlug[slug] ?? cardMockFromSlug(slug);
 }
 
 export function formatDistanceKm(km: number) {
