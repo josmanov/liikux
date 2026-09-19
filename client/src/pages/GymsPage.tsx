@@ -8,6 +8,7 @@ function GymsPage() {
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [chains, setChains] = useState<Chain[]>([]);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<Map | null>(null);
   const markersRef = useRef(new globalThis.Map<string, Marker>());
@@ -70,8 +71,14 @@ function GymsPage() {
         el.dataset.gymId = gym.id;
         el.setAttribute("aria-label", gym.name);
 
+        const img = document.createElement("img");
+        img.src = "/pins/gym-pin.png";
+        img.alt = "";
+        el.appendChild(img);
+
         el.addEventListener("mouseenter", () => setHoveredId(gym.id));
         el.addEventListener("mouseleave", () => setHoveredId(null));
+        el.addEventListener("click", () => setSelectedId(gym.id));
 
         const marker = new Marker({ element: el })
           .setLngLat([gym.lng, gym.lat])
@@ -84,6 +91,8 @@ function GymsPage() {
       if (!bounds.isEmpty()) {
         map.fitBounds(bounds, { padding: 72, maxZoom: 12 });
       }
+
+      map.resize();
     };
 
     if (map.loaded()) {
@@ -95,55 +104,69 @@ function GymsPage() {
 
   useEffect(() => {
     markersRef.current.forEach((marker, id) => {
-      marker.getElement().classList.toggle("is-hovered", id === hoveredId);
+      const el = marker.getElement();
+      el.classList.toggle("is-hovered", id === hoveredId);
+      el.classList.toggle("is-selected", id === selectedId);
     });
-  }, [hoveredId]);
+  }, [hoveredId, selectedId]);
 
   return (
     <main className="browse">
-      <section className="browse-list">
-        <header className="browse-list-head">
-          <h1>Kuntosalit</h1>
-          <p>{gyms.length} paikkaa</p>
-        </header>
-        <ul className="browse-rows">
-          {gyms.map((gym) => {
-            const chain = chains.find((c) => c.id === gym.chainId);
-            return (
-              <li
-                key={gym.id}
-                className={[
-                  "browse-row",
-                  hoveredId === gym.id ? "is-hovered" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                onMouseEnter={() => setHoveredId(gym.id)}
-                onMouseLeave={() => setHoveredId(null)}
-              >
-                <span
-                  className={[
-                    "browse-row-media",
-                    chain?.logoFit === "contain" ? "is-logo" : "",
-                    chain?.logoClass || "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                >
-                  {chain?.image ? <img src={chain.image} alt="" /> : null}
-                </span>
-                <div className="browse-row-text">
-                  <strong>{gym.name}</strong>
-                  <span>
-                    {gym.city} · {gym.address}
-                  </span>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
-      <aside className="browse-map" aria-label="Kartta" ref={mapRef} />
+      <div className="browse-body">
+        <section className="browse-list-col">
+          <header className="browse-list-head">
+            <h1>Kuntosalit</h1>
+            <p>{gyms.length} paikkaa</p>
+          </header>
+          <ul className="browse-rows">
+            {gyms.map((gym) => {
+              const chain = chains.find((c) => c.id === gym.chainId);
+              return (
+                <li key={gym.id}>
+                  <button
+                    type="button"
+                    className={[
+                      "browse-row",
+                      hoveredId === gym.id ? "is-hovered" : "",
+                      selectedId === gym.id ? "is-selected" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    onMouseEnter={() => setHoveredId(gym.id)}
+                    onMouseLeave={() => setHoveredId(null)}
+                    onClick={() => setSelectedId(gym.id)}
+                  >
+                    <span
+                      className={[
+                        "browse-row-media",
+                        chain?.logoFit === "contain" ? "is-logo" : "",
+                        chain?.logoClass || "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                    >
+                      {chain?.image ? <img src={chain.image} alt="" /> : null}
+                    </span>
+                    <div className="browse-row-text">
+                      <strong>{gym.name}</strong>
+                      <span>
+                        {gym.city} · {gym.address}
+                      </span>
+                    </div>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+
+        <section className="browse-map-col">
+          <header className="browse-map-head" aria-label="Kartan suodattimet" />
+          <div className="browse-map-frame">
+            <div className="browse-map" aria-label="Kartta" ref={mapRef} />
+          </div>
+        </section>
+      </div>
     </main>
   );
 }
