@@ -219,8 +219,9 @@ function GymsPage() {
   }, []);
 
   useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map || !mapReady) return;
+    const mapRefCurrent = mapInstanceRef.current;
+    if (!mapRefCurrent || !mapReady) return;
+    const map = mapRefCurrent;
 
     function clearMarkers() {
       markersRef.current.forEach((m) => m.remove());
