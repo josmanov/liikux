@@ -18,6 +18,7 @@ function App() {
           <Route path="/fi/kuntosalit" element={<GymsPage />} />
           <Route path="/hobbies" element={<HobbysPage />} />
           <Route path="/fi/ketju/:slug" element={<GymDetailPage />} />
+          <Route path="/fi/sali/:slug" element={<GymDetailPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/favorites" element={<FavoritesPage />} />

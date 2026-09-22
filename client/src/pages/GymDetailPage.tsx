@@ -2,12 +2,13 @@ import { useParams } from "react-router-dom";
 import "./PagePlaceholder.css";
 
 function GymDetailPage() {
-  const { id } = useParams();
+  const { slug, id } = useParams();
+  const label = slug || id || "—";
 
   return (
     <main className="page">
       <h1>Sali</h1>
-      <p>id: {id}</p>
+      <p>{label}</p>
     </main>
   );
 }

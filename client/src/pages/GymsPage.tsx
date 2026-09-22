@@ -1,6 +1,7 @@
 import "./GymsPage.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ChevronDown, ChevronLeft, ChevronRight, SlidersHorizontal, X } from "lucide-react";
 import { LngLatBounds, Map, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type Chain, type Gym } from "../data/types";
@@ -120,6 +121,24 @@ function GymsPage() {
   const pageGymsRef = useRef(pageGyms);
   pageGymsRef.current = pageGyms;
 
+  const selectedGym = useMemo(() => {
+    if (!selectedId) return null;
+    return (
+      gyms.find((g) => g.id === selectedId) ??
+      pageGyms.find((g) => g.id === selectedId) ??
+      null
+    );
+  }, [gyms, pageGyms, selectedId]);
+
+  const selectedChain = useMemo(() => {
+    if (!selectedGym) return null;
+    return chains.find((c) => c.id === selectedGym.chainId) ?? null;
+  }, [chains, selectedGym]);
+
+  const selectedCard = selectedGym
+    ? getGymCardMock(selectedGym.slug)
+    : null;
+
   useEffect(() => {
     setPage(1);
   }, [query, sortId]);
@@ -133,35 +152,20 @@ function GymsPage() {
     selectFromMapRef.current = false;
 
     const el = document.querySelector<HTMLElement>(
-      `[data-gym-id="${selectedId}"]`,
+      `.browse-row[data-gym-id="${selectedId}"]`,
     );
     if (!el) return;
 
     const index = pageGyms.findIndex((g) => g.id === selectedId);
-    const nearEnd = index >= 0 && index >= pageGyms.length - 2;
+    const nearEnd = index >= 0 && index >= pageGyms.length - 6;
+    const pager = document.querySelector<HTMLElement>(".browse-pager");
 
-    if (!nearEnd) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (nearEnd) {
+      (pager ?? el).scrollIntoView({ behavior: "smooth", block: "end" });
       return;
     }
 
-    const footer = document.querySelector<HTMLElement>(".footer");
-    const sticky = document.querySelector<HTMLElement>(".browse-list-sticky");
-    const header = document.querySelector<HTMLElement>(".header");
-    const topPad =
-      (header?.offsetHeight ?? 0) + (sticky?.offsetHeight ?? 0) + 12;
-    const footerH = footer?.offsetHeight ?? 0;
-    const elTop = el.getBoundingClientRect().top + window.scrollY;
-    const ideal = elTop - topPad;
-    const maxScroll = Math.max(
-      0,
-      document.documentElement.scrollHeight - window.innerHeight - footerH - 8,
-    );
-
-    window.scrollTo({
-      top: Math.min(ideal, maxScroll),
-      behavior: "smooth",
-    });
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [selectedId, pageGyms]);
 
   useEffect(() => {
@@ -630,6 +634,45 @@ function GymsPage() {
 
           <div className="browse-map-frame">
             <div className="browse-map" aria-label="Kartta" ref={mapRef} />
+            {selectedGym && selectedCard ? (
+              <div className="browse-map-preview">
+                <button
+                  type="button"
+                  className="browse-map-preview-close"
+                  aria-label="Sulje"
+                  onClick={() => setSelectedId(null)}
+                >
+                  <X size={16} strokeWidth={2.2} />
+                </button>
+                <Link
+                  className="browse-map-preview-link"
+                  to={`/fi/sali/${selectedGym.slug}`}
+                >
+                  <span
+                    className={[
+                      "browse-map-preview-media",
+                      selectedChain?.logoFit === "contain" ? "is-logo" : "",
+                      selectedChain?.logoClass || "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
+                    {selectedChain?.image ? (
+                      <img src={selectedChain.image} alt="" />
+                    ) : null}
+                  </span>
+                  <span className="browse-map-preview-meta">
+                    <strong className="browse-map-preview-name">
+                      {selectedGym.name}
+                    </strong>
+                    <span className="browse-map-preview-distance">
+                      {formatDistanceKm(selectedCard.distanceKm)}
+                    </span>
+                  </span>
+                  <span className="browse-map-preview-open">Avaa</span>
+                </Link>
+              </div>
+            ) : null}
           </div>
         </section>
 
@@ -640,8 +683,8 @@ function GymsPage() {
               const card = getGymCardMock(gym.slug);
               return (
                 <li key={gym.id}>
-                  <button
-                    type="button"
+                  <Link
+                    to={`/fi/sali/${gym.slug}`}
                     data-gym-id={gym.id}
                     className={[
                       "browse-row",
@@ -652,10 +695,6 @@ function GymsPage() {
                       .join(" ")}
                     onMouseEnter={() => setHoveredId(gym.id)}
                     onMouseLeave={() => setHoveredId(null)}
-                    onClick={() => {
-                      selectFromMapRef.current = false;
-                      setSelectedId(gym.id);
-                    }}
                   >
                     <span
                       className={[
@@ -698,7 +737,7 @@ function GymsPage() {
                         ) : null}
                       </div>
                     </div>
-                  </button>
+                  </Link>
                 </li>
               );
             })}

@@ -444,6 +444,7 @@
   cursor: pointer;
   font: inherit;
   color: inherit;
+  text-decoration: none;
   border-radius: 14px;
   box-sizing: border-box;
   scroll-margin-top: 12rem;
@@ -491,6 +492,7 @@
 }
 
 .browse-map-frame {
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
   margin-top: 0.5rem;
@@ -505,6 +507,140 @@
   width: 100%;
   height: 100%;
   min-height: 0;
+}
+
+.browse-map-preview {
+  position: absolute;
+  left: 50%;
+  bottom: 0.85rem;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  width: min(340px, calc(100% - 1.5rem));
+  padding: 0.55rem 2rem 0.55rem 0.55rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--color-surface);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  transform: translateX(-50%);
+  animation: browse-preview-in 0.22s ease-out;
+}
+
+@keyframes browse-preview-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.browse-map-preview-close {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.browse-map-preview-close:hover {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.browse-map-preview-link {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  flex: 1;
+  color: inherit;
+  text-decoration: none;
+}
+
+.browse-map-preview-media {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.browse-map-preview-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.browse-map-preview-media.is-logo img {
+  object-fit: contain;
+}
+
+.browse-map-preview-media.logo-easyfit {
+  background: #fef164;
+}
+
+.browse-map-preview-media.logo-easyfit img {
+  transform: scale(2);
+}
+
+.browse-map-preview-media.logo-elixia {
+  background: #fff;
+  padding: 0.35rem;
+}
+
+.browse-map-preview-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.browse-map-preview-name {
+  min-width: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.browse-map-preview-distance {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #facc15;
+}
+
+.browse-map-preview-open {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  min-width: 3.6rem;
+  height: 2.1rem;
+  padding: 0 0.75rem;
+  border-radius: 9px;
+  background: #f7ff09;
+  color: #0b1220;
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .browse-row-media {
