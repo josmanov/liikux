@@ -20,8 +20,9 @@ const sortOptions = [
   { id: "name-desc", label: "Nimi Ö–A" },
 ];
 
+const OTHER_CHAIN_FILTER_ID = "yksityiset";
+
 const chainFilterOptions = [
-  { id: "all", label: "Kaikki ketjut" },
   { id: "elixia", label: "Elixia" },
   { id: "easyfit", label: "EasyFit" },
   { id: "fressi", label: "Fressi" },
@@ -29,7 +30,23 @@ const chainFilterOptions = [
   { id: "gofitness", label: "GoFitness" },
   { id: "olefit", label: "Ole.Fit" },
   { id: "liikku", label: "Liikku" },
+  { id: OTHER_CHAIN_FILTER_ID, label: "Yksityiset / muut" },
 ];
+
+const allChainFilterIds = chainFilterOptions.map((o) => o.id);
+
+function chainMatchesFilterKey(chain: { slug: string }, key: string) {
+  const slug = chain.slug.replace(/-/g, "").toLowerCase();
+  const k = key.replace(/-/g, "").toLowerCase();
+  return slug === k || slug.startsWith(k) || k.startsWith(slug);
+}
+
+function isListedBrandChain(chain: { slug: string }) {
+  return chainFilterOptions.some(
+    (opt) =>
+      opt.id !== OTHER_CHAIN_FILTER_ID && chainMatchesFilterKey(chain, opt.id),
+  );
+}
 
 const audienceOptions = [
   { id: "all", label: "Kaikille" },
@@ -68,7 +85,9 @@ function GymsPage() {
   const [sortId, setSortId] = useState("nearest");
   const [page, setPage] = useState(1);
   const [openFilter, setOpenFilter] = useState<FilterKey | null>(null);
-  const [chainFilter, setChainFilter] = useState("all");
+  const [selectedChains, setSelectedChains] = useState<string[]>([
+    ...allChainFilterIds,
+  ]);
   const [audienceFilter, setAudienceFilter] = useState("all");
   const [distanceFilter, setDistanceFilter] = useState("all");
   const [priceFilter, setPriceFilter] = useState("all");
@@ -82,8 +101,16 @@ function GymsPage() {
 
   const sortLabel =
     sortOptions.find((o) => o.id === sortId)?.label ?? "Lähimmät ensin";
+  const chainFilterActive = selectedChains.length < allChainFilterIds.length;
   const chainLabel =
-    chainFilterOptions.find((o) => o.id === chainFilter)?.label ?? "Ketjut";
+    selectedChains.length === 0
+      ? "Ketjut"
+      : !chainFilterActive
+        ? "Ketjut"
+        : selectedChains.length === 1
+          ? (chainFilterOptions.find((o) => o.id === selectedChains[0])
+              ?.label ?? "Ketjut")
+          : `Ketjut (${selectedChains.length})`;
   const audienceLabel =
     audienceOptions.find((o) => o.id === audienceFilter)?.label ?? "Kenelle";
   const distanceLabel =
@@ -91,9 +118,43 @@ function GymsPage() {
   const priceLabel =
     priceOptions.find((o) => o.id === priceFilter)?.label ?? "Hinta";
 
+  const selectedChainFilter = useMemo(() => {
+    if (selectedChains.length === 0) {
+      return { mode: "none" as const };
+    }
+    if (!chainFilterActive) {
+      return { mode: "all" as const };
+    }
+
+    const ids = new Set<string>();
+    let includeOther = false;
+    for (const key of selectedChains) {
+      if (key === OTHER_CHAIN_FILTER_ID) {
+        includeOther = true;
+        continue;
+      }
+      const match = chains.find((c) => chainMatchesFilterKey(c, key));
+      if (match) ids.add(match.id);
+    }
+    return { mode: "some" as const, ids, includeOther };
+  }, [chains, selectedChains, chainFilterActive]);
+
   const visibleGyms = useMemo(() => {
     const q = query.trim().toLowerCase();
+
     let list = gyms.filter((gym) => {
+      if (selectedChainFilter.mode === "none") return false;
+      if (selectedChainFilter.mode === "some") {
+        const matchesBrand = selectedChainFilter.ids.has(gym.chainId);
+        const chain = chains.find((c) => c.id === gym.chainId);
+        const isOther = !chain || !isListedBrandChain(chain);
+        if (
+          !matchesBrand &&
+          !(selectedChainFilter.includeOther && isOther)
+        ) {
+          return false;
+        }
+      }
       if (!q) return true;
       return (
         gym.name.toLowerCase().includes(q) ||
@@ -109,7 +170,7 @@ function GymsPage() {
     }
 
     return list;
-  }, [gyms, query, sortId]);
+  }, [gyms, chains, query, sortId, selectedChainFilter]);
 
   const pageCount = Math.max(1, Math.ceil(visibleGyms.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
@@ -141,7 +202,7 @@ function GymsPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [query, sortId]);
+  }, [query, sortId, selectedChains]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -173,8 +234,13 @@ function GymsPage() {
     function close() {
       setOpenFilter(null);
     }
-    window.addEventListener("click", close);
-    return () => window.removeEventListener("click", close);
+    const id = window.setTimeout(() => {
+      window.addEventListener("click", close);
+    }, 0);
+    return () => {
+      window.clearTimeout(id);
+      window.removeEventListener("click", close);
+    };
   }, [openFilter]);
 
   function toggleFilter(key: FilterKey) {
@@ -464,30 +530,56 @@ function GymsPage() {
                   src="/icons/ketjut.png"
                   alt=""
                 />
-                <span className="browse-filter-label">
-                  {chainFilter === "all" ? "Ketjut" : chainLabel}
-                </span>
+                <span className="browse-filter-label">{chainLabel}</span>
                 <ChevronDown size={16} strokeWidth={2.2} />
               </button>
               {openFilter === "chains" ? (
-                <ul className="browse-filter-menu" role="listbox">
-                  {chainFilterOptions.map((opt) => (
-                    <li key={opt.id}>
-                      <button
-                        type="button"
-                        className={opt.id === chainFilter ? "is-on" : ""}
-                        role="option"
-                        aria-selected={opt.id === chainFilter}
-                        onClick={() => {
-                          setChainFilter(opt.id);
-                          setOpenFilter(null);
-                        }}
-                      >
-                        {opt.label}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                <div
+                  className="browse-filter-menu browse-filter-menu-chains"
+                  role="group"
+                  aria-label="Ketjut"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="browse-filter-menu-actions">
+                    <button
+                      type="button"
+                      className="browse-filter-menu-action"
+                      onClick={() => setSelectedChains([...allChainFilterIds])}
+                    >
+                      Kaikki
+                    </button>
+                    <button
+                      type="button"
+                      className="browse-filter-menu-action"
+                      onClick={() => setSelectedChains([])}
+                    >
+                      Tyhjennä
+                    </button>
+                  </div>
+                  <ul className="browse-filter-check-list" role="listbox">
+                    {chainFilterOptions.map((opt) => {
+                      const on = selectedChains.includes(opt.id);
+                      return (
+                        <li key={opt.id}>
+                          <label className="browse-filter-check">
+                            <input
+                              type="checkbox"
+                              checked={on}
+                              onChange={() => {
+                                setSelectedChains((cur) =>
+                                  cur.includes(opt.id)
+                                    ? cur.filter((id) => id !== opt.id)
+                                    : [...cur, opt.id],
+                                );
+                              }}
+                            />
+                            <span>{opt.label}</span>
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
               ) : null}
             </div>
 
@@ -620,7 +712,7 @@ function GymsPage() {
                 type="button"
                 className="browse-filters-clear"
                 onClick={() => {
-                  setChainFilter("all");
+                  setSelectedChains([...allChainFilterIds]);
                   setAudienceFilter("all");
                   setDistanceFilter("all");
                   setPriceFilter("all");

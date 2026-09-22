@@ -70,13 +70,10 @@
   padding: 0.85rem 0 0.35rem;
   box-sizing: border-box;
   flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
+  overflow: visible;
   background: var(--color-bg);
-}
-
-.browse-map-filters::-webkit-scrollbar {
-  display: none;
+  position: relative;
+  z-index: 20;
 }
 
 .browse-sep {
@@ -195,6 +192,65 @@
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
 }
 
+.browse-filter-menu-chains {
+  min-width: 13.5rem;
+  padding: 0.45rem;
+}
+
+.browse-filter-menu-actions {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.browse-filter-menu-action {
+  flex: 1;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.browse-filter-menu-action:hover {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+
+.browse-filter-check-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.browse-filter-check {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.45rem 0.55rem;
+  border-radius: 10px;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.browse-filter-check input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--color-brand);
+  cursor: pointer;
+}
+
 .browse-filter-menu button {
   display: block;
   width: 100%;
@@ -214,6 +270,10 @@
 .browse-filter-menu button.is-on {
   background: rgba(132, 204, 22, 0.18);
   color: var(--color-brand);
+}
+
+.browse-filter-menu-chains .browse-filter-menu-action {
+  width: auto;
 }
 
 .browse-search {
@@ -475,7 +535,7 @@
   align-self: start;
   height: calc(100dvh - (55px + 2.2rem + 1px) - 1.25rem);
   max-height: calc(100dvh - (55px + 2.2rem + 1px) - 1.25rem);
-  overflow: hidden;
+  overflow: visible;
   box-sizing: border-box;
   background: var(--color-bg);
 }
