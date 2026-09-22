@@ -11,6 +11,7 @@ import {
   getGymCardMock,
 } from "../data/gymCardMock";
 import { extraGymsMock } from "../data/extraGymsMock";
+import { useAppLocation } from "../context/LocationContext";
 
 const PIN_TOUCH_PX = 40;
 
@@ -49,20 +50,43 @@ function isListedBrandChain(chain: { slug: string }) {
 }
 
 const audienceOptions = [
-  { id: "all", label: "Kaikille" },
-  { id: "men", label: "Miehille" },
-  { id: "women", label: "Naisille" },
-  { id: "kids", label: "Lapsille" },
-  { id: "seniors", label: "Seniori" },
+  { id: "men", label: "Miehille", icon: "/icons/kenelle-men.png" },
+  { id: "women", label: "Naisille", icon: "/icons/kenelle-women.png" },
+  { id: "kids", label: "Lapsille", icon: "/icons/kenelle-kids.png" },
+  { id: "seniors", label: "Seniori", icon: "/icons/kenelle-seniors.png" },
 ];
 
-const distanceOptions = [
-  { id: "all", label: "Kaikki etäisyydet" },
-  { id: "1", label: "Alle 1 km" },
-  { id: "3", label: "Alle 3 km" },
-  { id: "5", label: "Alle 5 km" },
-  { id: "10", label: "Alle 10 km" },
+const distancePresets = [
+  { id: "all", km: null as number | null, label: "Kaikki" },
+  { id: "1", km: 1, label: "1 km" },
+  { id: "3", km: 3, label: "3 km" },
+  { id: "5", km: 5, label: "5 km" },
+  { id: "10", km: 10, label: "10 km" },
+  { id: "20", km: 20, label: "20 km" },
 ];
+
+const cityCenters: Record<string, { lat: number; lng: number }> = {
+  Helsinki: { lat: 60.1699, lng: 24.9384 },
+  Espoo: { lat: 60.2055, lng: 24.6559 },
+  Vantaa: { lat: 60.2934, lng: 25.0378 },
+};
+
+function distanceKm(
+  aLat: number,
+  aLng: number,
+  bLat: number,
+  bLng: number,
+) {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(bLat - aLat);
+  const dLng = toRad(bLng - aLng);
+  const lat1 = toRad(aLat);
+  const lat2 = toRad(bLat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+}
 
 const priceOptions = [
   { id: "all", label: "Kaikki hinnat" },
@@ -77,6 +101,7 @@ type FilterKey = "chains" | "audience" | "distance" | "price" | "sort";
 const PAGE_SIZE = 24;
 
 function GymsPage() {
+  const { label: locationLabel } = useAppLocation();
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [chains, setChains] = useState<Chain[]>([]);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -88,7 +113,7 @@ function GymsPage() {
   const [selectedChains, setSelectedChains] = useState<string[]>([
     ...allChainFilterIds,
   ]);
-  const [audienceFilter, setAudienceFilter] = useState("all");
+  const [selectedAudiences, setSelectedAudiences] = useState<string[]>([]);
   const [distanceFilter, setDistanceFilter] = useState("all");
   const [priceFilter, setPriceFilter] = useState("all");
   const [mapReady, setMapReady] = useState(false);
@@ -112,9 +137,27 @@ function GymsPage() {
               ?.label ?? "Ketjut")
           : `Ketjut (${selectedChains.length})`;
   const audienceLabel =
-    audienceOptions.find((o) => o.id === audienceFilter)?.label ?? "Kenelle";
+    selectedAudiences.length === 0
+      ? "Kenelle"
+      : selectedAudiences.length === 1
+        ? (audienceOptions.find((o) => o.id === selectedAudiences[0])?.label ??
+          "Kenelle")
+        : `Kenelle (${selectedAudiences.length})`;
   const distanceLabel =
-    distanceOptions.find((o) => o.id === distanceFilter)?.label ?? "Etäisyys";
+    distancePresets.find((o) => o.id === distanceFilter)?.label ?? "Etäisyys";
+  const distancePresetIndex = Math.max(
+    0,
+    distancePresets.findIndex((o) => o.id === distanceFilter),
+  );
+  const maxDistanceKm =
+    distancePresets[distancePresetIndex]?.km ?? null;
+
+  const origin = useMemo(() => {
+    const key = Object.keys(cityCenters).find(
+      (city) => locationLabel.toLowerCase() === city.toLowerCase(),
+    );
+    return cityCenters[key ?? "Helsinki"];
+  }, [locationLabel]);
   const priceLabel =
     priceOptions.find((o) => o.id === priceFilter)?.label ?? "Hinta";
 
@@ -155,6 +198,18 @@ function GymsPage() {
           return false;
         }
       }
+      if (selectedAudiences.length > 0) {
+        const card = getGymCardMock(gym.slug);
+        const hit = selectedAudiences.some((id) =>
+          card.audiences.includes(id as "men" | "women" | "kids" | "seniors"),
+        );
+        if (!hit) return false;
+      }
+      if (maxDistanceKm != null) {
+        if (gym.lat == null || gym.lng == null) return false;
+        const km = distanceKm(origin.lat, origin.lng, gym.lat, gym.lng);
+        if (km > maxDistanceKm) return false;
+      }
       if (!q) return true;
       return (
         gym.name.toLowerCase().includes(q) ||
@@ -167,10 +222,31 @@ function GymsPage() {
       list = [...list].sort((a, b) => a.name.localeCompare(b.name, "fi"));
     } else if (sortId === "name-desc") {
       list = [...list].sort((a, b) => b.name.localeCompare(a.name, "fi"));
+    } else if (sortId === "nearest") {
+      list = [...list].sort((a, b) => {
+        const da =
+          a.lat == null || a.lng == null
+            ? Number.POSITIVE_INFINITY
+            : distanceKm(origin.lat, origin.lng, a.lat, a.lng);
+        const db =
+          b.lat == null || b.lng == null
+            ? Number.POSITIVE_INFINITY
+            : distanceKm(origin.lat, origin.lng, b.lat, b.lng);
+        return da - db;
+      });
     }
 
     return list;
-  }, [gyms, chains, query, sortId, selectedChainFilter]);
+  }, [
+    gyms,
+    chains,
+    query,
+    sortId,
+    selectedChainFilter,
+    selectedAudiences,
+    maxDistanceKm,
+    origin,
+  ]);
 
   const pageCount = Math.max(1, Math.ceil(visibleGyms.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
@@ -202,7 +278,8 @@ function GymsPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [query, sortId, selectedChains]);
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [query, sortId, selectedChains, selectedAudiences, distanceFilter]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -227,7 +304,13 @@ function GymsPage() {
     }
 
     el.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [selectedId, pageGyms]);
+  }, [selectedId]);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    if (visibleGyms.some((g) => g.id === selectedId)) return;
+    setSelectedId(null);
+  }, [visibleGyms, selectedId]);
 
   useEffect(() => {
     if (!openFilter) return;
@@ -596,30 +679,56 @@ function GymsPage() {
                   src="/icons/kenelle.png"
                   alt=""
                 />
-                <span className="browse-filter-label">
-                  {audienceFilter === "all" ? "Kenelle" : audienceLabel}
-                </span>
+                <span className="browse-filter-label">{audienceLabel}</span>
                 <ChevronDown size={16} strokeWidth={2.2} />
               </button>
               {openFilter === "audience" ? (
-                <ul className="browse-filter-menu" role="listbox">
-                  {audienceOptions.map((opt) => (
-                    <li key={opt.id}>
-                      <button
-                        type="button"
-                        className={opt.id === audienceFilter ? "is-on" : ""}
-                        role="option"
-                        aria-selected={opt.id === audienceFilter}
-                        onClick={() => {
-                          setAudienceFilter(opt.id);
-                          setOpenFilter(null);
-                        }}
-                      >
-                        {opt.label}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+                <div
+                  className="browse-filter-menu browse-filter-menu-audience"
+                  role="group"
+                  aria-label="Kenelle"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="browse-filter-menu-actions">
+                    <button
+                      type="button"
+                      className="browse-filter-menu-action"
+                      onClick={() => setSelectedAudiences([])}
+                    >
+                      Tyhjennä
+                    </button>
+                  </div>
+                  <ul className="browse-filter-check-list" role="listbox">
+                    {audienceOptions.map((opt) => {
+                      const on = selectedAudiences.includes(opt.id);
+                      return (
+                        <li key={opt.id}>
+                          <label className="browse-filter-check">
+                            <input
+                              type="checkbox"
+                              checked={on}
+                              onChange={() => {
+                                setSelectedAudiences((cur) =>
+                                  cur.includes(opt.id)
+                                    ? cur.filter((id) => id !== opt.id)
+                                    : [...cur, opt.id],
+                                );
+                              }}
+                            />
+                            <span className="browse-filter-check-label">
+                              {opt.label}
+                            </span>
+                            <img
+                              className="browse-filter-check-icon"
+                              src={opt.icon}
+                              alt=""
+                            />
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
               ) : null}
             </div>
 
@@ -628,7 +737,7 @@ function GymsPage() {
                 type="button"
                 className="browse-filter-btn"
                 aria-expanded={openFilter === "distance"}
-                aria-haspopup="listbox"
+                aria-haspopup="dialog"
                 onClick={() => toggleFilter("distance")}
               >
                 <img
@@ -642,24 +751,56 @@ function GymsPage() {
                 <ChevronDown size={16} strokeWidth={2.2} />
               </button>
               {openFilter === "distance" ? (
-                <ul className="browse-filter-menu" role="listbox">
-                  {distanceOptions.map((opt) => (
-                    <li key={opt.id}>
+                <div
+                  className="browse-filter-menu browse-filter-menu-distance"
+                  role="dialog"
+                  aria-label="Etäisyys"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="browse-distance-head">
+                    <span>Max etäisyys</span>
+                    <strong>
+                      {maxDistanceKm == null
+                        ? "Kaikki"
+                        : `${maxDistanceKm} km`}
+                    </strong>
+                  </div>
+                  <input
+                    className="browse-distance-slider"
+                    type="range"
+                    min={0}
+                    max={distancePresets.length - 1}
+                    step={1}
+                    value={distancePresetIndex}
+                    aria-valuetext={
+                      maxDistanceKm == null
+                        ? "Kaikki"
+                        : `${maxDistanceKm} kilometriä`
+                    }
+                    onChange={(e) => {
+                      const next =
+                        distancePresets[Number(e.target.value)] ??
+                        distancePresets[0];
+                      setDistanceFilter(next.id);
+                    }}
+                  />
+                  <div className="browse-distance-marks">
+                    {distancePresets.map((opt) => (
                       <button
+                        key={opt.id}
                         type="button"
-                        className={opt.id === distanceFilter ? "is-on" : ""}
-                        role="option"
-                        aria-selected={opt.id === distanceFilter}
-                        onClick={() => {
-                          setDistanceFilter(opt.id);
-                          setOpenFilter(null);
-                        }}
+                        className={
+                          opt.id === distanceFilter
+                            ? "browse-distance-mark is-on"
+                            : "browse-distance-mark"
+                        }
+                        onClick={() => setDistanceFilter(opt.id)}
                       >
                         {opt.label}
                       </button>
-                    </li>
-                  ))}
-                </ul>
+                    ))}
+                  </div>
+                </div>
               ) : null}
             </div>
 
@@ -713,7 +854,7 @@ function GymsPage() {
                 className="browse-filters-clear"
                 onClick={() => {
                   setSelectedChains([...allChainFilterIds]);
-                  setAudienceFilter("all");
+                  setSelectedAudiences([]);
                   setDistanceFilter("all");
                   setPriceFilter("all");
                   setOpenFilter(null);
@@ -743,15 +884,20 @@ function GymsPage() {
                   <span
                     className={[
                       "browse-map-preview-media",
-                      selectedChain?.logoFit === "contain" ? "is-logo" : "",
-                      selectedChain?.logoClass || "",
+                      selectedChain?.image
+                        ? selectedChain.logoFit === "contain"
+                          ? "is-logo"
+                          : ""
+                        : "is-pin",
+                      selectedChain?.image ? selectedChain.logoClass || "" : "",
                     ]
                       .filter(Boolean)
                       .join(" ")}
                   >
-                    {selectedChain?.image ? (
-                      <img src={selectedChain.image} alt="" />
-                    ) : null}
+                    <img
+                      src={selectedChain?.image || "/pins/gym-pin.png"}
+                      alt=""
+                    />
                   </span>
                   <span className="browse-map-preview-meta">
                     <strong className="browse-map-preview-name">
@@ -791,13 +937,20 @@ function GymsPage() {
                     <span
                       className={[
                         "browse-row-media",
-                        chain?.logoFit === "contain" ? "is-logo" : "",
-                        chain?.logoClass || "",
+                        chain?.image
+                          ? chain.logoFit === "contain"
+                            ? "is-logo"
+                            : ""
+                          : "is-pin",
+                        chain?.image ? chain.logoClass || "" : "",
                       ]
                         .filter(Boolean)
                         .join(" ")}
                     >
-                      {chain?.image ? <img src={chain.image} alt="" /> : null}
+                      <img
+                        src={chain?.image || "/pins/gym-pin.png"}
+                        alt=""
+                      />
                     </span>
                     <div className="browse-row-text">
                       <div className="browse-row-top">

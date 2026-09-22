@@ -1,9 +1,12 @@
+export type AudienceId = "men" | "women" | "kids" | "seniors";
+
 export type GymCardMock = {
   distanceKm: number;
   priceFrom: number;
   is247: boolean;
   freeTrial: boolean;
   openNow: boolean;
+  audiences: AudienceId[];
 };
 
 const bySlug: Record<string, GymCardMock> = {
@@ -13,6 +16,7 @@ const bySlug: Record<string, GymCardMock> = {
     is247: false,
     freeTrial: true,
     openNow: true,
+    audiences: ["men", "women"],
   },
   "elixia-itis": {
     distanceKm: 4.8,
@@ -20,6 +24,7 @@ const bySlug: Record<string, GymCardMock> = {
     is247: false,
     freeTrial: true,
     openNow: true,
+    audiences: ["men", "women", "seniors"],
   },
   "easyfit-kamppi": {
     distanceKm: 0.6,
@@ -27,6 +32,7 @@ const bySlug: Record<string, GymCardMock> = {
     is247: true,
     freeTrial: true,
     openNow: true,
+    audiences: ["men", "women"],
   },
   "easyfit-tikkurila": {
     distanceKm: 12.4,
@@ -34,6 +40,7 @@ const bySlug: Record<string, GymCardMock> = {
     is247: true,
     freeTrial: false,
     openNow: true,
+    audiences: ["men", "women", "kids"],
   },
   "fressi-tapiola": {
     distanceKm: 7.1,
@@ -41,6 +48,7 @@ const bySlug: Record<string, GymCardMock> = {
     is247: false,
     freeTrial: true,
     openNow: false,
+    audiences: ["women"],
   },
   "liikku-pasila": {
     distanceKm: 2.3,
@@ -48,6 +56,7 @@ const bySlug: Record<string, GymCardMock> = {
     is247: false,
     freeTrial: false,
     openNow: true,
+    audiences: ["men", "women", "seniors"],
   },
 };
 
@@ -57,12 +66,21 @@ function cardMockFromSlug(slug: string): GymCardMock {
     h = (h * 31 + slug.charCodeAt(i)) >>> 0;
   }
   const prices = [29, 35, 39, 49, 59];
+  const sets: AudienceId[][] = [
+    ["men", "women"],
+    ["men", "women", "kids"],
+    ["men", "women", "seniors"],
+    ["women"],
+    ["men"],
+    ["men", "women", "kids", "seniors"],
+  ];
   return {
     distanceKm: Math.round((0.5 + (h % 140) / 10) * 10) / 10,
     priceFrom: prices[h % prices.length],
     is247: h % 3 === 0,
     freeTrial: h % 2 === 0,
     openNow: h % 5 !== 0,
+    audiences: sets[h % sets.length],
   };
 }
 

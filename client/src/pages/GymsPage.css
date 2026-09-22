@@ -197,6 +197,85 @@
   padding: 0.45rem;
 }
 
+.browse-filter-menu-audience {
+  width: max-content;
+  min-width: 0;
+  padding: 0.45rem;
+}
+
+.browse-filter-menu-audience .browse-filter-check {
+  display: grid;
+  grid-template-columns: auto 5.75rem auto;
+  align-items: center;
+  justify-content: start;
+  column-gap: 0.35rem;
+  width: auto;
+}
+
+.browse-filter-menu-audience .browse-filter-check-label {
+  min-width: 0;
+}
+
+.browse-filter-menu-audience .browse-filter-check-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+  margin-left: 0;
+  justify-self: start;
+}
+
+.browse-filter-menu-distance {
+  min-width: 18rem;
+  padding: 0.75rem 0.85rem;
+}
+
+.browse-distance-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.browse-distance-head strong {
+  font-size: 0.95rem;
+  color: var(--color-text);
+}
+
+.browse-distance-slider {
+  display: block;
+  width: 100%;
+  margin: 0;
+  accent-color: #f7ff09;
+  cursor: pointer;
+}
+
+.browse-distance-marks {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.2rem;
+  margin-top: 0.55rem;
+}
+
+.browse-distance-mark {
+  flex: 1;
+  padding: 0.25rem 0.1rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.browse-distance-mark.is-on,
+.browse-distance-mark:hover {
+  color: var(--color-text);
+}
+
 .browse-filter-menu-actions {
   display: flex;
   gap: 0.35rem;
@@ -242,6 +321,21 @@
   font-weight: 500;
   cursor: pointer;
   box-sizing: border-box;
+}
+
+.browse-filter-check-label {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.browse-filter-check-icon {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex-shrink: 0;
+  margin-left: 0.15rem;
+  object-fit: contain;
+  filter: invert(84%) sepia(72%) saturate(1200%) hue-rotate(5deg)
+    brightness(105%) contrast(102%);
 }
 
 .browse-filter-check input {
@@ -651,6 +745,15 @@
   object-fit: contain;
 }
 
+.browse-map-preview-media.is-pin {
+  background: #fff;
+  padding: 0.35rem;
+}
+
+.browse-map-preview-media.is-pin img {
+  object-fit: contain;
+}
+
 .browse-map-preview-media.logo-easyfit {
   background: #fef164;
 }
@@ -734,6 +837,15 @@
 .browse-row-media.is-logo img {
   width: 100%;
   height: 100%;
+  object-fit: contain;
+}
+
+.browse-row-media.is-pin {
+  background: #fff;
+  padding: 0.4rem;
+}
+
+.browse-row-media.is-pin img {
   object-fit: contain;
 }
 
