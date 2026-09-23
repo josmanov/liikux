@@ -10,6 +10,11 @@ export type GymMembershipMock = {
   note?: string;
 };
 
+export type GymContactMock = {
+  phone: string | null;
+  email: string | null;
+};
+
 export type GymDetailMock = {
   heroImage: string;
   monthlyPrice: number;
@@ -17,9 +22,29 @@ export type GymDetailMock = {
   hours: GymHoursMock | null;
   services: string[];
   memberships: GymMembershipMock[];
+  contact: GymContactMock;
 };
 
-const bySlug: Record<string, GymDetailMock> = {
+function contactFromSlug(slug: string): GymContactMock {
+  let h = 0;
+  for (let i = 0; i < slug.length; i++) {
+    h = (h * 31 + slug.charCodeAt(i)) >>> 0;
+  }
+  const brand = slug.split("-")[0] || "sali";
+  return {
+    phone: `09 ${100 + (h % 800)} ${1000 + (h % 8000)}`,
+    email: `info@${brand}.fi`,
+  };
+}
+
+function withContact(slug: string, detail: Omit<GymDetailMock, "contact"> & { contact?: GymContactMock }): GymDetailMock {
+  return {
+    ...detail,
+    contact: detail.contact ?? contactFromSlug(slug),
+  };
+}
+
+const bySlug: Record<string, Omit<GymDetailMock, "contact"> & { contact?: GymContactMock }> = {
   "fressi-tapiola": {
     heroImage: "/hero-gym.jpg",
     monthlyPrice: 59,
@@ -41,6 +66,10 @@ const bySlug: Record<string, GymDetailMock> = {
       { name: "12 kk sopimus", priceEur: 49, note: "Alk. /kk" },
       { name: "Kertakäynti", priceEur: 25 },
     ],
+    contact: {
+      phone: "09 4243 3000",
+      email: "tapiola@fressi.fi",
+    },
   },
   "elixia-redi": {
     heroImage: "/hero-gym.jpg",
@@ -57,6 +86,10 @@ const bySlug: Record<string, GymDetailMock> = {
       { name: "12 kk sopimus", priceEur: 39, note: "Alk. /kk" },
       { name: "Kertakäynti", priceEur: 20 },
     ],
+    contact: {
+      phone: "020 710 9800",
+      email: "redi@elixia.fi",
+    },
   },
   "easyfit-kamppi": {
     heroImage: "/bg-gym.png",
@@ -72,6 +105,10 @@ const bySlug: Record<string, GymDetailMock> = {
       { name: "Kuukausijäsenyys", priceEur: 29 },
       { name: "Kertakäynti", priceEur: 15 },
     ],
+    contact: {
+      phone: "010 217 6800",
+      email: "kamppi@easyfit.fi",
+    },
   },
   "liikku-pasila": {
     heroImage: "/hero-gym.jpg",
@@ -87,6 +124,10 @@ const bySlug: Record<string, GymDetailMock> = {
       { name: "Kuukausijäsenyys", priceEur: 39 },
       { name: "12 kk sopimus", priceEur: 32, note: "Alk. /kk" },
     ],
+    contact: {
+      phone: "010 322 9800",
+      email: "pasila@liikku.com",
+    },
   },
   "fressi-kamppi": {
     heroImage: "/hero-gym.jpg",
@@ -98,6 +139,10 @@ const bySlug: Record<string, GymDetailMock> = {
       { name: "Kuukausijäsenyys", priceEur: 39 },
       { name: "12 kk sopimus", priceEur: 34, note: "Alk. /kk" },
     ],
+    contact: {
+      phone: null,
+      email: null,
+    },
   },
 };
 
@@ -108,7 +153,7 @@ function detailFromSlug(slug: string): GymDetailMock {
   }
   const monthly = [29, 35, 39, 49, 59][h % 5];
   const is247 = h % 3 === 0;
-  return {
+  return withContact(slug, {
     heroImage: h % 2 === 0 ? "/hero-gym.jpg" : "/bg-gym.png",
     monthlyPrice: monthly,
     dayPassPrice: h % 4 === 0 ? Math.round(monthly / 2) : null,
@@ -137,11 +182,13 @@ function detailFromSlug(slug: string): GymDetailMock {
         ? [{ name: "Kertakäynti", priceEur: Math.round(monthly / 2) }]
         : []),
     ],
-  };
+  });
 }
 
 export function getGymDetailMock(slug: string): GymDetailMock {
-  return bySlug[slug] ?? detailFromSlug(slug);
+  const row = bySlug[slug];
+  if (row) return withContact(slug, row);
+  return detailFromSlug(slug);
 }
 
 const chainWebsites: Record<string, string> = {

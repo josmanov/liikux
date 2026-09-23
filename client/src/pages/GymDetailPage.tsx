@@ -271,8 +271,8 @@ function GymDetailPage() {
       <div className="gym-detail-shell">
         <aside className="gym-detail-panel">
           <Link className="gym-detail-back" to="/fi/kuntosalit">
-            <ArrowLeft size={14} strokeWidth={2.2} aria-hidden="true" />
-            Selaa
+            <ArrowLeft size={18} strokeWidth={2.4} aria-hidden="true" />
+            Takaisin selaamaan
           </Link>
 
           <div
@@ -370,9 +370,37 @@ function GymDetailPage() {
             )}
           </section>
 
-          {chain ? (
-            <p className="gym-detail-chain-line">Ketju: {chain.name}</p>
-          ) : null}
+          <div className="gym-detail-footer">
+            <section className="gym-detail-section">
+              <h2>Yhteystiedot</h2>
+              {detail.contact.phone || detail.contact.email ? (
+                <div className="gym-detail-contact">
+                  {detail.contact.phone ? (
+                    <div className="gym-detail-contact-item">
+                      <span>Puhelin</span>
+                      <a href={`tel:${detail.contact.phone.replace(/\s/g, "")}`}>
+                        {detail.contact.phone}
+                      </a>
+                    </div>
+                  ) : null}
+                  {detail.contact.email ? (
+                    <div className="gym-detail-contact-item">
+                      <span>Sähköposti</span>
+                      <a href={`mailto:${detail.contact.email}`}>
+                        {detail.contact.email}
+                      </a>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="gym-detail-muted">Ei yhteystietoja.</p>
+              )}
+            </section>
+
+            {chain ? (
+              <p className="gym-detail-chain-line">Ketju: {chain.name}</p>
+            ) : null}
+          </div>
         </aside>
 
         <div className="gym-detail-map-panel" aria-label="Kartta">
