@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { LngLatBounds, Map, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { ArrowLeft, MapPin } from "lucide-react";
+import { ArrowLeft, Check, Copy, MapPin } from "lucide-react";
 import { type Chain, type Gym } from "../data/types";
 import { extraGymsMock } from "../data/extraGymsMock";
 import { getChainWebsite, getGymDetailMock } from "../data/gymDetailMock";
@@ -76,6 +76,7 @@ function GymDetailPage() {
   const [geoStatus, setGeoStatus] = useState<"idle" | "loading" | "fail">(
     "idle",
   );
+  const [copiedKey, setCopiedKey] = useState<"phone" | "email" | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<Map | null>(null);
   const gymMarkerRef = useRef<Marker | null>(null);
@@ -231,6 +232,16 @@ function GymDetailPage() {
       });
   }
 
+  function copyContact(key: "phone" | "email", value: string) {
+    navigator.clipboard.writeText(value).then(
+      () => {
+        setCopiedKey(key);
+        window.setTimeout(() => setCopiedKey(null), 1400);
+      },
+      () => {},
+    );
+  }
+
   if (status === "loading") {
     return (
       <main className="gym-detail">
@@ -378,17 +389,51 @@ function GymDetailPage() {
                   {detail.contact.phone ? (
                     <div className="gym-detail-contact-item">
                       <span>Puhelin</span>
-                      <a href={`tel:${detail.contact.phone.replace(/\s/g, "")}`}>
-                        {detail.contact.phone}
-                      </a>
+                      <div className="gym-detail-contact-row">
+                        <a
+                          href={`tel:${detail.contact.phone.replace(/\s/g, "")}`}
+                        >
+                          {detail.contact.phone}
+                        </a>
+                        <button
+                          type="button"
+                          className="gym-detail-copy"
+                          aria-label="Kopioi puhelinnumero"
+                          onClick={() =>
+                            copyContact("phone", detail.contact.phone!)
+                          }
+                        >
+                          {copiedKey === "phone" ? (
+                            <Check size={15} strokeWidth={2.4} />
+                          ) : (
+                            <Copy size={15} strokeWidth={2.2} />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   ) : null}
                   {detail.contact.email ? (
                     <div className="gym-detail-contact-item">
                       <span>Sähköposti</span>
-                      <a href={`mailto:${detail.contact.email}`}>
-                        {detail.contact.email}
-                      </a>
+                      <div className="gym-detail-contact-row">
+                        <a href={`mailto:${detail.contact.email}`}>
+                          {detail.contact.email}
+                        </a>
+                        <button
+                          type="button"
+                          className="gym-detail-copy"
+                          aria-label="Kopioi sähköposti"
+                          onClick={() =>
+                            copyContact("email", detail.contact.email!)
+                          }
+                        >
+                          {copiedKey === "email" ? (
+                            <Check size={15} strokeWidth={2.4} />
+                          ) : (
+                            <Copy size={15} strokeWidth={2.2} />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   ) : null}
                 </div>
@@ -396,11 +441,11 @@ function GymDetailPage() {
                 <p className="gym-detail-muted">Ei yhteystietoja.</p>
               )}
             </section>
-
-            {chain ? (
-              <p className="gym-detail-chain-line">Ketju: {chain.name}</p>
-            ) : null}
           </div>
+
+          {chain ? (
+            <p className="gym-detail-chain-line">Ketju: {chain.name}</p>
+          ) : null}
         </aside>
 
         <div className="gym-detail-map-panel" aria-label="Kartta">
