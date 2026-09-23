@@ -279,109 +279,113 @@ function GymDetailPage() {
 
   return (
     <main className="gym-detail">
-      <div className="gym-detail-shell">
-        <aside className="gym-detail-panel">
+      <div className="gym-detail-body">
+        <div className="gym-detail-left-sticky">
           <Link className="gym-detail-back" to="/fi/kuntosalit">
             <ArrowLeft size={18} strokeWidth={2.4} aria-hidden="true" />
             Takaisin selaamaan
           </Link>
+        </div>
 
-          <div
-            className={[
-              "gym-detail-logo",
-              heroIsLogo ? "is-logo" : "",
-              heroIsPin ? "is-pin" : "",
-              chain?.logoClass || "",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-          >
-            <img src={heroSrc} alt="" />
-          </div>
-
-          <div className="gym-detail-title-row">
-            <div className="gym-detail-titles">
-              <h1>{gym.name}</h1>
-              <p>{gym.address}</p>
-            </div>
-            <div className="gym-detail-price">
-              <span className="gym-detail-price-label">Alk.</span>
-              <strong>{detail.monthlyPrice} €</strong>
-              <span className="gym-detail-price-unit">/kk</span>
-            </div>
-          </div>
-
-          {siteUrl ? (
-            <a
-              className="gym-detail-cta"
-              href={siteUrl}
-              target="_blank"
-              rel="noreferrer"
+        <div className="gym-detail-main">
+          <article className="gym-detail-card">
+            <div
+              className={[
+                "gym-detail-logo",
+                heroIsLogo ? "is-logo" : "",
+                heroIsPin ? "is-pin" : "",
+                chain?.logoClass || "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
             >
-              Siirry salin sivulle
-            </a>
-          ) : null}
+              <img src={heroSrc} alt="" />
+            </div>
 
-          <hr className="gym-detail-divider" />
+            <div className="gym-detail-title-row">
+              <div className="gym-detail-titles">
+                <h1>{gym.name}</h1>
+                <p>{gym.address}</p>
+              </div>
+              <div className="gym-detail-price">
+                <span className="gym-detail-price-label">Alk.</span>
+                <strong>{detail.monthlyPrice} €</strong>
+                <span className="gym-detail-price-unit">/kk</span>
+              </div>
+            </div>
 
-          <section className="gym-detail-section">
-            <h2>Aukiolo ja pääsy</h2>
-            {!hours ? (
-              <p className="gym-detail-muted">Ei aukiolo- tai pääsytietoja.</p>
-            ) : (
-              <ul className="gym-detail-plans">
-                <li>
-                  <span>Ma–pe</span>
-                  <strong>{cleanHoursValue(hours.weekday, hours.is247)}</strong>
-                </li>
-                <li>
-                  <span>La–su</span>
-                  <strong>{cleanHoursValue(hours.weekend, hours.is247)}</strong>
-                </li>
-              </ul>
-            )}
-          </section>
+            {siteUrl ? (
+              <a
+                className="gym-detail-cta"
+                href={siteUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Siirry salin sivulle
+              </a>
+            ) : null}
 
-          <section className="gym-detail-section">
-            <h2>Jäsenyysvaihtoehdot</h2>
-            {detail.memberships.length > 0 ? (
-              <ul className="gym-detail-plans">
-                {detail.memberships.map((m) => (
-                  <li key={m.name}>
-                    <span>
-                      {m.name}
-                      {m.note ? ` · ${m.note}` : ""}
-                    </span>
-                    <strong>{m.priceEur} €</strong>
+            <hr className="gym-detail-divider" />
+
+            <section className="gym-detail-section">
+              <h2>Aukiolo ja pääsy</h2>
+              {!hours ? (
+                <p className="gym-detail-muted">Ei aukiolo- tai pääsytietoja.</p>
+              ) : (
+                <ul className="gym-detail-plans">
+                  <li>
+                    <span>Ma–pe</span>
+                    <strong>
+                      {cleanHoursValue(hours.weekday, hours.is247)}
+                    </strong>
                   </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="gym-detail-muted">Ei jäsenyystietoja.</p>
-            )}
-          </section>
-
-          <section className="gym-detail-section">
-            <h2>Palvelut</h2>
-            {detail.services.length > 0 ? (
-              <ul className="gym-detail-tags">
-                {detail.services.map((s) => (
-                  <li
-                    key={s}
-                    className={
-                      promoTag === s ? "is-promo" : undefined
-                    }
-                  >
-                    {s}
+                  <li>
+                    <span>La–su</span>
+                    <strong>
+                      {cleanHoursValue(hours.weekend, hours.is247)}
+                    </strong>
                   </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="gym-detail-muted">Ei palvelutietoja.</p>
-            )}
-          </section>
+                </ul>
+              )}
+            </section>
 
-          <div className="gym-detail-footer">
+            <section className="gym-detail-section">
+              <h2>Jäsenyysvaihtoehdot</h2>
+              {detail.memberships.length > 0 ? (
+                <ul className="gym-detail-plans">
+                  {detail.memberships.map((m) => (
+                    <li key={m.name}>
+                      <span>
+                        {m.name}
+                        {m.note ? ` · ${m.note}` : ""}
+                      </span>
+                      <strong>{m.priceEur} €</strong>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="gym-detail-muted">Ei jäsenyystietoja.</p>
+              )}
+            </section>
+
+            <section className="gym-detail-section">
+              <h2>Palvelut</h2>
+              {detail.services.length > 0 ? (
+                <ul className="gym-detail-tags">
+                  {detail.services.map((s) => (
+                    <li
+                      key={s}
+                      className={promoTag === s ? "is-promo" : undefined}
+                    >
+                      {s}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="gym-detail-muted">Ei palvelutietoja.</p>
+              )}
+            </section>
+
             <section className="gym-detail-section">
               <h2>Yhteystiedot</h2>
               {detail.contact.phone || detail.contact.email ? (
@@ -441,53 +445,55 @@ function GymDetailPage() {
                 <p className="gym-detail-muted">Ei yhteystietoja.</p>
               )}
             </section>
-          </div>
 
-          {chain ? (
-            <p className="gym-detail-chain-line">Ketju: {chain.name}</p>
-          ) : null}
-        </aside>
-
-        <div className="gym-detail-map-panel" aria-label="Kartta">
-          <div className="gym-detail-map-float">
-            <MapPin size={18} strokeWidth={2.2} aria-hidden="true" />
-            <input
-              className="gym-detail-from"
-              type="text"
-              value={fromDraft}
-              placeholder="Lähtöosoite…"
-              aria-label="Lähtöosoite"
-              onChange={(e) => {
-                setFromDraft(e.target.value);
-                setGeoStatus("idle");
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") lookupAddress();
-              }}
-              onBlur={lookupAddress}
-            />
-            <span className="gym-detail-crumb-sep" aria-hidden="true">
-              &gt;
-            </span>
-            <span className="gym-detail-crumb-to" title={gym.name}>
-              {gym.name}
-            </span>
-          </div>
-          {geoStatus === "loading" ||
-          geoStatus === "fail" ||
-          tripKm != null ? (
-            <p className="gym-detail-route-meta">
-              {geoStatus === "loading"
-                ? "Haetaan osoitetta…"
-                : geoStatus === "fail"
-                  ? "Osoitetta ei löytynyt"
-                  : tripKm != null
-                    ? `Matka salille noin ${tripKm.toFixed(1).replace(".", ",")} km`
-                    : null}
-            </p>
-          ) : null}
-          <div className="gym-detail-map" ref={mapRef} />
+            {chain ? (
+              <p className="gym-detail-chain-line">Ketju: {chain.name}</p>
+            ) : null}
+          </article>
         </div>
+
+        <aside className="gym-detail-map-col" aria-label="Kartta">
+          <div className="gym-detail-map-frame">
+            <div className="gym-detail-map-float">
+              <MapPin size={18} strokeWidth={2.2} aria-hidden="true" />
+              <input
+                className="gym-detail-from"
+                type="text"
+                value={fromDraft}
+                placeholder="Lähtöosoite…"
+                aria-label="Lähtöosoite"
+                onChange={(e) => {
+                  setFromDraft(e.target.value);
+                  setGeoStatus("idle");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") lookupAddress();
+                }}
+                onBlur={lookupAddress}
+              />
+              <span className="gym-detail-crumb-sep" aria-hidden="true">
+                &gt;
+              </span>
+              <span className="gym-detail-crumb-to" title={gym.name}>
+                {gym.name}
+              </span>
+            </div>
+            {geoStatus === "loading" ||
+            geoStatus === "fail" ||
+            tripKm != null ? (
+              <p className="gym-detail-route-meta">
+                {geoStatus === "loading"
+                  ? "Haetaan osoitetta…"
+                  : geoStatus === "fail"
+                    ? "Osoitetta ei löytynyt"
+                    : tripKm != null
+                      ? `Matka salille noin ${tripKm.toFixed(1).replace(".", ",")} km`
+                      : null}
+              </p>
+            ) : null}
+            <div className="gym-detail-map" ref={mapRef} />
+          </div>
+        </aside>
       </div>
     </main>
   );
