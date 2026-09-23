@@ -153,6 +153,28 @@
   background: #fff;
 }
 
+.gym-detail-logo.is-text {
+  display: grid;
+  place-items: center;
+  padding: 0.75rem 1rem;
+  box-sizing: border-box;
+  background: var(--color-surface);
+  border: 1px solid var(--gd-border);
+}
+
+.gym-detail-logo-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
 .gym-detail-logo.logo-easyfit {
   background: #fef164;
 }

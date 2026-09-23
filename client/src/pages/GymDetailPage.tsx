@@ -265,9 +265,9 @@ function GymDetailPage() {
   const detail = getGymDetailMock(gym.slug);
   const chain = gym.chain;
   const siteUrl = getChainWebsite(chain?.slug);
-  const heroSrc = chain?.image || "/pins/gym-pin.png";
+  const heroSrc = chain?.image || null;
   const heroIsLogo = Boolean(chain?.image && chain.logoFit === "contain");
-  const heroIsPin = !chain?.image;
+  const heroIsText = !chain?.image;
   const promoTag =
     detail.services.find((s) => PROMO_TAGS.includes(s)) ?? null;
   const tripKm =
@@ -293,13 +293,17 @@ function GymDetailPage() {
               className={[
                 "gym-detail-logo",
                 heroIsLogo ? "is-logo" : "",
-                heroIsPin ? "is-pin" : "",
+                heroIsText ? "is-text" : "",
                 chain?.logoClass || "",
               ]
                 .filter(Boolean)
                 .join(" ")}
             >
-              <img src={heroSrc} alt="" />
+              {heroSrc ? (
+                <img src={heroSrc} alt="" />
+              ) : (
+                <span className="gym-detail-logo-name">{gym.name}</span>
+              )}
             </div>
 
             <div className="gym-detail-title-row">
