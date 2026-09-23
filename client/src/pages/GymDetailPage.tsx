@@ -1,20 +1,91 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { LngLatBounds, Map, Marker } from "maplibre-gl";
+import "maplibre-gl/dist/maplibre-gl.css";
+import { ArrowLeft, MapPin } from "lucide-react";
 import { type Chain, type Gym } from "../data/types";
 import { extraGymsMock } from "../data/extraGymsMock";
-import {
-  formatDistanceKm,
-  formatPriceFrom,
-  getGymCardMock,
-} from "../data/gymCardMock";
+import { getChainWebsite, getGymDetailMock } from "../data/gymDetailMock";
+import { useAppLocation } from "../context/LocationContext";
 import "./GymDetailPage.css";
 
 type GymDetail = Gym & { chain: Chain | null };
 
+type GeoHit = {
+  id: string;
+  label: string;
+  lat: number;
+  lng: number;
+};
+
+const PROMO_TAGS = ["Ilmainen kokeilu", "Free trial"];
+
+function cleanHoursValue(raw: string, is247: boolean) {
+  if (is247) return "24/7";
+  return raw
+    .replace(/^ma[–-]pe\s+/i, "")
+    .replace(/^la[–-]su\s+/i, "")
+    .replace(/^la\s+/i, "")
+    .replace(/^su\s+/i, "");
+}
+
+function distanceKm(
+  aLat: number,
+  aLng: number,
+  bLat: number,
+  bLng: number,
+) {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(bLat - aLat);
+  const dLng = toRad(bLng - aLng);
+  const lat1 = toRad(aLat);
+  const lat2 = toRad(bLat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+}
+
+function makeGymPin() {
+  const el = document.createElement("div");
+  el.className = "gym-detail-pin";
+  const hit = document.createElement("div");
+  hit.className = "gym-detail-pin-hit is-selected";
+  const img = document.createElement("img");
+  img.src = "/pins/gym-pin.png";
+  img.alt = "";
+  hit.appendChild(img);
+  el.appendChild(hit);
+  return el;
+}
+
+function makeOriginPin() {
+  const el = document.createElement("div");
+  el.className = "gym-detail-origin-pin";
+  el.setAttribute("aria-label", "Lähtöosoite");
+  return el;
+}
+
 function GymDetailPage() {
   const { slug } = useParams();
+  const { label: locationLabel } = useAppLocation();
   const [gym, setGym] = useState<GymDetail | null>(null);
   const [status, setStatus] = useState<"loading" | "ok" | "missing">("loading");
+  const [fromDraft, setFromDraft] = useState("");
+  const [fromPoint, setFromPoint] = useState<GeoHit | null>(null);
+  const [geoStatus, setGeoStatus] = useState<"idle" | "loading" | "fail">(
+    "idle",
+  );
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<Map | null>(null);
+  const gymMarkerRef = useRef<Marker | null>(null);
+  const originMarkerRef = useRef<Marker | null>(null);
+
+  useEffect(() => {
+    setFromDraft(locationLabel === "Lähellä minua" ? "" : locationLabel);
+    setFromPoint(null);
+    setGeoStatus("idle");
+  }, [slug]);
 
   useEffect(() => {
     if (!slug) {
@@ -34,7 +105,9 @@ function GymDetailPage() {
           return r.json() as Promise<GymDetail>;
         },
       ),
-      fetch("http://localhost:3001/api/chains").then((r) => r.json() as Promise<Chain[]>),
+      fetch("http://localhost:3001/api/chains").then(
+        (r) => r.json() as Promise<Chain[]>,
+      ),
     ])
       .then(([apiGym, chainData]) => {
         if (cancelled) return;
@@ -72,6 +145,92 @@ function GymDetailPage() {
     };
   }, [slug]);
 
+  useEffect(() => {
+    if (status !== "ok" || !gym || !mapRef.current) return;
+    if (gym.lat == null || gym.lng == null) return;
+
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.remove();
+      mapInstanceRef.current = null;
+      gymMarkerRef.current = null;
+      originMarkerRef.current = null;
+    }
+
+    const map = new Map({
+      container: mapRef.current,
+      style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+      center: [gym.lng, gym.lat],
+      zoom: 14,
+    });
+    mapInstanceRef.current = map;
+
+    map.on("load", () => {
+      map.resize();
+      gymMarkerRef.current = new Marker({ element: makeGymPin() })
+        .setLngLat([gym.lng, gym.lat])
+        .addTo(map);
+    });
+
+    return () => {
+      gymMarkerRef.current?.remove();
+      originMarkerRef.current?.remove();
+      gymMarkerRef.current = null;
+      originMarkerRef.current = null;
+      mapInstanceRef.current?.remove();
+      mapInstanceRef.current = null;
+    };
+  }, [status, gym]);
+
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !gym || gym.lat == null || gym.lng == null) return;
+
+    originMarkerRef.current?.remove();
+    originMarkerRef.current = null;
+
+    if (!fromPoint) {
+      map.easeTo({ center: [gym.lng, gym.lat], zoom: 14 });
+      return;
+    }
+
+    originMarkerRef.current = new Marker({ element: makeOriginPin() })
+      .setLngLat([fromPoint.lng, fromPoint.lat])
+      .addTo(map);
+
+    const bounds = new LngLatBounds();
+    bounds.extend([gym.lng, gym.lat]);
+    bounds.extend([fromPoint.lng, fromPoint.lat]);
+    map.fitBounds(bounds, { padding: 72, maxZoom: 15 });
+  }, [fromPoint, gym]);
+
+  function lookupAddress() {
+    const q = fromDraft.trim();
+    if (q.length < 2) {
+      setFromPoint(null);
+      setGeoStatus("idle");
+      return;
+    }
+
+    setGeoStatus("loading");
+    fetch(`http://localhost:3001/api/geocode?q=${encodeURIComponent(q)}`)
+      .then((r) => r.json() as Promise<GeoHit[]>)
+      .then((rows) => {
+        const hit = rows[0];
+        if (!hit) {
+          setFromPoint(null);
+          setGeoStatus("fail");
+          return;
+        }
+        setFromDraft(hit.label);
+        setFromPoint(hit);
+        setGeoStatus("idle");
+      })
+      .catch(() => {
+        setFromPoint(null);
+        setGeoStatus("fail");
+      });
+  }
+
   if (status === "loading") {
     return (
       <main className="gym-detail">
@@ -92,81 +251,171 @@ function GymDetailPage() {
     );
   }
 
-  const card = getGymCardMock(gym.slug);
+  const detail = getGymDetailMock(gym.slug);
   const chain = gym.chain;
-  const mapsUrl =
-    gym.lat != null && gym.lng != null
-      ? `https://www.google.com/maps/search/?api=1&query=${gym.lat},${gym.lng}`
-      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-          `${gym.name} ${gym.address}`,
-        )}`;
+  const siteUrl = getChainWebsite(chain?.slug);
+  const heroSrc = chain?.image || "/pins/gym-pin.png";
+  const heroIsLogo = Boolean(chain?.image && chain.logoFit === "contain");
+  const heroIsPin = !chain?.image;
+  const promoTag =
+    detail.services.find((s) => PROMO_TAGS.includes(s)) ?? null;
+  const tripKm =
+    fromPoint && gym.lat != null && gym.lng != null
+      ? distanceKm(fromPoint.lat, fromPoint.lng, gym.lat, gym.lng)
+      : null;
 
-  const services = [
-    card.is247 ? "24/7" : null,
-    card.openNow && !card.is247 ? "Auki nyt" : null,
-    card.freeTrial ? "Ilmainen kokeilu" : null,
-    card.dayPass ? "Päivälippu" : null,
-  ].filter(Boolean) as string[];
+  const hours = detail.hours;
 
   return (
     <main className="gym-detail">
-      <Link className="gym-detail-back" to="/fi/kuntosalit">
-        ← Selaa kuntosaleja
-      </Link>
+      <div className="gym-detail-shell">
+        <aside className="gym-detail-panel">
+          <Link className="gym-detail-back" to="/fi/kuntosalit">
+            <ArrowLeft size={14} strokeWidth={2.2} aria-hidden="true" />
+            Selaa
+          </Link>
 
-      <div className="gym-detail-hero">
-        <span
-          className={[
-            "gym-detail-logo",
-            chain?.image ? (chain.logoFit === "contain" ? "is-logo" : "") : "is-pin",
-            chain?.image ? chain.logoClass || "" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-        >
-          <img src={chain?.image || "/pins/gym-pin.png"} alt="" />
-        </span>
-        <div className="gym-detail-hero-text">
-          <h1>{gym.name}</h1>
-          {chain ? <p className="gym-detail-chain">{chain.name}</p> : null}
+          <div
+            className={[
+              "gym-detail-logo",
+              heroIsLogo ? "is-logo" : "",
+              heroIsPin ? "is-pin" : "",
+              chain?.logoClass || "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          >
+            <img src={heroSrc} alt="" />
+          </div>
+
+          <div className="gym-detail-title-row">
+            <div className="gym-detail-titles">
+              <h1>{gym.name}</h1>
+              <p>{gym.address}</p>
+            </div>
+            <div className="gym-detail-price">
+              <span className="gym-detail-price-label">Alk.</span>
+              <strong>{detail.monthlyPrice} €</strong>
+              <span className="gym-detail-price-unit">/kk</span>
+            </div>
+          </div>
+
+          {siteUrl ? (
+            <a
+              className="gym-detail-cta"
+              href={siteUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Siirry salin sivulle
+            </a>
+          ) : null}
+
+          <hr className="gym-detail-divider" />
+
+          <section className="gym-detail-section">
+            <h2>Aukiolo ja pääsy</h2>
+            {!hours ? (
+              <p className="gym-detail-muted">Ei aukiolo- tai pääsytietoja.</p>
+            ) : (
+              <ul className="gym-detail-plans">
+                <li>
+                  <span>Ma–pe</span>
+                  <strong>{cleanHoursValue(hours.weekday, hours.is247)}</strong>
+                </li>
+                <li>
+                  <span>La–su</span>
+                  <strong>{cleanHoursValue(hours.weekend, hours.is247)}</strong>
+                </li>
+              </ul>
+            )}
+          </section>
+
+          <section className="gym-detail-section">
+            <h2>Jäsenyysvaihtoehdot</h2>
+            {detail.memberships.length > 0 ? (
+              <ul className="gym-detail-plans">
+                {detail.memberships.map((m) => (
+                  <li key={m.name}>
+                    <span>
+                      {m.name}
+                      {m.note ? ` · ${m.note}` : ""}
+                    </span>
+                    <strong>{m.priceEur} €</strong>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="gym-detail-muted">Ei jäsenyystietoja.</p>
+            )}
+          </section>
+
+          <section className="gym-detail-section">
+            <h2>Palvelut</h2>
+            {detail.services.length > 0 ? (
+              <ul className="gym-detail-tags">
+                {detail.services.map((s) => (
+                  <li
+                    key={s}
+                    className={
+                      promoTag === s ? "is-promo" : undefined
+                    }
+                  >
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="gym-detail-muted">Ei palvelutietoja.</p>
+            )}
+          </section>
+
+          {chain ? (
+            <p className="gym-detail-chain-line">Ketju: {chain.name}</p>
+          ) : null}
+        </aside>
+
+        <div className="gym-detail-map-panel" aria-label="Kartta">
+          <div className="gym-detail-map-float">
+            <MapPin size={18} strokeWidth={2.2} aria-hidden="true" />
+            <input
+              className="gym-detail-from"
+              type="text"
+              value={fromDraft}
+              placeholder="Lähtöosoite…"
+              aria-label="Lähtöosoite"
+              onChange={(e) => {
+                setFromDraft(e.target.value);
+                setGeoStatus("idle");
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") lookupAddress();
+              }}
+              onBlur={lookupAddress}
+            />
+            <span className="gym-detail-crumb-sep" aria-hidden="true">
+              &gt;
+            </span>
+            <span className="gym-detail-crumb-to" title={gym.name}>
+              {gym.name}
+            </span>
+          </div>
+          {geoStatus === "loading" ||
+          geoStatus === "fail" ||
+          tripKm != null ? (
+            <p className="gym-detail-route-meta">
+              {geoStatus === "loading"
+                ? "Haetaan osoitetta…"
+                : geoStatus === "fail"
+                  ? "Osoitetta ei löytynyt"
+                  : tripKm != null
+                    ? `Matka salille noin ${tripKm.toFixed(1).replace(".", ",")} km`
+                    : null}
+            </p>
+          ) : null}
+          <div className="gym-detail-map" ref={mapRef} />
         </div>
       </div>
-
-      <section className="gym-detail-block">
-        <h2>Sijainti</h2>
-        <p>{gym.address}</p>
-        <p className="gym-detail-muted">{gym.city}</p>
-        <p className="gym-detail-distance">
-          {formatDistanceKm(card.distanceKm)}
-        </p>
-      </section>
-
-      <section className="gym-detail-block">
-        <h2>Hinta</h2>
-        <p>{formatPriceFrom(card.priceFrom)}</p>
-      </section>
-
-      <section className="gym-detail-block">
-        <h2>Palvelut</h2>
-        {services.length > 0 ? (
-          <ul className="gym-detail-tags">
-            {services.map((s) => (
-              <li key={s}>{s}</li>
-            ))}
-          </ul>
-        ) : (
-          <p className="gym-detail-muted">Ei lisätietoja vielä.</p>
-        )}
-      </section>
-
-      <a
-        className="gym-detail-cta"
-        href={mapsUrl}
-        target="_blank"
-        rel="noreferrer"
-      >
-        Avaa kartalla
-      </a>
     </main>
   );
 }
