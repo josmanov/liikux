@@ -96,7 +96,7 @@
   min-width: 0;
   box-sizing: border-box;
   background: var(--color-bg);
-  padding: 0;
+  padding: 1.25rem 0 0;
 }
 
 .gym-detail-map-col::before {
