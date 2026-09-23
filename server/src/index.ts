@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import { eq } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import { chains, gyms } from "../db/schema.js";
@@ -22,6 +23,32 @@ app.get("/api/chains", async (_req, res) => {
 app.get("/api/gyms", async (_req, res) => {
   const rows = await db.select().from(gyms);
   res.json(rows);
+});
+
+app.get("/api/gyms/:slug", async (req, res) => {
+  const slug = String(req.params.slug ?? "").trim();
+  if (!slug) {
+    res.status(400).json({ error: "slug required" });
+    return;
+  }
+
+  const rows = await db.select().from(gyms).where(eq(gyms.slug, slug)).limit(1);
+  const gym = rows[0];
+  if (!gym) {
+    res.status(404).json({ error: "not found" });
+    return;
+  }
+
+  const chainRows = await db
+    .select()
+    .from(chains)
+    .where(eq(chains.id, gym.chainId))
+    .limit(1);
+
+  res.json({
+    ...gym,
+    chain: chainRows[0] ?? null,
+  });
 });
 
 app.get("/api/geocode", async (req, res) => {

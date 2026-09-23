@@ -6,6 +6,7 @@ export type GymCardMock = {
   is247: boolean;
   freeTrial: boolean;
   openNow: boolean;
+  dayPass: boolean;
   audiences: AudienceId[];
 };
 
@@ -16,6 +17,7 @@ const bySlug: Record<string, GymCardMock> = {
     is247: false,
     freeTrial: true,
     openNow: true,
+    dayPass: true,
     audiences: ["men", "women"],
   },
   "elixia-itis": {
@@ -24,6 +26,7 @@ const bySlug: Record<string, GymCardMock> = {
     is247: false,
     freeTrial: true,
     openNow: true,
+    dayPass: false,
     audiences: ["men", "women", "seniors"],
   },
   "easyfit-kamppi": {
@@ -32,6 +35,7 @@ const bySlug: Record<string, GymCardMock> = {
     is247: true,
     freeTrial: true,
     openNow: true,
+    dayPass: true,
     audiences: ["men", "women"],
   },
   "easyfit-tikkurila": {
@@ -40,6 +44,7 @@ const bySlug: Record<string, GymCardMock> = {
     is247: true,
     freeTrial: false,
     openNow: true,
+    dayPass: false,
     audiences: ["men", "women", "kids"],
   },
   "fressi-tapiola": {
@@ -48,6 +53,7 @@ const bySlug: Record<string, GymCardMock> = {
     is247: false,
     freeTrial: true,
     openNow: false,
+    dayPass: true,
     audiences: ["women"],
   },
   "liikku-pasila": {
@@ -56,6 +62,7 @@ const bySlug: Record<string, GymCardMock> = {
     is247: false,
     freeTrial: false,
     openNow: true,
+    dayPass: false,
     audiences: ["men", "women", "seniors"],
   },
 };
@@ -80,6 +87,7 @@ function cardMockFromSlug(slug: string): GymCardMock {
     is247: h % 3 === 0,
     freeTrial: h % 2 === 0,
     openNow: h % 5 !== 0,
+    dayPass: h % 4 === 0,
     audiences: sets[h % sets.length],
   };
 }

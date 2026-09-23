@@ -158,6 +158,16 @@ function GymsPage() {
     );
     return cityCenters[key ?? "Helsinki"];
   }, [locationLabel]);
+
+  const areaCity = useMemo(() => {
+    const known = ["Helsinki", "Espoo", "Vantaa", "Tampere", "Turku", "Oulu"];
+    return (
+      known.find(
+        (city) => city.toLowerCase() === locationLabel.trim().toLowerCase(),
+      ) ?? null
+    );
+  }, [locationLabel]);
+
   const priceLabel =
     priceOptions.find((o) => o.id === priceFilter)?.label ?? "Hinta";
 
@@ -186,6 +196,12 @@ function GymsPage() {
     const q = query.trim().toLowerCase();
 
     let list = gyms.filter((gym) => {
+      if (
+        areaCity &&
+        gym.city.toLowerCase() !== areaCity.toLowerCase()
+      ) {
+        return false;
+      }
       if (selectedChainFilter.mode === "none") return false;
       if (selectedChainFilter.mode === "some") {
         const matchesBrand = selectedChainFilter.ids.has(gym.chainId);
@@ -204,6 +220,18 @@ function GymsPage() {
           card.audiences.includes(id as "men" | "women" | "kids" | "seniors"),
         );
         if (!hit) return false;
+      }
+      if (priceFilter !== "all") {
+        const card = getGymCardMock(gym.slug);
+        if (priceFilter === "cheap" && !(card.priceFrom < 30)) return false;
+        if (
+          priceFilter === "mid" &&
+          !(card.priceFrom >= 30 && card.priceFrom <= 50)
+        ) {
+          return false;
+        }
+        if (priceFilter === "premium" && !(card.priceFrom > 50)) return false;
+        if (priceFilter === "daypass" && !card.dayPass) return false;
       }
       if (maxDistanceKm != null) {
         if (gym.lat == null || gym.lng == null) return false;
@@ -244,8 +272,10 @@ function GymsPage() {
     sortId,
     selectedChainFilter,
     selectedAudiences,
+    priceFilter,
     maxDistanceKm,
     origin,
+    areaCity,
   ]);
 
   const pageCount = Math.max(1, Math.ceil(visibleGyms.length / PAGE_SIZE));
@@ -279,7 +309,15 @@ function GymsPage() {
   useEffect(() => {
     setPage(1);
     window.scrollTo({ top: 0, behavior: "auto" });
-  }, [query, sortId, selectedChains, selectedAudiences, distanceFilter]);
+  }, [
+    query,
+    sortId,
+    selectedChains,
+    selectedAudiences,
+    distanceFilter,
+    priceFilter,
+    areaCity,
+  ]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
