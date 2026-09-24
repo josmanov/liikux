@@ -490,6 +490,52 @@ function GymsPage() {
       if (map.getZoom() < map.getMinZoom()) {
         map.setZoom(map.getMinZoom());
       }
+
+      void (async () => {
+        try {
+          const maskRes = await fetch("/geo/finland-mask.json");
+          const outlineRes = await fetch("/geo/finland.json");
+          if (!maskRes.ok || !outlineRes.ok) return;
+          const maskData = await maskRes.json();
+          const outlineData = await outlineRes.json();
+
+          if (!map.getSource("finland-mask")) {
+            map.addSource("finland-mask", {
+              type: "geojson",
+              data: maskData,
+            });
+            map.addLayer({
+              id: "finland-mask-fill",
+              type: "fill",
+              source: "finland-mask",
+              paint: {
+                "fill-color": "#0b1220",
+                "fill-opacity": 0.62,
+              },
+            });
+          }
+
+          if (!map.getSource("finland-outline")) {
+            map.addSource("finland-outline", {
+              type: "geojson",
+              data: outlineData,
+            });
+            map.addLayer({
+              id: "finland-outline-line",
+              type: "line",
+              source: "finland-outline",
+              paint: {
+                "line-color": "#94a3b8",
+                "line-width": 1.2,
+                "line-opacity": 0.7,
+              },
+            });
+          }
+        } catch {
+          /* peite ei kaada karttaa */
+        }
+      })();
+
       setMapReady(true);
     });
 
