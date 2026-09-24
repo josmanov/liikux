@@ -2,7 +2,7 @@ import "./GymsPage.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ChevronDown, ChevronLeft, ChevronRight, SlidersHorizontal, X } from "lucide-react";
-import { LngLatBounds, Map, Marker } from "maplibre-gl";
+import { LngLatBounds, Map, Marker, type MapLayerMouseEvent } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type Chain, type Gym } from "../data/types";
 import {
@@ -13,7 +13,15 @@ import {
 import { extraGymsMock } from "../data/extraGymsMock";
 import { useAppLocation } from "../context/LocationContext";
 
-const PIN_TOUCH_PX = 40;
+function clusterTouchPx(zoom: number) {
+  const t = Math.min(1, Math.max(0, (zoom - 4.2) / 8));
+  return 10 + t * 8;
+}
+
+function markerScaleForZoom(zoom: number) {
+  const t = Math.min(1, Math.max(0, (zoom - 4.2) / 8));
+  return 0.42 + t * 0.58;
+}
 const HANGO: [number, number] = [22.968, 59.824];
 const NUORGAM: [number, number] = [27.879, 70.086];
 const FINLAND_VIEW: [[number, number], [number, number]] = [
@@ -28,6 +36,72 @@ const MAP_MAX_BOUNDS: [[number, number], [number, number]] = [
   [4.0, 53.5],
   [44.0, 73.0],
 ];
+
+type MaakuntaGeom = {
+  type: "Polygon" | "MultiPolygon";
+  coordinates: number[][][] | number[][][][];
+};
+
+function pointInRing(lng: number, lat: number, ring: number[][]) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = ring[i][0];
+    const yi = ring[i][1];
+    const xj = ring[j][0];
+    const yj = ring[j][1];
+    if (
+      yi > lat !== yj > lat &&
+      lng < ((xj - xi) * (lat - yi)) / (yj - yi + 0.0) + xi
+    ) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+function pointInPolygon(lng: number, lat: number, geom: MaakuntaGeom) {
+  const polys =
+    geom.type === "Polygon"
+      ? [geom.coordinates as number[][][]]
+      : (geom.coordinates as number[][][][]);
+  for (const poly of polys) {
+    if (!pointInRing(lng, lat, poly[0])) continue;
+    let inHole = false;
+    for (let i = 1; i < poly.length; i++) {
+      if (pointInRing(lng, lat, poly[i])) {
+        inHole = true;
+        break;
+      }
+    }
+    if (!inHole) return true;
+  }
+  return false;
+}
+
+function geomBBox(geom: MaakuntaGeom): [[number, number], [number, number]] {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  function walk(coords: unknown) {
+    if (!Array.isArray(coords)) return;
+    if (typeof coords[0] === "number") {
+      const lng = coords[0] as number;
+      const lat = coords[1] as number;
+      minX = Math.min(minX, lng);
+      maxX = Math.max(maxX, lng);
+      minY = Math.min(minY, lat);
+      maxY = Math.max(maxY, lat);
+      return;
+    }
+    for (const c of coords) walk(c);
+  }
+  walk(geom.coordinates);
+  return [
+    [minX, minY],
+    [maxX, maxY],
+  ];
+}
 
 function applyFinlandMinZoom(map: Map) {
   const cam = map.cameraForBounds(FINLAND_VIEW, { padding: 36 });
@@ -175,6 +249,11 @@ function GymsPage() {
   const [distanceFilter, setDistanceFilter] = useState("all");
   const [priceFilter, setPriceFilter] = useState("all");
   const [mapReady, setMapReady] = useState(false);
+  const [maakunnatReady, setMaakunnatReady] = useState(false);
+  const [selectedMaakunta, setSelectedMaakunta] = useState<string | null>(null);
+  const [gymMaakuntaMap, setGymMaakuntaMap] = useState<Record<string, string>>(
+    {},
+  );
   const [mapBounds, setMapBounds] = useState<{
     west: number;
     south: number;
@@ -190,7 +269,14 @@ function GymsPage() {
   const selectedIdRef = useRef<string | null>(null);
   const visibleGymsRef = useRef<Gym[]>([]);
   const inViewGymsRef = useRef<Gym[]>([]);
-  const fitKeyRef = useRef("");
+  const regionPickModeRef = useRef(true);
+  const selectedMaakuntaRef = useRef<string | null>(null);
+  const maakuntaFeaturesRef = useRef<
+    { nimi: string; maakunta: string; geometry: MaakuntaGeom }[]
+  >([]);
+  const fitKeyRef = useRef("origin:60.1699:24.9384");
+
+  const regionPickMode = selectedMaakunta == null;
 
   useEffect(() => {
     if (!chainSlug) return;
@@ -310,6 +396,9 @@ function GymsPage() {
         const km = distanceKm(origin.lat, origin.lng, gym.lat, gym.lng);
         if (km > maxDistanceKm) return false;
       }
+      if (selectedMaakunta) {
+        if (gymMaakuntaMap[gym.id] !== selectedMaakunta) return false;
+      }
       if (!q) return true;
       return (
         gym.name.toLowerCase().includes(q) ||
@@ -347,11 +436,16 @@ function GymsPage() {
     priceFilter,
     maxDistanceKm,
     origin,
+    selectedMaakunta,
+    gymMaakuntaMap,
   ]);
 
   visibleGymsRef.current = visibleGyms;
+  selectedMaakuntaRef.current = selectedMaakunta;
+  regionPickModeRef.current = regionPickMode;
 
   const inViewGyms = useMemo(() => {
+    if (regionPickMode) return [];
     if (!mapBounds) return visibleGyms;
     return visibleGyms.filter((g) => {
       if (g.lat == null || g.lng == null) return false;
@@ -362,7 +456,7 @@ function GymsPage() {
         g.lat <= mapBounds.north
       );
     });
-  }, [visibleGyms, mapBounds]);
+  }, [visibleGyms, mapBounds, regionPickMode]);
 
   inViewGymsRef.current = inViewGyms;
 
@@ -486,7 +580,6 @@ function GymsPage() {
         padding: 36,
         duration: 0,
       });
-      map.setCenter(FINLAND_CENTER);
       if (map.getZoom() < map.getMinZoom()) {
         map.setZoom(map.getMinZoom());
       }
@@ -495,6 +588,7 @@ function GymsPage() {
         try {
           const maskRes = await fetch("/geo/finland-mask.json");
           const outlineRes = await fetch("/geo/finland.json");
+          const maakuntaRes = await fetch("/geo/maakunnat.json");
           if (!maskRes.ok || !outlineRes.ok) return;
           const maskData = await maskRes.json();
           const outlineData = await outlineRes.json();
@@ -531,6 +625,115 @@ function GymsPage() {
               },
             });
           }
+
+          if (maakuntaRes.ok && !map.getSource("maakunnat")) {
+            const maakuntaData = await maakuntaRes.json();
+            maakuntaFeaturesRef.current = (
+              maakuntaData.features as {
+                properties: { nimi: string; maakunta: string };
+                geometry: MaakuntaGeom;
+              }[]
+            ).map((f) => ({
+              nimi: f.properties.nimi,
+              maakunta: f.properties.maakunta,
+              geometry: f.geometry,
+            }));
+
+            map.addSource("maakunnat", {
+              type: "geojson",
+              data: maakuntaData,
+              promoteId: "maakunta",
+            });
+            map.addLayer({
+              id: "maakunnat-fill",
+              type: "fill",
+              source: "maakunnat",
+              paint: {
+                "fill-color": [
+                  "match",
+                  ["get", "maakunta"],
+                  "01",
+                  "#1e3a5f",
+                  "02",
+                  "#4a7fa8",
+                  "04",
+                  "#9ec5e0",
+                  "05",
+                  "#2c5282",
+                  "06",
+                  "#6b9fc4",
+                  "07",
+                  "#c5dceb",
+                  "08",
+                  "#254a73",
+                  "09",
+                  "#5a8fb5",
+                  "10",
+                  "#a8cfe3",
+                  "11",
+                  "#1b3554",
+                  "12",
+                  "#7eb0cc",
+                  "13",
+                  "#d6e8f2",
+                  "14",
+                  "#345f8a",
+                  "15",
+                  "#8ebfd6",
+                  "16",
+                  "#b8d7e8",
+                  "17",
+                  "#e8f2f8",
+                  "18",
+                  "#f0f6fa",
+                  "19",
+                  "#163049",
+                  "21",
+                  "#3d6f9c",
+                  "#3b6e9e",
+                ],
+                "fill-opacity": [
+                  "case",
+                  ["boolean", ["feature-state", "hover"], false],
+                  0.72,
+                  0.42,
+                ],
+              },
+            });
+            map.addLayer({
+              id: "maakunnat-line",
+              type: "line",
+              source: "maakunnat",
+              paint: {
+                "line-color": "#0f2744",
+                "line-width": 1.4,
+                "line-opacity": 0.85,
+              },
+            });
+            try {
+              map.addLayer({
+                id: "maakunnat-label",
+                type: "symbol",
+                source: "maakunnat",
+                layout: {
+                  "text-field": ["get", "nimi"],
+                  "text-size": 11,
+                  "text-transform": "uppercase",
+                  "text-letter-spacing": 0.03,
+                  "text-max-width": 8,
+                  "text-allow-overlap": false,
+                },
+                paint: {
+                  "text-color": "#ffffff",
+                  "text-halo-color": "rgba(15, 39, 68, 0.8)",
+                  "text-halo-width": 1.5,
+                },
+              });
+            } catch {
+              /* fontti ei kaada alueita */
+            }
+            setMaakunnatReady(true);
+          }
         } catch {
           /* peite ei kaada karttaa */
         }
@@ -548,6 +751,7 @@ function GymsPage() {
       map.off("zoomend", onMaxOutView);
       map.off("moveend", onMaxOutView);
       setMapReady(false);
+      setMaakunnatReady(false);
       markersRef.current.forEach((m) => m.remove());
       markersRef.current.clear();
       originMarkerRef.current?.remove();
@@ -595,10 +799,17 @@ function GymsPage() {
     function syncPins() {
       clearMarkers();
 
+      if (regionPickModeRef.current) return;
+
       const gyms = visibleGymsRef.current.filter(
         (g) => g.lng != null && g.lat != null,
       );
       if (gyms.length === 0) return;
+
+      const zoom = map.getZoom();
+      const scale = markerScaleForZoom(zoom);
+      const touchPx = clusterTouchPx(zoom);
+      const touch2 = touchPx * touchPx;
 
       const pts = gyms.map((g, i) => ({
         i,
@@ -620,7 +831,6 @@ function GymsPage() {
         if (a !== b) parent[a] = b;
       }
 
-      const touch2 = PIN_TOUCH_PX * PIN_TOUCH_PX;
       for (let i = 0; i < pts.length; i++) {
         for (let j = i + 1; j < pts.length; j++) {
           const dx = pts[i].p.x - pts[j].p.x;
@@ -644,6 +854,7 @@ function GymsPage() {
           const el = document.createElement("div");
           el.className = "gym-pin";
           el.dataset.gymId = g.id;
+          el.style.setProperty("--pin-scale", String(scale));
 
           const hit = document.createElement("button");
           hit.type = "button";
@@ -688,6 +899,7 @@ function GymsPage() {
         const el = document.createElement("button");
         el.type = "button";
         el.className = "gym-cluster";
+        el.style.setProperty("--pin-scale", String(scale));
         el.textContent = String(group.length);
         el.setAttribute("aria-label", `${group.length} salia`);
         el.addEventListener("click", () => {
@@ -750,7 +962,107 @@ function GymsPage() {
       originMarkerRef.current?.remove();
       originMarkerRef.current = null;
     };
-  }, [visibleGyms, mapReady, origin.lat, origin.lng]);
+  }, [visibleGyms, mapReady, origin.lat, origin.lng, selectedMaakunta]);
+
+  useEffect(() => {
+    if (!maakunnatReady || maakuntaFeaturesRef.current.length === 0) return;
+    if (gyms.length === 0) {
+      setGymMaakuntaMap({});
+      return;
+    }
+    const next: Record<string, string> = {};
+    for (const g of gyms) {
+      if (g.lat == null || g.lng == null) continue;
+      for (const f of maakuntaFeaturesRef.current) {
+        if (pointInPolygon(g.lng, g.lat, f.geometry)) {
+          next[g.id] = f.nimi;
+          break;
+        }
+      }
+    }
+    setGymMaakuntaMap(next);
+  }, [gyms, maakunnatReady]);
+
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !mapReady || !maakunnatReady) return;
+
+    const hideOpen =
+      selectedMaakunta != null
+        ? (["!=", ["get", "nimi"], selectedMaakunta] as [
+            "!=",
+            ["get", string],
+            string,
+          ])
+        : null;
+
+    for (const id of ["maakunnat-fill", "maakunnat-line", "maakunnat-label"]) {
+      if (!map.getLayer(id)) continue;
+      map.setFilter(id, hideOpen);
+    }
+  }, [selectedMaakunta, mapReady, maakunnatReady]);
+
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !mapReady || !maakunnatReady) return;
+
+    let hoveredFeatureId: string | number | null = null;
+
+    function onEnter(e: MapLayerMouseEvent) {
+      map.getCanvas().style.cursor = "pointer";
+      const f = e.features?.[0];
+      if (!f || f.id == null) return;
+      if (hoveredFeatureId != null) {
+        map.setFeatureState(
+          { source: "maakunnat", id: hoveredFeatureId },
+          { hover: false },
+        );
+      }
+      hoveredFeatureId = f.id;
+      map.setFeatureState(
+        { source: "maakunnat", id: hoveredFeatureId },
+        { hover: true },
+      );
+    }
+
+    function onLeave() {
+      map.getCanvas().style.cursor = "";
+      if (hoveredFeatureId != null) {
+        map.setFeatureState(
+          { source: "maakunnat", id: hoveredFeatureId },
+          { hover: false },
+        );
+        hoveredFeatureId = null;
+      }
+    }
+
+    function onClick(e: MapLayerMouseEvent) {
+      const f = e.features?.[0];
+      const nimi = f?.properties?.nimi as string | undefined;
+      if (!nimi || !f?.geometry) return;
+      if (nimi === selectedMaakuntaRef.current) return;
+      selectedMaakuntaRef.current = nimi;
+      regionPickModeRef.current = false;
+      setSelectedMaakunta(nimi);
+      const bbox = geomBBox(f.geometry as MaakuntaGeom);
+      map.fitBounds(bbox, {
+        padding: 52,
+        duration: 750,
+        maxZoom: 10.5,
+      });
+    }
+
+    map.on("mousemove", "maakunnat-fill", onEnter);
+    map.on("mouseleave", "maakunnat-fill", onLeave);
+    map.on("click", "maakunnat-fill", onClick);
+
+    return () => {
+      map.off("mousemove", "maakunnat-fill", onEnter);
+      map.off("mouseleave", "maakunnat-fill", onLeave);
+      map.off("click", "maakunnat-fill", onClick);
+      map.getCanvas().style.cursor = "";
+    };
+  }, [mapReady, maakunnatReady]);
 
   useEffect(() => {
     const map = mapInstanceRef.current;
@@ -760,6 +1072,17 @@ function GymsPage() {
     const key = `origin:${origin.lat}:${origin.lng}`;
     if (key === fitKeyRef.current) return;
     fitKeyRef.current = key;
+
+    let nimi: string | null = null;
+    for (const f of maakuntaFeaturesRef.current) {
+      if (pointInPolygon(origin.lng, origin.lat, f.geometry)) {
+        nimi = f.nimi;
+        break;
+      }
+    }
+    selectedMaakuntaRef.current = nimi;
+    regionPickModeRef.current = nimi == null;
+    setSelectedMaakunta(nimi);
 
     map.easeTo({
       center: [origin.lng, origin.lat],
@@ -843,7 +1166,13 @@ function GymsPage() {
 
           <header className="browse-list-head">
             <h1>{pageTitle}</h1>
-            <p className="browse-list-count">{inViewGyms.length} paikkaa</p>
+            <p className="browse-list-count">
+              {regionPickMode
+                ? "Valitse maakunta kartalta"
+                : selectedMaakunta
+                  ? `${selectedMaakunta} · ${inViewGyms.length} paikkaa`
+                  : `${inViewGyms.length} paikkaa`}
+            </p>
           </header>
           </div>
 
@@ -1121,6 +1450,9 @@ function GymsPage() {
 
           <div className="browse-map-frame">
             <div className="browse-map" aria-label="Kartta" ref={mapRef} />
+            <p className="browse-region-hint">
+              {selectedMaakunta ?? "Valitse maakunta"}
+            </p>
             {selectedGym && selectedCard ? (
               <div className="browse-map-preview">
                 <button
@@ -1169,6 +1501,11 @@ function GymsPage() {
         </section>
 
         <section className="browse-list-main">
+          {regionPickMode ? (
+            <p className="browse-region-empty">
+              Valitse maakunta kartalta nähdäksesi salit.
+            </p>
+          ) : null}
           <ul className="browse-rows">
             {pageGyms.map((gym) => {
               const chain = chains.find((c) => c.id === gym.chainId);
