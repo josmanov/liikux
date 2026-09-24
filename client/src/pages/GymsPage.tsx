@@ -143,6 +143,12 @@ function GymsPage() {
   const [distanceFilter, setDistanceFilter] = useState("all");
   const [priceFilter, setPriceFilter] = useState("all");
   const [mapReady, setMapReady] = useState(false);
+  const [mapBounds, setMapBounds] = useState<{
+    west: number;
+    south: number;
+    east: number;
+    north: number;
+  } | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<Map | null>(null);
   const markersRef = useRef(new globalThis.Map<string, Marker>());
@@ -150,6 +156,9 @@ function GymsPage() {
   const selectFromMapRef = useRef(false);
   const hoveredIdRef = useRef<string | null>(null);
   const selectedIdRef = useRef<string | null>(null);
+  const visibleGymsRef = useRef<Gym[]>([]);
+  const inViewGymsRef = useRef<Gym[]>([]);
+  const fitKeyRef = useRef("");
 
   useEffect(() => {
     if (!chainSlug) return;
@@ -324,24 +333,39 @@ function GymsPage() {
     areaCity,
   ]);
 
-  const pageCount = Math.max(1, Math.ceil(visibleGyms.length / PAGE_SIZE));
+  visibleGymsRef.current = visibleGyms;
+
+  const inViewGyms = useMemo(() => {
+    if (!mapBounds) return visibleGyms;
+    return visibleGyms.filter((g) => {
+      if (g.lat == null || g.lng == null) return false;
+      return (
+        g.lng >= mapBounds.west &&
+        g.lng <= mapBounds.east &&
+        g.lat >= mapBounds.south &&
+        g.lat <= mapBounds.north
+      );
+    });
+  }, [visibleGyms, mapBounds]);
+
+  inViewGymsRef.current = inViewGyms;
+
+  const pageCount = Math.max(1, Math.ceil(inViewGyms.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
 
   const pageGyms = useMemo(() => {
     const start = (safePage - 1) * PAGE_SIZE;
-    return visibleGyms.slice(start, start + PAGE_SIZE);
-  }, [visibleGyms, safePage]);
-  const pageGymsRef = useRef(pageGyms);
-  pageGymsRef.current = pageGyms;
+    return inViewGyms.slice(start, start + PAGE_SIZE);
+  }, [inViewGyms, safePage]);
 
   const selectedGym = useMemo(() => {
     if (!selectedId) return null;
     return (
       gyms.find((g) => g.id === selectedId) ??
-      pageGyms.find((g) => g.id === selectedId) ??
+      visibleGyms.find((g) => g.id === selectedId) ??
       null
     );
-  }, [gyms, pageGyms, selectedId]);
+  }, [gyms, visibleGyms, selectedId]);
 
   const selectedChain = useMemo(() => {
     if (!selectedGym) return null;
@@ -366,11 +390,16 @@ function GymsPage() {
   ]);
 
   useEffect(() => {
+    setPage(1);
+  }, [mapBounds]);
+
+  useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [safePage]);
 
   useEffect(() => {
     if (!selectedId || !selectFromMapRef.current) return;
+    if (!pageGyms.some((g) => g.id === selectedId)) return;
     selectFromMapRef.current = false;
 
     const el = document.querySelector<HTMLElement>(
@@ -388,7 +417,7 @@ function GymsPage() {
     }
 
     el.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [selectedId]);
+  }, [selectedId, pageGyms]);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -467,10 +496,20 @@ function GymsPage() {
       markersRef.current.clear();
     }
 
+    function readBounds() {
+      const b = map.getBounds();
+      return {
+        west: b.getWest(),
+        south: b.getSouth(),
+        east: b.getEast(),
+        north: b.getNorth(),
+      };
+    }
+
     function syncPins() {
       clearMarkers();
 
-      const gyms = pageGymsRef.current.filter(
+      const gyms = visibleGymsRef.current.filter(
         (g) => g.lng != null && g.lat != null,
       );
       if (gyms.length === 0) return;
@@ -536,6 +575,10 @@ function GymsPage() {
           hit.addEventListener("mouseenter", () => setHoveredId(g.id));
           hit.addEventListener("mouseleave", () => setHoveredId(null));
           hit.addEventListener("click", () => {
+            const idx = inViewGymsRef.current.findIndex((x) => x.id === g.id);
+            if (idx >= 0) {
+              setPage(Math.floor(idx / PAGE_SIZE) + 1);
+            }
             selectFromMapRef.current = true;
             setSelectedId(g.id);
           });
@@ -589,34 +632,67 @@ function GymsPage() {
         .addTo(map);
     }
 
-    function fitToGyms() {
-      const gyms = pageGyms.filter((g) => g.lng != null && g.lat != null);
-      const bounds = new LngLatBounds();
-      gyms.forEach((g) => bounds.extend([g.lng as number, g.lat as number]));
-      if (origin.lat != null && origin.lng != null) {
-        bounds.extend([origin.lng, origin.lat]);
-      }
-      if (bounds.isEmpty()) return;
-      map.fitBounds(bounds, { padding: 72, maxZoom: 12 });
+    function onMapIdle() {
+      syncPins();
+      const next = readBounds();
+      setMapBounds((prev) => {
+        if (
+          prev &&
+          Math.abs(prev.west - next.west) < 1e-7 &&
+          Math.abs(prev.south - next.south) < 1e-7 &&
+          Math.abs(prev.east - next.east) < 1e-7 &&
+          Math.abs(prev.north - next.north) < 1e-7
+        ) {
+          return prev;
+        }
+        return next;
+      });
     }
 
     syncPins();
     syncOriginPin();
-    fitToGyms();
+    setMapBounds(readBounds());
     map.resize();
 
-    map.on("moveend", syncPins);
-    map.on("zoomend", syncPins);
+    map.on("moveend", onMapIdle);
+    map.on("zoomend", onMapIdle);
 
     return () => {
-      map.off("moveend", syncPins);
-      map.off("zoomend", syncPins);
+      map.off("moveend", onMapIdle);
+      map.off("zoomend", onMapIdle);
       clearMarkers();
       originMarkerRef.current?.remove();
       originMarkerRef.current = null;
     };
-  }, [pageGyms, mapReady, origin.lat, origin.lng]);
+  }, [visibleGyms, mapReady, origin.lat, origin.lng]);
 
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !mapReady) return;
+
+    const key = `${visibleGyms.length}:${origin.lat}:${origin.lng}:${areaCity ?? ""}:${selectedChains.join(",")}:${distanceFilter}:${priceFilter}:${query}`;
+    if (key === fitKeyRef.current && visibleGyms.length > 0) return;
+    fitKeyRef.current = key;
+
+    const withCoords = visibleGyms.filter((g) => g.lng != null && g.lat != null);
+    const bounds = new LngLatBounds();
+    withCoords.forEach((g) => bounds.extend([g.lng as number, g.lat as number]));
+    if (origin.lat != null && origin.lng != null) {
+      bounds.extend([origin.lng, origin.lat]);
+    }
+    if (bounds.isEmpty()) return;
+    map.fitBounds(bounds, { padding: 72, maxZoom: 12 });
+  }, [
+    visibleGyms,
+    mapReady,
+    origin.lat,
+    origin.lng,
+    areaCity,
+    selectedChains,
+    distanceFilter,
+    priceFilter,
+    query,
+  ]);
   useEffect(() => {
     markersRef.current.forEach((marker, id) => {
       const hit = marker.getElement().querySelector(".gym-pin-hit");
@@ -693,7 +769,7 @@ function GymsPage() {
 
           <header className="browse-list-head">
             <h1>{pageTitle}</h1>
-            <p className="browse-list-count">{visibleGyms.length} paikkaa</p>
+            <p className="browse-list-count">{inViewGyms.length} paikkaa</p>
           </header>
           </div>
 
@@ -1092,7 +1168,7 @@ function GymsPage() {
             })}
           </ul>
 
-          {visibleGyms.length > PAGE_SIZE ? (
+          {inViewGyms.length > PAGE_SIZE ? (
             <nav className="browse-pager" aria-label="Sivutus">
               <button
                 type="button"
