@@ -136,7 +136,7 @@
 }
 
 .area-select-suggestions button:hover {
-  background: rgba(132, 204, 22, 0.18);
+  background: rgba(255, 191, 0, 0.18);
   color: var(--color-brand);
 }
 
@@ -177,6 +177,6 @@
 
 .area-select-cities button:hover,
 .area-select-cities button.is-on {
-  background: rgba(132, 204, 22, 0.18);
+  background: rgba(255, 191, 0, 0.18);
   color: var(--color-brand);
 }

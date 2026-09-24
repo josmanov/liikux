@@ -150,7 +150,7 @@
   padding: 0.35rem 0.95rem;
   border: 1.5px solid var(--color-brand);
   border-radius: 999px;
-  background: rgba(132, 204, 22, 0.12);
+  background: rgba(255, 191, 0, 0.12);
   color: var(--color-text);
   font-family: var(--font-body);
   font-size: 0.9rem;
@@ -161,7 +161,7 @@
 }
 
 .browse-filters-more:hover {
-  background: rgba(132, 204, 22, 0.22);
+  background: rgba(255, 191, 0, 0.22);
 }
 
 .browse-filter-label {
@@ -247,7 +247,7 @@
   display: block;
   width: 100%;
   margin: 0;
-  accent-color: #f7ff09;
+  accent-color: var(--color-brand);
   cursor: pointer;
 }
 
@@ -362,7 +362,7 @@
 
 .browse-filter-menu button:hover,
 .browse-filter-menu button.is-on {
-  background: rgba(132, 204, 22, 0.18);
+  background: rgba(255, 191, 0, 0.18);
   color: var(--color-brand);
 }
 
@@ -499,7 +499,7 @@
 
 .browse-sort-menu button:hover,
 .browse-sort-menu button.is-on {
-  background: rgba(132, 204, 22, 0.18);
+  background: rgba(255, 191, 0, 0.18);
   color: var(--color-brand);
 }
 
@@ -800,7 +800,7 @@
   height: 2.1rem;
   padding: 0 0.75rem;
   border-radius: 9px;
-  background: #f7ff09;
+  background: var(--color-brand);
   color: #0b1220;
   font-size: 0.82rem;
   font-weight: 700;
@@ -987,7 +987,7 @@
 }
 
 .browse-tag.is-247 {
-  background: rgba(132, 204, 22, 0.2);
+  background: rgba(255, 191, 0, 0.2);
   color: var(--color-brand);
 }
 
@@ -1023,7 +1023,7 @@
   padding: 0;
   border: 2px solid #0b1220;
   border-radius: 999px;
-  background: #f7ff09;
+  background: var(--color-brand);
   color: #0b1220;
   font-size: 0.85rem;
   font-weight: 700;
@@ -1073,7 +1073,7 @@
   transform: scale(1.35);
   padding: 3px;
   box-sizing: border-box;
-  background: #F7FF09;
+  background: var(--color-brand);
   box-shadow:
     0 0 0 2px #000000,
     0 5px 14px rgba(0, 0, 0, 0.45);
@@ -1082,7 +1082,7 @@
 
 .gym-pin-hit.is-hovered.is-selected {
   transform: scale(1.4);
-  background: #F7FF09;
+  background: var(--color-brand);
 }
 
 .gym-pin-hit.is-selected img {

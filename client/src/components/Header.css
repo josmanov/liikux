@@ -1,4 +1,4 @@
-﻿.header {
+.header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -17,6 +17,7 @@
 .header-right {
     position: relative;
     z-index: 1;
+    flex-shrink: 0;
 }
 
 .header-logo {
@@ -53,7 +54,7 @@
     border-radius: 2px;
 }
 
-.header-right a.header-login {
+.header-right a.header-cta {
   position: relative;
   font-size: 12px;
   text-transform: uppercase;
@@ -70,12 +71,12 @@
   background: var(--color-brand);
 }
 
-.header-right a.header-login:hover {
+.header-right a.header-cta:hover {
   transform: scale(1.1);
-  box-shadow: 0 10px 24px rgba(132, 204, 22, 0.25);
+  box-shadow: 0 10px 24px rgba(255, 191, 0, 0.25);
 }
 
-.header-right a.header-login:active {
+.header-right a.header-cta:active {
   transform: translateY(-1px);
-  box-shadow: 0 5px 12px rgba(132, 204, 22, 0.2);
+  box-shadow: 0 5px 12px rgba(255, 191, 0, 0.2);
 }

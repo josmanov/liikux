@@ -51,6 +51,13 @@ const chainRows = [
     logoFit: "contain",
     logoClass: "logo-liikku",
   },
+  {
+    id: "c-other",
+    slug: "muut",
+    name: "Muut",
+    image: "/pins/gym-pin.png",
+    logoFit: "contain",
+  },
 ];
 
 const gymRows = [

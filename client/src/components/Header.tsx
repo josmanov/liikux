@@ -1,5 +1,6 @@
 ﻿import { Link } from "react-router-dom";
 import AreaSelect from "./AreaSelect";
+import HeaderSearch from "./HeaderSearch";
 import "flag-icons/css/flag-icons.min.css";
 import "./uiverse-playstore.css";
 import "./Header.css";
@@ -15,20 +16,21 @@ function Header() {
       </div>
 
       <div className="header-right">
-        <Link to="/fi/kuntosalit" className="playstore-button is-plain">
+        <HeaderSearch />
+        <Link to="/#suositut" className="playstore-button is-plain">
           <span className="texts">
-            <span className="text-2">Selaa kuntosaleja</span>
+            <span className="text-2">Suositukset</span>
           </span>
         </Link>
         <button
           type="button"
-          className="playstore-button is-plain header-lang"
+          className="header-lang playstore-button is-plain"
           aria-label="Suomi"
         >
           <span className="fi fi-fi"></span>
         </button>
-        <Link to="/login" className="header-login">
-          Kirjaudu
+        <Link to="/fi/kuntosalit" className="header-cta">
+          Selaa kuntosaleja
         </Link>
       </div>
     </header>

@@ -1,0 +1,142 @@
+.header-search {
+  position: relative;
+  flex: 0 0 auto;
+  width: 9.25rem;
+  display: flex;
+  align-items: center;
+  z-index: 2;
+}
+
+.header-search-icon {
+  position: absolute;
+  left: 0.7rem;
+  color: #bdbecb;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.header-search-input {
+  font-family: var(--font-body);
+  width: 100%;
+  min-height: 2.35rem;
+  height: 2.35rem;
+  padding-left: 2.1rem;
+  padding-right: 0.75rem;
+  box-shadow: 0 0 0 1.5px #2b2c37, 0 0 25px -17px #000;
+  border: 0;
+  border-radius: 12px;
+  background-color: #16171d;
+  outline: none;
+  color: #bdbecb;
+  font-size: 0.92rem;
+  font-weight: 500;
+  box-sizing: border-box;
+  transition: all 0.25s cubic-bezier(0.19, 1, 0.22, 1);
+  cursor: text;
+}
+
+.header-search-input::placeholder {
+  color: #bdbecb;
+  font-weight: 500;
+}
+
+.header-search-input:hover {
+  box-shadow: 0 0 0 2.5px #2f303d, 0 0 25px -15px #000;
+}
+
+.header-search-input:focus {
+  box-shadow: 0 0 0 2.5px #2f303d;
+  color: #e8e8ef;
+}
+
+.header-search-panel {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  left: 0;
+  right: auto;
+  width: 16rem;
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 0.55rem 0;
+  border-radius: 16px;
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4);
+  z-index: 40;
+}
+
+.header-search-section {
+  padding: 0.15rem 0 0.35rem;
+}
+
+.header-search-section-label {
+  margin: 0;
+  padding: 0.35rem 0.9rem 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8b8c98;
+}
+
+.header-search-section ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.header-search-hit {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.9rem;
+  text-decoration: none;
+  color: #e8e8ef;
+  font-size: 0.92rem;
+}
+
+.header-search-hit:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.header-search-hit img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.header-search-hit-fallback {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: #2b2c37;
+  flex-shrink: 0;
+}
+
+.header-search-hit-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.header-search-hit-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-search-hit-meta {
+  font-size: 0.75rem;
+  color: #8b8c98;
+}
+
+.header-search-empty {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  color: #8b8c98;
+  font-size: 0.9rem;
+}
