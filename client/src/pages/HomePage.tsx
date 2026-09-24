@@ -1,6 +1,6 @@
 import "./HomePage.css";
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
   Bike,
@@ -76,6 +76,7 @@ function LajiIcon({ name, Icon }: { name: string; Icon?: LucideIcon }) {
 
 function LocateButton() {
   const hover = usePickHover();
+  const navigate = useNavigate();
   const { useMyLocation } = useAppLocation();
 
   return (
@@ -83,7 +84,10 @@ function LocateButton() {
       type="button"
       className="hero-locate"
       aria-label="Käytä sijaintiani"
-      onClick={useMyLocation}
+      onClick={() => {
+        useMyLocation();
+        navigate("/fi/kuntosalit");
+      }}
       onMouseEnter={hover.onMouseEnter}
       onMouseLeave={hover.onMouseLeave}
     >
@@ -168,8 +172,28 @@ function HomePage() {
   const [chainPopupOpen, setChainPopupOpen] = useState(false);
   const [chains, setChains] = useState<Chain[]>([]);
   const [gyms, setGyms] = useState<Gym[]>([]);
-  const { label, setLabel } = useAppLocation();
+  const { label, setLocation } = useAppLocation();
+  const navigate = useNavigate();
   const [addressDraft, setAddressDraft] = useState("");
+
+  function goBrowseWithAddress(raw: string) {
+    const q = raw.trim() || "Helsinki";
+    fetch(`http://localhost:3001/api/geocode?q=${encodeURIComponent(q)}`)
+      .then((r) => r.json())
+      .then((rows: { label: string; lat: number; lng: number }[]) => {
+        const hit = rows[0];
+        if (hit) {
+          setLocation({ label: hit.label, lat: hit.lat, lng: hit.lng });
+        } else {
+          setLocation({ label: q });
+        }
+        navigate("/fi/kuntosalit");
+      })
+      .catch(() => {
+        setLocation({ label: q });
+        navigate("/fi/kuntosalit");
+      });
+  }
 
   useEffect(() => {
     if (label === "Helsinki" || label === "Lähellä minua") {
@@ -228,12 +252,12 @@ function HomePage() {
                 onChange={(e) => setAddressDraft(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    setLabel(addressDraft.trim() || "Helsinki");
+                    goBrowseWithAddress(addressDraft);
                   }
                 }}
                 onBlur={() => {
                   if (addressDraft.trim()) {
-                    setLabel(addressDraft.trim());
+                    setLocation({ label: addressDraft.trim() });
                   }
                 }}
               />

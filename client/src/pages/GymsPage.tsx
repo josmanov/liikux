@@ -123,7 +123,11 @@ const PAGE_SIZE = 24;
 
 function GymsPage() {
   const { slug: chainSlug } = useParams();
-  const { label: locationLabel } = useAppLocation();
+  const {
+    label: locationLabel,
+    lat: locationLat,
+    lng: locationLng,
+  } = useAppLocation();
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [chains, setChains] = useState<Chain[]>([]);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -142,6 +146,7 @@ function GymsPage() {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<Map | null>(null);
   const markersRef = useRef(new globalThis.Map<string, Marker>());
+  const originMarkerRef = useRef<Marker | null>(null);
   const selectFromMapRef = useRef(false);
   const hoveredIdRef = useRef<string | null>(null);
   const selectedIdRef = useRef<string | null>(null);
@@ -191,11 +196,14 @@ function GymsPage() {
     distancePresets[distancePresetIndex]?.km ?? null;
 
   const origin = useMemo(() => {
+    if (locationLat != null && locationLng != null) {
+      return { lat: locationLat, lng: locationLng };
+    }
     const key = Object.keys(cityCenters).find(
       (city) => locationLabel.toLowerCase() === city.toLowerCase(),
     );
     return cityCenters[key ?? "Helsinki"];
-  }, [locationLabel]);
+  }, [locationLabel, locationLat, locationLng]);
 
   const areaCity = useMemo(() => {
     const known = ["Helsinki", "Espoo", "Vantaa", "Tampere", "Turku", "Oulu"];
@@ -427,6 +435,8 @@ function GymsPage() {
       setMapReady(false);
       markersRef.current.forEach((m) => m.remove());
       markersRef.current.clear();
+      originMarkerRef.current?.remove();
+      originMarkerRef.current = null;
       mapInstanceRef.current = null;
       map.remove();
     };
@@ -567,15 +577,31 @@ function GymsPage() {
       });
     }
 
+    function syncOriginPin() {
+      originMarkerRef.current?.remove();
+      originMarkerRef.current = null;
+      if (origin.lat == null || origin.lng == null) return;
+      const el = document.createElement("div");
+      el.className = "gym-origin-pin";
+      el.setAttribute("aria-label", "Lähtöosoite");
+      originMarkerRef.current = new Marker({ element: el })
+        .setLngLat([origin.lng, origin.lat])
+        .addTo(map);
+    }
+
     function fitToGyms() {
       const gyms = pageGyms.filter((g) => g.lng != null && g.lat != null);
-      if (gyms.length === 0) return;
       const bounds = new LngLatBounds();
       gyms.forEach((g) => bounds.extend([g.lng as number, g.lat as number]));
+      if (origin.lat != null && origin.lng != null) {
+        bounds.extend([origin.lng, origin.lat]);
+      }
+      if (bounds.isEmpty()) return;
       map.fitBounds(bounds, { padding: 72, maxZoom: 12 });
     }
 
     syncPins();
+    syncOriginPin();
     fitToGyms();
     map.resize();
 
@@ -586,8 +612,10 @@ function GymsPage() {
       map.off("moveend", syncPins);
       map.off("zoomend", syncPins);
       clearMarkers();
+      originMarkerRef.current?.remove();
+      originMarkerRef.current = null;
     };
-  }, [pageGyms, mapReady]);
+  }, [pageGyms, mapReady, origin.lat, origin.lng]);
 
   useEffect(() => {
     markersRef.current.forEach((marker, id) => {

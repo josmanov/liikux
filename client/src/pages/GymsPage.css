@@ -1001,6 +1001,16 @@
   color: #fde047;
 }
 
+.gym-origin-pin {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #2563eb;
+  border: 3px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  transform: translate(-50%, -50%);
+}
+
 .gym-pin {
   width: 40px;
   height: 40px;

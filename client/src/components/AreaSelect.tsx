@@ -18,7 +18,7 @@ function shortLabel(label: string) {
 }
 
 function AreaSelect() {
-  const { label, setLabel, useMyLocation } = useAppLocation();
+  const { label, setLocation, useMyLocation } = useAppLocation();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -59,12 +59,12 @@ function AreaSelect() {
   }, [draft, open]);
 
   function pickSuggestion(item: Suggestion) {
-    setLabel(item.label);
+    setLocation({ label: item.label, lat: item.lat, lng: item.lng });
     setOpen(false);
   }
 
   function pickCity(name: string) {
-    setLabel(name);
+    setLocation({ label: name });
     setOpen(false);
   }
 
