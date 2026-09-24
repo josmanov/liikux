@@ -1,6 +1,6 @@
 import "./GymsPage.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { ChevronDown, ChevronLeft, ChevronRight, SlidersHorizontal, X } from "lucide-react";
 import { LngLatBounds, Map, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -46,6 +46,27 @@ function isListedBrandChain(chain: { slug: string }) {
   return chainFilterOptions.some(
     (opt) =>
       opt.id !== OTHER_CHAIN_FILTER_ID && chainMatchesFilterKey(chain, opt.id),
+  );
+}
+
+function filterIdFromChainSlug(slug: string, chains: Chain[]) {
+  const fromOptions = chainFilterOptions.find(
+    (opt) =>
+      opt.id !== OTHER_CHAIN_FILTER_ID &&
+      chainMatchesFilterKey({ slug }, opt.id),
+  );
+  if (fromOptions) return fromOptions.id;
+
+  const chain = chains.find((c) => c.slug === slug);
+  if (!chain) return null;
+  if (!isListedBrandChain(chain)) return OTHER_CHAIN_FILTER_ID;
+
+  return (
+    chainFilterOptions.find(
+      (opt) =>
+        opt.id !== OTHER_CHAIN_FILTER_ID &&
+        chainMatchesFilterKey(chain, opt.id),
+    )?.id ?? null
   );
 }
 
@@ -101,6 +122,7 @@ type FilterKey = "chains" | "audience" | "distance" | "price" | "sort";
 const PAGE_SIZE = 24;
 
 function GymsPage() {
+  const { slug: chainSlug } = useParams();
   const { label: locationLabel } = useAppLocation();
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [chains, setChains] = useState<Chain[]>([]);
@@ -124,9 +146,25 @@ function GymsPage() {
   const hoveredIdRef = useRef<string | null>(null);
   const selectedIdRef = useRef<string | null>(null);
 
+  useEffect(() => {
+    if (!chainSlug) return;
+    const filterId = filterIdFromChainSlug(chainSlug, chains);
+    if (filterId) setSelectedChains([filterId]);
+  }, [chainSlug, chains]);
+
+  useEffect(() => {
+    if (chainSlug) return;
+    setSelectedChains([...allChainFilterIds]);
+  }, [chainSlug]);
+
   const sortLabel =
     sortOptions.find((o) => o.id === sortId)?.label ?? "Lähimmät ensin";
   const chainFilterActive = selectedChains.length < allChainFilterIds.length;
+  const pageTitle =
+    selectedChains.length === 1
+      ? (chainFilterOptions.find((o) => o.id === selectedChains[0])?.label ??
+        "Kuntosalit")
+      : "Kuntosalit";
   const chainLabel =
     selectedChains.length === 0
       ? "Ketjut"
@@ -626,7 +664,7 @@ function GymsPage() {
           </div>
 
           <header className="browse-list-head">
-            <h1>Kuntosalit</h1>
+            <h1>{pageTitle}</h1>
             <p className="browse-list-count">{visibleGyms.length} paikkaa</p>
           </header>
           </div>
