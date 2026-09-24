@@ -8,7 +8,8 @@
     "start": "tsx src/index.ts",
     "db:push": "drizzle-kit push",
     "db:seed": "tsx src/seed.ts",
-    "db:sync-turku": "tsx src/sync-lipas-turku.ts"
+    "db:sync-turku": "tsx src/sync-lipas-turku.ts",
+    "db:sync-fi": "tsx src/sync-lipas-fi.ts"
   },
   "keywords": [],
   "author": "",

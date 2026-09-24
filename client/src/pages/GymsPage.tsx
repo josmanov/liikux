@@ -14,6 +14,38 @@ import { extraGymsMock } from "../data/extraGymsMock";
 import { useAppLocation } from "../context/LocationContext";
 
 const PIN_TOUCH_PX = 40;
+const HANGO: [number, number] = [22.968, 59.824];
+const NUORGAM: [number, number] = [27.879, 70.086];
+const FINLAND_VIEW: [[number, number], [number, number]] = [
+  [18.8, HANGO[1] - 0.35],
+  [31.8, NUORGAM[1] + 0.25],
+];
+const FINLAND_CENTER: [number, number] = [
+  (HANGO[0] + NUORGAM[0]) / 2,
+  (HANGO[1] + NUORGAM[1]) / 2,
+];
+const MAP_MAX_BOUNDS: [[number, number], [number, number]] = [
+  [4.0, 53.5],
+  [44.0, 73.0],
+];
+
+function applyFinlandMinZoom(map: Map) {
+  const cam = map.cameraForBounds(FINLAND_VIEW, { padding: 36 });
+  if (cam?.zoom == null) return;
+  map.setMinZoom(Math.max(1, cam.zoom - 0.65));
+}
+
+function centerFinlandIfMaxOut(map: Map) {
+  if (map.getZoom() > map.getMinZoom() + 0.12) return;
+  const c = map.getCenter();
+  if (
+    Math.abs(c.lng - FINLAND_CENTER[0]) < 0.08 &&
+    Math.abs(c.lat - FINLAND_CENTER[1]) < 0.08
+  ) {
+    return;
+  }
+  map.easeTo({ center: FINLAND_CENTER, duration: 280 });
+}
 
 const sortOptions = [
   { id: "nearest", label: "Lähimmät ensin" },
@@ -214,15 +246,6 @@ function GymsPage() {
     return cityCenters[key ?? "Helsinki"];
   }, [locationLabel, locationLat, locationLng]);
 
-  const areaCity = useMemo(() => {
-    const known = ["Helsinki", "Espoo", "Vantaa", "Tampere", "Turku", "Oulu"];
-    return (
-      known.find(
-        (city) => city.toLowerCase() === locationLabel.trim().toLowerCase(),
-      ) ?? null
-    );
-  }, [locationLabel]);
-
   const priceLabel =
     priceOptions.find((o) => o.id === priceFilter)?.label ?? "Hinta";
 
@@ -251,12 +274,6 @@ function GymsPage() {
     const q = query.trim().toLowerCase();
 
     let list = gyms.filter((gym) => {
-      if (
-        areaCity &&
-        gym.city.toLowerCase() !== areaCity.toLowerCase()
-      ) {
-        return false;
-      }
       if (selectedChainFilter.mode === "none") return false;
       if (selectedChainFilter.mode === "some") {
         const matchesBrand = selectedChainFilter.ids.has(gym.chainId);
@@ -330,7 +347,6 @@ function GymsPage() {
     priceFilter,
     maxDistanceKm,
     origin,
-    areaCity,
   ]);
 
   visibleGymsRef.current = visibleGyms;
@@ -386,7 +402,6 @@ function GymsPage() {
     selectedAudiences,
     distanceFilter,
     priceFilter,
-    areaCity,
   ]);
 
   useEffect(() => {
@@ -449,18 +464,43 @@ function GymsPage() {
     const map = new Map({
       container: mapRef.current,
       style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
-      center: [24.94, 60.17],
-      zoom: 11,
+      center: FINLAND_CENTER,
+      zoom: 4,
+      maxBounds: MAP_MAX_BOUNDS,
     });
 
     mapInstanceRef.current = map;
 
+    function onResize() {
+      applyFinlandMinZoom(map);
+    }
+
+    function onMaxOutView() {
+      centerFinlandIfMaxOut(map);
+    }
+
     map.on("load", () => {
       map.resize();
+      applyFinlandMinZoom(map);
+      map.fitBounds(FINLAND_VIEW, {
+        padding: 36,
+        duration: 0,
+      });
+      map.setCenter(FINLAND_CENTER);
+      if (map.getZoom() < map.getMinZoom()) {
+        map.setZoom(map.getMinZoom());
+      }
       setMapReady(true);
     });
 
+    map.on("zoomend", onMaxOutView);
+    map.on("moveend", onMaxOutView);
+    window.addEventListener("resize", onResize);
+
     return () => {
+      window.removeEventListener("resize", onResize);
+      map.off("zoomend", onMaxOutView);
+      map.off("moveend", onMaxOutView);
       setMapReady(false);
       markersRef.current.forEach((m) => m.remove());
       markersRef.current.clear();
@@ -669,30 +709,18 @@ function GymsPage() {
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !mapReady) return;
+    if (origin.lat == null || origin.lng == null) return;
 
-    const key = `${visibleGyms.length}:${origin.lat}:${origin.lng}:${areaCity ?? ""}:${selectedChains.join(",")}:${distanceFilter}:${priceFilter}:${query}`;
-    if (key === fitKeyRef.current && visibleGyms.length > 0) return;
+    const key = `origin:${origin.lat}:${origin.lng}`;
+    if (key === fitKeyRef.current) return;
     fitKeyRef.current = key;
 
-    const withCoords = visibleGyms.filter((g) => g.lng != null && g.lat != null);
-    const bounds = new LngLatBounds();
-    withCoords.forEach((g) => bounds.extend([g.lng as number, g.lat as number]));
-    if (origin.lat != null && origin.lng != null) {
-      bounds.extend([origin.lng, origin.lat]);
-    }
-    if (bounds.isEmpty()) return;
-    map.fitBounds(bounds, { padding: 72, maxZoom: 12 });
-  }, [
-    visibleGyms,
-    mapReady,
-    origin.lat,
-    origin.lng,
-    areaCity,
-    selectedChains,
-    distanceFilter,
-    priceFilter,
-    query,
-  ]);
+    map.easeTo({
+      center: [origin.lng, origin.lat],
+      zoom: 11,
+      duration: 600,
+    });
+  }, [mapReady, origin.lat, origin.lng]);
   useEffect(() => {
     markersRef.current.forEach((marker, id) => {
       const hit = marker.getElement().querySelector(".gym-pin-hit");
