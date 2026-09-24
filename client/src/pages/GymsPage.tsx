@@ -269,6 +269,7 @@ function GymsPage() {
   const selectedIdRef = useRef<string | null>(null);
   const visibleGymsRef = useRef<Gym[]>([]);
   const inViewGymsRef = useRef<Gym[]>([]);
+  const chainsByIdRef = useRef(new globalThis.Map<string, Chain>());
   const regionPickModeRef = useRef(true);
   const selectedMaakuntaRef = useRef<string | null>(null);
   const maakuntaFeaturesRef = useRef<
@@ -443,6 +444,7 @@ function GymsPage() {
   visibleGymsRef.current = visibleGyms;
   selectedMaakuntaRef.current = selectedMaakunta;
   regionPickModeRef.current = regionPickMode;
+  chainsByIdRef.current = new globalThis.Map(chains.map((c) => [c.id, c]));
 
   const inViewGyms = useMemo(() => {
     if (regionPickMode) return [];
@@ -851,20 +853,38 @@ function GymsPage() {
       groups.forEach((group) => {
         if (group.length === 1) {
           const { g } = group[0];
+          const chain = chainsByIdRef.current.get(g.chainId);
+          const brandImg =
+            chain?.image && !chain.image.includes("/pins/")
+              ? chain.image
+              : null;
           const el = document.createElement("div");
-          el.className = "gym-pin";
+          el.className = ["gym-pin", brandImg ? "is-brand-pin" : "is-plain-pin"]
+            .filter(Boolean)
+            .join(" ");
           el.dataset.gymId = g.id;
           el.style.setProperty("--pin-scale", String(scale));
+          if (g.id === selectedIdRef.current) {
+            el.classList.add("is-front");
+            el.style.zIndex = "6";
+          }
 
           const hit = document.createElement("button");
           hit.type = "button";
-          hit.className = "gym-pin-hit";
+          hit.className = [
+            "gym-pin-hit",
+            brandImg ? "is-brand" : "",
+            brandImg && chain?.logoFit === "contain" ? "is-logo" : "",
+            brandImg && chain?.logoClass ? chain.logoClass : "",
+          ]
+            .filter(Boolean)
+            .join(" ");
           if (g.id === selectedIdRef.current) hit.classList.add("is-selected");
           if (g.id === hoveredIdRef.current) hit.classList.add("is-hovered");
           hit.setAttribute("aria-label", g.name);
 
           const img = document.createElement("img");
-          img.src = "/pins/gym-pin.png";
+          img.src = brandImg || "/pins/gym-pin.png";
           img.alt = "";
           hit.appendChild(img);
           el.appendChild(hit);
@@ -872,6 +892,16 @@ function GymsPage() {
           hit.addEventListener("mouseenter", () => setHoveredId(g.id));
           hit.addEventListener("mouseleave", () => setHoveredId(null));
           hit.addEventListener("click", () => {
+            markersRef.current.forEach((m, mid) => {
+              const node = m.getElement();
+              if (mid === g.id) {
+                node.classList.add("is-front");
+                node.style.zIndex = "8";
+              } else if (mid !== hoveredIdRef.current) {
+                node.classList.remove("is-front");
+                node.style.zIndex = "";
+              }
+            });
             const idx = inViewGymsRef.current.findIndex((x) => x.id === g.id);
             if (idx >= 0) {
               setPage(Math.floor(idx / PAGE_SIZE) + 1);
@@ -962,7 +992,7 @@ function GymsPage() {
       originMarkerRef.current?.remove();
       originMarkerRef.current = null;
     };
-  }, [visibleGyms, mapReady, origin.lat, origin.lng, selectedMaakunta]);
+  }, [visibleGyms, mapReady, origin.lat, origin.lng, selectedMaakunta, chains]);
 
   useEffect(() => {
     if (!maakunnatReady || maakuntaFeaturesRef.current.length === 0) return;
@@ -1092,10 +1122,16 @@ function GymsPage() {
   }, [mapReady, origin.lat, origin.lng]);
   useEffect(() => {
     markersRef.current.forEach((marker, id) => {
-      const hit = marker.getElement().querySelector(".gym-pin-hit");
+      const el = marker.getElement();
+      const hit = el.querySelector(".gym-pin-hit");
       if (!hit) return;
+      const front = id === selectedId || id === hoveredId;
       hit.classList.toggle("is-hovered", id === hoveredId);
       hit.classList.toggle("is-selected", id === selectedId);
+      el.classList.toggle("is-front", front);
+      if (id === selectedId) el.style.zIndex = "8";
+      else if (id === hoveredId) el.style.zIndex = "5";
+      else el.style.zIndex = "";
     });
     hoveredIdRef.current = hoveredId;
     selectedIdRef.current = selectedId;
