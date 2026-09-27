@@ -86,7 +86,7 @@ function LocateButton() {
       aria-label="Käytä sijaintiani"
       onClick={() => {
         useMyLocation();
-        navigate("/fi/kuntosalit");
+        navigate("/fi/kuntosalit", { state: { focusOrigin: true } });
       }}
       onMouseEnter={hover.onMouseEnter}
       onMouseLeave={hover.onMouseLeave}
@@ -175,24 +175,21 @@ function HomePage() {
   const { label, setLocation } = useAppLocation();
   const navigate = useNavigate();
   const [addressDraft, setAddressDraft] = useState("");
+  const [suggestions, setSuggestions] = useState<
+    { id: string; label: string; lat: number; lng: number }[]
+  >([]);
+  const [suggestLoading, setSuggestLoading] = useState(false);
+  const [suggestOpen, setSuggestOpen] = useState(false);
 
-  function goBrowseWithAddress(raw: string) {
-    const q = raw.trim() || "Helsinki";
-    fetch(`http://localhost:3001/api/geocode?q=${encodeURIComponent(q)}`)
-      .then((r) => r.json())
-      .then((rows: { label: string; lat: number; lng: number }[]) => {
-        const hit = rows[0];
-        if (hit) {
-          setLocation({ label: hit.label, lat: hit.lat, lng: hit.lng });
-        } else {
-          setLocation({ label: q });
-        }
-        navigate("/fi/kuntosalit");
-      })
-      .catch(() => {
-        setLocation({ label: q });
-        navigate("/fi/kuntosalit");
-      });
+  function goBrowseWithPick(item: {
+    label: string;
+    lat: number;
+    lng: number;
+  }) {
+    setLocation({ label: item.label, lat: item.lat, lng: item.lng });
+    setSuggestOpen(false);
+    setSuggestions([]);
+    navigate("/fi/kuntosalit", { state: { focusOrigin: true } });
   }
 
   useEffect(() => {
@@ -202,6 +199,31 @@ function HomePage() {
       setAddressDraft(label);
     }
   }, [label]);
+
+  useEffect(() => {
+    const q = addressDraft.trim();
+    if (q.length < 2) {
+      setSuggestions([]);
+      setSuggestLoading(false);
+      return;
+    }
+
+    setSuggestLoading(true);
+    const t = window.setTimeout(() => {
+      fetch(`http://localhost:3001/api/geocode?q=${encodeURIComponent(q)}`)
+        .then((r) => r.json())
+        .then(
+          (data: { id: string; label: string; lat: number; lng: number }[]) => {
+            setSuggestions(Array.isArray(data) ? data : []);
+            setSuggestOpen(true);
+          },
+        )
+        .catch(() => setSuggestions([]))
+        .finally(() => setSuggestLoading(false));
+    }, 280);
+
+    return () => window.clearTimeout(t);
+  }, [addressDraft]);
 
   useEffect(() => {
     function measure() {
@@ -249,16 +271,24 @@ function HomePage() {
                 type="text"
                 placeholder=" "
                 value={addressDraft}
-                onChange={(e) => setAddressDraft(e.target.value)}
+                autoComplete="off"
+                onChange={(e) => {
+                  setAddressDraft(e.target.value);
+                  setSuggestOpen(true);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
-                    goBrowseWithAddress(addressDraft);
+                    e.preventDefault();
+                  }
+                  if (e.key === "Escape") {
+                    setSuggestOpen(false);
                   }
                 }}
+                onFocus={() => {
+                  if (addressDraft.trim().length >= 2) setSuggestOpen(true);
+                }}
                 onBlur={() => {
-                  if (addressDraft.trim()) {
-                    setLocation({ label: addressDraft.trim() });
-                  }
+                  window.setTimeout(() => setSuggestOpen(false), 160);
                 }}
               />
               <label className="hero-search-label" htmlFor="address_input">
@@ -266,6 +296,53 @@ function HomePage() {
               </label>
               <span className="hero-search-divider" aria-hidden="true" />
               <LocateButton />
+              {suggestOpen && addressDraft.trim().length >= 2 ? (
+                <div className="hero-suggest" role="listbox">
+                  {suggestLoading && suggestions.length === 0 ? (
+                    <p className="hero-suggest-empty">Haetaan…</p>
+                  ) : null}
+                  {!suggestLoading && suggestions.length === 0 ? (
+                    <p className="hero-suggest-empty">Ei tuloksia</p>
+                  ) : null}
+                  {suggestions.length > 0 ? (
+                    <ul className="hero-suggest-list">
+                      {suggestions.slice(0, 6).map((item) => {
+                        const comma = item.label.lastIndexOf(",");
+                        const name =
+                          comma >= 0
+                            ? item.label.slice(0, comma).trim()
+                            : item.label;
+                        const meta =
+                          comma >= 0
+                            ? item.label.slice(comma + 1).trim()
+                            : "";
+                        return (
+                          <li key={item.id}>
+                            <button
+                              type="button"
+                              className="hero-suggest-hit"
+                              role="option"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => goBrowseWithPick(item)}
+                            >
+                              <span className="hero-suggest-hit-text">
+                                <span className="hero-suggest-hit-name">
+                                  {name}
+                                </span>
+                                {meta ? (
+                                  <span className="hero-suggest-hit-meta">
+                                    {meta}
+                                  </span>
+                                ) : null}
+                              </span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
             <p className="hero-stats">
               {chainCount} kuntosaliketjua · {cityCount} kaupunkia

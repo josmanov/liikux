@@ -1,6 +1,6 @@
 import "./GymsPage.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { ChevronDown, ChevronLeft, ChevronRight, SlidersHorizontal, X } from "lucide-react";
 import { LngLatBounds, Map, Marker, type MapLayerMouseEvent } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -234,6 +234,7 @@ const PAGE_SIZE = 24;
 
 function GymsPage() {
   const { slug: chainSlug } = useParams();
+  const routeLocation = useLocation();
   const {
     label: locationLabel,
     lat: locationLat,
@@ -281,6 +282,10 @@ function GymsPage() {
     { nimi: string; maakunta: string; geometry: MaakuntaGeom }[]
   >([]);
   const fitKeyRef = useRef("origin:60.1699:24.9384");
+  const focusOriginRef = useRef(
+    (routeLocation.state as { focusOrigin?: boolean } | null)?.focusOrigin ===
+      true,
+  );
 
   const regionPickMode = selectedMaakunta == null;
 
@@ -1155,10 +1160,10 @@ function GymsPage() {
     const map = mapInstanceRef.current;
     if (!map || !mapReady) return;
     if (origin.lat == null || origin.lng == null) return;
+    if (!focusOriginRef.current) return;
+    if (!maakunnatReady || maakuntaFeaturesRef.current.length === 0) return;
 
     const key = `origin:${origin.lat}:${origin.lng}`;
-    if (key === fitKeyRef.current) return;
-    fitKeyRef.current = key;
 
     let nimi: string | null = null;
     for (const f of maakuntaFeaturesRef.current) {
@@ -1167,16 +1172,20 @@ function GymsPage() {
         break;
       }
     }
+
     selectedMaakuntaRef.current = nimi;
     regionPickModeRef.current = nimi == null;
     setSelectedMaakunta(nimi);
 
+    if (key === fitKeyRef.current && map.getZoom() >= 11.5) return;
+    fitKeyRef.current = key;
+
     map.easeTo({
       center: [origin.lng, origin.lat],
-      zoom: 11,
-      duration: 600,
+      zoom: 12,
+      duration: 650,
     });
-  }, [mapReady, origin.lat, origin.lng]);
+  }, [mapReady, maakunnatReady, origin.lat, origin.lng]);
   useEffect(() => {
     markersRef.current.forEach((marker, id) => {
       const el = marker.getElement();

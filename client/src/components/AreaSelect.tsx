@@ -96,8 +96,8 @@ function AreaSelect() {
               autoFocus
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && suggestions[0]) {
-                  pickSuggestion(suggestions[0]);
+                if (e.key === "Enter") {
+                  e.preventDefault();
                 }
               }}
             />
