@@ -13,20 +13,23 @@ import {
 import { extraGymsMock } from "../data/extraGymsMock";
 import { useAppLocation } from "../context/LocationContext";
 
-function clusterTouchPx(zoom: number) {
-  if (zoom < 9) return 44;
-  if (zoom < 11) return 34;
-  if (zoom < 13) return 26;
-  if (zoom < 15) return 18;
-  return 14;
-}
-
 function markerScaleForZoom(zoom: number) {
   const t = Math.min(1, Math.max(0, (zoom - 4.2) / 8));
   return 0.42 + t * 0.58;
 }
 
-const MAX_MAP_MARKERS = 80;
+function clusterCellDeg(zoom: number) {
+  if (zoom < 7) return 0.5;
+  if (zoom < 8) return 0.32;
+  if (zoom < 9) return 0.2;
+  if (zoom < 10) return 0.12;
+  if (zoom < 11) return 0.075;
+  if (zoom < 12) return 0.045;
+  if (zoom < 13) return 0.028;
+  if (zoom < 14) return 0.018;
+  if (zoom < 15) return 0.011;
+  return 0.007;
+}
 const HANGO: [number, number] = [22.968, 59.824];
 const NUORGAM: [number, number] = [27.879, 70.086];
 const FINLAND_VIEW: [[number, number], [number, number]] = [
@@ -106,6 +109,11 @@ function geomBBox(geom: MaakuntaGeom): [[number, number], [number, number]] {
     [minX, minY],
     [maxX, maxY],
   ];
+}
+
+function geomCentroid(geom: MaakuntaGeom): [number, number] {
+  const [[minX, minY], [maxX, maxY]] = geomBBox(geom);
+  return [(minX + maxX) / 2, (minY + maxY) / 2];
 }
 
 function applyFinlandMinZoom(map: Map) {
@@ -656,6 +664,31 @@ function GymsPage() {
               data: maakuntaData,
               promoteId: "maakunta",
             });
+
+            const labelPoints = {
+              type: "FeatureCollection" as const,
+              features: (
+                maakuntaData.features as {
+                  properties: { nimi: string; maakunta: string };
+                  geometry: MaakuntaGeom;
+                }[]
+              ).map((f) => ({
+                type: "Feature" as const,
+                properties: {
+                  nimi: f.properties.nimi,
+                  maakunta: f.properties.maakunta,
+                },
+                geometry: {
+                  type: "Point" as const,
+                  coordinates: geomCentroid(f.geometry),
+                },
+              })),
+            };
+            map.addSource("maakunnat-labels", {
+              type: "geojson",
+              data: labelPoints,
+              promoteId: "maakunta",
+            });
             map.addLayer({
               id: "maakunnat-fill",
               type: "fill",
@@ -726,7 +759,7 @@ function GymsPage() {
               map.addLayer({
                 id: "maakunnat-label",
                 type: "symbol",
-                source: "maakunnat",
+                source: "maakunnat-labels",
                 layout: {
                   "text-field": ["get", "nimi"],
                   "text-size": 11,
@@ -734,6 +767,7 @@ function GymsPage() {
                   "text-letter-spacing": 0.03,
                   "text-max-width": 8,
                   "text-allow-overlap": false,
+                  "text-ignore-placement": false,
                 },
                 paint: {
                   "text-color": "#ffffff",
@@ -813,62 +847,27 @@ function GymsPage() {
 
       if (regionPickModeRef.current) return;
 
-      const b = map.getBounds();
-      const padLng = (b.getEast() - b.getWest()) * 0.06;
-      const padLat = (b.getNorth() - b.getSouth()) * 0.06;
-      const west = b.getWest() - padLng;
-      const east = b.getEast() + padLng;
-      const south = b.getSouth() - padLat;
-      const north = b.getNorth() + padLat;
-
-      const gyms = visibleGymsRef.current.filter((g) => {
-        if (g.lng == null || g.lat == null) return false;
-        return (
-          g.lng >= west &&
-          g.lng <= east &&
-          g.lat >= south &&
-          g.lat <= north
-        );
-      });
+      const gyms = visibleGymsRef.current.filter(
+        (g) => g.lng != null && g.lat != null,
+      );
       if (gyms.length === 0) return;
 
       const zoom = map.getZoom();
       const scale = markerScaleForZoom(zoom);
-      let cell = clusterTouchPx(zoom);
-      if (gyms.length > 220) cell *= 1.45;
-      else if (gyms.length > 120) cell *= 1.2;
+      const cell = clusterCellDeg(zoom);
 
       type Pt = {
         g: (typeof gyms)[number];
-        p: { x: number; y: number };
       };
-      const pts: Pt[] = gyms.map((g) => ({
-        g,
-        p: map.project([g.lng as number, g.lat as number]),
-      }));
-
-      function bucket(size: number) {
-        const cells = new globalThis.Map<string, Pt[]>();
-        for (const pt of pts) {
-          const key = `${Math.floor(pt.p.x / size)}:${Math.floor(pt.p.y / size)}`;
-          const list = cells.get(key);
-          if (list) list.push(pt);
-          else cells.set(key, [pt]);
-        }
-        return cells;
+      const cells = new globalThis.Map<string, Pt[]>();
+      for (const g of gyms) {
+        const key = `${Math.floor((g.lng as number) / cell)}:${Math.floor((g.lat as number) / cell)}`;
+        const list = cells.get(key);
+        if (list) list.push({ g });
+        else cells.set(key, [{ g }]);
       }
 
-      let cells = bucket(cell);
-      if (cells.size > MAX_MAP_MARKERS) {
-        cells = bucket(cell * Math.ceil(cells.size / MAX_MAP_MARKERS));
-      }
-
-      let clusterN = 0;
-      cells.forEach((group) => {
-        if (clusterN + (group.length === 1 ? 1 : 1) > MAX_MAP_MARKERS) {
-          return;
-        }
-
+      cells.forEach((group, cellKey) => {
         if (group.length === 1) {
           const { g } = group[0];
           const chain = chainsByIdRef.current.get(g.chainId);
@@ -933,7 +932,6 @@ function GymsPage() {
             .setLngLat([g.lng as number, g.lat as number])
             .addTo(map);
           markersRef.current.set(g.id, marker);
-          clusterN += 1;
           return;
         }
 
@@ -963,8 +961,7 @@ function GymsPage() {
         const marker = new Marker({ element: el })
           .setLngLat([lng, lat])
           .addTo(map);
-        markersRef.current.set(`cluster-${clusterN}`, marker);
-        clusterN += 1;
+        markersRef.current.set(`cluster-${cellKey}`, marker);
       });
     }
 
@@ -980,13 +977,7 @@ function GymsPage() {
         .addTo(map);
     }
 
-    function onMapIdle() {
-      if (moveRaf !== 0) {
-        cancelAnimationFrame(moveRaf);
-        moveRaf = 0;
-      }
-      lastPinSyncAt = 0;
-      syncPins();
+    function pushBounds() {
       const next = readBounds();
       setMapBounds((prev) => {
         if (
@@ -1002,38 +993,28 @@ function GymsPage() {
       });
     }
 
-    let moveRaf = 0;
-    let lastPinSyncAt = 0;
-    let lastSyncZoom = map.getZoom();
+    let zoomRaf = 0;
 
-    function updatePinScales() {
-      if (markersRef.current.size === 0) return;
-      const scale = markerScaleForZoom(map.getZoom());
-      markersRef.current.forEach((marker) => {
-        marker.getElement().style.setProperty("--pin-scale", String(scale));
+    function onMapZoom() {
+      if (regionPickModeRef.current) return;
+      if (zoomRaf !== 0) return;
+      zoomRaf = requestAnimationFrame(() => {
+        zoomRaf = 0;
+        syncPins();
       });
     }
 
-    function onMapMove() {
-      if (regionPickModeRef.current) return;
-      if (moveRaf !== 0) return;
-      moveRaf = requestAnimationFrame(() => {
-        moveRaf = 0;
-        const now = performance.now();
-        const z = map.getZoom();
-        const zoomDelta = Math.abs(z - lastSyncZoom);
-        if (now - lastPinSyncAt < 100) {
-          updatePinScales();
-          return;
-        }
-        if (zoomDelta < 0.2 && markersRef.current.size > 0) {
-          updatePinScales();
-          return;
-        }
-        lastPinSyncAt = now;
-        lastSyncZoom = z;
-        syncPins();
-      });
+    function onMoveEnd() {
+      pushBounds();
+    }
+
+    function onZoomEnd() {
+      if (zoomRaf !== 0) {
+        cancelAnimationFrame(zoomRaf);
+        zoomRaf = 0;
+      }
+      syncPins();
+      pushBounds();
     }
 
     syncPins();
@@ -1041,15 +1022,15 @@ function GymsPage() {
     setMapBounds(readBounds());
     map.resize();
 
-    map.on("move", onMapMove);
-    map.on("moveend", onMapIdle);
-    map.on("zoomend", onMapIdle);
+    map.on("zoom", onMapZoom);
+    map.on("moveend", onMoveEnd);
+    map.on("zoomend", onZoomEnd);
 
     return () => {
-      if (moveRaf !== 0) cancelAnimationFrame(moveRaf);
-      map.off("move", onMapMove);
-      map.off("moveend", onMapIdle);
-      map.off("zoomend", onMapIdle);
+      if (zoomRaf !== 0) cancelAnimationFrame(zoomRaf);
+      map.off("zoom", onMapZoom);
+      map.off("moveend", onMoveEnd);
+      map.off("zoomend", onZoomEnd);
       clearMarkers();
       originMarkerRef.current?.remove();
       originMarkerRef.current = null;
@@ -1136,11 +1117,14 @@ function GymsPage() {
       selectedMaakuntaRef.current = nimi;
       regionPickModeRef.current = false;
       setSelectedMaakunta(nimi);
-      const bbox = geomBBox(f.geometry as MaakuntaGeom);
+      const full = maakuntaFeaturesRef.current.find((x) => x.nimi === nimi);
+      const bbox = geomBBox(
+        (full?.geometry ?? f.geometry) as MaakuntaGeom,
+      );
       map.fitBounds(bbox, {
-        padding: 52,
+        padding: { top: 72, bottom: 72, left: 72, right: 72 },
         duration: 750,
-        maxZoom: 10.5,
+        maxZoom: 9.5,
       });
     }
 
