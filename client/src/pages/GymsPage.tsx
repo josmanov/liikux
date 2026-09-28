@@ -520,11 +520,16 @@ function GymsPage() {
 
   useEffect(() => {
     setPage(1);
+    const id = window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    });
+    return () => window.cancelAnimationFrame(id);
   }, [mapBounds]);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, [safePage]);
+    if (inViewGyms.length > 0) return;
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [inViewGyms.length]);
 
   useEffect(() => {
     if (!selectedId || !selectFromMapRef.current) return;
@@ -536,16 +541,11 @@ function GymsPage() {
     );
     if (!el) return;
 
-    const index = pageGyms.findIndex((g) => g.id === selectedId);
-    const nearEnd = index >= 0 && index >= pageGyms.length - 6;
-    const pager = document.querySelector<HTMLElement>(".browse-pager");
-
-    if (nearEnd) {
-      (pager ?? el).scrollIntoView({ behavior: "smooth", block: "end" });
-      return;
-    }
-
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "nearest",
+    });
   }, [selectedId, pageGyms]);
 
   useEffect(() => {
