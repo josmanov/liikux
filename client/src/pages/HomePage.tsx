@@ -7,6 +7,7 @@ import {
   Dumbbell,
   Footprints,
   Goal,
+  LocateFixed,
   Mountain,
   PersonStanding,
   Target,
@@ -75,7 +76,6 @@ function LajiIcon({ name, Icon }: { name: string; Icon?: LucideIcon }) {
 }
 
 function LocateButton() {
-  const hover = usePickHover();
   const navigate = useNavigate();
   const { useMyLocation } = useAppLocation();
 
@@ -88,44 +88,20 @@ function LocateButton() {
         useMyLocation();
         navigate("/fi/kuntosalit", { state: { focusOrigin: true } });
       }}
-      onMouseEnter={hover.onMouseEnter}
-      onMouseLeave={hover.onMouseLeave}
     >
-      <span className="hero-locate-gif">
-        <img
-          className="hero-locate-still"
-          src="/picks/location-still.png"
-          alt=""
-          style={{ opacity: hover.playing ? 0 : 1 }}
-        />
-        {hover.playing ? (
-          <img
-            key={hover.playKey}
-            className="hero-locate-anim"
-            src={`/picks/location.gif?r=${hover.playKey}`}
-            alt=""
-            aria-hidden="true"
-          />
-        ) : null}
-      </span>
+      <LocateFixed size={18} strokeWidth={2.2} />
     </button>
   );
 }
 
 function SearchButton() {
-  const hover = usePickHover();
-
   return (
     <button
       type="button"
       className="hero-locate"
-      aria-label="Käytä sijaintiani"
-      onMouseEnter={hover.onMouseEnter}
-      onMouseLeave={hover.onMouseLeave}
+      aria-label="Hae"
     >
-      <span className="hero-locate-gif">
-        <img className="hero-locate-still" src="/picks/search.png" alt="" />
-      </span>
+      <img src="/picks/search.png" alt="" width={22} height={22} />
     </button>
   );
 }
@@ -254,9 +230,12 @@ function HomePage() {
       .catch(() => setGyms([]));
   }, []);
 
-  const suositutKetjut = chains.slice(0, 6);
-  const chainCount = chains.length;
-  const cityCount = new Set(gyms.map((g) => g.city)).size;
+  const suositutKetjut = chains
+    .filter((c) => c.slug !== "muut")
+    .slice(0, 6);
+  const chainCount = chains.filter((c) => c.slug !== "muut").length;
+  const gymCount = gyms.length;
+  const cityCount = new Set(gyms.map((g) => g.city).filter(Boolean)).size;
 
   return (
     <main className="shell">
@@ -345,7 +324,8 @@ function HomePage() {
               ) : null}
             </div>
             <p className="hero-stats">
-              {chainCount} kuntosaliketjua · {cityCount} kaupunkia
+              {gymCount} kuntosalia · {chainCount} ketjua · {cityCount}{" "}
+              kaupunkia
             </p>
           </div>
         </div>

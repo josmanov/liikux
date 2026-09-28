@@ -1,11 +1,15 @@
-﻿import { Link } from "react-router-dom";
+﻿import { useState } from "react";
+import { Link } from "react-router-dom";
 import AreaSelect from "./AreaSelect";
+import FavoritesPopup from "./FavoritesPopup";
 import HeaderSearch from "./HeaderSearch";
 import "flag-icons/css/flag-icons.min.css";
 import "./uiverse-playstore.css";
 import "./Header.css";
 
 function Header() {
+  const [favoritesOpen, setFavoritesOpen] = useState(false);
+
   return (
     <header className="header">
       <div className="header-left">
@@ -17,11 +21,15 @@ function Header() {
 
       <div className="header-right">
         <HeaderSearch />
-        <Link to="/#suositut" className="playstore-button is-plain">
+        <button
+          type="button"
+          className="playstore-button is-plain"
+          onClick={() => setFavoritesOpen(true)}
+        >
           <span className="texts">
-            <span className="text-2">Suositukset</span>
+            <span className="text-2">Suosikit</span>
           </span>
-        </Link>
+        </button>
         <button
           type="button"
           className="header-lang playstore-button is-plain"
@@ -33,6 +41,11 @@ function Header() {
           Selaa kuntosaleja
         </Link>
       </div>
+
+      <FavoritesPopup
+        open={favoritesOpen}
+        onClose={() => setFavoritesOpen(false)}
+      />
     </header>
   );
 }

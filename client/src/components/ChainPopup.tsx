@@ -39,15 +39,16 @@ function ChainPopup({ open, onClose }: Props) {
   if (!open) return null;
 
   const q = query.trim().toLowerCase();
-  const list = chains.filter((chain) =>
-    q ? chain.name.toLowerCase().includes(q) : true,
-  );
+  const list = chains.filter((chain) => {
+    if (chain.slug === "muut") return false;
+    if (!q) return true;
+    return chain.name.toLowerCase().includes(q);
+  });
 
   return createPortal(
     <div className="chain-popup-overlay" onClick={onClose}>
       <div className="chain-popup-card" onClick={(e) => e.stopPropagation()}>
         <div className="chain-popup-top">
-          {/* AreaSelect deaktivoitu — popup näyttää kaikki ketjut; alue myöhemmin */}
           <div className="group">
             <svg viewBox="0 0 24 24" aria-hidden="true" className="search-icon">
               <g>
