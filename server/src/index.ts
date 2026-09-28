@@ -224,25 +224,9 @@ app.get("/api/geocode", async (req, res) => {
   }
 
   try {
-    const { street, number } = parseStreetQuery(q);
-    const streetQuery = number ? `${street} ${number}` : street;
-    const cityQueries = GEOCODE_CITIES.map(
-      (city) => `${streetQuery}, ${city}`,
-    );
-
-    const batches = await Promise.allSettled([
-      photonSearch(q),
-      photonSearch(streetQuery),
-      nominatimSearch(q, 8),
-      ...cityQueries.map((cq) => nominatimSearch(cq, 1)),
-    ]);
-
-    let merged: GeocodeHit[] = [];
-    for (const b of batches) {
-      if (b.status === "fulfilled") merged = merged.concat(b.value);
-    }
-
-    res.json(rankHits(dedupeHits(merged), q, number).slice(0, 6));
+    const { number } = parseStreetQuery(q);
+    const hits = await photonSearch(q);
+    res.json(rankHits(dedupeHits(hits), q, number).slice(0, 6));
   } catch {
     res.status(502).json([]);
   }

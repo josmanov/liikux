@@ -289,7 +289,7 @@ function GymsPage() {
   const maakuntaFeaturesRef = useRef<
     { nimi: string; maakunta: string; geometry: MaakuntaGeom }[]
   >([]);
-  const fitKeyRef = useRef("origin:60.1699:24.9384");
+  const fitKeyRef = useRef("");
   const focusOriginRef = useRef(
     (routeLocation.state as { focusOrigin?: boolean } | null)?.focusOrigin ===
       true,
@@ -1144,7 +1144,6 @@ function GymsPage() {
     const map = mapInstanceRef.current;
     if (!map || !mapReady) return;
     if (origin.lat == null || origin.lng == null) return;
-    if (!focusOriginRef.current) return;
     if (!maakunnatReady || maakuntaFeaturesRef.current.length === 0) return;
 
     const key = `origin:${origin.lat}:${origin.lng}`;
@@ -1161,8 +1160,14 @@ function GymsPage() {
     regionPickModeRef.current = nimi == null;
     setSelectedMaakunta(nimi);
 
-    if (key === fitKeyRef.current && map.getZoom() >= 11.5) return;
+    const shouldZoom =
+      focusOriginRef.current ||
+      key !== fitKeyRef.current ||
+      map.getZoom() < 11.5;
+    if (!shouldZoom) return;
+
     fitKeyRef.current = key;
+    focusOriginRef.current = false;
 
     map.easeTo({
       center: [origin.lng, origin.lat],

@@ -185,20 +185,34 @@ function HomePage() {
     }
 
     setSuggestLoading(true);
+    const ac = new AbortController();
     const t = window.setTimeout(() => {
-      fetch(`http://localhost:3001/api/geocode?q=${encodeURIComponent(q)}`)
+      fetch(`http://localhost:3001/api/geocode?q=${encodeURIComponent(q)}`, {
+        signal: ac.signal,
+      })
         .then((r) => r.json())
         .then(
           (data: { id: string; label: string; lat: number; lng: number }[]) => {
+            if (ac.signal.aborted) return;
             setSuggestions(Array.isArray(data) ? data : []);
-            setSuggestOpen(true);
+            if (document.activeElement?.id === "address_input") {
+              setSuggestOpen(true);
+            }
           },
         )
-        .catch(() => setSuggestions([]))
-        .finally(() => setSuggestLoading(false));
-    }, 280);
+        .catch((err: unknown) => {
+          if (err instanceof DOMException && err.name === "AbortError") return;
+          setSuggestions([]);
+        })
+        .finally(() => {
+          if (!ac.signal.aborted) setSuggestLoading(false);
+        });
+    }, 120);
 
-    return () => window.clearTimeout(t);
+    return () => {
+      window.clearTimeout(t);
+      ac.abort();
+    };
   }, [addressDraft]);
 
   useEffect(() => {
@@ -248,7 +262,8 @@ function HomePage() {
                 className="hero-search-input"
                 id="address_input"
                 type="text"
-                placeholder=" "
+                placeholder="Syötä osoite.."
+                aria-label="Syötä osoite"
                 value={addressDraft}
                 autoComplete="off"
                 onChange={(e) => {
@@ -267,12 +282,9 @@ function HomePage() {
                   if (addressDraft.trim().length >= 2) setSuggestOpen(true);
                 }}
                 onBlur={() => {
-                  window.setTimeout(() => setSuggestOpen(false), 160);
+                  setSuggestOpen(false);
                 }}
               />
-              <label className="hero-search-label" htmlFor="address_input">
-                Syötä osoite..
-              </label>
               <span className="hero-search-divider" aria-hidden="true" />
               <LocateButton />
               {suggestOpen && addressDraft.trim().length >= 2 ? (

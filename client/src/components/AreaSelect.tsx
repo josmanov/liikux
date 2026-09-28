@@ -53,7 +53,7 @@ function AreaSelect() {
         })
         .catch(() => setSuggestions([]))
         .finally(() => setLoading(false));
-    }, 280);
+    }, 120);
 
     return () => window.clearTimeout(t);
   }, [draft, open]);
