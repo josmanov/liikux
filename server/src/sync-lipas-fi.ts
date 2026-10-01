@@ -20,11 +20,27 @@ const brandHints: { match: RegExp; chainId: string }[] = [
   { match: /fitness\s*24|24\s*seven/i, chainId: "c4" },
   { match: /go\s*fitness/i, chainId: "c5" },
   { match: /\bliikku\b/i, chainId: "c6" },
+  { match: /\bforever\b/i, chainId: "c7" },
+  { match: /lady\s*line|ladyline/i, chainId: "c8" },
+  { match: /ole\.?\s*fit/i, chainId: "c9" },
+  { match: /\besport\b/i, chainId: "c10" },
+  { match: /unisport/i, chainId: "c11" },
+  { match: /m\s*&\s*m\b|m&m/i, chainId: "c12" },
 ];
+
+const RESIDENTS_NAME =
+  /palvelutalo|palvelukesk|seniorikuntosali|hoivakoti|vanhainkoti|asukaskuntosali|asukkaiden kuntosali/i;
+
+const SCHOOL_NAME =
+  /(lukion|ammattikoulun|yhtenäiskoulun|peruskoulun|yläkoulun|alakoulun|yhteiskoulun|opiston)\s+kuntosali|koulun\s+kuntosali/i;
+
+const RESTRICTED_TEXT =
+  /vain\s+.*(jäsen|asukka|henkilö|opiskel|oppila|työntek)|yrityskohtai|ei\s+(ole\s+)?avoin|ei\s+yleisö|suljettu\s+yleisöltä|henkilökunnan\s+käyt|asukkaiden\s+käyt|oppilaiden\s+(ja\s+henkilökunnan\s+)?käyt/i;
 
 type LipasItem = {
   "lipas-id": number;
   name?: string;
+  comment?: string;
   location?: {
     address?: string;
     "postal-office"?: string;
@@ -37,6 +53,9 @@ type LipasItem = {
         };
       }>;
     };
+  };
+  properties?: {
+    "school-use?"?: boolean;
   };
 };
 
@@ -59,6 +78,16 @@ function chainForName(name: string) {
     if (hint.match.test(name)) return hint.chainId;
   }
   return OTHER_CHAIN.id;
+}
+
+function hideReasonFor(item: LipasItem, name: string): string | null {
+  if (item.properties?.["school-use?"] === true) return "school";
+  if (SCHOOL_NAME.test(name)) return "school";
+  if (RESIDENTS_NAME.test(name)) return "residents_only";
+  const comment = (item.comment ?? "").trim();
+  if (comment && RESTRICTED_TEXT.test(comment)) return "members_only";
+  if (RESTRICTED_TEXT.test(name)) return "members_only";
+  return null;
 }
 
 function pointFromItem(item: LipasItem): { lat: number; lng: number } | null {
@@ -120,6 +149,7 @@ async function sync() {
   const items = await fetchAllFinland();
   let ok = 0;
   let skip = 0;
+  const hideCounts: Record<string, number> = {};
   const batch: {
     id: string;
     slug: string;
@@ -129,6 +159,8 @@ async function sync() {
     chainId: string;
     lat: number;
     lng: number;
+    listed: boolean;
+    hiddenReason: string | null;
   }[] = [];
 
   for (const item of items) {
@@ -147,6 +179,9 @@ async function sync() {
       city,
     ].filter(Boolean);
 
+    const reason = hideReasonFor(item, name);
+    if (reason) hideCounts[reason] = (hideCounts[reason] ?? 0) + 1;
+
     batch.push({
       id: `lipas-${lipasId}`,
       slug: slugify(name, lipasId),
@@ -156,6 +191,8 @@ async function sync() {
       chainId: chainForName(name),
       lat: point.lat,
       lng: point.lng,
+      listed: reason == null,
+      hiddenReason: reason,
     });
   }
 
@@ -176,6 +213,8 @@ async function sync() {
             chainId: row.chainId,
             lat: row.lat,
             lng: row.lng,
+            listed: row.listed,
+            hiddenReason: row.hiddenReason,
           },
         });
       ok += 1;
@@ -183,7 +222,14 @@ async function sync() {
     console.log(`DB upsert ${Math.min(i + CHUNK, batch.length)}/${batch.length}`);
   }
 
+  const hiddenTotal = Object.values(hideCounts).reduce((a, b) => a + b, 0);
   console.log(`Finland sync OK: ${ok} gyms upserted, ${skip} skipped`);
+  console.log(
+    `Hidden ${hiddenTotal}: ${Object.entries(hideCounts)
+      .map(([k, v]) => `${k}=${v}`)
+      .join(", ") || "none"}`,
+  );
+  console.log(`Listed: ${ok - hiddenTotal}`);
   process.exit(0);
 }
 

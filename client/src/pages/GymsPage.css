@@ -932,12 +932,67 @@
 }
 
 .browse-row-media.logo-olefit {
-  background: #000;
+  background: #fff;
   padding: 0.55rem 0.7rem;
 }
 
 .browse-row-media.logo-olefit img {
   transform: scale(1.05);
+  object-position: center;
+  object-fit: contain;
+}
+
+.browse-row-media.logo-ladyline {
+  background: #fff;
+  padding: 0.45rem 0.55rem;
+}
+
+.browse-row-media.logo-ladyline img {
+  transform: scale(1);
+  object-position: center;
+  object-fit: contain;
+}
+
+.browse-row-media.logo-forever {
+  background: #fff;
+  padding: 0.45rem 0.55rem;
+}
+
+.browse-row-media.logo-forever img {
+  transform: scale(1);
+  object-position: center;
+  object-fit: contain;
+}
+
+.browse-row-media.logo-unisport {
+  background: #fff;
+  padding: 0.45rem 0.55rem;
+}
+
+.browse-row-media.logo-unisport img {
+  transform: scale(1);
+  object-position: center;
+  object-fit: contain;
+}
+
+.browse-row-media.logo-mm {
+  background: #000;
+  padding: 0.45rem 0.55rem;
+}
+
+.browse-row-media.logo-mm img {
+  transform: scale(1);
+  object-position: center;
+  object-fit: contain;
+}
+
+.browse-row-media.logo-esport {
+  background: #000;
+  padding: 0.45rem 0.55rem;
+}
+
+.browse-row-media.logo-esport img {
+  transform: scale(1);
   object-position: center;
   object-fit: contain;
 }
@@ -1169,8 +1224,38 @@
 }
 
 .gym-pin-hit.logo-olefit {
-  background: #000;
+  background: #fff;
   padding: 5px;
+  box-sizing: border-box;
+}
+
+.gym-pin-hit.logo-ladyline {
+  background: #fff;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.gym-pin-hit.logo-forever {
+  background: #fff;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.gym-pin-hit.logo-unisport {
+  background: #fff;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.gym-pin-hit.logo-mm {
+  background: #000;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.gym-pin-hit.logo-esport {
+  background: #000;
+  padding: 4px;
   box-sizing: border-box;
 }
 
@@ -1184,6 +1269,11 @@
 .gym-pin-hit.is-selected.logo-fitness24,
 .gym-pin-hit.is-selected.logo-gofitness,
 .gym-pin-hit.is-selected.logo-olefit,
+.gym-pin-hit.is-selected.logo-ladyline,
+.gym-pin-hit.is-selected.logo-forever,
+.gym-pin-hit.is-selected.logo-unisport,
+.gym-pin-hit.is-selected.logo-mm,
+.gym-pin-hit.is-selected.logo-esport,
 .gym-pin-hit.is-selected.logo-liikku,
 .gym-pin-hit.is-selected.is-brand {
   background: var(--color-brand);

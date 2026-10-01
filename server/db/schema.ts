@@ -1,4 +1,4 @@
-import { pgTable, text, varchar, doublePrecision } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, doublePrecision, boolean } from "drizzle-orm/pg-core";
 
 export const chains = pgTable("chains", {
     id: varchar("id", { length: 64 }).primaryKey(),
@@ -20,4 +20,6 @@ export const gyms = pgTable("gyms", {
         .references(() => chains.id),
     lat: doublePrecision("lat").notNull(),
     lng: doublePrecision("lng").notNull(),
+    listed: boolean("listed").notNull().default(true),
+    hiddenReason: text("hidden_reason"),
 });

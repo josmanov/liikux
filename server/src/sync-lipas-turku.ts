@@ -21,6 +21,12 @@ const brandHints: { match: RegExp; chainId: string }[] = [
   { match: /fitness\s*24|24\s*seven/i, chainId: "c4" },
   { match: /go\s*fitness/i, chainId: "c5" },
   { match: /\bliikku\b/i, chainId: "c6" },
+  { match: /\bforever\b/i, chainId: "c7" },
+  { match: /lady\s*line|ladyline/i, chainId: "c8" },
+  { match: /ole\.?\s*fit/i, chainId: "c9" },
+  { match: /\besport\b/i, chainId: "c10" },
+  { match: /unisport/i, chainId: "c11" },
+  { match: /m\s*&\s*m\b|m&m/i, chainId: "c12" },
 ];
 
 type LipasItem = {

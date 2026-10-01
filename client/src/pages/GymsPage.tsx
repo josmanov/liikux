@@ -10,7 +10,6 @@ import {
   formatPriceFrom,
   getGymCardMock,
 } from "../data/gymCardMock";
-import { extraGymsMock } from "../data/extraGymsMock";
 import { useAppLocation } from "../context/LocationContext";
 
 function markerScaleForZoom(zoom: number) {
@@ -150,6 +149,11 @@ const chainFilterOptions = [
   { id: "gofitness", label: "GoFitness" },
   { id: "olefit", label: "Ole.Fit" },
   { id: "liikku", label: "Liikku" },
+  { id: "forever", label: "Forever" },
+  { id: "ladyline", label: "LadyLine" },
+  { id: "esport", label: "Esport" },
+  { id: "unisport", label: "UniSport" },
+  { id: "mm", label: "M&M" },
   { id: OTHER_CHAIN_FILTER_ID, label: "Yksityiset / muut" },
 ];
 
@@ -813,7 +817,7 @@ function GymsPage() {
       fetch("http://localhost:3001/api/chains").then((r) => r.json()),
     ])
       .then(([gymData, chainData]: [Gym[], Chain[]]) => {
-        setGyms([...gymData, ...extraGymsMock]);
+        setGyms(gymData);
         setChains(chainData);
       })
       .catch(() => {

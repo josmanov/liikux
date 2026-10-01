@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import { chains, gyms } from "../db/schema.js";
@@ -21,7 +21,7 @@ app.get("/api/chains", async (_req, res) => {
 });
 
 app.get("/api/gyms", async (_req, res) => {
-  const rows = await db.select().from(gyms);
+  const rows = await db.select().from(gyms).where(eq(gyms.listed, true));
   res.json(rows);
 });
 
@@ -32,7 +32,11 @@ app.get("/api/gyms/:slug", async (req, res) => {
     return;
   }
 
-  const rows = await db.select().from(gyms).where(eq(gyms.slug, slug)).limit(1);
+  const rows = await db
+    .select()
+    .from(gyms)
+    .where(and(eq(gyms.slug, slug), eq(gyms.listed, true)))
+    .limit(1);
   const gym = rows[0];
   if (!gym) {
     res.status(404).json({ error: "not found" });

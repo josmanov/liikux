@@ -234,6 +234,72 @@
   object-position: center;
 }
 
+.chain-popup-media.logo-olefit {
+  background: #fff;
+  padding: 0.55rem 0.7rem;
+}
+
+.chain-popup-media.logo-olefit img {
+  transform: scale(1.05);
+  object-position: center;
+  object-fit: contain;
+}
+
+.chain-popup-media.logo-ladyline {
+  background: #fff;
+  padding: 0.45rem 0.55rem;
+}
+
+.chain-popup-media.logo-ladyline img {
+  transform: scale(1);
+  object-position: center;
+  object-fit: contain;
+}
+
+.chain-popup-media.logo-forever {
+  background: #fff;
+  padding: 0.45rem 0.55rem;
+}
+
+.chain-popup-media.logo-forever img {
+  transform: scale(1);
+  object-position: center;
+  object-fit: contain;
+}
+
+.chain-popup-media.logo-unisport {
+  background: #fff;
+  padding: 0.45rem 0.55rem;
+}
+
+.chain-popup-media.logo-unisport img {
+  transform: scale(1);
+  object-position: center;
+  object-fit: contain;
+}
+
+.chain-popup-media.logo-mm {
+  background: #000;
+  padding: 0.45rem 0.55rem;
+}
+
+.chain-popup-media.logo-mm img {
+  transform: scale(1);
+  object-position: center;
+  object-fit: contain;
+}
+
+.chain-popup-media.logo-esport {
+  background: #000;
+  padding: 0.45rem 0.55rem;
+}
+
+.chain-popup-media.logo-esport img {
+  transform: scale(1);
+  object-position: center;
+  object-fit: contain;
+}
+
 .chain-popup-media.logo-liikku {
   background: #4da10f;
 }

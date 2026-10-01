@@ -4,7 +4,6 @@ import { LngLatBounds, Map, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { ArrowLeft, Check, Copy, MapPin } from "lucide-react";
 import { type Chain, type Gym } from "../data/types";
-import { extraGymsMock } from "../data/extraGymsMock";
 import { getChainWebsite, getGymDetailMock } from "../data/gymDetailMock";
 import { useAppLocation } from "../context/LocationContext";
 import "./GymDetailPage.css";
@@ -98,47 +97,26 @@ function GymDetailPage() {
     let cancelled = false;
     setStatus("loading");
 
-    Promise.all([
-      fetch(`http://localhost:3001/api/gyms/${encodeURIComponent(slug)}`).then(
-        async (r) => {
-          if (r.status === 404) return null;
-          if (!r.ok) throw new Error("fail");
-          return r.json() as Promise<GymDetail>;
-        },
-      ),
-      fetch("http://localhost:3001/api/chains").then(
-        (r) => r.json() as Promise<Chain[]>,
-      ),
-    ])
-      .then(([apiGym, chainData]) => {
+    fetch(`http://localhost:3001/api/gyms/${encodeURIComponent(slug)}`)
+      .then(async (r) => {
+        if (r.status === 404) return null;
+        if (!r.ok) throw new Error("fail");
+        return r.json() as Promise<GymDetail>;
+      })
+      .then((apiGym) => {
         if (cancelled) return;
         if (apiGym) {
           setGym(apiGym);
           setStatus("ok");
           return;
         }
-
-        const mock = extraGymsMock.find((g) => g.slug === slug);
-        if (!mock) {
-          setGym(null);
-          setStatus("missing");
-          return;
-        }
-
-        const chain = chainData.find((c) => c.id === mock.chainId) ?? null;
-        setGym({ ...mock, chain });
-        setStatus("ok");
+        setGym(null);
+        setStatus("missing");
       })
       .catch(() => {
         if (cancelled) return;
-        const mock = extraGymsMock.find((g) => g.slug === slug);
-        if (!mock) {
-          setGym(null);
-          setStatus("missing");
-          return;
-        }
-        setGym({ ...mock, chain: null });
-        setStatus("ok");
+        setGym(null);
+        setStatus("missing");
       });
 
     return () => {

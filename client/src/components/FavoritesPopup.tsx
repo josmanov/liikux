@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import { X } from "lucide-react";
 import "./ChainPopup.css";
 import { type Chain, type Gym } from "../data/types";
-import { extraGymsMock } from "../data/extraGymsMock";
 import { readFavoriteSlugs } from "../data/favorites";
 
 type Props = {
@@ -38,7 +37,7 @@ function FavoritesPopup({ open, onClose }: Props) {
       fetch("http://localhost:3001/api/chains").then((r) => r.json()),
     ])
       .then(([gymData, chainData]: [Gym[], Chain[]]) => {
-        setGyms([...gymData, ...extraGymsMock]);
+        setGyms(gymData);
         setChains(chainData);
       })
       .catch(() => {
