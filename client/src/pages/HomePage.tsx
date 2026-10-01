@@ -18,8 +18,8 @@ import HoverIcon, { usePickHover } from "../components/HoverIcon";
 import { type Chain, type Gym } from "../data/types";
 import { lajiGifUrl } from "../data/lajiGifs";
 import { useInView } from "../hooks/useInView";
-import ChainPopup from "../components/ChainPopup";
 import { useAppLocation } from "../context/LocationContext";
+import { useChainPopup } from "../context/ChainPopupContext";
 
 const picks = [
   {
@@ -145,7 +145,7 @@ function HomePage() {
   const lajitReveal = useInView<HTMLDivElement>();
   const gymsAllHover = usePickHover();
   const start = 0;
-  const [chainPopupOpen, setChainPopupOpen] = useState(false);
+  const { openChains, openChain } = useChainPopup();
   const [chains, setChains] = useState<Chain[]>([]);
   const [gyms, setGyms] = useState<Gym[]>([]);
   const { label, setLocation } = useAppLocation();
@@ -353,7 +353,7 @@ function HomePage() {
               <button
                 type="button"
                 className="lajit-all"
-                onClick={() => setChainPopupOpen(true)}
+                onClick={() => openChains()}
                 onMouseEnter={gymsAllHover.onMouseEnter}
                 onMouseLeave={gymsAllHover.onMouseLeave}
               >
@@ -376,10 +376,11 @@ function HomePage() {
               }}
             >
               {suositutKetjut.map((chain) => (
-                <Link
+                <button
                   key={chain.id}
-                  to={`/fi/ketju/${chain.slug}`}
+                  type="button"
                   className="place-card"
+                  onClick={() => openChain(chain.slug)}
                 >
                   <span
                     className={[
@@ -394,7 +395,7 @@ function HomePage() {
                     <img src={chain.image} alt="" />
                   </span>
                   <span className="place-card-name">{chain.name}</span>
-                </Link>
+                </button>
               ))}
             </div>
           </div>
@@ -427,10 +428,6 @@ function HomePage() {
         </div>
       </section>
       */}
-      <ChainPopup
-        open={chainPopupOpen}
-        onClose={() => setChainPopupOpen(false)}
-      />
     </main>
   );
 }

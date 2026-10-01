@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { type Chain, type Gym } from "../data/types";
+import { useChainPopup } from "../context/ChainPopupContext";
 import "./HeaderSearch.css";
 
 function HeaderSearch() {
   const navigate = useNavigate();
+  const { openChain } = useChainPopup();
   const wrapRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -42,7 +44,7 @@ function HeaderSearch() {
     q.length < 1
       ? []
       : chains
-          .filter((c) => c.name.toLowerCase().includes(q))
+          .filter((c) => c.name.toLowerCase().includes(q) && c.slug !== "muut")
           .slice(0, 5);
   const gymHits =
     q.length < 1
@@ -60,7 +62,7 @@ function HeaderSearch() {
 
   function goFirst() {
     if (chainHits[0]) {
-      navigate(`/fi/ketju/${chainHits[0].slug}`);
+      openChain(chainHits[0].slug);
       setQuery("");
       setOpen(false);
       return;
@@ -73,7 +75,11 @@ function HeaderSearch() {
   }
 
   return (
-    <div className="header-search" ref={wrapRef} onClick={(e) => e.stopPropagation()}>
+    <div
+      className="header-search"
+      ref={wrapRef}
+      onClick={(e) => e.stopPropagation()}
+    >
       <Search className="header-search-icon" size={16} strokeWidth={2.2} />
       <input
         className="header-search-input"
@@ -108,10 +114,11 @@ function HeaderSearch() {
                   <ul>
                     {chainHits.map((chain) => (
                       <li key={chain.id}>
-                        <Link
-                          to={`/fi/ketju/${chain.slug}`}
+                        <button
+                          type="button"
                           className="header-search-hit"
                           onClick={() => {
+                            openChain(chain.slug);
                             setQuery("");
                             setOpen(false);
                           }}
@@ -122,13 +129,12 @@ function HeaderSearch() {
                             <span className="header-search-hit-fallback" />
                           )}
                           <span>{chain.name}</span>
-                        </Link>
+                        </button>
                       </li>
                     ))}
                   </ul>
                 </div>
               ) : null}
-
               {gymHits.length > 0 ? (
                 <div className="header-search-section">
                   <p className="header-search-section-label">Salit</p>
@@ -143,11 +149,10 @@ function HeaderSearch() {
                             setOpen(false);
                           }}
                         >
-                          <span className="header-search-hit-text">
-                            <span className="header-search-hit-name">{gym.name}</span>
-                            <span className="header-search-hit-meta">
-                              {gym.city}
-                            </span>
+                          <span className="header-search-hit-fallback" />
+                          <span>
+                            {gym.name}
+                            {gym.city ? ` · ${gym.city}` : ""}
                           </span>
                         </Link>
                       </li>

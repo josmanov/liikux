@@ -489,6 +489,12 @@
   text-decoration: none;
   color: inherit;
   z-index: 30;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .place-card-media {

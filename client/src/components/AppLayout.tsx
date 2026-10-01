@@ -4,18 +4,23 @@ import Header from "./Header";
 import Footer from "./Footer";
 import ScrollToTop from "./ScrollToTop";
 import { LocationProvider } from "../context/LocationContext";
+import { ChainPopupProvider } from "../context/ChainPopupContext";
+import ChainPopup from "./ChainPopup";
 
 function AppLayout() {
   return (
     <LocationProvider>
-      <ScrollToTop />
-      <div className="layout">
-        <Header />
-        <div className="layout-content">
-          <Outlet />
+      <ChainPopupProvider>
+        <ScrollToTop />
+        <div className="layout">
+          <Header />
+          <div className="layout-content">
+            <Outlet />
+          </div>
+          <Footer />
         </div>
-        <Footer />
-      </div>
+        <ChainPopup />
+      </ChainPopupProvider>
     </LocationProvider>
   );
 }

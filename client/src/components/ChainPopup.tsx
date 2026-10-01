@@ -1,18 +1,41 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import { X } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import "./ChainPopup.css";
-import { type Chain } from "../data/types";
+import { type Chain, type Gym, resolveGymOffer } from "../data/types";
+import { formatPriceFrom } from "../data/gymCardMock";
+import { useAppLocation } from "../context/LocationContext";
+import { useChainPopup } from "../context/ChainPopupContext";
 
-type Props = {
-  open: boolean;
-  onClose: () => void;
-};
+function distanceKm(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number,
+) {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
-function ChainPopup({ open, onClose }: Props) {
+function formatKm(km: number) {
+  if (km < 10) return `${km.toFixed(1).replace(".", ",")} km`;
+  return `${Math.round(km)} km`;
+}
+
+function ChainPopup() {
+  const { open, chainSlug, close, openChain } = useChainPopup();
+  const location = useAppLocation();
   const [query, setQuery] = useState("");
   const [chains, setChains] = useState<Chain[]>([]);
+  const [gyms, setGyms] = useState<Gym[]>([]);
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -26,29 +49,102 @@ function ChainPopup({ open, onClose }: Props) {
   useEffect(() => {
     if (!open) {
       setQuery("");
+      setSelectedSlug(null);
+      return;
     }
-  }, [open]);
+    setSelectedSlug(chainSlug);
+    setQuery("");
+  }, [open, chainSlug]);
 
   useEffect(() => {
-    fetch("http://localhost:3001/api/chains")
-      .then((r) => r.json())
-      .then((data: Chain[]) => setChains(data))
-      .catch(() => setChains([]));
+    Promise.all([
+      fetch("http://localhost:3001/api/chains").then((r) => r.json()),
+      fetch("http://localhost:3001/api/gyms").then((r) => r.json()),
+    ])
+      .then(([chainData, gymData]: [Chain[], Gym[]]) => {
+        setChains(Array.isArray(chainData) ? chainData : []);
+        setGyms(Array.isArray(gymData) ? gymData : []);
+      })
+      .catch(() => {
+        setChains([]);
+        setGyms([]);
+      });
   }, []);
+
+  const selectedChain = useMemo(
+    () =>
+      selectedSlug
+        ? chains.find((c) => c.slug === selectedSlug) ?? null
+        : null,
+    [chains, selectedSlug],
+  );
+
+  const origin =
+    location.lat != null && location.lng != null
+      ? { lat: location.lat, lng: location.lng }
+      : null;
+
+  const q = query.trim().toLowerCase();
+
+  const chainList = useMemo(() => {
+    return chains.filter((chain) => {
+      if (chain.slug === "muut") return false;
+      if (!q) return true;
+      return chain.name.toLowerCase().includes(q);
+    });
+  }, [chains, q]);
+
+  const gymList = useMemo(() => {
+    if (!selectedChain) return [];
+    const rows = gyms
+      .filter((g) => g.chainId === selectedChain.id)
+      .filter((g) => {
+        if (!q) return true;
+        return (
+          g.name.toLowerCase().includes(q) ||
+          g.city.toLowerCase().includes(q) ||
+          g.address.toLowerCase().includes(q)
+        );
+      })
+      .map((g) => {
+        const km =
+          origin && g.lat != null && g.lng != null
+            ? distanceKm(origin.lat, origin.lng, g.lat, g.lng)
+            : null;
+        return { gym: g, km };
+      });
+    rows.sort((a, b) => {
+      if (a.km == null && b.km == null) {
+        return a.gym.name.localeCompare(b.gym.name, "fi");
+      }
+      if (a.km == null) return 1;
+      if (b.km == null) return -1;
+      return a.km - b.km;
+    });
+    return rows;
+  }, [gyms, selectedChain, q, origin]);
 
   if (!open) return null;
 
-  const q = query.trim().toLowerCase();
-  const list = chains.filter((chain) => {
-    if (chain.slug === "muut") return false;
-    if (!q) return true;
-    return chain.name.toLowerCase().includes(q);
-  });
+  const showingGyms = Boolean(selectedChain);
 
   return createPortal(
-    <div className="chain-popup-overlay" onClick={onClose}>
+    <div className="chain-popup-overlay" onClick={close}>
       <div className="chain-popup-card" onClick={(e) => e.stopPropagation()}>
         <div className="chain-popup-top">
+          {showingGyms ? (
+            <button
+              type="button"
+              className="chain-popup-back"
+              onClick={() => {
+                setSelectedSlug(null);
+                setQuery("");
+              }}
+              aria-label="Takaisin ketjuihin"
+            >
+              <ArrowLeft size={18} strokeWidth={2.4} />
+            </button>
+          ) : null}
           <div className="group">
             <svg viewBox="0 0 24 24" aria-hidden="true" className="search-icon">
               <g>
@@ -58,7 +154,7 @@ function ChainPopup({ open, onClose }: Props) {
             <input
               className="input"
               type="search"
-              placeholder="Etsi ketjua..."
+              placeholder={showingGyms ? "Etsi salia..." : "Etsi ketjua..."}
               name="searchbar"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -67,45 +163,110 @@ function ChainPopup({ open, onClose }: Props) {
           <button
             type="button"
             className="chain-popup-close"
-            onClick={onClose}
+            onClick={close}
             aria-label="Sulje"
           >
             <X size={20} strokeWidth={2.4} />
           </button>
         </div>
 
+        {showingGyms && selectedChain ? (
+          <div className="chain-popup-heading">
+            <strong>{selectedChain.name}</strong>
+            <span>
+              {gymList.length} salia
+              {location.label ? ` · lähimmät ensin (${location.label})` : ""}
+            </span>
+          </div>
+        ) : null}
+
         <ul className="chain-popup-list">
-          {list.map((chain) => (
-            <li key={chain.id}>
-              <Link
-                to={`/fi/ketju/${chain.slug}`}
-                className="chain-popup-row"
-                onClick={onClose}
-              >
-                <span
-                  className={[
-                    "chain-popup-media",
-                    chain.logoFit === "contain" ? "is-logo" : "",
-                    chain.logoClass || "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                >
-                  <img src={chain.image} alt="" />
-                </span>
-                <div className="chain-popup-text">
-                  <strong>{chain.name}</strong>
-                  <p className="chain-popup-blurb">
-                    Laaja saliverkosto, ryhmäliikuntaa ja joustavat aukioloajat.
-                    Katso ketjun salit kartalla ja vertaa sijainteja alueellasi.
-                  </p>
-                </div>
-              </Link>
-            </li>
-          ))}
-          {list.length === 0 ? (
+          {!showingGyms
+            ? chainList.map((chain) => (
+                <li key={chain.id}>
+                  <button
+                    type="button"
+                    className="chain-popup-row"
+                    onClick={() => {
+                      openChain(chain.slug);
+                      setSelectedSlug(chain.slug);
+                      setQuery("");
+                    }}
+                  >
+                    <span
+                      className={[
+                        "chain-popup-media",
+                        chain.logoFit === "contain" ? "is-logo" : "",
+                        chain.logoClass || "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                    >
+                      <img src={chain.image} alt="" />
+                    </span>
+                    <div className="chain-popup-text">
+                      <strong>{chain.name}</strong>
+                      <p className="chain-popup-blurb">
+                        Näytä kaikki ketjun kuntosalit etäisyyden mukaan.
+                      </p>
+                    </div>
+                  </button>
+                </li>
+              ))
+            : gymList.map(({ gym, km }) => {
+                const offer = resolveGymOffer(gym, selectedChain);
+                const priceLabel = formatPriceFrom(offer.priceFrom);
+                const hours =
+                  offer.is247 === true
+                    ? "24/7"
+                    : offer.hoursWeekday || null;
+                return (
+                  <li key={gym.id}>
+                    <Link
+                      to={`/fi/sali/${gym.slug}`}
+                      className="chain-popup-row"
+                      onClick={close}
+                    >
+                      <span
+                        className={[
+                          "chain-popup-media",
+                          selectedChain?.logoFit === "contain"
+                            ? "is-logo"
+                            : "",
+                          selectedChain?.logoClass || "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      >
+                        <img
+                          src={selectedChain?.image || "/pins/gym-pin.png"}
+                          alt=""
+                        />
+                      </span>
+                      <div className="chain-popup-text">
+                        <strong>{gym.name}</strong>
+                        <p className="chain-popup-blurb">
+                          {gym.address}
+                          {gym.city ? ` · ${gym.city}` : ""}
+                        </p>
+                        <p className="chain-popup-meta">
+                          {km != null ? <span>{formatKm(km)}</span> : null}
+                          {priceLabel ? <span>{priceLabel}</span> : null}
+                          {hours ? <span>{hours}</span> : null}
+                        </p>
+                      </div>
+                    </Link>
+                  </li>
+                );
+              })}
+          {!showingGyms && chainList.length === 0 ? (
             <li className="chain-popup-empty">
               Ei ketjuja{q ? ` haulla “${query}”` : ""}.
+            </li>
+          ) : null}
+          {showingGyms && gymList.length === 0 ? (
+            <li className="chain-popup-empty">
+              Ei saleja{q ? ` haulla “${query}”` : ""} tässä ketjussa.
             </li>
           ) : null}
         </ul>

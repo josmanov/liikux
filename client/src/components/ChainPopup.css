@@ -66,9 +66,11 @@
   line-height: 28px;
   align-items: center;
   position: relative;
-  max-width: 171px;
-  width: 171px;
-  flex-shrink: 0;
+  max-width: 260px;
+  width: 100%;
+  flex: 1;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .chain-popup-card .input {
@@ -137,17 +139,72 @@
   border-radius: 999px;
 }
 
+.chain-popup-back {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ddd;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.chain-popup-back:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+.chain-popup-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: -0.35rem 0 1rem;
+  padding: 0 0.25rem;
+  color: #eee;
+}
+
+.chain-popup-heading strong {
+  font-size: 1.15rem;
+}
+
+.chain-popup-heading span {
+  font-size: 0.85rem;
+  color: #9a9aa8;
+}
+
 .chain-popup-row {
   display: flex;
   align-items: center;
   gap: 1rem;
+  width: 100%;
   padding: 0.35rem 0.25rem;
   text-decoration: none;
   color: inherit;
+  border: 0;
   border-radius: 12px;
+  background: transparent;
   cursor: pointer;
+  text-align: left;
+  font: inherit;
   transition: background 0.15s ease;
 }
+
+.chain-popup-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: #b7b7c4;
+}
+
+.chain-popup-meta span {
+  white-space: nowrap;
+}
+
 
 .chain-popup-row:hover {
   background: rgba(255, 255, 255, 0.06);
