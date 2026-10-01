@@ -41,6 +41,9 @@ type LipasItem = {
   "lipas-id": number;
   name?: string;
   comment?: string;
+  www?: string;
+  email?: string;
+  "phone-number"?: string;
   location?: {
     address?: string;
     "postal-office"?: string;
@@ -58,6 +61,18 @@ type LipasItem = {
     "school-use?"?: boolean;
   };
 };
+
+function cleanText(raw: string | undefined | null): string | null {
+  const v = (raw ?? "").trim();
+  return v ? v : null;
+}
+
+function cleanWww(raw: string | undefined | null): string | null {
+  let v = (raw ?? "").trim();
+  if (!v) return null;
+  if (!/^https?:\/\//i.test(v)) v = `https://${v}`;
+  return v;
+}
 
 function slugify(name: string, lipasId: number) {
   const base = name
@@ -80,7 +95,13 @@ function chainForName(name: string) {
   return OTHER_CHAIN.id;
 }
 
+const MANUAL_CLOSED_LIPAS_IDS = new Set([
+  519104,
+]);
+
 function hideReasonFor(item: LipasItem, name: string): string | null {
+  const lipasId = item["lipas-id"];
+  if (lipasId && MANUAL_CLOSED_LIPAS_IDS.has(lipasId)) return "closed";
   if (item.properties?.["school-use?"] === true) return "school";
   if (SCHOOL_NAME.test(name)) return "school";
   if (RESIDENTS_NAME.test(name)) return "residents_only";
@@ -146,9 +167,19 @@ async function fetchAllFinland(): Promise<LipasItem[]> {
 async function sync() {
   await db.insert(chains).values(OTHER_CHAIN).onConflictDoNothing();
 
+  const existingDead = await db
+    .select({ id: gyms.id, wwwDead: gyms.wwwDead })
+    .from(gyms);
+  const deadById = new Map(
+    existingDead
+      .filter((r) => (r.wwwDead ?? "").trim())
+      .map((r) => [r.id, (r.wwwDead ?? "").trim()]),
+  );
+
   const items = await fetchAllFinland();
   let ok = 0;
   let skip = 0;
+  let skippedDeadWww = 0;
   const hideCounts: Record<string, number> = {};
   const batch: {
     id: string;
@@ -161,7 +192,15 @@ async function sync() {
     lng: number;
     listed: boolean;
     hiddenReason: string | null;
+    www: string | null;
+    wwwDead: string | null;
+    phone: string | null;
+    email: string | null;
   }[] = [];
+
+  let withWww = 0;
+  let withPhone = 0;
+  let withEmail = 0;
 
   for (const item of items) {
     const lipasId = item["lipas-id"];
@@ -182,8 +221,26 @@ async function sync() {
     const reason = hideReasonFor(item, name);
     if (reason) hideCounts[reason] = (hideCounts[reason] ?? 0) + 1;
 
+    const id = `lipas-${lipasId}`;
+    const lipasWww = cleanWww(item.www);
+    const prevDead = deadById.get(id) ?? null;
+    let www = lipasWww;
+    let wwwDead = prevDead;
+    if (lipasWww && prevDead && lipasWww === prevDead) {
+      www = null;
+      skippedDeadWww += 1;
+    } else if (lipasWww && lipasWww !== prevDead) {
+      wwwDead = null;
+    }
+
+    const phone = cleanText(item["phone-number"]);
+    const email = cleanText(item.email);
+    if (www) withWww += 1;
+    if (phone) withPhone += 1;
+    if (email) withEmail += 1;
+
     batch.push({
-      id: `lipas-${lipasId}`,
+      id,
       slug: slugify(name, lipasId),
       name,
       city,
@@ -193,6 +250,10 @@ async function sync() {
       lng: point.lng,
       listed: reason == null,
       hiddenReason: reason,
+      www,
+      wwwDead,
+      phone,
+      email,
     });
   }
 
@@ -215,6 +276,10 @@ async function sync() {
             lng: row.lng,
             listed: row.listed,
             hiddenReason: row.hiddenReason,
+            www: row.www,
+            wwwDead: row.wwwDead,
+            phone: row.phone,
+            email: row.email,
           },
         });
       ok += 1;
@@ -230,6 +295,8 @@ async function sync() {
       .join(", ") || "none"}`,
   );
   console.log(`Listed: ${ok - hiddenTotal}`);
+  console.log(`Contact: www=${withWww}, phone=${withPhone}, email=${withEmail}`);
+  console.log(`Kept dead www cleared: ${skippedDeadWww}`);
   process.exit(0);
 }
 

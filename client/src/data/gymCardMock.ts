@@ -100,6 +100,10 @@ export function formatDistanceKm(km: number) {
   return `${km.toFixed(1).replace(".", ",")} km`;
 }
 
-export function formatPriceFrom(eur: number) {
-  return `alk. ${eur} €/kk`;
+export function formatPriceFrom(eur: number | null | undefined) {
+  if (eur == null || !Number.isFinite(eur)) return null;
+  const text = Number.isInteger(eur)
+    ? String(eur)
+    : eur.toFixed(2).replace(".", ",");
+  return `alk. ${text} €/kk`;
 }

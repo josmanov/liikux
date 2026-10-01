@@ -8,7 +8,6 @@ import { type Chain, type Gym } from "../data/types";
 import {
   formatDistanceKm,
   formatPriceFrom,
-  getGymCardMock,
 } from "../data/gymCardMock";
 import { useAppLocation } from "../context/LocationContext";
 
@@ -396,23 +395,27 @@ function GymsPage() {
         }
       }
       if (selectedAudiences.length > 0) {
-        const card = getGymCardMock(gym.slug);
-        const hit = selectedAudiences.some((id) =>
-          card.audiences.includes(id as "men" | "women" | "kids" | "seniors"),
-        );
-        if (!hit) return false;
+        return false;
       }
       if (priceFilter !== "all") {
-        const card = getGymCardMock(gym.slug);
-        if (priceFilter === "cheap" && !(card.priceFrom < 30)) return false;
-        if (
+        const chain = chains.find((c) => c.id === gym.chainId);
+        const priceFrom =
+          gym.priceFrom != null ? gym.priceFrom : (chain?.priceFrom ?? null);
+        const dayPass = chain?.dayPass ?? null;
+        if (priceFilter === "daypass") {
+          if (dayPass !== true) return false;
+        } else if (priceFrom == null) {
+          return false;
+        } else if (priceFilter === "cheap" && !(priceFrom < 30)) {
+          return false;
+        } else if (
           priceFilter === "mid" &&
-          !(card.priceFrom >= 30 && card.priceFrom <= 50)
+          !(priceFrom >= 30 && priceFrom <= 50)
         ) {
           return false;
+        } else if (priceFilter === "premium" && !(priceFrom > 50)) {
+          return false;
         }
-        if (priceFilter === "premium" && !(card.priceFrom > 50)) return false;
-        if (priceFilter === "daypass" && !card.dayPass) return false;
       }
       if (maxDistanceKm != null) {
         if (gym.lat == null || gym.lng == null) return false;
@@ -506,9 +509,10 @@ function GymsPage() {
     return chains.find((c) => c.id === selectedGym.chainId) ?? null;
   }, [chains, selectedGym]);
 
-  const selectedCard = selectedGym
-    ? getGymCardMock(selectedGym.slug)
-    : null;
+  const selectedDistanceKm =
+    selectedGym && selectedGym.lat != null && selectedGym.lng != null
+      ? distanceKm(origin.lat, origin.lng, selectedGym.lat, selectedGym.lng)
+      : null;
 
   useEffect(() => {
     setPage(1);
@@ -1548,7 +1552,7 @@ function GymsPage() {
             <p className="browse-region-hint">
               {selectedMaakunta ?? "Valitse maakunta"}
             </p>
-            {selectedGym && selectedCard ? (
+            {selectedGym ? (
               <div className="browse-map-preview">
                 <button
                   type="button"
@@ -1584,9 +1588,11 @@ function GymsPage() {
                     <strong className="browse-map-preview-name">
                       {selectedGym.name}
                     </strong>
-                    <span className="browse-map-preview-distance">
-                      {formatDistanceKm(selectedCard.distanceKm)}
-                    </span>
+                    {selectedDistanceKm != null ? (
+                      <span className="browse-map-preview-distance">
+                        {formatDistanceKm(selectedDistanceKm)}
+                      </span>
+                    ) : null}
                   </span>
                   <span className="browse-map-preview-open">Avaa</span>
                 </Link>
@@ -1604,7 +1610,13 @@ function GymsPage() {
           <ul className="browse-rows">
             {pageGyms.map((gym) => {
               const chain = chains.find((c) => c.id === gym.chainId);
-              const card = getGymCardMock(gym.slug);
+              const distKm =
+                gym.lat != null && gym.lng != null
+                  ? distanceKm(origin.lat, origin.lng, gym.lat, gym.lng)
+                  : null;
+              const priceLabel = formatPriceFrom(
+                gym.priceFrom != null ? gym.priceFrom : chain?.priceFrom,
+              );
               return (
                 <li key={gym.id}>
                   <Link
@@ -1641,9 +1653,11 @@ function GymsPage() {
                     <div className="browse-row-text">
                       <div className="browse-row-top">
                         <strong>{gym.name}</strong>
-                        <span className="browse-row-distance">
-                          {formatDistanceKm(card.distanceKm)}
-                        </span>
+                        {distKm != null ? (
+                          <span className="browse-row-distance">
+                            {formatDistanceKm(distKm)}
+                          </span>
+                        ) : null}
                       </div>
                       <span className="browse-row-city">{gym.city}</span>
                       <span className="browse-row-address">
@@ -1651,17 +1665,14 @@ function GymsPage() {
                           .replace(new RegExp(`,\\s*${gym.city}\\s*$`, "i"), "")
                           .trim()}
                       </span>
-                      <span className="browse-row-price">
-                        {formatPriceFrom(card.priceFrom)}
-                      </span>
+                      {priceLabel ? (
+                        <span className="browse-row-price">{priceLabel}</span>
+                      ) : null}
                       <div className="browse-row-tags">
-                        {card.is247 ? (
+                        {chain?.is247 === true ? (
                           <span className="browse-tag is-247">24/7</span>
                         ) : null}
-                        {card.openNow && !card.is247 ? (
-                          <span className="browse-tag is-open">Auki nyt</span>
-                        ) : null}
-                        {card.freeTrial ? (
+                        {chain?.freeTrial === true ? (
                           <span className="browse-tag is-trial">
                             Ilmainen kokeilu
                           </span>

@@ -3,8 +3,14 @@ import { Link, useParams } from "react-router-dom";
 import { LngLatBounds, Map, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { ArrowLeft, Check, Copy, MapPin } from "lucide-react";
-import { type Chain, type Gym } from "../data/types";
-import { getChainWebsite, getGymDetailMock } from "../data/gymDetailMock";
+import {
+  type Chain,
+  type Gym,
+  parseChainServices,
+  resolveGymOffer,
+} from "../data/types";
+import { formatPriceFrom } from "../data/gymCardMock";
+import { getChainWebsite } from "../data/gymDetailMock";
 import { useAppLocation } from "../context/LocationContext";
 import "./GymDetailPage.css";
 
@@ -240,20 +246,36 @@ function GymDetailPage() {
     );
   }
 
-  const detail = getGymDetailMock(gym.slug);
   const chain = gym.chain;
-  const siteUrl = getChainWebsite(chain?.slug);
+  const offer = resolveGymOffer(gym, chain);
+  const memberships = offer.memberships;
+  const services = parseChainServices(chain);
+  const priceLabel = formatPriceFrom(offer.priceFrom);
+  const siteUrl =
+    gym.www?.trim() ||
+    chain?.website?.trim() ||
+    getChainWebsite(chain?.slug) ||
+    null;
   const heroSrc = chain?.image || null;
   const heroIsLogo = Boolean(chain?.image && chain.logoFit === "contain");
   const heroIsText = !chain?.image;
   const promoTag =
-    detail.services.find((s) => PROMO_TAGS.includes(s)) ?? null;
+    services.find((s) => PROMO_TAGS.includes(s)) ??
+    (chain?.freeTrial === true ? "Ilmainen kokeilu" : null);
   const tripKm =
     fromPoint && gym.lat != null && gym.lng != null
       ? distanceKm(fromPoint.lat, fromPoint.lng, gym.lat, gym.lng)
       : null;
 
-  const hours = detail.hours;
+  const hours247 = offer.is247 === true;
+  const hoursWeekday = offer.hoursWeekday;
+  const hoursWeekend = offer.hoursWeekend;
+  const hasHours = Boolean(hoursWeekday || hoursWeekend || chain?.freeTrial === true);
+
+  const contact = {
+    phone: gym.phone?.trim() || null,
+    email: gym.email?.trim() || null,
+  };
 
   return (
     <main className="gym-detail">
@@ -290,9 +312,23 @@ function GymDetailPage() {
                 <p>{gym.address}</p>
               </div>
               <div className="gym-detail-price">
-                <span className="gym-detail-price-label">Alk.</span>
-                <strong>{detail.monthlyPrice} €</strong>
-                <span className="gym-detail-price-unit">/kk</span>
+                {priceLabel ? (
+                  <>
+                    <span className="gym-detail-price-label">Alk.</span>
+                    <strong>
+                      {offer.priceFrom != null &&
+                      Number.isInteger(offer.priceFrom)
+                        ? offer.priceFrom
+                        : offer.priceFrom != null
+                          ? String(offer.priceFrom).replace(".", ",")
+                          : ""}{" "}
+                      €
+                    </strong>
+                    <span className="gym-detail-price-unit">/kk</span>
+                  </>
+                ) : (
+                  <span className="gym-detail-price-label">Hinta ei tiedossa</span>
+                )}
               </div>
             </div>
 
@@ -311,37 +347,52 @@ function GymDetailPage() {
 
             <section className="gym-detail-section">
               <h2>Aukiolo ja pääsy</h2>
-              {!hours ? (
+              {!hasHours ? (
                 <p className="gym-detail-muted">Ei aukiolo- tai pääsytietoja.</p>
               ) : (
                 <ul className="gym-detail-plans">
-                  <li>
-                    <span>Ma–pe</span>
-                    <strong>
-                      {cleanHoursValue(hours.weekday, hours.is247)}
-                    </strong>
-                  </li>
-                  <li>
-                    <span>La–su</span>
-                    <strong>
-                      {cleanHoursValue(hours.weekend, hours.is247)}
-                    </strong>
-                  </li>
+                  {hoursWeekday ? (
+                    <li>
+                      <span>Ma–pe</span>
+                      <strong>
+                        {cleanHoursValue(hoursWeekday, hours247)}
+                      </strong>
+                    </li>
+                  ) : null}
+                  {hoursWeekend ? (
+                    <li>
+                      <span>La–su</span>
+                      <strong>
+                        {cleanHoursValue(hoursWeekend, hours247)}
+                      </strong>
+                    </li>
+                  ) : null}
+                  {chain?.freeTrial === true ? (
+                    <li>
+                      <span>Kokeilu</span>
+                      <strong>Ilmainen kokeilu</strong>
+                    </li>
+                  ) : null}
                 </ul>
               )}
             </section>
 
             <section className="gym-detail-section">
               <h2>Jäsenyysvaihtoehdot</h2>
-              {detail.memberships.length > 0 ? (
+              {memberships.length > 0 ? (
                 <ul className="gym-detail-plans">
-                  {detail.memberships.map((m) => (
+                  {memberships.map((m) => (
                     <li key={m.name}>
                       <span>
                         {m.name}
                         {m.note ? ` · ${m.note}` : ""}
                       </span>
-                      <strong>{m.priceEur} €</strong>
+                      <strong>
+                        {Number.isInteger(m.priceEur)
+                          ? m.priceEur
+                          : String(m.priceEur).replace(".", ",")}{" "}
+                        €
+                      </strong>
                     </li>
                   ))}
                 </ul>
@@ -352,9 +403,9 @@ function GymDetailPage() {
 
             <section className="gym-detail-section">
               <h2>Palvelut</h2>
-              {detail.services.length > 0 ? (
+              {services.length > 0 ? (
                 <ul className="gym-detail-tags">
-                  {detail.services.map((s) => (
+                  {services.map((s) => (
                     <li
                       key={s}
                       className={promoTag === s ? "is-promo" : undefined}
@@ -362,6 +413,9 @@ function GymDetailPage() {
                       {s}
                     </li>
                   ))}
+                  {promoTag && !services.includes(promoTag) ? (
+                    <li className="is-promo">{promoTag}</li>
+                  ) : null}
                 </ul>
               ) : (
                 <p className="gym-detail-muted">Ei palvelutietoja.</p>
@@ -370,23 +424,23 @@ function GymDetailPage() {
 
             <section className="gym-detail-section">
               <h2>Yhteystiedot</h2>
-              {detail.contact.phone || detail.contact.email ? (
+              {contact.phone || contact.email ? (
                 <div className="gym-detail-contact">
-                  {detail.contact.phone ? (
+                  {contact.phone ? (
                     <div className="gym-detail-contact-item">
                       <span>Puhelin</span>
                       <div className="gym-detail-contact-row">
                         <a
-                          href={`tel:${detail.contact.phone.replace(/\s/g, "")}`}
+                          href={`tel:${contact.phone.replace(/\s/g, "")}`}
                         >
-                          {detail.contact.phone}
+                          {contact.phone}
                         </a>
                         <button
                           type="button"
                           className="gym-detail-copy"
                           aria-label="Kopioi puhelinnumero"
                           onClick={() =>
-                            copyContact("phone", detail.contact.phone!)
+                            copyContact("phone", contact.phone!)
                           }
                         >
                           {copiedKey === "phone" ? (
@@ -398,19 +452,19 @@ function GymDetailPage() {
                       </div>
                     </div>
                   ) : null}
-                  {detail.contact.email ? (
+                  {contact.email ? (
                     <div className="gym-detail-contact-item">
                       <span>Sähköposti</span>
                       <div className="gym-detail-contact-row">
-                        <a href={`mailto:${detail.contact.email}`}>
-                          {detail.contact.email}
+                        <a href={`mailto:${contact.email}`}>
+                          {contact.email}
                         </a>
                         <button
                           type="button"
                           className="gym-detail-copy"
                           aria-label="Kopioi sähköposti"
                           onClick={() =>
-                            copyContact("email", detail.contact.email!)
+                            copyContact("email", contact.email!)
                           }
                         >
                           {copiedKey === "email" ? (

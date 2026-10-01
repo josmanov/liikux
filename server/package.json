@@ -9,7 +9,11 @@
     "db:push": "drizzle-kit push",
     "db:seed": "tsx src/seed.ts",
     "db:sync-turku": "tsx src/sync-lipas-turku.ts",
-    "db:sync-fi": "tsx src/sync-lipas-fi.ts"
+    "db:sync-fi": "tsx src/sync-lipas-fi.ts",
+    "db:salilinkit": "tsx src/export-salilinkit.ts",
+    "db:check-www": "tsx src/check-www.ts",
+    "db:seed-chain-info": "tsx src/seed-chain-info.ts",
+    "db:scrape-gym-prices": "tsx src/scrape-gym-prices.ts"
   },
   "keywords": [],
   "author": "",

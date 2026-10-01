@@ -7,6 +7,17 @@ export const chains = pgTable("chains", {
     image: text("image").notNull(),
     logoFit: varchar("logo_fit", { length: 32}),
     logoClass: varchar("logo_class", { length: 64 }),
+    priceFrom: doublePrecision("price_from"),
+    is247: boolean("is_247"),
+    freeTrial: boolean("free_trial"),
+    dayPass: boolean("day_pass"),
+    website: text("website"),
+    hoursWeekday: text("hours_weekday"),
+    hoursWeekend: text("hours_weekend"),
+    membershipsJson: text("memberships_json"),
+    servicesJson: text("services_json"),
+    sourceUrl: text("source_url"),
+    checkedAt: varchar("checked_at", { length: 32 }),
 });
 
 export const gyms = pgTable("gyms", {
@@ -22,4 +33,13 @@ export const gyms = pgTable("gyms", {
     lng: doublePrecision("lng").notNull(),
     listed: boolean("listed").notNull().default(true),
     hiddenReason: text("hidden_reason"),
+    www: text("www"),
+    wwwDead: text("www_dead"),
+    phone: text("phone"),
+    email: text("email"),
+    priceFrom: doublePrecision("price_from"),
+    is247: boolean("is_247"),
+    hoursWeekday: text("hours_weekday"),
+    hoursWeekend: text("hours_weekend"),
+    membershipsJson: text("memberships_json"),
 });
