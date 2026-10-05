@@ -5,6 +5,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { chains, enrichRuns, gyms } from "../db/schema.js";
 import { cached } from "./memoryCache.js";
+import { rateLimit } from "./rateLimit.js";
 
 const app = express();
 const PORT = 3001;
@@ -12,6 +13,9 @@ const LIST_CACHE_MS = 2 * 60 * 1000;
 
 app.use(cors());
 app.use(express.json());
+
+const apiLimit = rateLimit({ windowMs: 60_000, max: 120 });
+app.use("/api", apiLimit);
 
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
@@ -28,7 +32,24 @@ app.get("/api/chains", async (_req, res) => {
 
 app.get("/api/gyms", async (_req, res) => {
   const { data, hit } = await cached("gyms-listed", LIST_CACHE_MS, () =>
-    db.select().from(gyms).where(eq(gyms.listed, true)),
+    db
+      .select({
+        id: gyms.id,
+        slug: gyms.slug,
+        name: gyms.name,
+        city: gyms.city,
+        address: gyms.address,
+        chainId: gyms.chainId,
+        lat: gyms.lat,
+        lng: gyms.lng,
+        priceFrom: gyms.priceFrom,
+        is247: gyms.is247,
+        hoursWeekday: gyms.hoursWeekday,
+        hoursWeekend: gyms.hoursWeekend,
+        membershipsJson: gyms.membershipsJson,
+      })
+      .from(gyms)
+      .where(eq(gyms.listed, true)),
   );
   res.setHeader("Cache-Control", "public, max-age=120");
   res.setHeader("X-Cache", hit ? "HIT" : "MISS");
