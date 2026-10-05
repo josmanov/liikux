@@ -21,9 +21,26 @@ export type Chain = {
   hoursWeekend?: string | null;
   membershipsJson?: string | null;
   servicesJson?: string | null;
+  audienceJson?: string | null;
   sourceUrl?: string | null;
   checkedAt?: string | null;
 };
+
+export type ChainSummary = Pick<
+  Chain,
+  | "id"
+  | "slug"
+  | "name"
+  | "image"
+  | "logoFit"
+  | "logoClass"
+  | "pricingMode"
+  | "priceFrom"
+  | "is247"
+  | "freeTrial"
+  | "dayPass"
+  | "audienceJson"
+>;
 
 export type Gym = {
   id: string;
@@ -44,6 +61,7 @@ export type Gym = {
   hoursWeekday?: string | null;
   hoursWeekend?: string | null;
   membershipsJson?: string | null;
+  chain?: ChainSummary | null;
 };
 
 export function parseMembershipsJson(

@@ -4,8 +4,13 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { ChevronDown, ChevronLeft, ChevronRight, SlidersHorizontal, X } from "lucide-react";
 import { LngLatBounds, Map, Marker, type MapLayerMouseEvent } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { type Chain, type Gym } from "../data/types";
+import { type Chain, type Gym, resolveGymOffer } from "../data/types";
 import { fetchGymsAndChains } from "../data/api";
+import {
+  chainForGym,
+  gymIs247,
+  gymMatchesAudience,
+} from "../data/audience";
 import {
   cleanGymDisplayName,
   formatDistanceKm,
@@ -241,7 +246,13 @@ const priceOptions = [
   { id: "daypass", label: "Päivälippu" },
 ];
 
-type FilterKey = "chains" | "audience" | "distance" | "price" | "sort";
+type FilterKey =
+  | "chains"
+  | "audience"
+  | "distance"
+  | "price"
+  | "sort"
+  | "extras";
 
 const PAGE_SIZE = 24;
 
@@ -267,6 +278,9 @@ function GymsPage() {
   const [selectedAudiences, setSelectedAudiences] = useState<string[]>([]);
   const [distanceFilter, setDistanceFilter] = useState("all");
   const [priceFilter, setPriceFilter] = useState("all");
+  const [extraOnly247, setExtraOnly247] = useState(false);
+  const [extraFreeTrial, setExtraFreeTrial] = useState(false);
+  const [extraDayPass, setExtraDayPass] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [maakunnatReady, setMaakunnatReady] = useState(false);
   const [selectedMaakunta, setSelectedMaakunta] = useState<string | null>(null);
@@ -358,6 +372,8 @@ function GymsPage() {
 
   const priceLabel =
     priceOptions.find((o) => o.id === priceFilter)?.label ?? "Hinta";
+  const extrasActive = extraOnly247 || extraFreeTrial || extraDayPass;
+  const extrasLabel = extrasActive ? "Suodattimet (päällä)" : "Suodattimet";
 
   const selectedChainFilter = useMemo(() => {
     if (selectedChains.length === 0) {
@@ -397,10 +413,11 @@ function GymsPage() {
         }
       }
       if (selectedAudiences.length > 0) {
-        return false;
+        const chain = chainForGym(gym, chains);
+        if (!gymMatchesAudience(chain, selectedAudiences)) return false;
       }
       if (priceFilter !== "all") {
-        const chain = chains.find((c) => c.id === gym.chainId);
+        const chain = chainForGym(gym, chains);
         const priceFrom =
           gym.priceFrom != null ? gym.priceFrom : (chain?.priceFrom ?? null);
         const dayPass = chain?.dayPass ?? null;
@@ -418,6 +435,18 @@ function GymsPage() {
         } else if (priceFilter === "premium" && !(priceFrom > 50)) {
           return false;
         }
+      }
+      if (extraOnly247) {
+        const chain = chainForGym(gym, chains);
+        if (!gymIs247(gym, chain)) return false;
+      }
+      if (extraFreeTrial) {
+        const chain = chainForGym(gym, chains);
+        if (chain?.freeTrial !== true) return false;
+      }
+      if (extraDayPass) {
+        const chain = chainForGym(gym, chains);
+        if (chain?.dayPass !== true) return false;
       }
       if (maxDistanceKm != null) {
         if (gym.lat == null || gym.lng == null) return false;
@@ -462,6 +491,9 @@ function GymsPage() {
     selectedChainFilter,
     selectedAudiences,
     priceFilter,
+    extraOnly247,
+    extraFreeTrial,
+    extraDayPass,
     maxDistanceKm,
     origin,
     selectedMaakunta,
@@ -508,7 +540,7 @@ function GymsPage() {
 
   const selectedChain = useMemo(() => {
     if (!selectedGym) return null;
-    return chains.find((c) => c.id === selectedGym.chainId) ?? null;
+    return chainForGym(selectedGym, chains);
   }, [chains, selectedGym]);
 
   const selectedDistanceKm =
@@ -526,6 +558,9 @@ function GymsPage() {
     selectedAudiences,
     distanceFilter,
     priceFilter,
+    extraOnly247,
+    extraFreeTrial,
+    extraDayPass,
   ]);
 
   useEffect(() => {
@@ -877,7 +912,8 @@ function GymsPage() {
       cells.forEach((group, cellKey) => {
         if (group.length === 1) {
           const { g } = group[0];
-          const chain = chainsByIdRef.current.get(g.chainId);
+          const chain =
+            g.chain ?? chainsByIdRef.current.get(g.chainId) ?? undefined;
           const brandImg =
             chain?.image && !chain.image.includes("/pins/")
               ? chain.image
@@ -1525,11 +1561,58 @@ function GymsPage() {
               ) : null}
             </div>
 
-            <div className="browse-filters-actions">
-              <button type="button" className="browse-filters-more">
+            <div className="browse-filter">
+              <button
+                type="button"
+                className="browse-filter-btn"
+                aria-expanded={openFilter === "extras"}
+                aria-haspopup="listbox"
+                onClick={() => toggleFilter("extras")}
+              >
                 <SlidersHorizontal size={16} strokeWidth={2.2} />
-                <span>Suodattimet</span>
+                <span className="browse-filter-label">{extrasLabel}</span>
+                <ChevronDown size={16} strokeWidth={2.2} />
               </button>
+              {openFilter === "extras" ? (
+                <ul className="browse-filter-menu" role="listbox">
+                  <li>
+                    <button
+                      type="button"
+                      className={extraOnly247 ? "is-on" : ""}
+                      role="option"
+                      aria-selected={extraOnly247}
+                      onClick={() => setExtraOnly247((v) => !v)}
+                    >
+                      24/7
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      type="button"
+                      className={extraFreeTrial ? "is-on" : ""}
+                      role="option"
+                      aria-selected={extraFreeTrial}
+                      onClick={() => setExtraFreeTrial((v) => !v)}
+                    >
+                      Ilmainen kokeilu
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      type="button"
+                      className={extraDayPass ? "is-on" : ""}
+                      role="option"
+                      aria-selected={extraDayPass}
+                      onClick={() => setExtraDayPass((v) => !v)}
+                    >
+                      Päivälippu
+                    </button>
+                  </li>
+                </ul>
+              ) : null}
+            </div>
+
+            <div className="browse-filters-actions">
               <button
                 type="button"
                 className="browse-filters-clear"
@@ -1538,6 +1621,9 @@ function GymsPage() {
                   setSelectedAudiences([]);
                   setDistanceFilter("all");
                   setPriceFilter("all");
+                  setExtraOnly247(false);
+                  setExtraFreeTrial(false);
+                  setExtraDayPass(false);
                   setOpenFilter(null);
                 }}
               >
@@ -1608,14 +1694,13 @@ function GymsPage() {
           ) : null}
           <ul className="browse-rows">
             {pageGyms.map((gym) => {
-              const chain = chains.find((c) => c.id === gym.chainId);
+              const chain = chainForGym(gym, chains);
+              const offer = resolveGymOffer(gym, chain as Chain | null);
               const distKm =
                 gym.lat != null && gym.lng != null
                   ? distanceKm(origin.lat, origin.lng, gym.lat, gym.lng)
                   : null;
-              const priceLabel = formatPriceFrom(
-                gym.priceFrom != null ? gym.priceFrom : chain?.priceFrom,
-              );
+              const priceLabel = formatPriceFrom(offer.priceFrom);
               return (
                 <li key={gym.id}>
                   <Link
@@ -1668,13 +1753,16 @@ function GymsPage() {
                         {priceLabel ?? "Hinta ei tiedossa"}
                       </span>
                       <div className="browse-row-tags">
-                        {chain?.is247 === true ? (
+                        {offer.is247 === true ? (
                           <span className="browse-tag is-247">24/7</span>
                         ) : null}
                         {chain?.freeTrial === true ? (
                           <span className="browse-tag is-trial">
                             Ilmainen kokeilu
                           </span>
+                        ) : null}
+                        {chain?.dayPass === true ? (
+                          <span className="browse-tag is-daypass">Päivälippu</span>
                         ) : null}
                       </div>
                     </div>
