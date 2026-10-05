@@ -45,6 +45,21 @@
   color: var(--color-brand);
 }
 
+.footer-nav-btn {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.footer-nav-btn:hover {
+  color: var(--color-brand);
+}
+
 .footer-copy {
   margin: 0;
   color: var(--color-muted);

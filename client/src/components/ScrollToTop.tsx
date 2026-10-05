@@ -1,5 +1,6 @@
-import { useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { trackPageView } from "../analytics";
 
 function scrollTop() {
   window.scrollTo(0, 0);
@@ -19,6 +20,10 @@ function ScrollToTop() {
       scrollTop();
     });
     return () => window.cancelAnimationFrame(id);
+  }, [pathname]);
+
+  useEffect(() => {
+    trackPageView(pathname);
   }, [pathname]);
 
   return null;
