@@ -246,13 +246,7 @@ const priceOptions = [
   { id: "daypass", label: "Päivälippu" },
 ];
 
-type FilterKey =
-  | "chains"
-  | "audience"
-  | "distance"
-  | "price"
-  | "sort"
-  | "extras";
+type FilterKey = "chains" | "audience" | "distance" | "price" | "sort";
 
 const PAGE_SIZE = 24;
 
@@ -281,6 +275,7 @@ function GymsPage() {
   const [extraOnly247, setExtraOnly247] = useState(false);
   const [extraFreeTrial, setExtraFreeTrial] = useState(false);
   const [extraDayPass, setExtraDayPass] = useState(false);
+  const [extrasOpen, setExtrasOpen] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [maakunnatReady, setMaakunnatReady] = useState(false);
   const [selectedMaakunta, setSelectedMaakunta] = useState<string | null>(null);
@@ -613,7 +608,17 @@ function GymsPage() {
     };
   }, [openFilter]);
 
+  useEffect(() => {
+    if (!extrasOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [extrasOpen]);
+
   function toggleFilter(key: FilterKey) {
+    setExtrasOpen(false);
     setOpenFilter((cur) => (cur === key ? null : key));
   }
 
@@ -1561,58 +1566,25 @@ function GymsPage() {
               ) : null}
             </div>
 
-            <div className="browse-filter">
+            <div className="browse-filters-actions">
               <button
                 type="button"
-                className="browse-filter-btn"
-                aria-expanded={openFilter === "extras"}
-                aria-haspopup="listbox"
-                onClick={() => toggleFilter("extras")}
+                className={[
+                  "browse-filters-more",
+                  extrasActive ? "is-active" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+                aria-haspopup="dialog"
+                aria-expanded={extrasOpen}
+                onClick={() => {
+                  setOpenFilter(null);
+                  setExtrasOpen(true);
+                }}
               >
                 <SlidersHorizontal size={16} strokeWidth={2.2} />
-                <span className="browse-filter-label">{extrasLabel}</span>
-                <ChevronDown size={16} strokeWidth={2.2} />
+                <span>{extrasLabel}</span>
               </button>
-              {openFilter === "extras" ? (
-                <ul className="browse-filter-menu" role="listbox">
-                  <li>
-                    <button
-                      type="button"
-                      className={extraOnly247 ? "is-on" : ""}
-                      role="option"
-                      aria-selected={extraOnly247}
-                      onClick={() => setExtraOnly247((v) => !v)}
-                    >
-                      24/7
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      type="button"
-                      className={extraFreeTrial ? "is-on" : ""}
-                      role="option"
-                      aria-selected={extraFreeTrial}
-                      onClick={() => setExtraFreeTrial((v) => !v)}
-                    >
-                      Ilmainen kokeilu
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      type="button"
-                      className={extraDayPass ? "is-on" : ""}
-                      role="option"
-                      aria-selected={extraDayPass}
-                      onClick={() => setExtraDayPass((v) => !v)}
-                    >
-                      Päivälippu
-                    </button>
-                  </li>
-                </ul>
-              ) : null}
-            </div>
-
-            <div className="browse-filters-actions">
               <button
                 type="button"
                 className="browse-filters-clear"
@@ -1625,6 +1597,7 @@ function GymsPage() {
                   setExtraFreeTrial(false);
                   setExtraDayPass(false);
                   setOpenFilter(null);
+                  setExtrasOpen(false);
                 }}
               >
                 Tyhjennä
@@ -1799,6 +1772,92 @@ function GymsPage() {
           ) : null}
         </section>
       </div>
+
+      {extrasOpen ? (
+        <div
+          className="browse-extras-root"
+          role="presentation"
+          onClick={() => setExtrasOpen(false)}
+        >
+          <div
+            className="browse-extras-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Suodattimet"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="browse-extras-head">
+              <h2 className="browse-extras-title">Suodattimet</h2>
+              <p className="browse-extras-text">
+                Valitse lisäehdot. Voit ottaa useita päälle yhtä aikaa.
+              </p>
+            </div>
+
+            <div className="browse-extras-options">
+              <label className="browse-extras-row">
+                <span>
+                  <strong>24/7</strong>
+                  <span className="browse-extras-desc">
+                    Avoinna ympäri vuorokauden.
+                  </span>
+                </span>
+                <input
+                  type="checkbox"
+                  checked={extraOnly247}
+                  onChange={(e) => setExtraOnly247(e.target.checked)}
+                />
+              </label>
+              <label className="browse-extras-row">
+                <span>
+                  <strong>Ilmainen kokeilu</strong>
+                  <span className="browse-extras-desc">
+                    Ketju tai sali tarjoaa kokeilujakson.
+                  </span>
+                </span>
+                <input
+                  type="checkbox"
+                  checked={extraFreeTrial}
+                  onChange={(e) => setExtraFreeTrial(e.target.checked)}
+                />
+              </label>
+              <label className="browse-extras-row">
+                <span>
+                  <strong>Päivälippu</strong>
+                  <span className="browse-extras-desc">
+                    Kertakäynti tai päivälippu saatavilla.
+                  </span>
+                </span>
+                <input
+                  type="checkbox"
+                  checked={extraDayPass}
+                  onChange={(e) => setExtraDayPass(e.target.checked)}
+                />
+              </label>
+            </div>
+
+            <div className="browse-extras-footer">
+              <button
+                type="button"
+                className="browse-extras-btn browse-extras-btn-ghost"
+                onClick={() => {
+                  setExtraOnly247(false);
+                  setExtraFreeTrial(false);
+                  setExtraDayPass(false);
+                }}
+              >
+                Tyhjennä
+              </button>
+              <button
+                type="button"
+                className="browse-extras-btn"
+                onClick={() => setExtrasOpen(false)}
+              >
+                Valmis
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }
