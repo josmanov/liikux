@@ -5,6 +5,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { chains, enrichRuns, gyms } from "../db/schema.js";
 import { cached } from "./memoryCache.js";
+import { fetchListedGymsWithChain } from "./gymListQuery.js";
 import { rateLimit } from "./rateLimit.js";
 
 const app = express();
@@ -31,25 +32,8 @@ app.get("/api/chains", async (_req, res) => {
 });
 
 app.get("/api/gyms", async (_req, res) => {
-  const { data, hit } = await cached("gyms-listed-slim", LIST_CACHE_MS, () =>
-    db
-      .select({
-        id: gyms.id,
-        slug: gyms.slug,
-        name: gyms.name,
-        city: gyms.city,
-        address: gyms.address,
-        chainId: gyms.chainId,
-        lat: gyms.lat,
-        lng: gyms.lng,
-        priceFrom: gyms.priceFrom,
-        is247: gyms.is247,
-        hoursWeekday: gyms.hoursWeekday,
-        hoursWeekend: gyms.hoursWeekend,
-        membershipsJson: gyms.membershipsJson,
-      })
-      .from(gyms)
-      .where(eq(gyms.listed, true)),
+  const { data, hit } = await cached("gyms-listed-v3", LIST_CACHE_MS, () =>
+    fetchListedGymsWithChain(),
   );
   res.setHeader("Cache-Control", "public, max-age=120");
   res.setHeader("X-Cache", hit ? "HIT" : "MISS");
