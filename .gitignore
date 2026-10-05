@@ -7,6 +7,9 @@ build/
 .env.*.local
 .cursor/
 logs/
+client/public/salilinkit.html
+client/public/data-review.html
+exports/
 *.log
 npm-debug.log*
 .DS_Store

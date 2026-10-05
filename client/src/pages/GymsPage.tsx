@@ -6,9 +6,10 @@ import { LngLatBounds, Map, Marker, type MapLayerMouseEvent } from "maplibre-gl"
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type Chain, type Gym } from "../data/types";
 import {
+  cleanGymDisplayName,
   formatDistanceKm,
   formatPriceFrom,
-} from "../data/gymCardMock";
+} from "../data/format";
 import { useAppLocation } from "../context/LocationContext";
 
 function markerScaleForZoom(zoom: number) {
@@ -1652,7 +1653,7 @@ function GymsPage() {
                     </span>
                     <div className="browse-row-text">
                       <div className="browse-row-top">
-                        <strong>{gym.name}</strong>
+                        <strong>{cleanGymDisplayName(gym.name)}</strong>
                         {distKm != null ? (
                           <span className="browse-row-distance">
                             {formatDistanceKm(distKm)}
@@ -1665,9 +1666,9 @@ function GymsPage() {
                           .replace(new RegExp(`,\\s*${gym.city}\\s*$`, "i"), "")
                           .trim()}
                       </span>
-                      {priceLabel ? (
-                        <span className="browse-row-price">{priceLabel}</span>
-                      ) : null}
+                      <span className="browse-row-price">
+                        {priceLabel ?? "Hinta ei tiedossa"}
+                      </span>
                       <div className="browse-row-tags">
                         {chain?.is247 === true ? (
                           <span className="browse-tag is-247">24/7</span>

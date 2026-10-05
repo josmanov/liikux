@@ -9,8 +9,8 @@ import {
   parseChainServices,
   resolveGymOffer,
 } from "../data/types";
-import { formatPriceFrom } from "../data/gymCardMock";
-import { getChainWebsite } from "../data/gymDetailMock";
+import { cleanGymDisplayName, formatPriceFrom } from "../data/format";
+import { getChainWebsite } from "../data/chainWebsites";
 import { useAppLocation } from "../context/LocationContext";
 import "./GymDetailPage.css";
 
@@ -302,13 +302,15 @@ function GymDetailPage() {
               {heroSrc ? (
                 <img src={heroSrc} alt="" />
               ) : (
-                <span className="gym-detail-logo-name">{gym.name}</span>
+                <span className="gym-detail-logo-name">
+                  {cleanGymDisplayName(gym.name)}
+                </span>
               )}
             </div>
 
             <div className="gym-detail-title-row">
               <div className="gym-detail-titles">
-                <h1>{gym.name}</h1>
+                <h1>{cleanGymDisplayName(gym.name)}</h1>
                 <p>{gym.address}</p>
               </div>
               <div className="gym-detail-price">
@@ -510,8 +512,11 @@ function GymDetailPage() {
               <span className="gym-detail-crumb-sep" aria-hidden="true">
                 &gt;
               </span>
-              <span className="gym-detail-crumb-to" title={gym.name}>
-                {gym.name}
+              <span
+                className="gym-detail-crumb-to"
+                title={cleanGymDisplayName(gym.name)}
+              >
+                {cleanGymDisplayName(gym.name)}
               </span>
             </div>
             {geoStatus === "loading" ||

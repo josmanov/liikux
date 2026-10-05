@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { X } from "lucide-react";
 import "./ChainPopup.css";
 import { type Chain, type Gym } from "../data/types";
+import { cleanGymDisplayName } from "../data/format";
 import { readFavoriteSlugs } from "../data/favorites";
 
 type Props = {
@@ -119,7 +120,7 @@ function FavoritesPopup({ open, onClose }: Props) {
                     <img src={img} alt="" />
                   </span>
                   <div className="chain-popup-text">
-                    <strong>{gym.name}</strong>
+                    <strong>{cleanGymDisplayName(gym.name)}</strong>
                     <p className="chain-popup-blurb">
                       {gym.address}
                       {gym.city ? ` · ${gym.city}` : ""}

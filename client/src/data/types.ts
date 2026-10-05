@@ -11,6 +11,7 @@ export type Chain = {
   image: string;
   logoFit?: "contain";
   logoClass?: string;
+  pricingMode?: string | null;
   priceFrom?: number | null;
   is247?: boolean | null;
   freeTrial?: boolean | null;

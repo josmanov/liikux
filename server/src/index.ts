@@ -1,9 +1,9 @@
 import express from "express";
 import cors from "cors";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 import { db } from "../db/index.js";
-import { chains, gyms } from "../db/schema.js";
+import { chains, enrichRuns, gyms } from "../db/schema.js";
 
 const app = express();
 const PORT = 3001;
@@ -53,6 +53,74 @@ app.get("/api/gyms/:slug", async (req, res) => {
     ...gym,
     chain: chainRows[0] ?? null,
   });
+});
+
+function adminAllowed(req: express.Request) {
+  const key = process.env.ADMIN_KEY;
+  if (!key) return true;
+  const given = String(req.query.key ?? req.headers["x-admin-key"] ?? "");
+  return given === key;
+}
+
+app.get("/api/admin/data-status", async (req, res) => {
+  if (!adminAllowed(req)) {
+    res.status(403).json({ error: "forbidden" });
+    return;
+  }
+  const chainRows = await db.select().from(chains);
+  const chainById = new Map(chainRows.map((c) => [c.id, c]));
+  const gymRows = await db.select().from(gyms).where(eq(gyms.listed, true));
+
+  const rows = gymRows.map((g) => {
+    const c = chainById.get(g.chainId);
+    const mode = c?.pricingMode ?? "location";
+    let price: number | null = g.priceFrom ?? null;
+    let priceSource: "sali" | "ketju" | null = price != null ? "sali" : null;
+    if (price == null && (mode === "shared" || mode === "hybrid")) {
+      price = c?.priceFrom ?? null;
+      priceSource = price != null ? "ketju" : null;
+    }
+    let hours: string | null = g.is247 === true ? "24/7" : g.hoursWeekday ?? null;
+    let hoursSource: "sali" | "ketju" | null = hours ? "sali" : null;
+    if (!hours && mode === "shared") {
+      hours = c?.is247 === true ? "24/7" : c?.hoursWeekday ?? null;
+      hoursSource = hours ? "ketju" : null;
+    }
+    return {
+      id: g.id,
+      slug: g.slug,
+      name: g.name,
+      city: g.city,
+      chainId: g.chainId,
+      chain: c?.name ?? g.chainId,
+      pricingMode: mode,
+      price,
+      priceSource,
+      hours,
+      hoursSource,
+      www: g.www,
+      checkedAt: g.offerCheckedAt ?? (priceSource === "ketju" ? c?.checkedAt ?? null : null),
+      status: g.enrichStatus ?? (mode === "shared" ? "chain" : null),
+      missReason: g.missReason ?? null,
+      sourceUrl: g.offerSourceUrl ?? (priceSource === "ketju" ? c?.sourceUrl ?? null : null),
+      method: g.offerMethod ?? (priceSource === "ketju" ? "chain" : null),
+    };
+  });
+
+  res.json(rows);
+});
+
+app.get("/api/admin/enrich-runs", async (req, res) => {
+  if (!adminAllowed(req)) {
+    res.status(403).json({ error: "forbidden" });
+    return;
+  }
+  const rows = await db
+    .select()
+    .from(enrichRuns)
+    .orderBy(desc(enrichRuns.startedAt))
+    .limit(20);
+  res.json(rows);
 });
 
 const GEOCODE_CITIES = [

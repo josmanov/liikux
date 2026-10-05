@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, X } from "lucide-react";
 import "./ChainPopup.css";
 import { type Chain, type Gym, resolveGymOffer } from "../data/types";
-import { formatPriceFrom } from "../data/gymCardMock";
+import { cleanGymDisplayName, formatPriceFrom } from "../data/format";
 import { useAppLocation } from "../context/LocationContext";
 import { useChainPopup } from "../context/ChainPopupContext";
 
@@ -244,14 +244,14 @@ function ChainPopup() {
                         />
                       </span>
                       <div className="chain-popup-text">
-                        <strong>{gym.name}</strong>
+                        <strong>{cleanGymDisplayName(gym.name)}</strong>
                         <p className="chain-popup-blurb">
                           {gym.address}
                           {gym.city ? ` · ${gym.city}` : ""}
                         </p>
                         <p className="chain-popup-meta">
                           {km != null ? <span>{formatKm(km)}</span> : null}
-                          {priceLabel ? <span>{priceLabel}</span> : null}
+                          <span>{priceLabel ?? "Hinta ei tiedossa"}</span>
                           {hours ? <span>{hours}</span> : null}
                         </p>
                       </div>

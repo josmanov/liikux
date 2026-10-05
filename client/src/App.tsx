@@ -8,6 +8,7 @@ import RegisterPage from "./pages/RegisterPage";
 import FavoritesPage from "./pages/FavoritesPage";
 import AboutPage from "./pages/AboutPage";
 import HobbysPage from "./pages/HobbysPage";
+import AdminDataPage from "./pages/AdminDataPage";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/favorites" element={<FavoritesPage />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/admin/data" element={<AdminDataPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

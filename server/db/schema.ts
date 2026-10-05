@@ -1,4 +1,11 @@
-import { pgTable, text, varchar, doublePrecision, boolean } from "drizzle-orm/pg-core";
+import {
+    pgTable,
+    text,
+    varchar,
+    doublePrecision,
+    boolean,
+    integer,
+} from "drizzle-orm/pg-core";
 
 export const chains = pgTable("chains", {
     id: varchar("id", { length: 64 }).primaryKey(),
@@ -7,6 +14,7 @@ export const chains = pgTable("chains", {
     image: text("image").notNull(),
     logoFit: varchar("logo_fit", { length: 32}),
     logoClass: varchar("logo_class", { length: 64 }),
+    pricingMode: varchar("pricing_mode", { length: 32 }),
     priceFrom: doublePrecision("price_from"),
     is247: boolean("is_247"),
     freeTrial: boolean("free_trial"),
@@ -42,4 +50,28 @@ export const gyms = pgTable("gyms", {
     hoursWeekday: text("hours_weekday"),
     hoursWeekend: text("hours_weekend"),
     membershipsJson: text("memberships_json"),
+    offerCheckedAt: varchar("offer_checked_at", { length: 32 }),
+    enrichStatus: varchar("enrich_status", { length: 32 }),
+    missReason: text("miss_reason"),
+    offerSourceUrl: text("offer_source_url"),
+    offerMethod: varchar("offer_method", { length: 32 }),
+});
+
+export const enrichRuns = pgTable("enrich_runs", {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    startedAt: varchar("started_at", { length: 32 }).notNull(),
+    finishedAt: varchar("finished_at", { length: 32 }),
+    durationSec: doublePrecision("duration_sec"),
+    dryRun: boolean("dry_run").notNull().default(false),
+    scanned: integer("scanned").notNull().default(0),
+    okCount: integer("ok_count").notNull().default(0),
+    partialCount: integer("partial_count").notNull().default(0),
+    unknownCount: integer("unknown_count").notNull().default(0),
+    failCount: integer("fail_count").notNull().default(0),
+    skippedCount: integer("skipped_count").notNull().default(0),
+    pricesNew: integer("prices_new").notNull().default(0),
+    pricesChanged: integer("prices_changed").notNull().default(0),
+    hoursNew: integer("hours_new").notNull().default(0),
+    hoursChanged: integer("hours_changed").notNull().default(0),
+    changesJson: text("changes_json"),
 });

@@ -13,7 +13,16 @@
     "db:salilinkit": "tsx src/export-salilinkit.ts",
     "db:check-www": "tsx src/check-www.ts",
     "db:seed-chain-info": "tsx src/seed-chain-info.ts",
-    "db:scrape-gym-prices": "tsx src/scrape-gym-prices.ts"
+    "db:scrape-gym-prices": "tsx src/scrape-gym-prices.ts",
+    "db:clean-gym-names": "tsx src/clean-gym-names.ts",
+    "db:data-review": "tsx src/export-data-review.ts",
+    "db:export-csv": "tsx src/export-gyms-csv.ts",
+    "db:backup-gyms": "tsx src/backup-gyms.ts",
+    "db:import-salit": "tsx src/import-salit-json.ts",
+    "db:restore-gyms": "tsx src/restore-gyms-backup.ts",
+    "db:enrich": "tsx src/enrich-gyms.ts",
+    "db:enrich:dry": "tsx src/enrich-gyms.ts --dry-run --limit=25",
+    "db:enrich:chains": "tsx src/enrich-gyms.ts --skip-other --only-missing"
   },
   "keywords": [],
   "author": "",

@@ -74,6 +74,16 @@ function cleanWww(raw: string | undefined | null): string | null {
   return v;
 }
 
+function cleanGymName(name: string) {
+  return name
+    .replace(/\s*\/\s*kuntokeskus\b/gi, "")
+    .replace(/\s*\/\s*kuntosalit?\b.*$/gi, "")
+    .replace(/\s*-\s*kuntokeskus\b/gi, "")
+    .replace(/\s*-\s*kuntosali\b/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 function slugify(name: string, lipasId: number) {
   const base = name
     .toLowerCase()
@@ -204,7 +214,7 @@ async function sync() {
 
   for (const item of items) {
     const lipasId = item["lipas-id"];
-    const name = (item.name ?? "").trim();
+    const name = cleanGymName((item.name ?? "").trim());
     const point = pointFromItem(item);
     if (!lipasId || !name || !point) {
       skip += 1;
