@@ -31,7 +31,7 @@ app.get("/api/chains", async (_req, res) => {
 });
 
 app.get("/api/gyms", async (_req, res) => {
-  const { data, hit } = await cached("gyms-listed", LIST_CACHE_MS, () =>
+  const { data, hit } = await cached("gyms-listed-slim", LIST_CACHE_MS, () =>
     db
       .select({
         id: gyms.id,
