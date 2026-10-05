@@ -15,7 +15,8 @@ import {
   Waves,
 } from "lucide-react";
 import HoverIcon, { usePickHover } from "../components/HoverIcon";
-import { type Chain, type Gym } from "../data/types";
+import { type Chain } from "../data/types";
+import { fetchChains, fetchHomeStats } from "../data/api";
 import { lajiGifUrl } from "../data/lajiGifs";
 import { useInView } from "../hooks/useInView";
 import { useAppLocation } from "../context/LocationContext";
@@ -147,7 +148,8 @@ function HomePage() {
   const start = 0;
   const { openChains, openChain } = useChainPopup();
   const [chains, setChains] = useState<Chain[]>([]);
-  const [gyms, setGyms] = useState<Gym[]>([]);
+  const [gymCount, setGymCount] = useState(0);
+  const [cityCount, setCityCount] = useState(0);
   const { label, setLocation } = useAppLocation();
   const navigate = useNavigate();
   const [addressDraft, setAddressDraft] = useState("");
@@ -231,25 +233,27 @@ function HomePage() {
   }, []);
 
   useEffect(() => {
-    fetch("http://localhost:3001/api/chains")
-      .then((r) => r.json())
-      .then((data: Chain[]) => setChains(data))
+    fetchChains()
+      .then((data) => setChains(data))
       .catch(() => setChains([]));
   }, []);
 
   useEffect(() => {
-    fetch("http://localhost:3001/api/gyms")
-      .then((r) => r.json())
-      .then((data: Gym[]) => setGyms(data))
-      .catch(() => setGyms([]));
+    fetchHomeStats()
+      .then((s) => {
+        setGymCount(s.gymCount);
+        setCityCount(s.cityCount);
+      })
+      .catch(() => {
+        setGymCount(0);
+        setCityCount(0);
+      });
   }, []);
 
   const suositutKetjut = chains
     .filter((c) => c.slug !== "muut")
     .slice(0, 6);
   const chainCount = chains.filter((c) => c.slug !== "muut").length;
-  const gymCount = gyms.length;
-  const cityCount = new Set(gyms.map((g) => g.city).filter(Boolean)).size;
 
   return (
     <main className="shell">

@@ -5,6 +5,7 @@ import { ChevronDown, ChevronLeft, ChevronRight, SlidersHorizontal, X } from "lu
 import { LngLatBounds, Map, Marker, type MapLayerMouseEvent } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type Chain, type Gym } from "../data/types";
+import { fetchGymsAndChains } from "../data/api";
 import {
   cleanGymDisplayName,
   formatDistanceKm,
@@ -817,11 +818,8 @@ function GymsPage() {
   }, []);
 
   useEffect(() => {
-    Promise.all([
-      fetch("http://localhost:3001/api/gyms").then((r) => r.json()),
-      fetch("http://localhost:3001/api/chains").then((r) => r.json()),
-    ])
-      .then(([gymData, chainData]: [Gym[], Chain[]]) => {
+    fetchGymsAndChains()
+      .then(([gymData, chainData]) => {
         setGyms(gymData);
         setChains(chainData);
       })

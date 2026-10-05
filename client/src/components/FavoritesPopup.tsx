@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { X } from "lucide-react";
 import "./ChainPopup.css";
 import { type Chain, type Gym } from "../data/types";
+import { fetchGymsAndChains } from "../data/api";
 import { cleanGymDisplayName } from "../data/format";
 import { readFavoriteSlugs } from "../data/favorites";
 
@@ -33,19 +34,23 @@ function FavoritesPopup({ open, onClose }: Props) {
   }, [open]);
 
   useEffect(() => {
-    Promise.all([
-      fetch("http://localhost:3001/api/gyms").then((r) => r.json()),
-      fetch("http://localhost:3001/api/chains").then((r) => r.json()),
-    ])
-      .then(([gymData, chainData]: [Gym[], Chain[]]) => {
+    if (!open) return;
+    let cancelled = false;
+    fetchGymsAndChains()
+      .then(([gymData, chainData]) => {
+        if (cancelled) return;
         setGyms(gymData);
         setChains(chainData);
       })
       .catch(() => {
+        if (cancelled) return;
         setGyms([]);
         setChains([]);
       });
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
 
   if (!open) return null;
 

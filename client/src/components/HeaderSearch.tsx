@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { type Chain, type Gym } from "../data/types";
+import { fetchGymsAndChains } from "../data/api";
 import { useChainPopup } from "../context/ChainPopupContext";
 import "./HeaderSearch.css";
 
@@ -13,21 +14,22 @@ function HeaderSearch() {
   const [open, setOpen] = useState(false);
   const [chains, setChains] = useState<Chain[]>([]);
   const [gyms, setGyms] = useState<Gym[]>([]);
+  const [dataReady, setDataReady] = useState(false);
 
-  useEffect(() => {
-    Promise.all([
-      fetch("http://localhost:3001/api/chains").then((r) => r.json()),
-      fetch("http://localhost:3001/api/gyms").then((r) => r.json()),
-    ])
-      .then(([chainData, gymData]: [Chain[], Gym[]]) => {
-        setChains(Array.isArray(chainData) ? chainData : []);
-        setGyms(Array.isArray(gymData) ? gymData : []);
+  function ensureData() {
+    if (dataReady) return;
+    setDataReady(true);
+    fetchGymsAndChains()
+      .then(([gymData, chainData]) => {
+        setChains(chainData);
+        setGyms(gymData);
       })
       .catch(() => {
         setChains([]);
         setGyms([]);
+        setDataReady(false);
       });
-  }, []);
+  }
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -87,10 +89,14 @@ function HeaderSearch() {
         placeholder="Etsi..."
         value={query}
         onChange={(e) => {
+          ensureData();
           setQuery(e.target.value);
           setOpen(true);
         }}
-        onFocus={() => setOpen(true)}
+        onFocus={() => {
+          ensureData();
+          setOpen(true);
+        }}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();

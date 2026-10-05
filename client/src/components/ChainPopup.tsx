@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, X } from "lucide-react";
 import "./ChainPopup.css";
 import { type Chain, type Gym, resolveGymOffer } from "../data/types";
+import { fetchGymsAndChains } from "../data/api";
 import { cleanGymDisplayName, formatPriceFrom } from "../data/format";
 import { useAppLocation } from "../context/LocationContext";
 import { useChainPopup } from "../context/ChainPopupContext";
@@ -57,19 +58,23 @@ function ChainPopup() {
   }, [open, chainSlug]);
 
   useEffect(() => {
-    Promise.all([
-      fetch("http://localhost:3001/api/chains").then((r) => r.json()),
-      fetch("http://localhost:3001/api/gyms").then((r) => r.json()),
-    ])
-      .then(([chainData, gymData]: [Chain[], Gym[]]) => {
-        setChains(Array.isArray(chainData) ? chainData : []);
-        setGyms(Array.isArray(gymData) ? gymData : []);
+    if (!open) return;
+    let cancelled = false;
+    fetchGymsAndChains()
+      .then(([gymData, chainData]) => {
+        if (cancelled) return;
+        setGyms(gymData);
+        setChains(chainData);
       })
       .catch(() => {
-        setChains([]);
+        if (cancelled) return;
         setGyms([]);
+        setChains([]);
       });
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
 
   const selectedChain = useMemo(
     () =>

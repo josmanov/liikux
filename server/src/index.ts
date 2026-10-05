@@ -4,9 +4,11 @@ import { and, desc, eq } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import { chains, enrichRuns, gyms } from "../db/schema.js";
+import { cached } from "./memoryCache.js";
 
 const app = express();
 const PORT = 3001;
+const LIST_CACHE_MS = 2 * 60 * 1000;
 
 app.use(cors());
 app.use(express.json());
@@ -16,13 +18,40 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.get("/api/chains", async (_req, res) => {
-  const rows = await db.select().from(chains);
-  res.json(rows);
+  const { data, hit } = await cached("chains", LIST_CACHE_MS, () =>
+    db.select().from(chains),
+  );
+  res.setHeader("Cache-Control", "public, max-age=120");
+  res.setHeader("X-Cache", hit ? "HIT" : "MISS");
+  res.json(data);
 });
 
 app.get("/api/gyms", async (_req, res) => {
-  const rows = await db.select().from(gyms).where(eq(gyms.listed, true));
-  res.json(rows);
+  const { data, hit } = await cached("gyms-listed", LIST_CACHE_MS, () =>
+    db.select().from(gyms).where(eq(gyms.listed, true)),
+  );
+  res.setHeader("Cache-Control", "public, max-age=120");
+  res.setHeader("X-Cache", hit ? "HIT" : "MISS");
+  res.json(data);
+});
+
+app.get("/api/stats", async (_req, res) => {
+  const { data, hit } = await cached("stats", LIST_CACHE_MS, async () => {
+    const rows = await db
+      .select({ city: gyms.city })
+      .from(gyms)
+      .where(eq(gyms.listed, true));
+    const chainRows = await db.select({ slug: chains.slug }).from(chains);
+    const cities = new Set(rows.map((r) => r.city).filter(Boolean));
+    return {
+      gymCount: rows.length,
+      cityCount: cities.size,
+      chainCount: chainRows.filter((c) => c.slug !== "muut").length,
+    };
+  });
+  res.setHeader("Cache-Control", "public, max-age=120");
+  res.setHeader("X-Cache", hit ? "HIT" : "MISS");
+  res.json(data);
 });
 
 app.get("/api/gyms/:slug", async (req, res) => {
