@@ -375,6 +375,12 @@ function GymDetailPage() {
                       <strong>Ilmainen kokeilu</strong>
                     </li>
                   ) : null}
+                  {chain?.dayPass === true ? (
+                    <li>
+                      <span>Päivälippu</span>
+                      <strong>Saatavilla</strong>
+                    </li>
+                  ) : null}
                 </ul>
               )}
             </section>
