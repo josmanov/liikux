@@ -24,6 +24,7 @@ export const chains = pgTable("chains", {
     hoursWeekend: text("hours_weekend"),
     membershipsJson: text("memberships_json"),
     servicesJson: text("services_json"),
+    audienceJson: text("audience_json"),
     sourceUrl: text("source_url"),
     checkedAt: varchar("checked_at", { length: 32 }),
 });
