@@ -3,6 +3,7 @@ import "./AppLayout.css";
 import Header from "./Header";
 import Footer from "./Footer";
 import ScrollToTop from "./ScrollToTop";
+import CookieBanner from "./CookieBanner";
 import { LocationProvider } from "../context/LocationContext";
 import { ChainPopupProvider } from "../context/ChainPopupContext";
 import ChainPopup from "./ChainPopup";
@@ -20,6 +21,7 @@ function AppLayout() {
           <Footer />
         </div>
         <ChainPopup />
+        <CookieBanner />
       </ChainPopupProvider>
     </LocationProvider>
   );
