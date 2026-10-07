@@ -54,6 +54,7 @@ export const gyms = pgTable("gyms", {
     hoursWeekend: text("hours_weekend"),
     membershipsJson: text("memberships_json"),
     servicesJson: text("services_json"),
+    audienceJson: text("audience_json"),
     offerCheckedAt: varchar("offer_checked_at", { length: 32 }),
     enrichStatus: varchar("enrich_status", { length: 32 }),
     missReason: text("miss_reason"),

@@ -19,6 +19,7 @@ const gymListSelect = {
   hoursWeekend: gyms.hoursWeekend,
   membershipsJson: gyms.membershipsJson,
   servicesJson: gyms.servicesJson,
+  audienceJson: gyms.audienceJson,
   chainRowId: chains.id,
   chainSlug: chains.slug,
   chainName: chains.name,
@@ -50,6 +51,7 @@ function mapGymListRow(r: {
   hoursWeekend: string | null;
   membershipsJson: string | null;
   servicesJson: string | null;
+  audienceJson: string | null;
   chainRowId: string | null;
   chainSlug: string | null;
   chainName: string | null;
@@ -80,6 +82,7 @@ function mapGymListRow(r: {
     hoursWeekend: r.hoursWeekend,
     membershipsJson: r.membershipsJson,
     servicesJson: r.servicesJson,
+    audienceJson: r.audienceJson,
     chain: r.chainRowId
       ? {
           id: r.chainRowId,

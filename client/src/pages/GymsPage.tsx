@@ -411,7 +411,7 @@ function GymsPage() {
       }
       if (selectedAudiences.length > 0) {
         const chain = chainForGym(gym, chains);
-        if (!gymMatchesAudience(chain, selectedAudiences)) return false;
+        if (!gymMatchesAudience(gym, chain, selectedAudiences)) return false;
       }
       if (priceFilter !== "all") {
         const chain = chainForGym(gym, chains);

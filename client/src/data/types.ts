@@ -64,6 +64,7 @@ export type Gym = {
   hoursWeekend?: string | null;
   membershipsJson?: string | null;
   servicesJson?: string | null;
+  audienceJson?: string | null;
   chain?: ChainSummary | null;
 };
 

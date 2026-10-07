@@ -12,11 +12,12 @@ export function parseAudienceTags(raw: string | null | undefined): string[] {
 }
 
 export function gymMatchesAudience(
+  gym: Gym | null | undefined,
   chain: Chain | ChainSummary | null | undefined,
   selected: string[],
 ) {
   if (selected.length === 0) return true;
-  const tags = parseAudienceTags(chain?.audienceJson);
+  const tags = parseAudienceTags(gym?.audienceJson ?? chain?.audienceJson);
   if (tags.length === 0) return true;
   return selected.some((id) => tags.includes(id));
 }
