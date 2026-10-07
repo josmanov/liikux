@@ -6,7 +6,6 @@ import { ArrowLeft, Check, Copy, MapPin } from "lucide-react";
 import {
   type Chain,
   type Gym,
-  parseChainServices,
   resolveGymOffer,
 } from "../data/types";
 import { cleanGymDisplayName, formatPriceFrom } from "../data/format";
@@ -249,7 +248,7 @@ function GymDetailPage() {
   const chain = gym.chain;
   const offer = resolveGymOffer(gym, chain);
   const memberships = offer.memberships;
-  const services = parseChainServices(chain);
+  const services = offer.services;
   const priceLabel = formatPriceFrom(offer.priceFrom);
   const siteUrl =
     gym.www?.trim() ||
@@ -261,7 +260,7 @@ function GymDetailPage() {
   const heroIsText = !chain?.image;
   const promoTag =
     services.find((s) => PROMO_TAGS.includes(s)) ??
-    (chain?.freeTrial === true ? "Ilmainen kokeilu" : null);
+    (offer.freeTrial === true ? "Ilmainen kokeilu" : null);
   const tripKm =
     fromPoint && gym.lat != null && gym.lng != null
       ? distanceKm(fromPoint.lat, fromPoint.lng, gym.lat, gym.lng)
@@ -270,7 +269,9 @@ function GymDetailPage() {
   const hours247 = offer.is247 === true;
   const hoursWeekday = offer.hoursWeekday;
   const hoursWeekend = offer.hoursWeekend;
-  const hasHours = Boolean(hoursWeekday || hoursWeekend || chain?.freeTrial === true);
+  const hasHours = Boolean(
+    hoursWeekday || hoursWeekend || offer.freeTrial === true,
+  );
 
   const contact = {
     phone: gym.phone?.trim() || null,
@@ -369,13 +370,13 @@ function GymDetailPage() {
                       </strong>
                     </li>
                   ) : null}
-                  {chain?.freeTrial === true ? (
+                  {offer.freeTrial === true ? (
                     <li>
                       <span>Kokeilu</span>
                       <strong>Ilmainen kokeilu</strong>
                     </li>
                   ) : null}
-                  {chain?.dayPass === true ? (
+                  {offer.dayPass === true ? (
                     <li>
                       <span>Päivälippu</span>
                       <strong>Saatavilla</strong>

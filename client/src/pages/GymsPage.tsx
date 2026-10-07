@@ -8,6 +8,8 @@ import { type Chain, type Gym, resolveGymOffer } from "../data/types";
 import { fetchGymsAndChains } from "../data/api";
 import {
   chainForGym,
+  gymHasDayPass,
+  gymHasFreeTrial,
   gymIs247,
   gymMatchesAudience,
 } from "../data/audience";
@@ -415,9 +417,8 @@ function GymsPage() {
         const chain = chainForGym(gym, chains);
         const priceFrom =
           gym.priceFrom != null ? gym.priceFrom : (chain?.priceFrom ?? null);
-        const dayPass = chain?.dayPass ?? null;
         if (priceFilter === "daypass") {
-          if (dayPass !== true) return false;
+          if (!gymHasDayPass(gym, chain)) return false;
         } else if (priceFrom == null) {
           return false;
         } else if (priceFilter === "cheap" && !(priceFrom < 30)) {
@@ -437,11 +438,11 @@ function GymsPage() {
       }
       if (extraFreeTrial) {
         const chain = chainForGym(gym, chains);
-        if (chain?.freeTrial !== true) return false;
+        if (!gymHasFreeTrial(gym, chain)) return false;
       }
       if (extraDayPass) {
         const chain = chainForGym(gym, chains);
-        if (chain?.dayPass !== true) return false;
+        if (!gymHasDayPass(gym, chain)) return false;
       }
       if (maxDistanceKm != null) {
         if (gym.lat == null || gym.lng == null) return false;
@@ -1729,12 +1730,12 @@ function GymsPage() {
                         {offer.is247 === true ? (
                           <span className="browse-tag is-247">24/7</span>
                         ) : null}
-                        {chain?.freeTrial === true ? (
+                        {offer.freeTrial === true ? (
                           <span className="browse-tag is-trial">
                             Ilmainen kokeilu
                           </span>
                         ) : null}
-                        {chain?.dayPass === true ? (
+                        {offer.dayPass === true ? (
                           <span className="browse-tag is-daypass">Päivälippu</span>
                         ) : null}
                       </div>

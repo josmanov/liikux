@@ -58,9 +58,12 @@ export type Gym = {
   email?: string | null;
   priceFrom?: number | null;
   is247?: boolean | null;
+  freeTrial?: boolean | null;
+  dayPass?: boolean | null;
   hoursWeekday?: string | null;
   hoursWeekend?: string | null;
   membershipsJson?: string | null;
+  servicesJson?: string | null;
   chain?: ChainSummary | null;
 };
 
@@ -82,23 +85,42 @@ export function parseChainMemberships(
   return parseMembershipsJson(chain?.membershipsJson);
 }
 
-export function parseChainServices(chain: Chain | null | undefined): string[] {
-  if (!chain?.servicesJson) return [];
+export function parseServicesJson(raw: string | null | undefined): string[] {
+  if (!raw) return [];
   try {
-    const raw = JSON.parse(chain.servicesJson);
-    return Array.isArray(raw) ? raw : [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
 }
 
+export function parseChainServices(chain: Chain | null | undefined): string[] {
+  return parseServicesJson(chain?.servicesJson);
+}
+
+type OfferChain = {
+  priceFrom?: number | null;
+  is247?: boolean | null;
+  freeTrial?: boolean | null;
+  dayPass?: boolean | null;
+  hoursWeekday?: string | null;
+  hoursWeekend?: string | null;
+  membershipsJson?: string | null;
+  servicesJson?: string | null;
+};
+
 export function resolveGymOffer(
   gym: Gym | null | undefined,
-  chain: Chain | null | undefined,
+  chain: OfferChain | null | undefined,
 ) {
   const priceFrom =
     gym?.priceFrom != null ? gym.priceFrom : (chain?.priceFrom ?? null);
   const is247 = gym?.is247 != null ? gym.is247 : (chain?.is247 ?? null);
+  const freeTrial =
+    gym?.freeTrial != null ? gym.freeTrial : (chain?.freeTrial ?? null);
+  const dayPass =
+    gym?.dayPass != null ? gym.dayPass : (chain?.dayPass ?? null);
   const hoursWeekday =
     gym?.hoursWeekday?.trim() ||
     (is247 === true ? "24/7" : null) ||
@@ -113,6 +135,20 @@ export function resolveGymOffer(
   const memberships =
     gymMemberships.length > 0
       ? gymMemberships
-      : parseChainMemberships(chain);
-  return { priceFrom, is247, hoursWeekday, hoursWeekend, memberships };
+      : parseMembershipsJson(chain?.membershipsJson);
+  const gymServices = parseServicesJson(gym?.servicesJson);
+  const services =
+    gymServices.length > 0
+      ? gymServices
+      : parseServicesJson(chain?.servicesJson);
+  return {
+    priceFrom,
+    is247,
+    freeTrial,
+    dayPass,
+    hoursWeekday,
+    hoursWeekend,
+    memberships,
+    services,
+  };
 }

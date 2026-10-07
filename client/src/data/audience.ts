@@ -37,3 +37,21 @@ export function gymIs247(
   if (gym.is247 === false) return false;
   return chain?.is247 === true;
 }
+
+export function gymHasFreeTrial(
+  gym: Gym,
+  chain: Chain | ChainSummary | null | undefined,
+) {
+  if (gym.freeTrial === true) return true;
+  if (gym.freeTrial === false) return false;
+  return chain?.freeTrial === true;
+}
+
+export function gymHasDayPass(
+  gym: Gym,
+  chain: Chain | ChainSummary | null | undefined,
+) {
+  if (gym.dayPass === true) return true;
+  if (gym.dayPass === false) return false;
+  return chain?.dayPass === true;
+}
