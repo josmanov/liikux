@@ -1,5 +1,7 @@
 import "./GymsPage.css";
+import "../components/ChainPopup.css";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useLocation, useParams } from "react-router-dom";
 import {
   ChevronDown,
@@ -312,7 +314,23 @@ function distanceKm(
   return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
 
-type FilterKey = "chains" | "sort" | "price" | "distance";
+type FilterKey = "sort" | "price" | "distance";
+
+function filterChainVisual(id: string, list: Chain[]) {
+  if (id === OTHER_CHAIN_FILTER_ID) {
+    return { image: "/pins/gym-pin.png", logo: true, logoClass: "" };
+  }
+  const chain = list.find((c) => chainMatchesFilterKey(c, id));
+  const image =
+    chain?.image && !chain.image.includes("/pins/")
+      ? chain.image
+      : "/pins/gym-pin.png";
+  return {
+    image,
+    logo: chain?.logoFit === "contain" || image.includes("/pins/"),
+    logoClass: chain?.logoClass || "",
+  };
+}
 
 const PAGE_SIZE = 24;
 
@@ -369,6 +387,7 @@ function GymsPage() {
   const [extraFreeTrial, setExtraFreeTrial] = useState(false);
   const [extraDayPass, setExtraDayPass] = useState(false);
   const [extrasOpen, setExtrasOpen] = useState(false);
+  const [chainsOpen, setChainsOpen] = useState(false);
   const [addressDraft, setAddressDraft] = useState(locationLabel);
   const [addressHits, setAddressHits] = useState<AddressHit[]>([]);
   const [addressLoading, setAddressLoading] = useState(false);
@@ -756,6 +775,20 @@ function GymsPage() {
       document.body.style.overflow = prev;
     };
   }, [extrasOpen]);
+
+  useEffect(() => {
+    if (!chainsOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setChainsOpen(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [chainsOpen]);
 
   function toggleFilter(key: FilterKey) {
     setExtrasOpen(false);
@@ -1622,9 +1655,13 @@ function GymsPage() {
               <button
                 type="button"
                 className="browse-filter-btn"
-                aria-expanded={openFilter === "chains"}
-                aria-haspopup="listbox"
-                onClick={() => toggleFilter("chains")}
+                aria-expanded={chainsOpen}
+                aria-haspopup="dialog"
+                onClick={() => {
+                  setOpenFilter(null);
+                  setExtrasOpen(false);
+                  setChainsOpen(true);
+                }}
               >
                 <img
                   className="browse-filter-icon"
@@ -1634,56 +1671,6 @@ function GymsPage() {
                 <span className="browse-filter-label">{chainLabel}</span>
                 <ChevronDown size={16} strokeWidth={2.2} />
               </button>
-              {openFilter === "chains" ? (
-                <div
-                  className="browse-filter-menu browse-filter-menu-chains"
-                  role="group"
-                  aria-label={t("chains")}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="browse-filter-menu-actions">
-                    <button
-                      type="button"
-                      className="browse-filter-menu-action"
-                      onClick={() => setSelectedChains([...allChainFilterIds])}
-                    >
-                      {t("all")}
-                    </button>
-                    <button
-                      type="button"
-                      className="browse-filter-menu-action"
-                      onClick={() => setSelectedChains([])}
-                    >
-                      {t("clear")}
-                    </button>
-                  </div>
-                  <ul className="browse-filter-check-list" role="listbox">
-                    {localizedChainFilterOptions.map((opt) => {
-                      const on = selectedChains.includes(opt.id);
-                      return (
-                        <li key={opt.id}>
-                          <label className="browse-filter-check">
-                            <UxSwitch
-                              size="sm"
-                              checked={on}
-                              onChange={() => {
-                                setSelectedChains((cur) =>
-                                  cur.includes(opt.id)
-                                    ? cur.filter((id) => id !== opt.id)
-                                    : [...cur, opt.id],
-                                );
-                              }}
-                            />
-                            <span className="browse-filter-check-label">
-                              {opt.label}
-                            </span>
-                          </label>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ) : null}
             </div>
 
             <div className="browse-filter">
@@ -2170,6 +2157,100 @@ function GymsPage() {
           </div>
         </div>
       ) : null}
+
+      {chainsOpen
+        ? createPortal(
+            <div
+              className="chain-popup-overlay"
+              onClick={() => setChainsOpen(false)}
+            >
+              <div
+                className="chain-popup-card"
+                role="dialog"
+                aria-modal="true"
+                aria-label={t("chains")}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="browse-chains-top">
+                  <button
+                    type="button"
+                    className="browse-chains-action"
+                    onClick={() => setSelectedChains([...allChainFilterIds])}
+                  >
+                    {t("all")}
+                  </button>
+                  <button
+                    type="button"
+                    className="browse-chains-action"
+                    onClick={() => setSelectedChains([])}
+                  >
+                    {t("clear")}
+                  </button>
+                  <button
+                    type="button"
+                    className="chain-popup-close"
+                    onClick={() => setChainsOpen(false)}
+                    aria-label="Sulje"
+                  >
+                    <X size={20} strokeWidth={2.4} />
+                  </button>
+                </div>
+                <div className="chain-popup-scroll">
+                  <ul
+                    className="chain-popup-list list-pop"
+                    onScroll={(e) => {
+                      e.currentTarget.parentElement?.classList.toggle(
+                        "is-scrolled",
+                        e.currentTarget.scrollTop > 6,
+                      );
+                    }}
+                  >
+                    {localizedChainFilterOptions.map((opt, i) => {
+                      const on = selectedChains.includes(opt.id);
+                      const visual = filterChainVisual(opt.id, chains);
+                      return (
+                        <li
+                          key={opt.id}
+                          style={{
+                            animationDelay: `${Math.min(i, 18) * 28}ms`,
+                          }}
+                        >
+                          <label className="browse-chains-row">
+                            <span
+                              className={[
+                                "chain-popup-media",
+                                visual.logo ? "is-logo" : "",
+                                visual.logoClass,
+                              ]
+                                .filter(Boolean)
+                                .join(" ")}
+                            >
+                              <img src={visual.image} alt="" />
+                            </span>
+                            <UxSwitch
+                              checked={on}
+                              onChange={() => {
+                                setSelectedChains((cur) =>
+                                  cur.includes(opt.id)
+                                    ? cur.filter((id) => id !== opt.id)
+                                    : [...cur, opt.id],
+                                );
+                              }}
+                            />
+                            <span className="browse-chains-name">
+                              {opt.label}
+                            </span>
+                          </label>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
 
     </main>
     </>
