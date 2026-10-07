@@ -202,8 +202,9 @@ function filterIdFromChainSlug(slug: string, chains: Chain[]) {
 }
 
 const audienceOptions = [
-  { id: "men", label: "Miehille", icon: "/icons/kenelle-men.png" },
+  { id: "all", label: "Kaikille", icon: "/icons/kenelle-men.png" },
   { id: "women", label: "Naisille", icon: "/icons/kenelle-women.png" },
+  { id: "men", label: "Miehille", icon: "/icons/kenelle-men.png" },
   { id: "kids", label: "Lapsille", icon: "/icons/kenelle-kids.png" },
   { id: "seniors", label: "Seniori", icon: "/icons/kenelle-seniors.png" },
 ];

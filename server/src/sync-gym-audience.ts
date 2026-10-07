@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { chains, gyms } from "../db/schema.js";
 
@@ -23,12 +23,12 @@ async function main() {
     const rows = await db
       .update(gyms)
       .set({ audienceJson: chain.audienceJson })
-      .where(and(eq(gyms.chainId, chain.id), isNull(gyms.audienceJson)))
+      .where(eq(gyms.chainId, chain.id))
       .returning({ id: gyms.id });
 
     updated += rows.length;
     console.log(
-      `chain ${chain.id}: filled ${rows.length} gyms (audience=${chain.audienceJson})`,
+      `chain ${chain.id}: set ${rows.length} gyms (audience=${chain.audienceJson})`,
     );
   }
 
@@ -36,10 +36,21 @@ async function main() {
     .select({ n: sql<number>`count(*)::int` })
     .from(gyms)
     .where(eq(gyms.listed, true));
-  const withAudience = await db
+  const womenOnly = await db
     .select({ n: sql<number>`count(*)::int` })
     .from(gyms)
-    .where(and(eq(gyms.listed, true), sql`${gyms.audienceJson} IS NOT NULL`));
+    .where(
+      and(
+        eq(gyms.listed, true),
+        sql`${gyms.audienceJson} = ${'["women"]'}`,
+      ),
+    );
+  const everyone = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(gyms)
+    .where(
+      and(eq(gyms.listed, true), sql`${gyms.audienceJson} LIKE ${'%"all"%'}`),
+    );
 
   console.log(
     JSON.stringify(
@@ -47,7 +58,8 @@ async function main() {
         updated,
         chainsWithoutAudience: skipped,
         listed: listed[0]?.n,
-        listedWithAudience: withAudience[0]?.n,
+        listedWomenOnly: womenOnly[0]?.n,
+        listedEveryoneTag: everyone[0]?.n,
       },
       null,
       2,

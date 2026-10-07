@@ -84,7 +84,7 @@ app.get("/api/chains/:slug/gyms", async (req, res) => {
 });
 
 app.get("/api/gyms", async (_req, res) => {
-  const { data, hit } = await cached("gyms-listed-v5", LIST_CACHE_MS, () =>
+  const { data, hit } = await cached("gyms-listed-v6", LIST_CACHE_MS, () =>
     fetchListedGymsWithChain(),
   );
   res.setHeader("Cache-Control", "public, max-age=120");

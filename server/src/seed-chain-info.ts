@@ -23,8 +23,10 @@ type ChainInfo = {
   sourceUrl: string | null;
 };
 
-const AUDIENCE_ALL = ["men", "women", "kids", "seniors"] as const;
-const AUDIENCE_MW = ["men", "women"];
+const AUDIENCE_EVERYONE = ["all"] as const;
+const AUDIENCE_WOMEN_ONLY = ["women"] as const;
+const AUDIENCE_EVERYONE_KIDS = ["all", "kids"] as const;
+const AUDIENCE_EVERYONE_SENIORS = ["all", "seniors"] as const;
 
 const infos: ChainInfo[] = [
   {
@@ -34,7 +36,7 @@ const infos: ChainInfo[] = [
     is247: null,
     freeTrial: false,
     dayPass: true,
-    audiences: [...AUDIENCE_MW],
+    audiences: [...AUDIENCE_EVERYONE],
     website: "https://www.easyfit.fi/",
     hoursWeekday: null,
     hoursWeekend: null,
@@ -60,7 +62,7 @@ const infos: ChainInfo[] = [
     is247: null,
     freeTrial: null,
     dayPass: true,
-    audiences: [...AUDIENCE_MW],
+    audiences: [...AUDIENCE_EVERYONE],
     website: "https://www.elixia.fi/",
     hoursWeekday: null,
     hoursWeekend: null,
@@ -79,7 +81,7 @@ const infos: ChainInfo[] = [
     is247: false,
     freeTrial: null,
     dayPass: null,
-    audiences: [...AUDIENCE_MW],
+    audiences: [...AUDIENCE_EVERYONE],
     website: "https://www.fressi.fi/",
     hoursWeekday: null,
     hoursWeekend: null,
@@ -99,7 +101,7 @@ const infos: ChainInfo[] = [
     is247: true,
     freeTrial: true,
     dayPass: null,
-    audiences: ["men", "women", "kids"],
+    audiences: [...AUDIENCE_EVERYONE_KIDS],
     website: "https://fi.fitness24seven.com/",
     hoursWeekday: "24/7",
     hoursWeekend: "24/7",
@@ -117,7 +119,7 @@ const infos: ChainInfo[] = [
     is247: null,
     freeTrial: null,
     dayPass: null,
-    audiences: [...AUDIENCE_MW],
+    audiences: [...AUDIENCE_EVERYONE],
     website: null,
     hoursWeekday: null,
     hoursWeekend: null,
@@ -132,7 +134,7 @@ const infos: ChainInfo[] = [
     is247: false,
     freeTrial: true,
     dayPass: null,
-    audiences: [...AUDIENCE_MW, "seniors"],
+    audiences: [...AUDIENCE_EVERYONE_SENIORS],
     website: "https://www.liikku.fi/",
     hoursWeekday: "05:00–23:00",
     hoursWeekend: "05:00–23:00",
@@ -152,7 +154,7 @@ const infos: ChainInfo[] = [
     is247: false,
     freeTrial: true,
     dayPass: null,
-    audiences: [...AUDIENCE_MW, "seniors"],
+    audiences: [...AUDIENCE_EVERYONE_SENIORS],
     website: "https://www.foreverclub.fi/",
     hoursWeekday: null,
     hoursWeekend: null,
@@ -172,7 +174,7 @@ const infos: ChainInfo[] = [
     is247: null,
     freeTrial: false,
     dayPass: null,
-    audiences: ["women"],
+    audiences: [...AUDIENCE_WOMEN_ONLY],
     website: "https://ladyline.fi/",
     hoursWeekday: null,
     hoursWeekend: null,
@@ -191,7 +193,7 @@ const infos: ChainInfo[] = [
     is247: null,
     freeTrial: true,
     dayPass: true,
-    audiences: [...AUDIENCE_MW],
+    audiences: [...AUDIENCE_EVERYONE],
     website: "https://ole.fit/",
     hoursWeekday: null,
     hoursWeekend: null,
@@ -209,7 +211,7 @@ const infos: ChainInfo[] = [
     is247: false,
     freeTrial: true,
     dayPass: null,
-    audiences: [...AUDIENCE_MW],
+    audiences: [...AUDIENCE_EVERYONE],
     website: "https://esport.fi/",
     hoursWeekday: "06:30–23:00",
     hoursWeekend: "07:30–22:00",
@@ -234,7 +236,7 @@ const infos: ChainInfo[] = [
     is247: false,
     freeTrial: true,
     dayPass: true,
-    audiences: ["men", "women", "kids"],
+    audiences: [...AUDIENCE_EVERYONE_KIDS],
     website: "https://www.unisport.fi/",
     hoursWeekday: "06:30–22:30",
     hoursWeekend: "09:00–20:30",
@@ -254,7 +256,7 @@ const infos: ChainInfo[] = [
     is247: true,
     freeTrial: true,
     dayPass: null,
-    audiences: [...AUDIENCE_MW],
+    audiences: [...AUDIENCE_EVERYONE],
     website: "https://mmkuntotalo.fi/",
     hoursWeekday: "24/7",
     hoursWeekend: "24/7",
@@ -274,7 +276,7 @@ const infos: ChainInfo[] = [
     is247: null,
     freeTrial: null,
     dayPass: null,
-    audiences: [...AUDIENCE_ALL],
+    audiences: [...AUDIENCE_EVERYONE],
     website: null,
     hoursWeekday: null,
     hoursWeekend: null,

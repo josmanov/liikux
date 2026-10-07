@@ -11,6 +11,23 @@ export function parseAudienceTags(raw: string | null | undefined): string[] {
   }
 }
 
+function isWomenOnly(tags: string[]) {
+  return tags.includes("women") && !tags.includes("men") && !tags.includes("all");
+}
+
+function isMenOnly(tags: string[]) {
+  return tags.includes("men") && !tags.includes("women") && !tags.includes("all");
+}
+
+function matchesAudienceTag(tags: string[], id: string) {
+  if (id === "all") return tags.includes("all");
+  if (id === "women") return isWomenOnly(tags);
+  if (id === "men") return isMenOnly(tags);
+  if (id === "kids") return tags.includes("kids");
+  if (id === "seniors") return tags.includes("seniors");
+  return tags.includes(id);
+}
+
 export function gymMatchesAudience(
   gym: Gym | null | undefined,
   chain: Chain | ChainSummary | null | undefined,
@@ -18,8 +35,8 @@ export function gymMatchesAudience(
 ) {
   if (selected.length === 0) return true;
   const tags = parseAudienceTags(gym?.audienceJson ?? chain?.audienceJson);
-  if (tags.length === 0) return true;
-  return selected.some((id) => tags.includes(id));
+  if (tags.length === 0) return false;
+  return selected.some((id) => matchesAudienceTag(tags, id));
 }
 
 export function chainForGym(
