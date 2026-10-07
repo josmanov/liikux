@@ -15,6 +15,7 @@ import {
   Waves,
 } from "lucide-react";
 import HoverIcon, { usePickHover } from "../components/HoverIcon";
+import LoadSpin from "../components/LoadSpin";
 import { type Chain } from "../data/types";
 import { fetchChains, fetchHomeStats } from "../data/api";
 import { lajiGifUrl } from "../data/lajiGifs";
@@ -237,22 +238,23 @@ function HomePage() {
     return () => window.removeEventListener("resize", measure);
   }, []);
 
-  useEffect(() => {
-    fetchChains()
-      .then((data) => setChains(data))
-      .catch(() => setChains([]));
-  }, []);
+  const [homeReady, setHomeReady] = useState(false);
 
   useEffect(() => {
-    fetchHomeStats()
-      .then((s) => {
-        setGymCount(s.gymCount);
-        setCityCount(s.cityCount);
-      })
-      .catch(() => {
-        setGymCount(0);
-        setCityCount(0);
-      });
+    let cancelled = false;
+    Promise.all([
+      fetchChains().catch(() => [] as Chain[]),
+      fetchHomeStats().catch(() => ({ gymCount: 0, cityCount: 0 })),
+    ]).then(([data, stats]) => {
+      if (cancelled) return;
+      setChains(data);
+      setGymCount(stats.gymCount);
+      setCityCount(stats.cityCount);
+      setHomeReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const suositutKetjut = chains
@@ -261,7 +263,13 @@ function HomePage() {
   const chainCount = chains.filter((c) => c.slug !== "muut").length;
 
   return (
-    <main className="shell">
+    <>
+      {!homeReady ? (
+        <div className="load-cover">
+          <LoadSpin />
+        </div>
+      ) : null}
+    <main className={homeReady ? "shell load-reveal" : "shell load-hold"}>
       <section className="hero">
         <div className="hero-top">
           <h1 className="title">{t("heroTitle")}</h1>
@@ -299,7 +307,9 @@ function HomePage() {
               {suggestOpen && addressDraft.trim().length >= 2 ? (
                 <div className="hero-suggest" role="listbox">
                   {suggestLoading && suggestions.length === 0 ? (
-                    <p className="hero-suggest-empty">{t("searching")}</p>
+                    <p className="hero-suggest-empty">
+                      <LoadSpin size="sm" />
+                    </p>
                   ) : null}
                   {!suggestLoading && suggestions.length === 0 ? (
                     <p className="hero-suggest-empty">{t("noResults")}</p>
@@ -356,7 +366,7 @@ function HomePage() {
 
         <div
           id="suositut"
-          className={`rail reveal ${railReveal.inView ? "is-in" : ""}`}
+          className={`rail reveal ${railReveal.inView || homeReady ? "is-in" : ""}`}
           ref={railReveal.ref}
         >
           <div className="rail-head">
@@ -441,6 +451,7 @@ function HomePage() {
       </section>
       */}
     </main>
+    </>
   );
 }
 

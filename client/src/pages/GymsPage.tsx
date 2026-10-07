@@ -32,6 +32,7 @@ import { useAppLocation } from "../context/LocationContext";
 import { pathGym } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import UxSwitch from "../components/UxSwitch";
+import LoadSpin from "../components/LoadSpin";
 
 function markerScaleForZoom(zoom: number) {
   const t = Math.min(1, Math.max(0, (zoom - 4.2) / 8));
@@ -369,6 +370,7 @@ function GymsPage() {
   const [extraDayPass, setExtraDayPass] = useState(false);
   const [extrasOpen, setExtrasOpen] = useState(false);
   const [mapReady, setMapReady] = useState(false);
+  const [dataReady, setDataReady] = useState(false);
   const [maakunnatReady, setMaakunnatReady] = useState(false);
   const [selectedMaakunta, setSelectedMaakunta] = useState<string | null>(null);
   const [gymMaakuntaMap, setGymMaakuntaMap] = useState<Record<string, string>>(
@@ -416,7 +418,7 @@ function GymsPage() {
     if (!chrome) return;
 
     function onScroll() {
-      chrome.classList.toggle("is-scrolled", window.scrollY > 6);
+      chrome?.classList.toggle("is-scrolled", window.scrollY > 6);
     }
 
     onScroll();
@@ -976,15 +978,24 @@ function GymsPage() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
     fetchGymsAndChains()
       .then(([gymData, chainData]) => {
+        if (cancelled) return;
         setGyms(gymData);
         setChains(chainData);
       })
       .catch(() => {
+        if (cancelled) return;
         setGyms([]);
         setChains([]);
+      })
+      .finally(() => {
+        if (!cancelled) setDataReady(true);
       });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -1362,8 +1373,16 @@ function GymsPage() {
     selectedIdRef.current = selectedId;
   }, [hoveredId, selectedId]);
 
+  const browseReady = dataReady && mapReady;
+
   return (
-    <main className="browse">
+    <>
+    {!browseReady ? (
+      <div className="load-cover">
+        <LoadSpin />
+      </div>
+    ) : null}
+    <main className={browseReady ? "browse load-reveal" : "browse load-hold"}>
       <div className="browse-body">
         <section className="browse-list-col">
           <div className="browse-list-chrome" ref={listChromeRef}>
@@ -2051,6 +2070,7 @@ function GymsPage() {
       ) : null}
 
     </main>
+    </>
   );
 }
 

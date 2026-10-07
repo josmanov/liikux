@@ -12,6 +12,7 @@ import { cleanGymDisplayName, formatPriceFrom } from "../data/format";
 import { getChainWebsite } from "../data/chainWebsites";
 import { useAppLocation } from "../context/LocationContext";
 import { pathGyms } from "../i18n/lang";
+import LoadSpin from "../components/LoadSpin";
 import { useLang } from "../i18n/useLang";
 import "./GymDetailPage.css";
 
@@ -230,9 +231,9 @@ function GymDetailPage() {
 
   if (status === "loading") {
     return (
-      <main className="gym-detail">
-        <p className="gym-detail-muted">Ladataan…</p>
-      </main>
+      <div className="load-cover">
+        <LoadSpin />
+      </div>
     );
   }
 
@@ -282,7 +283,7 @@ function GymDetailPage() {
   };
 
   return (
-    <main className="gym-detail">
+    <main className="gym-detail load-reveal">
       <div className="gym-detail-body">
         <div className="gym-detail-left-sticky">
           <Link className="gym-detail-back" to={pathGyms(lang)}>

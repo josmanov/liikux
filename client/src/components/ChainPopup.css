@@ -111,6 +111,35 @@
   z-index: 1;
 }
 
+.chain-popup-scroll {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.chain-popup-scroll.is-scrolled::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0.85rem;
+  top: 0;
+  height: 2.4rem;
+  z-index: 2;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    #1c1b1b 0%,
+    rgba(28, 27, 27, 0.55) 42%,
+    rgba(28, 27, 27, 0) 100%
+  );
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
+}
+
 .chain-popup-list {
   list-style: none;
   margin: 0;

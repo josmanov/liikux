@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ChevronDown, LocateFixed, MapPin, Search } from "lucide-react";
 import { useAppLocation } from "../context/LocationContext";
 import "./AreaSelect.css";
+import LoadSpin from "./LoadSpin";
 
 const cities = ["Helsinki", "Espoo", "Vantaa", "Tampere", "Turku", "Oulu"];
 
@@ -117,7 +118,9 @@ function AreaSelect() {
           {showSuggestions ? (
             <ul className="area-select-suggestions" role="listbox">
               {loading && suggestions.length === 0 ? (
-                <li className="area-select-hint">Haetaan…</li>
+                <li className="area-select-hint">
+                  <LoadSpin size="sm" />
+                </li>
               ) : null}
               {!loading && suggestions.length === 0 ? (
                 <li className="area-select-hint">Ei tuloksia</li>

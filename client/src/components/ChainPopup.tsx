@@ -10,6 +10,7 @@ import { useAppLocation } from "../context/LocationContext";
 import { useChainPopup } from "../context/ChainPopupContext";
 import { pathGym } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
+import LoadSpin from "./LoadSpin";
 
 function distanceKm(
   lat1: number,
@@ -39,6 +40,8 @@ function ChainPopup() {
   const [query, setQuery] = useState("");
   const [chains, setChains] = useState<Chain[]>([]);
   const [gyms, setGyms] = useState<Gym[]>([]);
+  const [chainsReady, setChainsReady] = useState(false);
+  const [gymsReady, setGymsReady] = useState(true);
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
 
   useEffect(() => {
@@ -71,6 +74,9 @@ function ChainPopup() {
       .catch(() => {
         if (cancelled) return;
         setChains([]);
+      })
+      .finally(() => {
+        if (!cancelled) setChainsReady(true);
       });
     return () => {
       cancelled = true;
@@ -80,9 +86,11 @@ function ChainPopup() {
   useEffect(() => {
     if (!open || !selectedSlug) {
       setGyms([]);
+      setGymsReady(true);
       return;
     }
     let cancelled = false;
+    setGymsReady(false);
     fetchChainGyms(selectedSlug)
       .then((data) => {
         if (cancelled) return;
@@ -102,6 +110,9 @@ function ChainPopup() {
       .catch(() => {
         if (cancelled) return;
         setGyms([]);
+      })
+      .finally(() => {
+        if (!cancelled) setGymsReady(true);
       });
     return () => {
       cancelled = true;
@@ -217,7 +228,21 @@ function ChainPopup() {
           </div>
         ) : null}
 
-        <ul className="chain-popup-list">
+        {!chainsReady || (showingGyms && !gymsReady) ? (
+          <div className="load-box">
+            <LoadSpin />
+          </div>
+        ) : (
+        <div className="chain-popup-scroll">
+        <ul
+          className="chain-popup-list load-reveal"
+          onScroll={(e) => {
+            e.currentTarget.parentElement?.classList.toggle(
+              "is-scrolled",
+              e.currentTarget.scrollTop > 6,
+            );
+          }}
+        >
           {!showingGyms
             ? chainList.map((chain) => (
                 <li key={chain.id}>
@@ -307,6 +332,8 @@ function ChainPopup() {
             </li>
           ) : null}
         </ul>
+        </div>
+        )}
       </div>
     </div>,
     document.body,

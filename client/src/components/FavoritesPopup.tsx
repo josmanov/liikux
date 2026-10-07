@@ -9,6 +9,7 @@ import { cleanGymDisplayName } from "../data/format";
 import { readFavoriteSlugs } from "../data/favorites";
 import { pathGym } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
+import LoadSpin from "./LoadSpin";
 
 type Props = {
   open: boolean;
@@ -21,6 +22,7 @@ function FavoritesPopup({ open, onClose }: Props) {
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [chains, setChains] = useState<Chain[]>([]);
   const [favoriteSlugs, setFavoriteSlugs] = useState<string[]>([]);
+  const [favReady, setFavReady] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -39,6 +41,7 @@ function FavoritesPopup({ open, onClose }: Props) {
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
+    setFavReady(false);
     fetchGymsAndChains()
       .then(([gymData, chainData]) => {
         if (cancelled) return;
@@ -49,6 +52,9 @@ function FavoritesPopup({ open, onClose }: Props) {
         if (cancelled) return;
         setGyms([]);
         setChains([]);
+      })
+      .finally(() => {
+        if (!cancelled) setFavReady(true);
       });
     return () => {
       cancelled = true;
@@ -102,7 +108,21 @@ function FavoritesPopup({ open, onClose }: Props) {
           </button>
         </div>
 
-        <ul className="chain-popup-list">
+        {!favReady ? (
+          <div className="load-box">
+            <LoadSpin />
+          </div>
+        ) : (
+        <div className="chain-popup-scroll">
+        <ul
+          className="chain-popup-list load-reveal"
+          onScroll={(e) => {
+            e.currentTarget.parentElement?.classList.toggle(
+              "is-scrolled",
+              e.currentTarget.scrollTop > 6,
+            );
+          }}
+        >
           {list.map((gym) => {
             const chain = chainsById.get(gym.chainId);
             const img =
@@ -146,6 +166,8 @@ function FavoritesPopup({ open, onClose }: Props) {
             </li>
           ) : null}
         </ul>
+        </div>
+        )}
       </div>
     </div>,
     document.body,

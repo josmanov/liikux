@@ -5,7 +5,8 @@
   --gd-promo-fg: #e8c48a;
   --gd-float-bg: var(--color-surface);
   --gd-sticky-top: calc(55px + 2.2rem + 1px);
-  --gd-tools-h: calc(45px + 1.2rem);
+  --gd-top: 1.25rem;
+  --gd-back-h: 2.35rem;
   padding: 0 3rem 1.25rem;
   box-sizing: border-box;
 }
@@ -26,6 +27,8 @@
   align-self: start;
   pointer-events: none;
   isolation: isolate;
+  padding-top: var(--gd-top);
+  box-sizing: border-box;
 }
 
 .gym-detail-left-sticky > * {
@@ -45,11 +48,12 @@
 
 .gym-detail-back {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.45rem;
   margin: 0;
-  padding: 0.85rem 0 0.35rem;
-  min-height: var(--gd-tools-h);
+  padding: 0;
+  min-height: 0;
+  line-height: 1.2;
   box-sizing: border-box;
   color: var(--color-text);
   text-decoration: none;
@@ -68,7 +72,7 @@
   min-width: 0;
   position: relative;
   z-index: 1;
-  padding-top: var(--gd-tools-h);
+  padding-top: calc(var(--gd-top) + 2.75rem);
   background: var(--color-bg);
 }
 
@@ -96,7 +100,7 @@
   min-width: 0;
   box-sizing: border-box;
   background: var(--color-bg);
-  padding: 1.25rem 0 0;
+  padding: var(--gd-top) 0 0;
 }
 
 .gym-detail-map-col::before {
@@ -132,7 +136,7 @@
   height: 72px;
   min-height: 72px;
   max-height: 72px;
-  border-radius: 8px;
+  border-radius: 12px 12px 12px 12px;
   overflow: hidden;
   background: var(--color-surface);
   flex-shrink: 0;

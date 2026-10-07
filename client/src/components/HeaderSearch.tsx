@@ -7,6 +7,7 @@ import { useChainPopup } from "../context/ChainPopupContext";
 import { pathGym } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import "./HeaderSearch.css";
+import LoadSpin from "./LoadSpin";
 
 function HeaderSearch() {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ function HeaderSearch() {
   const [chains, setChains] = useState<Chain[]>([]);
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [dataReady, setDataReady] = useState(false);
+  const [searchLoaded, setSearchLoaded] = useState(false);
 
   function ensureData() {
     if (dataReady) return;
@@ -26,6 +28,7 @@ function HeaderSearch() {
       .then(([gymData, chainData]) => {
         setChains(chainData);
         setGyms(gymData);
+        setSearchLoaded(true);
       })
       .catch(() => {
         setChains([]);
@@ -113,7 +116,11 @@ function HeaderSearch() {
 
       {showPanel ? (
         <div className="header-search-panel" role="listbox">
-          {!hasHits ? (
+          {!searchLoaded ? (
+            <div className="load-box">
+              <LoadSpin size="sm" />
+            </div>
+          ) : !hasHits ? (
             <p className="header-search-empty">Ei tuloksia</p>
           ) : (
             <>

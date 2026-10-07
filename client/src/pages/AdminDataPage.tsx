@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import "./AdminDataPage.css";
+import LoadSpin from "../components/LoadSpin";
 
 type Row = {
   id: string;
@@ -227,8 +228,16 @@ function AdminDataPage() {
 
   const pct = (a: number, b: number) => (b ? Math.round((100 * a) / b) : 0);
 
+  if (loading && rows.length === 0 && !error) {
+    return (
+      <div className="load-cover">
+        <LoadSpin />
+      </div>
+    );
+  }
+
   return (
-    <main className="admin-data">
+    <main className="admin-data load-reveal">
       <div className="admin-data-head">
         <div>
           <h1>Salidata — tilanne</h1>

@@ -144,6 +144,8 @@
   padding: 0.55rem 0.75rem;
   color: var(--color-muted);
   font-size: 0.88rem;
+  display: grid;
+  place-items: center;
 }
 
 .area-select-divider {
