@@ -381,6 +381,7 @@ function GymsPage() {
     north: number;
   } | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
+  const listChromeRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<Map | null>(null);
   const markersRef = useRef(new globalThis.Map<string, Marker>());
   const originMarkerRef = useRef<Marker | null>(null);
@@ -408,6 +409,19 @@ function GymsPage() {
     return () => {
       document.documentElement.classList.remove("browse-no-scrollbar");
     };
+  }, []);
+
+  useEffect(() => {
+    const chrome = listChromeRef.current;
+    if (!chrome) return;
+
+    function onScroll() {
+      chrome.classList.toggle("is-scrolled", window.scrollY > 6);
+    }
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   useEffect(() => {
@@ -1352,7 +1366,7 @@ function GymsPage() {
     <main className="browse">
       <div className="browse-body">
         <section className="browse-list-col">
-          <div className="browse-list-chrome">
+          <div className="browse-list-chrome" ref={listChromeRef}>
           <div
             className="browse-list-tools"
             onClick={(e) => e.stopPropagation()}
@@ -1528,7 +1542,10 @@ function GymsPage() {
                   type="button"
                   className="browse-pager-btn"
                   disabled={safePage <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  onClick={() => {
+                  setPage((p) => Math.max(1, p - 1));
+                  window.scrollTo(0, 0);
+                }}
                 >
                   <ChevronLeft size={18} strokeWidth={2.2} />
                   <span>Edellinen</span>
@@ -1540,7 +1557,10 @@ function GymsPage() {
                   type="button"
                   className="browse-pager-btn"
                   disabled={safePage >= pageCount}
-                  onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                  onClick={() => {
+                  setPage((p) => Math.min(pageCount, p + 1));
+                  window.scrollTo(0, 0);
+                }}
                 >
                   <span>Seuraava</span>
                   <ChevronRight size={18} strokeWidth={2.2} />

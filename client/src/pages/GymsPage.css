@@ -50,6 +50,26 @@ html.browse-no-scrollbar body::-webkit-scrollbar {
   background: var(--color-bg);
 }
 
+.browse-list-chrome.is-scrolled::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 2.4rem;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    #0f172a 0%,
+    rgba(15, 23, 42, 0.55) 42%,
+    rgba(15, 23, 42, 0) 100%
+  );
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 100%);
+}
+
 .browse-list-tools,
 .browse-list-head {
   width: 100%;
@@ -1708,6 +1728,7 @@ html.browse-no-scrollbar body::-webkit-scrollbar {
   }
 
   .browse-list-chrome::before,
+  .browse-list-chrome.is-scrolled::after,
   .browse-map-col::before {
     display: none;
   }
