@@ -17,6 +17,7 @@ import {
   cleanGymDisplayName,
   formatDistanceKm,
   formatPriceFrom,
+  formatPricePill,
 } from "../data/format";
 import { useAppLocation } from "../context/LocationContext";
 import { pathGym } from "../i18n/lang";
@@ -29,49 +30,50 @@ function markerScaleForZoom(zoom: number) {
 }
 
 function pinTouchPx(scale: number) {
-  return 44 * scale;
+  return 36 * scale;
 }
 
 function clusterGymsByScreenTouch(gyms: Gym[], map: Map, touchPx: number) {
   const n = gyms.length;
   if (n === 0) return [] as Gym[][];
 
-  const pts = gyms.map((g) => {
-    const p = map.project([g.lng, g.lat]);
-    return { g, x: p.x, y: p.y };
-  });
-
-  const parent = Array.from({ length: n }, (_, i) => i);
-  function find(i: number): number {
-    while (parent[i] !== i) {
-      parent[i] = parent[parent[i]];
-      i = parent[i];
-    }
-    return i;
-  }
-  function union(a: number, b: number) {
-    const ra = find(a);
-    const rb = find(b);
-    if (ra !== rb) parent[rb] = ra;
-  }
+  const pts = [...gyms]
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .map((g) => {
+      const p = map.project([g.lng, g.lat]);
+      return { g, x: p.x, y: p.y };
+    });
 
   const limit = touchPx * touchPx;
-  for (let i = 0; i < n; i++) {
-    for (let j = i + 1; j < n; j++) {
-      const dx = pts[i].x - pts[j].x;
-      const dy = pts[i].y - pts[j].y;
-      if (dx * dx + dy * dy <= limit) union(i, j);
-    }
+  const used = new Array(n).fill(false);
+  const groups: Gym[][] = [];
+
+  function dist2(a: number, b: number) {
+    const dx = pts[a].x - pts[b].x;
+    const dy = pts[a].y - pts[b].y;
+    return dx * dx + dy * dy;
   }
 
-  const groups = new globalThis.Map<number, Gym[]>();
   for (let i = 0; i < n; i++) {
-    const root = find(i);
-    const list = groups.get(root);
-    if (list) list.push(pts[i].g);
-    else groups.set(root, [pts[i].g]);
+    if (used[i]) continue;
+    const members = [i];
+    used[i] = true;
+    let grew = true;
+    while (grew) {
+      grew = false;
+      for (let j = 0; j < n; j++) {
+        if (used[j]) continue;
+        const touchesAll = members.every((m) => dist2(m, j) <= limit);
+        if (!touchesAll) continue;
+        members.push(j);
+        used[j] = true;
+        grew = true;
+      }
+    }
+    groups.push(members.map((idx) => pts[idx].g));
   }
-  return [...groups.values()];
+
+  return groups;
 }
 const HANGO: [number, number] = [22.968, 59.824];
 const NUORGAM: [number, number] = [27.879, 70.086];
@@ -1024,11 +1026,25 @@ function GymsPage() {
           if (g.id === hoveredIdRef.current) hit.classList.add("is-hovered");
           hit.setAttribute("aria-label", g.name);
 
+          const media = document.createElement("span");
+          media.className = "gym-pin-media";
           const img = document.createElement("img");
           img.src = brandImg || "/pins/gym-pin.png";
           img.alt = "";
           img.decoding = "async";
-          hit.appendChild(img);
+          media.appendChild(img);
+          hit.appendChild(media);
+
+          if (g.priceFrom != null) {
+            const priceText = formatPricePill(g.priceFrom);
+            if (priceText) {
+              const pill = document.createElement("span");
+              pill.className = "gym-pin-price";
+              pill.textContent = priceText;
+              hit.appendChild(pill);
+            }
+          }
+
           el.appendChild(hit);
 
           hit.addEventListener("mouseenter", () => setHoveredId(g.id));

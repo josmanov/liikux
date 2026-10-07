@@ -11,6 +11,14 @@ export function formatPriceFrom(eur: number | null | undefined) {
   return `alk. ${text} €/kk`;
 }
 
+export function formatPricePill(eur: number | null | undefined) {
+  if (eur == null || !Number.isFinite(eur)) return null;
+  const text = Number.isInteger(eur)
+    ? String(eur)
+    : String(Number(eur.toFixed(1))).replace(".", ",");
+  return `${text}€/kk`;
+}
+
 export function cleanGymDisplayName(name: string) {
   return name
     .replace(/\s*\/\s*kuntokeskus\b/gi, "")
