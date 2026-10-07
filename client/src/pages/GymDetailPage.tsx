@@ -69,6 +69,7 @@ function makeGymPin() {
 function makeOriginPin() {
   const el = document.createElement("div");
   el.className = "gym-detail-origin-pin";
+  el.style.zIndex = "1000";
   el.setAttribute("aria-label", "Lähtöosoite");
   return el;
 }

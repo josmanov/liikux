@@ -1172,6 +1172,7 @@ function GymsPage() {
       if (origin.lat == null || origin.lng == null) return;
       const el = document.createElement("div");
       el.className = "gym-origin-pin";
+      el.style.zIndex = "1000";
       el.setAttribute("aria-label", "Lähtöosoite");
       originMarkerRef.current = new Marker({ element: el })
         .setLngLat([origin.lng, origin.lat])
