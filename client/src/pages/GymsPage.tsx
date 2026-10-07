@@ -202,11 +202,18 @@ function filterIdFromChainSlug(slug: string, chains: Chain[]) {
 }
 
 const audienceOptions = [
-  { id: "all", label: "Kaikille", icon: "/icons/kenelle.png" },
-  { id: "women", label: "Naisten salit", icon: "/icons/kenelle-women.png" },
-  { id: "men", label: "Miehille", icon: "/icons/kenelle-men.png" },
-  { id: "kids", label: "Lapsille", icon: "/icons/kenelle-kids.png" },
-  { id: "seniors", label: "Seniori", icon: "/icons/kenelle-seniors.png" },
+  {
+    id: "all",
+    label: "Kaikille",
+    icon: "/icons/kenelle.png",
+    iconClass: "is-natural",
+  },
+  {
+    id: "women",
+    label: "Naisten salit",
+    icon: "/icons/kenelle-women.png",
+    iconClass: "is-pink",
+  },
 ];
 
 const distancePresets = [
@@ -411,8 +418,13 @@ function GymsPage() {
         }
       }
       if (selectedAudiences.length > 0) {
-        const chain = chainForGym(gym, chains);
-        if (!gymMatchesAudience(gym, chain, selectedAudiences)) return false;
+        const allowed = selectedAudiences.filter((id) =>
+          audienceOptions.some((o) => o.id === id),
+        );
+        if (allowed.length > 0) {
+          const chain = chainForGym(gym, chains);
+          if (!gymMatchesAudience(gym, chain, allowed)) return false;
+        }
       }
       if (priceFilter !== "all") {
         const chain = chainForGym(gym, chains);
@@ -1443,7 +1455,12 @@ function GymsPage() {
                               {opt.label}
                             </span>
                             <img
-                              className="browse-filter-check-icon"
+                              className={[
+                                "browse-filter-check-icon",
+                                opt.iconClass || "",
+                              ]
+                                .filter(Boolean)
+                                .join(" ")}
                               src={opt.icon}
                               alt=""
                             />
