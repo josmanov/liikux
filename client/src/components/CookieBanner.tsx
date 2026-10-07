@@ -5,6 +5,7 @@ import {
   writeCookieConsent,
 } from "../data/cookieConsent";
 import { syncAnalyticsFromConsent } from "../analytics";
+import UxSwitch from "./UxSwitch";
 import "./CookieBanner.css";
 
 function CookieBanner() {
@@ -123,16 +124,16 @@ function CookieBanner() {
             </div>
 
             <div className="cookie-modal-options">
-              <label className="cookie-row">
+              <div className="cookie-row is-locked">
                 <span>
                   <strong>Pakolliset</strong>
                   <span className="cookie-row-desc">
                     Sivun toiminta, suosikit, kielivalinnat. Aina päällä.
                   </span>
                 </span>
-                <input type="checkbox" checked disabled readOnly />
-              </label>
-              <label className="cookie-row">
+                <UxSwitch checked disabled dim />
+              </div>
+              <div className="cookie-row">
                 <span>
                   <strong>Toiminnalliset</strong>
                   <span className="cookie-row-desc">
@@ -140,13 +141,12 @@ function CookieBanner() {
                     asetukset).
                   </span>
                 </span>
-                <input
-                  type="checkbox"
+                <UxSwitch
                   checked={functionalOn}
-                  onChange={(e) => setFunctionalOn(e.target.checked)}
+                  onChange={setFunctionalOn}
                 />
-              </label>
-              <label className="cookie-row">
+              </div>
+              <div className="cookie-row">
                 <span>
                   <strong>Analytiikka</strong>
                   <span className="cookie-row-desc">
@@ -154,12 +154,11 @@ function CookieBanner() {
                     sallit.
                   </span>
                 </span>
-                <input
-                  type="checkbox"
+                <UxSwitch
                   checked={analyticsOn}
-                  onChange={(e) => setAnalyticsOn(e.target.checked)}
+                  onChange={setAnalyticsOn}
                 />
-              </label>
+              </div>
             </div>
 
             <div className="cookie-modal-footer">

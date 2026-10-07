@@ -134,14 +134,17 @@
 
 .cookie-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 0.85rem;
   padding: 0.75rem 0.85rem;
   border-radius: 10px;
   border: 1px solid var(--color-border);
   background: color-mix(in srgb, var(--color-bg) 55%, transparent);
-  cursor: pointer;
+}
+
+.cookie-row.is-locked {
+  opacity: 0.55;
 }
 
 .cookie-row strong {
@@ -156,19 +159,6 @@
   color: var(--color-muted);
   font-size: 0.8rem;
   line-height: 1.35;
-}
-
-.cookie-row input {
-  margin-top: 0.15rem;
-  width: 1.1rem;
-  height: 1.1rem;
-  flex-shrink: 0;
-  accent-color: var(--color-brand);
-}
-
-.cookie-row input:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
 }
 
 .cookie-modal-footer {

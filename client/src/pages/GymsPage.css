@@ -225,7 +225,7 @@
 
 .browse-extras-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 0.85rem;
   padding: 0.75rem 0.85rem;
@@ -247,14 +247,6 @@
   color: var(--color-muted);
   font-size: 0.8rem;
   line-height: 1.35;
-}
-
-.browse-extras-row input {
-  margin-top: 0.15rem;
-  width: 1.1rem;
-  height: 1.1rem;
-  flex-shrink: 0;
-  accent-color: var(--color-brand);
 }
 
 .browse-extras-footer {
@@ -475,11 +467,8 @@
     brightness(105%) contrast(95%);
 }
 
-.browse-filter-check input {
-  width: 1rem;
-  height: 1rem;
-  accent-color: var(--color-brand);
-  cursor: pointer;
+.browse-filter-check .ux-switch {
+  margin-left: auto;
 }
 
 .browse-filter-menu button {
@@ -929,11 +918,105 @@
 
 .browse-map-preview-media.logo-easyfit img {
   transform: scale(2);
+  object-position: center;
 }
 
 .browse-map-preview-media.logo-elixia {
   background: #fff;
-  padding: 0.35rem;
+  padding: 0.45rem 0.55rem;
+}
+
+.browse-map-preview-media.logo-elixia img {
+  transform: scale(1.2);
+  object-position: center;
+}
+
+.browse-map-preview-media.logo-fressi {
+  background: #2a2a2a;
+}
+
+.browse-map-preview-media.logo-fressi img {
+  transform: scale(1.5);
+  object-position: center;
+}
+
+.browse-map-preview-media.logo-fitness24 {
+  background: #002d54;
+}
+
+.browse-map-preview-media.is-logo.logo-fitness24 img,
+.browse-map-preview-media.logo-fitness24 img {
+  object-fit: cover;
+  object-position: center center;
+  transform: scale(1.5);
+}
+
+.browse-map-preview-media.logo-gofitness {
+  background: #fff;
+  padding: 0.45rem 0.55rem;
+}
+
+.browse-map-preview-media.logo-gofitness img {
+  transform: scale(1);
+  object-position: center;
+}
+
+.browse-map-preview-media.logo-olefit {
+  background: #fff;
+  padding: 0.55rem 0.7rem;
+}
+
+.browse-map-preview-media.logo-olefit img {
+  transform: scale(1.155);
+  object-position: center;
+  object-fit: contain;
+}
+
+.browse-map-preview-media.logo-ladyline,
+.browse-map-preview-media.logo-forever,
+.browse-map-preview-media.logo-unisport {
+  background: #fff;
+  padding: 0.45rem 0.55rem;
+}
+
+.browse-map-preview-media.logo-ladyline img {
+  transform: scale(1);
+  object-position: center;
+  object-fit: contain;
+}
+
+.browse-map-preview-media.logo-unisport img {
+  transform: scale(1.3);
+  object-position: center;
+  object-fit: contain;
+}
+
+.browse-map-preview-media.logo-forever img {
+  transform: scale(1.1);
+  object-position: center;
+  object-fit: contain;
+}
+
+.browse-map-preview-media.logo-mm,
+.browse-map-preview-media.logo-esport {
+  background: #000;
+  padding: 0.45rem 0.55rem;
+}
+
+.browse-map-preview-media.logo-mm img,
+.browse-map-preview-media.logo-esport img {
+  transform: scale(1);
+  object-position: center;
+  object-fit: contain;
+}
+
+.browse-map-preview-media.logo-liikku {
+  background: #4da10f;
+}
+
+.browse-map-preview-media.logo-liikku img {
+  transform: scale(1.2);
+  object-position: center;
 }
 
 .browse-map-preview-meta {
@@ -1033,7 +1116,7 @@
 }
 
 .browse-row-media.logo-elixia img {
-  transform: scale(1);
+  transform: scale(1.2);
   object-position: center;
 }
 
@@ -1072,7 +1155,7 @@
 }
 
 .browse-row-media.logo-olefit img {
-  transform: scale(1.05);
+  transform: scale(1.155);
   object-position: center;
   object-fit: contain;
 }
@@ -1094,7 +1177,7 @@
 }
 
 .browse-row-media.logo-forever img {
-  transform: scale(1);
+  transform: scale(1.1);
   object-position: center;
   object-fit: contain;
 }
@@ -1105,7 +1188,7 @@
 }
 
 .browse-row-media.logo-unisport img {
-  transform: scale(1);
+  transform: scale(1.3);
   object-position: center;
   object-fit: contain;
 }
@@ -1137,7 +1220,7 @@
 }
 
 .browse-row-media.logo-liikku img {
-  transform: scale(1);
+  transform: scale(1.2);
   object-position: center;
 }
 
@@ -1326,13 +1409,20 @@
 }
 
 .gym-pin-hit.logo-easyfit img {
-  transform: scale(1.85);
+  transform: scale(2);
+  object-position: center;
 }
 
 .gym-pin-hit.logo-elixia {
   background: #fff;
-  padding: 4px;
+  padding: 0.45rem 0.55rem;
   box-sizing: border-box;
+}
+
+.gym-pin-hit.is-brand.logo-elixia img,
+.gym-pin-hit.logo-elixia img {
+  transform: scale(1.2);
+  object-position: center;
 }
 
 .gym-pin-hit.logo-fressi {
@@ -1340,106 +1430,150 @@
 }
 
 .gym-pin-hit.logo-fressi img {
-  transform: scale(1.35);
+  transform: scale(1.5);
+  object-position: center;
 }
 
 .gym-pin-hit.logo-fitness24 {
   background: #002d54;
 }
 
+.gym-pin-hit.is-brand.logo-fitness24 img,
 .gym-pin-hit.logo-fitness24 img {
   object-fit: cover;
-  transform: scale(1.35);
+  object-position: center center;
+  transform: scale(1.5);
 }
 
 .gym-pin-hit.logo-gofitness {
   background: #fff;
-  padding: 4px;
+  padding: 0.45rem 0.55rem;
   box-sizing: border-box;
+}
+
+.gym-pin-hit.logo-gofitness img {
+  transform: scale(1);
+  object-position: center;
 }
 
 .gym-pin-hit.logo-olefit {
   background: #fff;
-  padding: 5px;
+  padding: 0.55rem 0.7rem;
   box-sizing: border-box;
+}
+
+.gym-pin-hit.is-brand.logo-olefit img,
+.gym-pin-hit.logo-olefit img {
+  transform: scale(1.155);
+  object-position: center;
+  object-fit: contain;
 }
 
 .gym-pin-hit.logo-ladyline {
   background: #fff;
-  padding: 4px;
+  padding: 0.45rem 0.55rem;
   box-sizing: border-box;
+}
+
+.gym-pin-hit.logo-ladyline img {
+  transform: scale(1);
+  object-position: center;
+  object-fit: contain;
 }
 
 .gym-pin-hit.logo-forever {
   background: #fff;
-  padding: 4px;
+  padding: 0.45rem 0.55rem;
   box-sizing: border-box;
+}
+
+.gym-pin-hit.is-brand.logo-forever img,
+.gym-pin-hit.logo-forever img {
+  transform: scale(1.1);
+  object-position: center;
+  object-fit: contain;
 }
 
 .gym-pin-hit.logo-unisport {
   background: #fff;
-  padding: 4px;
+  padding: 0.45rem 0.55rem;
   box-sizing: border-box;
+}
+
+.gym-pin-hit.is-brand.logo-unisport img,
+.gym-pin-hit.logo-unisport img {
+  transform: scale(1.3);
+  object-position: center;
+  object-fit: contain;
 }
 
 .gym-pin-hit.logo-mm {
   background: #000;
-  padding: 4px;
+  padding: 0.45rem 0.55rem;
   box-sizing: border-box;
+}
+
+.gym-pin-hit.logo-mm img {
+  transform: scale(1);
+  object-position: center;
+  object-fit: contain;
 }
 
 .gym-pin-hit.logo-esport {
   background: #000;
-  padding: 4px;
+  padding: 0.45rem 0.55rem;
   box-sizing: border-box;
+}
+
+.gym-pin-hit.logo-esport img {
+  transform: scale(1);
+  object-position: center;
+  object-fit: contain;
 }
 
 .gym-pin-hit.logo-liikku {
   background: #4da10f;
 }
 
-.gym-pin-hit.is-selected.logo-easyfit,
-.gym-pin-hit.is-selected.logo-elixia,
-.gym-pin-hit.is-selected.logo-fressi,
-.gym-pin-hit.is-selected.logo-fitness24,
-.gym-pin-hit.is-selected.logo-gofitness,
-.gym-pin-hit.is-selected.logo-olefit,
-.gym-pin-hit.is-selected.logo-ladyline,
-.gym-pin-hit.is-selected.logo-forever,
-.gym-pin-hit.is-selected.logo-unisport,
-.gym-pin-hit.is-selected.logo-mm,
-.gym-pin-hit.is-selected.logo-esport,
-.gym-pin-hit.is-selected.logo-liikku,
-.gym-pin-hit.is-selected.is-brand {
-  background: var(--color-brand);
+.gym-pin-hit.is-brand.logo-liikku img,
+.gym-pin-hit.logo-liikku img {
+  transform: scale(1.2);
+  object-position: center;
 }
 
 .gym-pin-hit.is-hovered {
   transform: scale(1.25);
   box-shadow:
-    0 0 0 2px #000000,
+    0 0 0 2px #0b1220,
     0 4px 12px rgba(0, 0, 0, 0.4);
   z-index: 2;
 }
 
 .gym-pin-hit.is-selected {
   transform: scale(1.35);
-  padding: 3px;
-  box-sizing: border-box;
-  background: var(--color-brand);
   box-shadow:
-    0 0 0 2px #000000,
+    0 0 0 2px #0b1220,
     0 5px 14px rgba(0, 0, 0, 0.45);
   z-index: 3;
 }
 
 .gym-pin-hit.is-hovered.is-selected {
   transform: scale(1.4);
-  background: var(--color-brand);
 }
 
-.gym-pin-hit.is-selected img {
-  border-radius: 5px;
+.gym-pin-hit.is-hovered.logo-fressi,
+.gym-pin-hit.is-hovered.logo-fitness24,
+.gym-pin-hit.is-hovered.logo-mm,
+.gym-pin-hit.is-hovered.logo-esport,
+.gym-pin-hit.is-hovered.logo-liikku,
+.gym-pin-hit.is-selected.logo-fressi,
+.gym-pin-hit.is-selected.logo-fitness24,
+.gym-pin-hit.is-selected.logo-mm,
+.gym-pin-hit.is-selected.logo-esport,
+.gym-pin-hit.is-selected.logo-liikku {
+  box-shadow:
+    0 0 0 2px #ffffff,
+    0 5px 14px rgba(0, 0, 0, 0.45);
 }
 
 @media (max-width: 900px) {

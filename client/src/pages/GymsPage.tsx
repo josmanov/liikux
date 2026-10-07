@@ -21,6 +21,7 @@ import {
 import { useAppLocation } from "../context/LocationContext";
 import { pathGym } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
+import UxSwitch from "../components/UxSwitch";
 
 function markerScaleForZoom(zoom: number) {
   const t = Math.min(1, Math.max(0, (zoom - 4.2) / 8));
@@ -1445,8 +1446,9 @@ function GymsPage() {
                       return (
                         <li key={opt.id}>
                           <label className="browse-filter-check">
-                            <input
-                              type="checkbox"
+                            <span>{opt.label}</span>
+                            <UxSwitch
+                              size="sm"
                               checked={on}
                               onChange={() => {
                                 setSelectedChains((cur) =>
@@ -1456,7 +1458,6 @@ function GymsPage() {
                                 );
                               }}
                             />
-                            <span>{opt.label}</span>
                           </label>
                         </li>
                       );
@@ -1504,17 +1505,6 @@ function GymsPage() {
                       return (
                         <li key={opt.id}>
                           <label className="browse-filter-check">
-                            <input
-                              type="checkbox"
-                              checked={on}
-                              onChange={() => {
-                                setSelectedAudiences((cur) =>
-                                  cur.includes(opt.id)
-                                    ? cur.filter((id) => id !== opt.id)
-                                    : [...cur, opt.id],
-                                );
-                              }}
-                            />
                             <span className="browse-filter-check-label">
                               {opt.label}
                             </span>
@@ -1527,6 +1517,17 @@ function GymsPage() {
                                 .join(" ")}
                               src={opt.icon}
                               alt=""
+                            />
+                            <UxSwitch
+                              size="sm"
+                              checked={on}
+                              onChange={() => {
+                                setSelectedAudiences((cur) =>
+                                  cur.includes(opt.id)
+                                    ? cur.filter((id) => id !== opt.id)
+                                    : [...cur, opt.id],
+                                );
+                              }}
                             />
                           </label>
                         </li>
@@ -1882,10 +1883,9 @@ function GymsPage() {
                     Avoinna ympäri vuorokauden.
                   </span>
                 </span>
-                <input
-                  type="checkbox"
+                <UxSwitch
                   checked={extraOnly247}
-                  onChange={(e) => setExtraOnly247(e.target.checked)}
+                  onChange={setExtraOnly247}
                 />
               </label>
               <label className="browse-extras-row">
@@ -1895,10 +1895,9 @@ function GymsPage() {
                     Ketju tai sali tarjoaa kokeilujakson.
                   </span>
                 </span>
-                <input
-                  type="checkbox"
+                <UxSwitch
                   checked={extraFreeTrial}
-                  onChange={(e) => setExtraFreeTrial(e.target.checked)}
+                  onChange={setExtraFreeTrial}
                 />
               </label>
               <label className="browse-extras-row">
@@ -1908,10 +1907,9 @@ function GymsPage() {
                     Kertakäynti tai päivälippu saatavilla.
                   </span>
                 </span>
-                <input
-                  type="checkbox"
+                <UxSwitch
                   checked={extraDayPass}
-                  onChange={(e) => setExtraDayPass(e.target.checked)}
+                  onChange={setExtraDayPass}
                 />
               </label>
             </div>
