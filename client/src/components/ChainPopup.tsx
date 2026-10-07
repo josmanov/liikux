@@ -235,7 +235,7 @@ function ChainPopup() {
         ) : (
         <div className="chain-popup-scroll">
         <ul
-          className="chain-popup-list load-reveal"
+          className="chain-popup-list load-reveal list-pop"
           onScroll={(e) => {
             e.currentTarget.parentElement?.classList.toggle(
               "is-scrolled",
@@ -244,8 +244,11 @@ function ChainPopup() {
           }}
         >
           {!showingGyms
-            ? chainList.map((chain) => (
-                <li key={chain.id}>
+            ? chainList.map((chain, i) => (
+                <li
+                  key={chain.id}
+                  style={{ animationDelay: `${Math.min(i, 18) * 28}ms` }}
+                >
                   <button
                     type="button"
                     className="chain-popup-row"
@@ -275,7 +278,7 @@ function ChainPopup() {
                   </button>
                 </li>
               ))
-            : gymList.map(({ gym, km }) => {
+            : gymList.map(({ gym, km }, i) => {
                 const offer = resolveGymOffer(gym, selectedChain);
                 const priceLabel = formatPriceFrom(offer.priceFrom);
                 const hours =
@@ -283,7 +286,10 @@ function ChainPopup() {
                     ? "24/7"
                     : offer.hoursWeekday || null;
                 return (
-                  <li key={gym.id}>
+                  <li
+                    key={gym.id}
+                    style={{ animationDelay: `${Math.min(i, 18) * 28}ms` }}
+                  >
                     <Link
                       to={pathGym(lang, gym.slug)}
                       className="chain-popup-row"

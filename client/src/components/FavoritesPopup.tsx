@@ -115,7 +115,7 @@ function FavoritesPopup({ open, onClose }: Props) {
         ) : (
         <div className="chain-popup-scroll">
         <ul
-          className="chain-popup-list load-reveal"
+          className="chain-popup-list load-reveal list-pop"
           onScroll={(e) => {
             e.currentTarget.parentElement?.classList.toggle(
               "is-scrolled",
@@ -123,14 +123,17 @@ function FavoritesPopup({ open, onClose }: Props) {
             );
           }}
         >
-          {list.map((gym) => {
+          {list.map((gym, i) => {
             const chain = chainsById.get(gym.chainId);
             const img =
               chain?.image && !chain.image.includes("/pins/")
                 ? chain.image
                 : "/pins/gym-pin.png";
             return (
-              <li key={gym.id}>
+              <li
+                key={gym.id}
+                style={{ animationDelay: `${Math.min(i, 18) * 28}ms` }}
+              >
                 <Link
                   to={pathGym(lang, gym.slug)}
                   className="chain-popup-row"

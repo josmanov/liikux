@@ -392,16 +392,17 @@ function HomePage() {
           </div>
           <div className="rail-viewport" ref={viewportRef}>
             <div
-              className="rail-track"
+              className={homeReady ? "rail-track list-pop" : "rail-track"}
               style={{
                 transform: `translateX(-${start * step}px)`,
               }}
             >
-              {suositutKetjut.map((chain) => (
+              {suositutKetjut.map((chain, i) => (
                 <button
                   key={chain.id}
                   type="button"
                   className="place-card"
+                  style={{ animationDelay: `${Math.min(i, 18) * 28}ms` }}
                   onClick={() => openChain(chain.slug)}
                 >
                   <span

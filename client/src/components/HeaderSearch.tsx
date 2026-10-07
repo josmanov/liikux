@@ -127,9 +127,12 @@ function HeaderSearch() {
               {chainHits.length > 0 ? (
                 <div className="header-search-section">
                   <p className="header-search-section-label">Ketjut</p>
-                  <ul>
-                    {chainHits.map((chain) => (
-                      <li key={chain.id}>
+                  <ul className="list-pop">
+                    {chainHits.map((chain, i) => (
+                      <li
+                        key={chain.id}
+                        style={{ animationDelay: `${Math.min(i, 18) * 28}ms` }}
+                      >
                         <button
                           type="button"
                           className="header-search-hit"
@@ -154,9 +157,12 @@ function HeaderSearch() {
               {gymHits.length > 0 ? (
                 <div className="header-search-section">
                   <p className="header-search-section-label">Salit</p>
-                  <ul>
-                    {gymHits.map((gym) => (
-                      <li key={gym.id}>
+                  <ul className="list-pop">
+                    {gymHits.map((gym, i) => (
+                      <li
+                        key={gym.id}
+                        style={{ animationDelay: `${Math.min(i, 18) * 28}ms` }}
+                      >
                         <Link
                           to={pathGym(lang, gym.slug)}
                           className="header-search-hit"

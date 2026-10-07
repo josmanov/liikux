@@ -1485,8 +1485,8 @@ function GymsPage() {
             {regionPickMode ? (
               <p className="browse-region-empty">{t("pickRegion")}</p>
             ) : null}
-            <ul className="browse-rows">
-              {pageGyms.map((gym) => {
+            <ul className={browseReady ? "browse-rows list-pop" : "browse-rows"}>
+              {pageGyms.map((gym, i) => {
                 const chain = chainForGym(gym, chains);
                 const offer = resolveGymOffer(gym, chain as Chain | null);
                 const distKm =
@@ -1495,7 +1495,10 @@ function GymsPage() {
                     : null;
                 const priceLabel = formatPriceFrom(offer.priceFrom);
                 return (
-                  <li key={gym.id}>
+                  <li
+                    key={gym.id}
+                    style={{ animationDelay: `${Math.min(i, 18) * 28}ms` }}
+                  >
                     <Link
                       to={pathGym(lang, gym.slug)}
                       data-gym-id={gym.id}
