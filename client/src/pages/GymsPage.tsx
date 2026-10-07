@@ -1,7 +1,16 @@
 import "./GymsPage.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { ChevronDown, ChevronLeft, ChevronRight, SlidersHorizontal, X } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  LocateFixed,
+  Minus,
+  Plus,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
 import { LngLatBounds, Map, Marker, type MapLayerMouseEvent } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type Chain, type Gym, resolveGymOffer } from "../data/types";
@@ -256,13 +265,13 @@ function filterIdFromChainSlug(slug: string, chains: Chain[]) {
 const audienceOptionMeta = [
   {
     id: "all",
-    icon: "/icons/kenelle.png",
+    icon: "/icons/kenelle-all.png",
     iconClass: "is-natural",
   },
   {
     id: "women",
     icon: "/icons/kenelle-women.png",
-    iconClass: "is-pink",
+    iconClass: "is-natural",
   },
 ];
 
@@ -393,6 +402,13 @@ function GymsPage() {
   );
 
   const regionPickMode = selectedMaakunta == null;
+
+  useEffect(() => {
+    document.documentElement.classList.add("browse-no-scrollbar");
+    return () => {
+      document.documentElement.classList.remove("browse-no-scrollbar");
+    };
+  }, []);
 
   useEffect(() => {
     if (!chainSlug) return;
@@ -1335,7 +1351,8 @@ function GymsPage() {
   return (
     <main className="browse">
       <div className="browse-body">
-          <div className="browse-list-sticky">
+        <section className="browse-list-col">
+          <div className="browse-list-chrome">
           <div
             className="browse-list-tools"
             onClick={(e) => e.stopPropagation()}
@@ -1410,13 +1427,134 @@ function GymsPage() {
           </header>
           </div>
 
+          <div className="browse-list-scroll">
+            {regionPickMode ? (
+              <p className="browse-region-empty">{t("pickRegion")}</p>
+            ) : null}
+            <ul className="browse-rows">
+              {pageGyms.map((gym) => {
+                const chain = chainForGym(gym, chains);
+                const offer = resolveGymOffer(gym, chain as Chain | null);
+                const distKm =
+                  gym.lat != null && gym.lng != null
+                    ? distanceKm(origin.lat, origin.lng, gym.lat, gym.lng)
+                    : null;
+                const priceLabel = formatPriceFrom(offer.priceFrom);
+                return (
+                  <li key={gym.id}>
+                    <Link
+                      to={pathGym(lang, gym.slug)}
+                      data-gym-id={gym.id}
+                      className={[
+                        "browse-row",
+                        hoveredId === gym.id ? "is-hovered" : "",
+                        selectedId === gym.id ? "is-selected" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      onMouseEnter={() => setHoveredId(gym.id)}
+                      onMouseLeave={() => setHoveredId(null)}
+                    >
+                      <span
+                        className={[
+                          "browse-row-media",
+                          chain?.image && !chain.image.includes("/pins/")
+                            ? chain.logoFit === "contain"
+                              ? "is-logo"
+                              : ""
+                            : "is-pin",
+                          chain?.image && !chain.image.includes("/pins/")
+                            ? chain.logoClass || ""
+                            : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      >
+                        <img
+                          src={
+                            chain?.image && !chain.image.includes("/pins/")
+                              ? chain.image
+                              : "/pins/gym-pin.png"
+                          }
+                          alt=""
+                        />
+                      </span>
+                      <div className="browse-row-text">
+                        <div className="browse-row-top">
+                          <strong>{cleanGymDisplayName(gym.name)}</strong>
+                          {distKm != null ? (
+                            <span className="browse-row-distance">
+                              {formatDistanceKm(distKm)}
+                            </span>
+                          ) : null}
+                        </div>
+                        <span className="browse-row-city">{gym.city}</span>
+                        <span className="browse-row-address">
+                          {gym.address
+                            .replace(
+                              new RegExp(`,\\s*${gym.city}\\s*$`, "i"),
+                              "",
+                            )
+                            .trim()}
+                        </span>
+                        <span className="browse-row-price">
+                          {priceLabel ?? t("priceUnknown")}
+                        </span>
+                        <div className="browse-row-tags">
+                          {offer.is247 === true ? (
+                            <span className="browse-tag is-247">24/7</span>
+                          ) : null}
+                          {offer.freeTrial === true ? (
+                            <span className="browse-tag is-trial">
+                              Ilmainen kokeilu
+                            </span>
+                          ) : null}
+                          {offer.dayPass === true ? (
+                            <span className="browse-tag is-daypass">
+                              Päivälippu
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {inViewGyms.length > PAGE_SIZE ? (
+              <nav className="browse-pager" aria-label="Sivutus">
+                <button
+                  type="button"
+                  className="browse-pager-btn"
+                  disabled={safePage <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  <ChevronLeft size={18} strokeWidth={2.2} />
+                  <span>Edellinen</span>
+                </button>
+                <p className="browse-pager-status">
+                  Sivu {safePage} / {pageCount}
+                </p>
+                <button
+                  type="button"
+                  className="browse-pager-btn"
+                  disabled={safePage >= pageCount}
+                  onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                >
+                  <span>Seuraava</span>
+                  <ChevronRight size={18} strokeWidth={2.2} />
+                </button>
+              </nav>
+            ) : null}
+          </div>
+        </section>
+
         <section className="browse-map-col">
           <div
             className="browse-map-filters"
             onClick={(e) => e.stopPropagation()}
           >
-            <span className="browse-sep" aria-hidden="true" />
-
             <div className="browse-filter">
               <button
                 type="button"
@@ -1462,7 +1600,6 @@ function GymsPage() {
                       return (
                         <li key={opt.id}>
                           <label className="browse-filter-check">
-                            <span>{opt.label}</span>
                             <UxSwitch
                               size="sm"
                               checked={on}
@@ -1474,6 +1611,9 @@ function GymsPage() {
                                 );
                               }}
                             />
+                            <span className="browse-filter-check-label">
+                              {opt.label}
+                            </span>
                           </label>
                         </li>
                       );
@@ -1493,7 +1633,7 @@ function GymsPage() {
               >
                 <img
                   className="browse-filter-icon"
-                  src="/icons/kenelle.png"
+                  src="/icons/kenelle-all.png"
                   alt=""
                 />
                 <span className="browse-filter-label">{audienceLabel}</span>
@@ -1521,6 +1661,17 @@ function GymsPage() {
                       return (
                         <li key={opt.id}>
                           <label className="browse-filter-check">
+                            <UxSwitch
+                              size="sm"
+                              checked={on}
+                              onChange={() => {
+                                setSelectedAudiences((cur) =>
+                                  cur.includes(opt.id)
+                                    ? cur.filter((id) => id !== opt.id)
+                                    : [...cur, opt.id],
+                                );
+                              }}
+                            />
                             <span className="browse-filter-check-label">
                               {opt.label}
                             </span>
@@ -1533,17 +1684,6 @@ function GymsPage() {
                                 .join(" ")}
                               src={opt.icon}
                               alt=""
-                            />
-                            <UxSwitch
-                              size="sm"
-                              checked={on}
-                              onChange={() => {
-                                setSelectedAudiences((cur) =>
-                                  cur.includes(opt.id)
-                                    ? cur.filter((id) => id !== opt.id)
-                                    : [...cur, opt.id],
-                                );
-                              }}
                             />
                           </label>
                         </li>
@@ -1706,6 +1846,43 @@ function GymsPage() {
           </div>
 
           <div className="browse-map-frame">
+            <div className="browse-map-controls">
+              <button
+                type="button"
+                className="browse-map-ctrl"
+                aria-label={t("mapZoomIn")}
+                onClick={() => mapInstanceRef.current?.zoomIn({ duration: 280 })}
+              >
+                <Plus size={18} strokeWidth={2.4} />
+              </button>
+              <button
+                type="button"
+                className="browse-map-ctrl"
+                aria-label={t("mapZoomOut")}
+                onClick={() =>
+                  mapInstanceRef.current?.zoomOut({ duration: 280 })
+                }
+              >
+                <Minus size={18} strokeWidth={2.4} />
+              </button>
+              <button
+                type="button"
+                className="browse-map-ctrl"
+                aria-label={t("mapGoToLocation")}
+                disabled={origin.lat == null || origin.lng == null}
+                onClick={() => {
+                  const map = mapInstanceRef.current;
+                  if (!map || origin.lat == null || origin.lng == null) return;
+                  map.easeTo({
+                    center: [origin.lng, origin.lat],
+                    zoom: Math.max(map.getZoom(), 12),
+                    duration: 550,
+                  });
+                }}
+              >
+                <LocateFixed size={17} strokeWidth={2.4} />
+              </button>
+            </div>
             <div className="browse-map" aria-label="Kartta" ref={mapRef} />
             <p className="browse-region-hint">
               {selectedMaakunta ?? t("pickRegion")}
@@ -1768,122 +1945,6 @@ function GymsPage() {
           </div>
         </section>
 
-        <section className="browse-list-main">
-          {regionPickMode ? (
-            <p className="browse-region-empty">{t("pickRegion")}</p>
-          ) : null}
-          <ul className="browse-rows">
-            {pageGyms.map((gym) => {
-              const chain = chainForGym(gym, chains);
-              const offer = resolveGymOffer(gym, chain as Chain | null);
-              const distKm =
-                gym.lat != null && gym.lng != null
-                  ? distanceKm(origin.lat, origin.lng, gym.lat, gym.lng)
-                  : null;
-              const priceLabel = formatPriceFrom(offer.priceFrom);
-              return (
-                <li key={gym.id}>
-                  <Link
-                    to={pathGym(lang, gym.slug)}
-                    data-gym-id={gym.id}
-                    className={[
-                      "browse-row",
-                      hoveredId === gym.id ? "is-hovered" : "",
-                      selectedId === gym.id ? "is-selected" : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                    onMouseEnter={() => setHoveredId(gym.id)}
-                    onMouseLeave={() => setHoveredId(null)}
-                  >
-                    <span
-                      className={[
-                        "browse-row-media",
-                        chain?.image && !chain.image.includes("/pins/")
-                          ? chain.logoFit === "contain"
-                            ? "is-logo"
-                            : ""
-                          : "is-pin",
-                        chain?.image && !chain.image.includes("/pins/")
-                          ? chain.logoClass || ""
-                          : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                    >
-                      <img
-                        src={
-                          chain?.image && !chain.image.includes("/pins/")
-                            ? chain.image
-                            : "/pins/gym-pin.png"
-                        }
-                        alt=""
-                      />
-                    </span>
-                    <div className="browse-row-text">
-                      <div className="browse-row-top">
-                        <strong>{cleanGymDisplayName(gym.name)}</strong>
-                        {distKm != null ? (
-                          <span className="browse-row-distance">
-                            {formatDistanceKm(distKm)}
-                          </span>
-                        ) : null}
-                      </div>
-                      <span className="browse-row-city">{gym.city}</span>
-                      <span className="browse-row-address">
-                        {gym.address
-                          .replace(new RegExp(`,\\s*${gym.city}\\s*$`, "i"), "")
-                          .trim()}
-                      </span>
-                      <span className="browse-row-price">
-                        {priceLabel ?? t("priceUnknown")}
-                      </span>
-                      <div className="browse-row-tags">
-                        {offer.is247 === true ? (
-                          <span className="browse-tag is-247">24/7</span>
-                        ) : null}
-                        {offer.freeTrial === true ? (
-                          <span className="browse-tag is-trial">
-                            Ilmainen kokeilu
-                          </span>
-                        ) : null}
-                        {offer.dayPass === true ? (
-                          <span className="browse-tag is-daypass">Päivälippu</span>
-                        ) : null}
-                      </div>
-                    </div>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-
-          {inViewGyms.length > PAGE_SIZE ? (
-            <nav className="browse-pager" aria-label="Sivutus">
-              <button
-                type="button"
-                className="browse-pager-btn"
-                disabled={safePage <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                <ChevronLeft size={18} strokeWidth={2.2} />
-                <span>Edellinen</span>
-              </button>
-              <p className="browse-pager-status">
-                Sivu {safePage} / {pageCount}
-              </p>
-              <button
-                type="button"
-                className="browse-pager-btn"
-                disabled={safePage >= pageCount}
-                onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-              >
-                <span>Seuraava</span>
-                <ChevronRight size={18} strokeWidth={2.2} />
-              </button>
-            </nav>
-          ) : null}
-        </section>
       </div>
 
       {extrasOpen ? (
@@ -1968,6 +2029,7 @@ function GymsPage() {
           </div>
         </div>
       ) : null}
+
     </main>
   );
 }

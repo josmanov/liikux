@@ -29,7 +29,7 @@ const fi = {
   audience: "Kenelle",
   audienceN: "Kenelle ({n})",
   audienceAll: "Kaikille",
-  audienceWomen: "Naisten salit",
+  audienceWomen: "Naisten",
   distance: "Etäisyys",
   distanceAll: "Kaikki",
   price: "Hinta",
@@ -48,6 +48,9 @@ const fi = {
   open: "Avaa",
   clearFilters: "Tyhjennä",
   priceUnknown: "Hinta ei tiedossa",
+  mapZoomIn: "Lähennä",
+  mapZoomOut: "Loitonna",
+  mapGoToLocation: "Siirry sijaintiin",
 };
 
 const en: typeof fi = {
@@ -79,7 +82,7 @@ const en: typeof fi = {
   audience: "For whom",
   audienceN: "For whom ({n})",
   audienceAll: "Everyone",
-  audienceWomen: "Women's gyms",
+  audienceWomen: "Women",
   distance: "Distance",
   distanceAll: "All",
   price: "Price",
@@ -98,6 +101,9 @@ const en: typeof fi = {
   open: "Open",
   clearFilters: "Clear",
   priceUnknown: "Price unknown",
+  mapZoomIn: "Zoom in",
+  mapZoomOut: "Zoom out",
+  mapGoToLocation: "Go to location",
 };
 
 const catalogs = { fi, en };
