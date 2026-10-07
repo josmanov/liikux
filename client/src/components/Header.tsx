@@ -1,5 +1,5 @@
 ﻿import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import AreaSelect from "./AreaSelect";
 import FavoritesPopup from "./FavoritesPopup";
 import HeaderSearch from "./HeaderSearch";
@@ -13,7 +13,6 @@ function Header() {
   const [favoritesOpen, setFavoritesOpen] = useState(false);
   const { lang, t } = useLang();
   const location = useLocation();
-  const navigate = useNavigate();
   const nextLang = lang === "fi" ? "en" : "fi";
 
   return (
@@ -46,7 +45,7 @@ function Header() {
               : "Vaihda suomeksi"
           }
           onClick={() => {
-            navigate(switchLangPath(location.pathname, nextLang));
+            window.location.assign(switchLangPath(location.pathname, nextLang));
           }}
         >
           <span className={nextLang === "en" ? "fi fi-gb" : "fi fi-fi"}></span>
