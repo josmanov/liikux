@@ -5,7 +5,10 @@ import { and, desc, eq } from "drizzle-orm";
 import { db } from "../db/index.js";
 import { chains, enrichRuns, gyms } from "../db/schema.js";
 import { cached } from "./memoryCache.js";
-import { fetchListedGymsWithChain } from "./gymListQuery.js";
+import {
+  fetchListedGymsByChainSlug,
+  fetchListedGymsWithChain,
+} from "./gymListQuery.js";
 import { rateLimit } from "./rateLimit.js";
 
 const app = express();
@@ -26,6 +29,55 @@ app.get("/api/chains", async (_req, res) => {
   const { data, hit } = await cached("chains", LIST_CACHE_MS, () =>
     db.select().from(chains),
   );
+  res.setHeader("Cache-Control", "public, max-age=120");
+  res.setHeader("X-Cache", hit ? "HIT" : "MISS");
+  res.json(data);
+});
+
+app.get("/api/chains/:slug", async (req, res) => {
+  const slug = String(req.params.slug ?? "").trim();
+  if (!slug) {
+    res.status(400).json({ error: "slug required" });
+    return;
+  }
+
+  const { data, hit } = await cached(`chain:${slug}`, LIST_CACHE_MS, async () => {
+    const rows = await db
+      .select()
+      .from(chains)
+      .where(eq(chains.slug, slug))
+      .limit(1);
+    return rows[0] ?? null;
+  });
+
+  if (!data) {
+    res.status(404).json({ error: "not found" });
+    return;
+  }
+
+  res.setHeader("Cache-Control", "public, max-age=120");
+  res.setHeader("X-Cache", hit ? "HIT" : "MISS");
+  res.json(data);
+});
+
+app.get("/api/chains/:slug/gyms", async (req, res) => {
+  const slug = String(req.params.slug ?? "").trim();
+  if (!slug) {
+    res.status(400).json({ error: "slug required" });
+    return;
+  }
+
+  const { data, hit } = await cached(
+    `chain-gyms:${slug}`,
+    LIST_CACHE_MS,
+    () => fetchListedGymsByChainSlug(slug),
+  );
+
+  if (!data) {
+    res.status(404).json({ error: "not found" });
+    return;
+  }
+
   res.setHeader("Cache-Control", "public, max-age=120");
   res.setHeader("X-Cache", hit ? "HIT" : "MISS");
   res.json(data);

@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, X } from "lucide-react";
 import "./ChainPopup.css";
 import { type Chain, type Gym, resolveGymOffer } from "../data/types";
-import { fetchGymsAndChains } from "../data/api";
+import { fetchChains, fetchChainGyms } from "../data/api";
 import { cleanGymDisplayName, formatPriceFrom } from "../data/format";
 import { useAppLocation } from "../context/LocationContext";
 import { useChainPopup } from "../context/ChainPopupContext";
@@ -60,21 +60,50 @@ function ChainPopup() {
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    fetchGymsAndChains()
-      .then(([gymData, chainData]) => {
+    fetchChains()
+      .then((chainData) => {
         if (cancelled) return;
-        setGyms(gymData);
         setChains(chainData);
       })
       .catch(() => {
         if (cancelled) return;
-        setGyms([]);
         setChains([]);
       });
     return () => {
       cancelled = true;
     };
   }, [open]);
+
+  useEffect(() => {
+    if (!open || !selectedSlug) {
+      setGyms([]);
+      return;
+    }
+    let cancelled = false;
+    fetchChainGyms(selectedSlug)
+      .then((data) => {
+        if (cancelled) return;
+        if (!data) {
+          setGyms([]);
+          return;
+        }
+        setGyms(data.gyms);
+        setChains((prev) => {
+          const exists = prev.some((c) => c.id === data.chain.id);
+          if (exists) {
+            return prev.map((c) => (c.id === data.chain.id ? data.chain : c));
+          }
+          return [...prev, data.chain];
+        });
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setGyms([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, selectedSlug]);
 
   const selectedChain = useMemo(
     () =>

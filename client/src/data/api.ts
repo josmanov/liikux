@@ -74,3 +74,35 @@ export function fetchHomeStats(): Promise<HomeStats> {
 export function fetchGymsAndChains(): Promise<[Gym[], Chain[]]> {
   return Promise.all([fetchGyms(), fetchChains()]);
 }
+
+export type ChainGymsResponse = {
+  chain: Chain;
+  gyms: Gym[];
+};
+
+const chainGymsCache = new Map<string, CacheEntry<ChainGymsResponse | null>>();
+
+export function fetchChainGyms(
+  slug: string,
+): Promise<ChainGymsResponse | null> {
+  const key = slug.trim();
+  if (!key) return Promise.resolve(null);
+
+  const existing = chainGymsCache.get(key);
+  if (existing && stillFresh(existing.at)) return existing.promise;
+
+  const promise = fetch(`${API}/api/chains/${encodeURIComponent(key)}/gyms`)
+    .then(async (r) => {
+      if (!r.ok) return null;
+      const data = await r.json();
+      if (!data?.chain || !Array.isArray(data.gyms)) return null;
+      return data as ChainGymsResponse;
+    })
+    .catch(() => {
+      chainGymsCache.delete(key);
+      return null;
+    });
+
+  chainGymsCache.set(key, { at: Date.now(), promise });
+  return promise;
+}
