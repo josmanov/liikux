@@ -8,6 +8,8 @@ import { fetchChains, fetchChainGyms } from "../data/api";
 import { cleanGymDisplayName, formatPriceFrom } from "../data/format";
 import { useAppLocation } from "../context/LocationContext";
 import { useChainPopup } from "../context/ChainPopupContext";
+import { pathGym } from "../i18n/lang";
+import { useLang } from "../i18n/useLang";
 
 function distanceKm(
   lat1: number,
@@ -33,6 +35,7 @@ function formatKm(km: number) {
 function ChainPopup() {
   const { open, chainSlug, close, openChain } = useChainPopup();
   const location = useAppLocation();
+  const { lang } = useLang();
   const [query, setQuery] = useState("");
   const [chains, setChains] = useState<Chain[]>([]);
   const [gyms, setGyms] = useState<Gym[]>([]);
@@ -257,7 +260,7 @@ function ChainPopup() {
                 return (
                   <li key={gym.id}>
                     <Link
-                      to={`/fi/sali/${gym.slug}`}
+                      to={pathGym(lang, gym.slug)}
                       className="chain-popup-row"
                       onClick={close}
                     >

@@ -7,6 +7,8 @@ import { type Chain, type Gym } from "../data/types";
 import { fetchGymsAndChains } from "../data/api";
 import { cleanGymDisplayName } from "../data/format";
 import { readFavoriteSlugs } from "../data/favorites";
+import { pathGym } from "../i18n/lang";
+import { useLang } from "../i18n/useLang";
 
 type Props = {
   open: boolean;
@@ -14,6 +16,7 @@ type Props = {
 };
 
 function FavoritesPopup({ open, onClose }: Props) {
+  const { lang } = useLang();
   const [query, setQuery] = useState("");
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [chains, setChains] = useState<Chain[]>([]);
@@ -109,7 +112,7 @@ function FavoritesPopup({ open, onClose }: Props) {
             return (
               <li key={gym.id}>
                 <Link
-                  to={`/fi/sali/${gym.slug}`}
+                  to={pathGym(lang, gym.slug)}
                   className="chain-popup-row"
                   onClick={onClose}
                 >

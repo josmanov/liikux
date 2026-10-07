@@ -11,6 +11,8 @@ import {
 import { cleanGymDisplayName, formatPriceFrom } from "../data/format";
 import { getChainWebsite } from "../data/chainWebsites";
 import { useAppLocation } from "../context/LocationContext";
+import { pathGyms } from "../i18n/lang";
+import { useLang } from "../i18n/useLang";
 import "./GymDetailPage.css";
 
 type GymDetail = Gym & { chain: Chain | null };
@@ -72,6 +74,7 @@ function makeOriginPin() {
 
 function GymDetailPage() {
   const { slug } = useParams();
+  const { lang, t } = useLang();
   const { label: locationLabel } = useAppLocation();
   const [gym, setGym] = useState<GymDetail | null>(null);
   const [status, setStatus] = useState<"loading" | "ok" | "missing">("loading");
@@ -238,8 +241,8 @@ function GymDetailPage() {
       <main className="gym-detail">
         <h1>Salia ei löytynyt</h1>
         <p className="gym-detail-muted">Tarkista osoite tai palaa selaamaan.</p>
-        <Link className="gym-detail-back" to="/fi/kuntosalit">
-          ← Selaa kuntosaleja
+        <Link className="gym-detail-back" to={pathGyms(lang)}>
+          {t("backToBrowse")}
         </Link>
       </main>
     );
@@ -282,9 +285,9 @@ function GymDetailPage() {
     <main className="gym-detail">
       <div className="gym-detail-body">
         <div className="gym-detail-left-sticky">
-          <Link className="gym-detail-back" to="/fi/kuntosalit">
+          <Link className="gym-detail-back" to={pathGyms(lang)}>
             <ArrowLeft size={18} strokeWidth={2.4} aria-hidden="true" />
-            Takaisin selaamaan
+            {t("backToBrowse")}
           </Link>
         </div>
 

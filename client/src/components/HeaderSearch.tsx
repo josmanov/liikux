@@ -4,11 +4,14 @@ import { Search } from "lucide-react";
 import { type Chain, type Gym } from "../data/types";
 import { fetchGymsAndChains } from "../data/api";
 import { useChainPopup } from "../context/ChainPopupContext";
+import { pathGym } from "../i18n/lang";
+import { useLang } from "../i18n/useLang";
 import "./HeaderSearch.css";
 
 function HeaderSearch() {
   const navigate = useNavigate();
   const { openChain } = useChainPopup();
+  const { lang } = useLang();
   const wrapRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -70,7 +73,7 @@ function HeaderSearch() {
       return;
     }
     if (gymHits[0]) {
-      navigate(`/fi/sali/${gymHits[0].slug}`);
+      navigate(pathGym(lang, gymHits[0].slug));
       setQuery("");
       setOpen(false);
     }
@@ -148,7 +151,7 @@ function HeaderSearch() {
                     {gymHits.map((gym) => (
                       <li key={gym.id}>
                         <Link
-                          to={`/fi/sali/${gym.slug}`}
+                          to={pathGym(lang, gym.slug)}
                           className="header-search-hit"
                           onClick={() => {
                             setQuery("");

@@ -1,19 +1,25 @@
 ﻿import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import AreaSelect from "./AreaSelect";
 import FavoritesPopup from "./FavoritesPopup";
 import HeaderSearch from "./HeaderSearch";
+import { pathGyms, switchLangPath } from "../i18n/lang";
+import { useLang } from "../i18n/useLang";
 import "flag-icons/css/flag-icons.min.css";
 import "./uiverse-playstore.css";
 import "./Header.css";
 
 function Header() {
   const [favoritesOpen, setFavoritesOpen] = useState(false);
+  const { lang, t } = useLang();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const nextLang = lang === "fi" ? "en" : "fi";
 
   return (
     <header className="header">
       <div className="header-left">
-        <Link to="/" className="header-logo">
+        <Link to={lang === "en" ? "/en" : "/"} className="header-logo">
           <img src="/liikux-logo-light.png?v=white" alt="Liikux" />
         </Link>
         <AreaSelect />
@@ -27,18 +33,26 @@ function Header() {
           onClick={() => setFavoritesOpen(true)}
         >
           <span className="texts">
-            <span className="text-2">Suosikit</span>
+            <span className="text-2">{t("favorites")}</span>
           </span>
         </button>
         <button
           type="button"
           className="header-lang playstore-button is-plain"
-          aria-label="Suomi"
+          aria-label={nextLang === "en" ? t("langEn") : t("langFi")}
+          title={
+            nextLang === "en"
+              ? "Switch to English"
+              : "Vaihda suomeksi"
+          }
+          onClick={() => {
+            navigate(switchLangPath(location.pathname, nextLang));
+          }}
         >
-          <span className="fi fi-fi"></span>
+          <span className={nextLang === "en" ? "fi fi-gb" : "fi fi-fi"}></span>
         </button>
-        <Link to="/fi/kuntosalit" className="header-cta">
-          Selaa kuntosaleja
+        <Link to={pathGyms(lang)} className="header-cta">
+          {t("browseGyms")}
         </Link>
       </div>
 

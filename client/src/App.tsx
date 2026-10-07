@@ -16,10 +16,14 @@ function App() {
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/en" element={<HomePage />} />
           <Route path="/fi/kuntosalit" element={<GymsPage />} />
+          <Route path="/en/gyms" element={<GymsPage />} />
           <Route path="/hobbies" element={<HobbysPage />} />
           <Route path="/fi/ketju/:slug" element={<GymsPage />} />
+          <Route path="/en/chain/:slug" element={<GymsPage />} />
           <Route path="/fi/sali/:slug" element={<GymDetailPage />} />
+          <Route path="/en/gym/:slug" element={<GymDetailPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/favorites" element={<FavoritesPage />} />

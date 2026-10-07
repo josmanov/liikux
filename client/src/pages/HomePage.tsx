@@ -21,6 +21,8 @@ import { lajiGifUrl } from "../data/lajiGifs";
 import { useInView } from "../hooks/useInView";
 import { useAppLocation } from "../context/LocationContext";
 import { useChainPopup } from "../context/ChainPopupContext";
+import { pathGyms } from "../i18n/lang";
+import { useLang } from "../i18n/useLang";
 
 const picks = [
   {
@@ -79,15 +81,16 @@ function LajiIcon({ name, Icon }: { name: string; Icon?: LucideIcon }) {
 function LocateButton() {
   const navigate = useNavigate();
   const { useMyLocation } = useAppLocation();
+  const { lang, t } = useLang();
 
   return (
     <button
       type="button"
       className="hero-locate"
-      aria-label="Käytä sijaintiani"
+      aria-label={t("useMyLocation")}
       onClick={() => {
         useMyLocation();
-        navigate("/fi/kuntosalit", { state: { focusOrigin: true } });
+        navigate(pathGyms(lang), { state: { focusOrigin: true } });
       }}
     >
       <LocateFixed size={18} strokeWidth={2.2} />
@@ -96,11 +99,12 @@ function LocateButton() {
 }
 
 function SearchButton() {
+  const { t } = useLang();
   return (
     <button
       type="button"
       className="hero-locate"
-      aria-label="Hae"
+      aria-label={t("search")}
     >
       <img src="/picks/search.png" alt="" width={22} height={22} />
     </button>
@@ -152,6 +156,7 @@ function HomePage() {
   const [cityCount, setCityCount] = useState(0);
   const { label, setLocation } = useAppLocation();
   const navigate = useNavigate();
+  const { lang, t } = useLang();
   const [addressDraft, setAddressDraft] = useState("");
   const [suggestions, setSuggestions] = useState<
     { id: string; label: string; lat: number; lng: number }[]
@@ -167,7 +172,7 @@ function HomePage() {
     setLocation({ label: item.label, lat: item.lat, lng: item.lng });
     setSuggestOpen(false);
     setSuggestions([]);
-    navigate("/fi/kuntosalit", { state: { focusOrigin: true } });
+    navigate(pathGyms(lang), { state: { focusOrigin: true } });
   }
 
   useEffect(() => {
@@ -259,15 +264,15 @@ function HomePage() {
     <main className="shell">
       <section className="hero">
         <div className="hero-top">
-          <h1 className="title">Löydä paikka liikkua</h1>
+          <h1 className="title">{t("heroTitle")}</h1>
           <div className="hero-search-wrap">
             <div className="hero-search" id="input">
               <input
                 className="hero-search-input"
                 id="address_input"
                 type="text"
-                placeholder="Syötä osoite.."
-                aria-label="Syötä osoite"
+                placeholder={t("addressPlaceholder")}
+                aria-label={t("addressAria")}
                 value={addressDraft}
                 autoComplete="off"
                 onChange={(e) => {
@@ -294,10 +299,10 @@ function HomePage() {
               {suggestOpen && addressDraft.trim().length >= 2 ? (
                 <div className="hero-suggest" role="listbox">
                   {suggestLoading && suggestions.length === 0 ? (
-                    <p className="hero-suggest-empty">Haetaan…</p>
+                    <p className="hero-suggest-empty">{t("searching")}</p>
                   ) : null}
                   {!suggestLoading && suggestions.length === 0 ? (
-                    <p className="hero-suggest-empty">Ei tuloksia</p>
+                    <p className="hero-suggest-empty">{t("noResults")}</p>
                   ) : null}
                   {suggestions.length > 0 ? (
                     <ul className="hero-suggest-list">
@@ -340,8 +345,11 @@ function HomePage() {
               ) : null}
             </div>
             <p className="hero-stats">
-              {gymCount} kuntosalia · {chainCount} ketjua · {cityCount}{" "}
-              kaupunkia
+              {t("heroStats", {
+                gyms: gymCount,
+                chains: chainCount,
+                cities: cityCount,
+              })}
             </p>
           </div>
         </div>
@@ -352,7 +360,7 @@ function HomePage() {
           ref={railReveal.ref}
         >
           <div className="rail-head">
-            <h2 className="rail-title">Suomen suosituimmat</h2>
+            <h2 className="rail-title">{t("popularInFinland")}</h2>
             <div className="rail-arrows">
               <button
                 type="button"
@@ -368,7 +376,7 @@ function HomePage() {
                   playing={gymsAllHover.playing}
                   playKey={gymsAllHover.playKey}
                 />
-                <span>Kaikki kuntosaliketjut</span>
+                <span>{t("allGymChains")}</span>
               </button>
             </div>
           </div>

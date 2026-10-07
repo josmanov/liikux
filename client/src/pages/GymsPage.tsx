@@ -19,6 +19,8 @@ import {
   formatPriceFrom,
 } from "../data/format";
 import { useAppLocation } from "../context/LocationContext";
+import { pathGym } from "../i18n/lang";
+import { useLang } from "../i18n/useLang";
 
 function markerScaleForZoom(zoom: number) {
   const t = Math.min(1, Math.max(0, (zoom - 4.2) / 8));
@@ -174,29 +176,43 @@ function centerFinlandIfMaxOut(map: Map) {
   map.easeTo({ center: FINLAND_CENTER, duration: 280 });
 }
 
-const sortOptions = [
-  { id: "nearest", label: "Lähimmät ensin" },
-  { id: "name-asc", label: "Nimi A–Ö" },
-  { id: "name-desc", label: "Nimi Ö–A" },
-];
-
 const OTHER_CHAIN_FILTER_ID = "yksityiset";
 
-const chainFilterOptions = [
-  { id: "elixia", label: "Elixia" },
-  { id: "easyfit", label: "EasyFit" },
-  { id: "fressi", label: "Fressi" },
-  { id: "fitness24", label: "Fitness24Seven" },
-  { id: "gofitness", label: "GoFitness" },
-  { id: "olefit", label: "Ole.Fit" },
-  { id: "liikku", label: "Liikku" },
-  { id: "forever", label: "Forever" },
-  { id: "ladyline", label: "LadyLine" },
-  { id: "esport", label: "Esport" },
-  { id: "unisport", label: "UniSport" },
-  { id: "mm", label: "M&M" },
-  { id: OTHER_CHAIN_FILTER_ID, label: "Yksityiset / muut" },
-];
+const chainFilterOptionIds = [
+  "elixia",
+  "easyfit",
+  "fressi",
+  "fitness24",
+  "gofitness",
+  "olefit",
+  "liikku",
+  "forever",
+  "ladyline",
+  "esport",
+  "unisport",
+  "mm",
+  OTHER_CHAIN_FILTER_ID,
+] as const;
+
+const chainFilterBrandLabels: Record<string, string> = {
+  elixia: "Elixia",
+  easyfit: "EasyFit",
+  fressi: "Fressi",
+  fitness24: "Fitness24Seven",
+  gofitness: "GoFitness",
+  olefit: "Ole.Fit",
+  liikku: "Liikku",
+  forever: "Forever",
+  ladyline: "LadyLine",
+  esport: "Esport",
+  unisport: "UniSport",
+  mm: "M&M",
+};
+
+const chainFilterOptions = chainFilterOptionIds.map((id) => ({
+  id,
+  label: id === OTHER_CHAIN_FILTER_ID ? "Yksityiset / muut" : chainFilterBrandLabels[id],
+}));
 
 const allChainFilterIds = chainFilterOptions.map((o) => o.id);
 
@@ -234,28 +250,26 @@ function filterIdFromChainSlug(slug: string, chains: Chain[]) {
   );
 }
 
-const audienceOptions = [
+const audienceOptionMeta = [
   {
     id: "all",
-    label: "Kaikille",
     icon: "/icons/kenelle.png",
     iconClass: "is-natural",
   },
   {
     id: "women",
-    label: "Naisten salit",
     icon: "/icons/kenelle-women.png",
     iconClass: "is-pink",
   },
 ];
 
-const distancePresets = [
-  { id: "all", km: null as number | null, label: "Kaikki" },
-  { id: "1", km: 1, label: "1 km" },
-  { id: "3", km: 3, label: "3 km" },
-  { id: "5", km: 5, label: "5 km" },
-  { id: "10", km: 10, label: "10 km" },
-  { id: "20", km: 20, label: "20 km" },
+const distancePresetMeta = [
+  { id: "all", km: null as number | null },
+  { id: "1", km: 1 },
+  { id: "3", km: 3 },
+  { id: "5", km: 5 },
+  { id: "10", km: 10 },
+  { id: "20", km: 20 },
 ];
 
 const cityCenters: Record<string, { lat: number; lng: number }> = {
@@ -281,14 +295,6 @@ function distanceKm(
   return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
 
-const priceOptions = [
-  { id: "all", label: "Kaikki hinnat" },
-  { id: "cheap", label: "Alle 30 €/kk" },
-  { id: "mid", label: "30–50 €/kk" },
-  { id: "premium", label: "Yli 50 €/kk" },
-  { id: "daypass", label: "Päivälippu" },
-];
-
 type FilterKey = "chains" | "audience" | "distance" | "price" | "sort";
 
 const PAGE_SIZE = 24;
@@ -296,6 +302,37 @@ const PAGE_SIZE = 24;
 function GymsPage() {
   const { slug: chainSlug } = useParams();
   const routeLocation = useLocation();
+  const { lang, t } = useLang();
+  const sortOptions = [
+    { id: "nearest", label: t("sortNearest") },
+    { id: "name-asc", label: t("sortNameAsc") },
+    { id: "name-desc", label: t("sortNameDesc") },
+  ];
+  const audienceOptions = audienceOptionMeta.map((opt) => ({
+    ...opt,
+    label: opt.id === "all" ? t("audienceAll") : t("audienceWomen"),
+  }));
+  const distancePresets = distancePresetMeta.map((opt) => ({
+    ...opt,
+    label:
+      opt.id === "all"
+        ? t("distanceAll")
+        : `${opt.km} km`,
+  }));
+  const priceOptions = [
+    { id: "all", label: t("priceAll") },
+    { id: "cheap", label: t("priceCheap") },
+    { id: "mid", label: t("priceMid") },
+    { id: "premium", label: t("pricePremium") },
+    { id: "daypass", label: t("priceDayPass") },
+  ];
+  const localizedChainFilterOptions = chainFilterOptionIds.map((id) => ({
+    id,
+    label:
+      id === OTHER_CHAIN_FILTER_ID
+        ? t("otherChains")
+        : chainFilterBrandLabels[id],
+  }));
   const {
     label: locationLabel,
     lat: locationLat,
@@ -366,31 +403,32 @@ function GymsPage() {
   }, [chainSlug]);
 
   const sortLabel =
-    sortOptions.find((o) => o.id === sortId)?.label ?? "Lähimmät ensin";
+    sortOptions.find((o) => o.id === sortId)?.label ?? t("sortNearest");
   const chainFilterActive = selectedChains.length < allChainFilterIds.length;
   const pageTitle =
     selectedChains.length === 1
-      ? (chainFilterOptions.find((o) => o.id === selectedChains[0])?.label ??
-        "Kuntosalit")
-      : "Kuntosalit";
+      ? (localizedChainFilterOptions.find((o) => o.id === selectedChains[0])
+          ?.label ?? t("gymsTitle"))
+      : t("gymsTitle");
   const chainLabel =
     selectedChains.length === 0
-      ? "Ketjut"
+      ? t("chains")
       : !chainFilterActive
-        ? "Ketjut"
+        ? t("chains")
         : selectedChains.length === 1
-          ? (chainFilterOptions.find((o) => o.id === selectedChains[0])
-              ?.label ?? "Ketjut")
-          : `Ketjut (${selectedChains.length})`;
+          ? (localizedChainFilterOptions.find((o) => o.id === selectedChains[0])
+              ?.label ?? t("chains"))
+          : t("chainsN", { n: selectedChains.length });
   const audienceLabel =
     selectedAudiences.length === 0
-      ? "Kenelle"
+      ? t("audience")
       : selectedAudiences.length === 1
         ? (audienceOptions.find((o) => o.id === selectedAudiences[0])?.label ??
-          "Kenelle")
-        : `Kenelle (${selectedAudiences.length})`;
+          t("audience"))
+        : t("audienceN", { n: selectedAudiences.length });
   const distanceLabel =
-    distancePresets.find((o) => o.id === distanceFilter)?.label ?? "Etäisyys";
+    distancePresets.find((o) => o.id === distanceFilter)?.label ??
+    t("distance");
   const distancePresetIndex = Math.max(
     0,
     distancePresets.findIndex((o) => o.id === distanceFilter),
@@ -409,9 +447,9 @@ function GymsPage() {
   }, [locationLabel, locationLat, locationLng]);
 
   const priceLabel =
-    priceOptions.find((o) => o.id === priceFilter)?.label ?? "Hinta";
+    priceOptions.find((o) => o.id === priceFilter)?.label ?? t("price");
   const extrasActive = extraOnly247 || extraFreeTrial || extraDayPass;
-  const extrasLabel = extrasActive ? "Suodattimet (päällä)" : "Suodattimet";
+  const extrasLabel = extrasActive ? t("filtersOn") : t("filters");
 
   const selectedChainFilter = useMemo(() => {
     if (selectedChains.length === 0) {
@@ -1296,7 +1334,7 @@ function GymsPage() {
               <input
                 className="browse-search-input"
                 type="search"
-                placeholder="Hae nimellä tai osoitteella..."
+                placeholder={t("searchNameOrAddress")}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
@@ -1344,10 +1382,13 @@ function GymsPage() {
             <h1>{pageTitle}</h1>
             <p className="browse-list-count">
               {regionPickMode
-                ? "Valitse maakunta kartalta"
+                ? t("pickRegion")
                 : selectedMaakunta
-                  ? `${selectedMaakunta} · ${inViewGyms.length} paikkaa`
-                  : `${inViewGyms.length} paikkaa`}
+                  ? t("placesInRegion", {
+                      region: selectedMaakunta,
+                      count: inViewGyms.length,
+                    })
+                  : t("placesCount", { count: inViewGyms.length })}
             </p>
           </header>
           </div>
@@ -1379,7 +1420,7 @@ function GymsPage() {
                 <div
                   className="browse-filter-menu browse-filter-menu-chains"
                   role="group"
-                  aria-label="Ketjut"
+                  aria-label={t("chains")}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="browse-filter-menu-actions">
@@ -1388,18 +1429,18 @@ function GymsPage() {
                       className="browse-filter-menu-action"
                       onClick={() => setSelectedChains([...allChainFilterIds])}
                     >
-                      Kaikki
+                      {t("all")}
                     </button>
                     <button
                       type="button"
                       className="browse-filter-menu-action"
                       onClick={() => setSelectedChains([])}
                     >
-                      Tyhjennä
+                      {t("clear")}
                     </button>
                   </div>
                   <ul className="browse-filter-check-list" role="listbox">
-                    {chainFilterOptions.map((opt) => {
+                    {localizedChainFilterOptions.map((opt) => {
                       const on = selectedChains.includes(opt.id);
                       return (
                         <li key={opt.id}>
@@ -1445,7 +1486,7 @@ function GymsPage() {
                 <div
                   className="browse-filter-menu browse-filter-menu-audience"
                   role="group"
-                  aria-label="Kenelle"
+                  aria-label={t("audience")}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="browse-filter-menu-actions">
@@ -1454,7 +1495,7 @@ function GymsPage() {
                       className="browse-filter-menu-action"
                       onClick={() => setSelectedAudiences([])}
                     >
-                      Tyhjennä
+                      {t("clear")}
                     </button>
                   </div>
                   <ul className="browse-filter-check-list" role="listbox">
@@ -1582,7 +1623,7 @@ function GymsPage() {
                   alt=""
                 />
                 <span className="browse-filter-label">
-                  {priceFilter === "all" ? "Hinta" : priceLabel}
+                  {priceFilter === "all" ? t("price") : priceLabel}
                 </span>
                 <ChevronDown size={16} strokeWidth={2.2} />
               </button>
@@ -1642,7 +1683,7 @@ function GymsPage() {
                   setExtrasOpen(false);
                 }}
               >
-                Tyhjennä
+                {t("clear")}
               </button>
             </div>
           </div>
@@ -1650,7 +1691,7 @@ function GymsPage() {
           <div className="browse-map-frame">
             <div className="browse-map" aria-label="Kartta" ref={mapRef} />
             <p className="browse-region-hint">
-              {selectedMaakunta ?? "Valitse maakunta"}
+              {selectedMaakunta ?? t("pickRegion")}
             </p>
             {selectedGym ? (
               <div className="browse-map-preview">
@@ -1664,7 +1705,7 @@ function GymsPage() {
                 </button>
                 <Link
                   className="browse-map-preview-link"
-                  to={`/fi/sali/${selectedGym.slug}`}
+                  to={pathGym(lang, selectedGym.slug)}
                 >
                   <span
                     className={[
@@ -1694,7 +1735,7 @@ function GymsPage() {
                       </span>
                     ) : null}
                   </span>
-                  <span className="browse-map-preview-open">Avaa</span>
+                  <span className="browse-map-preview-open">{t("open")}</span>
                 </Link>
               </div>
             ) : null}
@@ -1703,9 +1744,7 @@ function GymsPage() {
 
         <section className="browse-list-main">
           {regionPickMode ? (
-            <p className="browse-region-empty">
-              Valitse maakunta kartalta nähdäksesi salit.
-            </p>
+            <p className="browse-region-empty">{t("pickRegion")}</p>
           ) : null}
           <ul className="browse-rows">
             {pageGyms.map((gym) => {
@@ -1719,7 +1758,7 @@ function GymsPage() {
               return (
                 <li key={gym.id}>
                   <Link
-                    to={`/fi/sali/${gym.slug}`}
+                    to={pathGym(lang, gym.slug)}
                     data-gym-id={gym.id}
                     className={[
                       "browse-row",
@@ -1765,7 +1804,7 @@ function GymsPage() {
                           .trim()}
                       </span>
                       <span className="browse-row-price">
-                        {priceLabel ?? "Hinta ei tiedossa"}
+                        {priceLabel ?? t("priceUnknown")}
                       </span>
                       <div className="browse-row-tags">
                         {offer.is247 === true ? (
@@ -1825,11 +1864,11 @@ function GymsPage() {
             className="browse-extras-modal"
             role="dialog"
             aria-modal="true"
-            aria-label="Suodattimet"
+            aria-label={t("filters")}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="browse-extras-head">
-              <h2 className="browse-extras-title">Suodattimet</h2>
+              <h2 className="browse-extras-title">{t("filters")}</h2>
               <p className="browse-extras-text">
                 Valitse lisäehdot. Voit ottaa useita päälle yhtä aikaa.
               </p>
@@ -1887,7 +1926,7 @@ function GymsPage() {
                   setExtraDayPass(false);
                 }}
               >
-                Tyhjennä
+                {t("clear")}
               </button>
               <button
                 type="button"
