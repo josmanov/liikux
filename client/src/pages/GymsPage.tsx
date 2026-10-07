@@ -25,17 +25,50 @@ function markerScaleForZoom(zoom: number) {
   return 0.42 + t * 0.58;
 }
 
-function clusterCellDeg(zoom: number) {
-  if (zoom < 7) return 0.5;
-  if (zoom < 8) return 0.32;
-  if (zoom < 9) return 0.2;
-  if (zoom < 10) return 0.12;
-  if (zoom < 11) return 0.075;
-  if (zoom < 12) return 0.045;
-  if (zoom < 13) return 0.028;
-  if (zoom < 14) return 0.018;
-  if (zoom < 15) return 0.011;
-  return 0.007;
+function pinTouchPx(scale: number) {
+  return 44 * scale;
+}
+
+function clusterGymsByScreenTouch(gyms: Gym[], map: Map, touchPx: number) {
+  const n = gyms.length;
+  if (n === 0) return [] as Gym[][];
+
+  const pts = gyms.map((g) => {
+    const p = map.project([g.lng, g.lat]);
+    return { g, x: p.x, y: p.y };
+  });
+
+  const parent = Array.from({ length: n }, (_, i) => i);
+  function find(i: number): number {
+    while (parent[i] !== i) {
+      parent[i] = parent[parent[i]];
+      i = parent[i];
+    }
+    return i;
+  }
+  function union(a: number, b: number) {
+    const ra = find(a);
+    const rb = find(b);
+    if (ra !== rb) parent[rb] = ra;
+  }
+
+  const limit = touchPx * touchPx;
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const dx = pts[i].x - pts[j].x;
+      const dy = pts[i].y - pts[j].y;
+      if (dx * dx + dy * dy <= limit) union(i, j);
+    }
+  }
+
+  const groups = new globalThis.Map<number, Gym[]>();
+  for (let i = 0; i < n; i++) {
+    const root = find(i);
+    const list = groups.get(root);
+    if (list) list.push(pts[i].g);
+    else groups.set(root, [pts[i].g]);
+  }
+  return [...groups.values()];
 }
 const HANGO: [number, number] = [22.968, 59.824];
 const NUORGAM: [number, number] = [27.879, 70.086];
@@ -915,22 +948,12 @@ function GymsPage() {
 
       const zoom = map.getZoom();
       const scale = markerScaleForZoom(zoom);
-      const cell = clusterCellDeg(zoom);
+      const touchPx = pinTouchPx(scale);
+      const groups = clusterGymsByScreenTouch(gyms, map, touchPx);
 
-      type Pt = {
-        g: (typeof gyms)[number];
-      };
-      const cells = new globalThis.Map<string, Pt[]>();
-      for (const g of gyms) {
-        const key = `${Math.floor((g.lng as number) / cell)}:${Math.floor((g.lat as number) / cell)}`;
-        const list = cells.get(key);
-        if (list) list.push({ g });
-        else cells.set(key, [{ g }]);
-      }
-
-      cells.forEach((group, cellKey) => {
+      groups.forEach((group, groupIndex) => {
         if (group.length === 1) {
-          const { g } = group[0];
+          const g = group[0];
           const chain =
             g.chain ?? chainsByIdRef.current.get(g.chainId) ?? undefined;
           const brandImg =
@@ -991,7 +1014,7 @@ function GymsPage() {
           });
 
           const marker = new Marker({ element: el })
-            .setLngLat([g.lng as number, g.lat as number])
+            .setLngLat([g.lng, g.lat])
             .addTo(map);
           markersRef.current.set(g.id, marker);
           return;
@@ -999,9 +1022,9 @@ function GymsPage() {
 
         let lng = 0;
         let lat = 0;
-        group.forEach((pt) => {
-          lng += pt.g.lng as number;
-          lat += pt.g.lat as number;
+        group.forEach((g) => {
+          lng += g.lng;
+          lat += g.lat;
         });
         lng /= group.length;
         lat /= group.length;
@@ -1014,8 +1037,8 @@ function GymsPage() {
         el.setAttribute("aria-label", `${group.length} salia`);
         el.addEventListener("click", () => {
           const bounds = new LngLatBounds();
-          group.forEach((pt) => {
-            bounds.extend([pt.g.lng as number, pt.g.lat as number]);
+          group.forEach((g) => {
+            bounds.extend([g.lng, g.lat]);
           });
           map.fitBounds(bounds, { padding: 72, maxZoom: 16 });
         });
@@ -1023,7 +1046,7 @@ function GymsPage() {
         const marker = new Marker({ element: el })
           .setLngLat([lng, lat])
           .addTo(map);
-        markersRef.current.set(`cluster-${cellKey}`, marker);
+        markersRef.current.set(`cluster-${groupIndex}`, marker);
       });
     }
 
