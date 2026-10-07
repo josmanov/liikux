@@ -760,7 +760,7 @@ function GymsPage() {
               source: "finland-mask",
               paint: {
                 "fill-color": "#0b1220",
-                "fill-opacity": 0.62,
+                "fill-opacity": 0.55,
               },
             });
           }
@@ -1711,18 +1711,27 @@ function GymsPage() {
                   <span
                     className={[
                       "browse-map-preview-media",
-                      selectedChain?.image
+                      selectedChain?.image &&
+                      !selectedChain.image.includes("/pins/")
                         ? selectedChain.logoFit === "contain"
                           ? "is-logo"
                           : ""
                         : "is-pin",
-                      selectedChain?.image ? selectedChain.logoClass || "" : "",
+                      selectedChain?.image &&
+                      !selectedChain.image.includes("/pins/")
+                        ? selectedChain.logoClass || ""
+                        : "",
                     ]
                       .filter(Boolean)
                       .join(" ")}
                   >
                     <img
-                      src={selectedChain?.image || "/pins/gym-pin.png"}
+                      src={
+                        selectedChain?.image &&
+                        !selectedChain.image.includes("/pins/")
+                          ? selectedChain.image
+                          : "/pins/gym-pin.png"
+                      }
                       alt=""
                     />
                   </span>
@@ -1774,18 +1783,24 @@ function GymsPage() {
                     <span
                       className={[
                         "browse-row-media",
-                        chain?.image
+                        chain?.image && !chain.image.includes("/pins/")
                           ? chain.logoFit === "contain"
                             ? "is-logo"
                             : ""
                           : "is-pin",
-                        chain?.image ? chain.logoClass || "" : "",
+                        chain?.image && !chain.image.includes("/pins/")
+                          ? chain.logoClass || ""
+                          : "",
                       ]
                         .filter(Boolean)
                         .join(" ")}
                     >
                       <img
-                        src={chain?.image || "/pins/gym-pin.png"}
+                        src={
+                          chain?.image && !chain.image.includes("/pins/")
+                            ? chain.image
+                            : "/pins/gym-pin.png"
+                        }
                         alt=""
                       />
                     </span>
