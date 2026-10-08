@@ -22,6 +22,7 @@ import HoverIcon, { usePickHover } from "../components/HoverIcon";
 import LoadSpin from "../components/LoadSpin";
 import { type Chain } from "../data/types";
 import { fetchChains, fetchHomeStats } from "../data/api";
+import { useAddressSuggest } from "../data/geocode";
 import { lajiGifUrl } from "../data/lajiGifs";
 import { useInView } from "../hooks/useInView";
 import { useAppLocation } from "../context/LocationContext";
@@ -145,8 +146,9 @@ function LocateButton() {
       className="hero-locate"
       aria-label={t("useMyLocation")}
       onClick={() => {
-        useMyLocation();
-        navigate(pathGyms(lang), { state: { focusOrigin: true } });
+        void useMyLocation().then(() => {
+          navigate(pathGyms(lang), { state: { focusOrigin: true } });
+        });
       }}
     >
       <LocateFixed size={18} strokeWidth={2.2} />
@@ -210,15 +212,16 @@ function HomePage() {
   const [chains, setChains] = useState<Chain[]>([]);
   const [gymCount, setGymCount] = useState(0);
   const [cityCount, setCityCount] = useState(0);
-  const { label, setLocation } = useAppLocation();
+  const { label, lat, lng, setLocation } = useAppLocation();
   const navigate = useNavigate();
   const { lang, t } = useLang();
   const [addressDraft, setAddressDraft] = useState("");
-  const [suggestions, setSuggestions] = useState<
-    { id: string; label: string; lat: number; lng: number }[]
-  >([]);
-  const [suggestLoading, setSuggestLoading] = useState(false);
   const [suggestOpen, setSuggestOpen] = useState(false);
+  const { hits: suggestions, loading: suggestLoading } = useAddressSuggest(
+    addressDraft,
+    suggestOpen,
+    { lat, lng },
+  );
 
   function goBrowseWithPick(item: {
     label: string;
@@ -227,7 +230,6 @@ function HomePage() {
   }) {
     setLocation({ label: item.label, lat: item.lat, lng: item.lng });
     setSuggestOpen(false);
-    setSuggestions([]);
     navigate(pathGyms(lang), { state: { focusOrigin: true } });
   }
 
@@ -238,45 +240,6 @@ function HomePage() {
       setAddressDraft(label);
     }
   }, [label]);
-
-  useEffect(() => {
-    const q = addressDraft.trim();
-    if (q.length < 2) {
-      setSuggestions([]);
-      setSuggestLoading(false);
-      return;
-    }
-
-    setSuggestLoading(true);
-    const ac = new AbortController();
-    const t = window.setTimeout(() => {
-      fetch(`http://localhost:3001/api/geocode?q=${encodeURIComponent(q)}`, {
-        signal: ac.signal,
-      })
-        .then((r) => r.json())
-        .then(
-          (data: { id: string; label: string; lat: number; lng: number }[]) => {
-            if (ac.signal.aborted) return;
-            setSuggestions(Array.isArray(data) ? data : []);
-            if (document.activeElement?.id === "address_input") {
-              setSuggestOpen(true);
-            }
-          },
-        )
-        .catch((err: unknown) => {
-          if (err instanceof DOMException && err.name === "AbortError") return;
-          setSuggestions([]);
-        })
-        .finally(() => {
-          if (!ac.signal.aborted) setSuggestLoading(false);
-        });
-    }, 120);
-
-    return () => {
-      window.clearTimeout(t);
-      ac.abort();
-    };
-  }, [addressDraft]);
 
   useEffect(() => {
     function measure() {
@@ -352,7 +315,7 @@ function HomePage() {
                   }
                 }}
                 onFocus={() => {
-                  if (addressDraft.trim().length >= 2) setSuggestOpen(true);
+                  if (addressDraft.trim().length >= 3) setSuggestOpen(true);
                 }}
                 onBlur={() => {
                   setSuggestOpen(false);
@@ -360,7 +323,7 @@ function HomePage() {
               />
               <span className="hero-search-divider" aria-hidden="true" />
               <LocateButton />
-              {suggestOpen && addressDraft.trim().length >= 2 ? (
+              {suggestOpen && addressDraft.trim().length >= 3 ? (
                 <div className="hero-suggest" role="listbox">
                   {suggestLoading && suggestions.length === 0 ? (
                     <p className="hero-suggest-empty">

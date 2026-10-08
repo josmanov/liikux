@@ -6,9 +6,13 @@
   background-color: var(--color-bg);
 }
 
-.layout.is-home {
-  height: 100dvh;
-  overflow: hidden;
+.layout.is-home .layout-content {
+  flex: 0 0 auto;
+}
+
+.layout.is-home .shell {
+  min-height: calc(100dvh - 5.75rem);
+  flex: none;
 }
 
 .layout-content {

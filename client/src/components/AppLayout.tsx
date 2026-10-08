@@ -21,7 +21,7 @@ function AppLayout() {
           <div className="layout-content">
             <Outlet />
           </div>
-          {home ? null : <Footer />}
+          <Footer />
         </div>
         <ChainPopup />
         <CookieBanner />

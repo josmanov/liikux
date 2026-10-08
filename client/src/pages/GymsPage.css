@@ -1390,6 +1390,29 @@
   color: var(--color-brand);
 }
 
+.browse-map-locate {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.browse-map-locate svg {
+  color: #fff;
+}
+
+.browse-map-locate:hover svg {
+  color: var(--color-brand);
+}
+
 .browse-map-address:hover {
   border-color: var(--color-brand);
 }

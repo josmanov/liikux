@@ -1,30 +1,25 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, LocateFixed, MapPin, Search } from "lucide-react";
 import { useAppLocation } from "../context/LocationContext";
+import { useAddressSuggest, type GeoHit } from "../data/geocode";
 import "./AreaSelect.css";
 import LoadSpin from "./LoadSpin";
 
 const cities = ["Helsinki", "Espoo", "Vantaa", "Tampere", "Turku", "Oulu"];
 
-type Suggestion = {
-  id: string;
-  label: string;
-  lat: number;
-  lng: number;
-};
-
 function AreaSelect() {
-  const { label, setLocation, useMyLocation } = useAppLocation();
+  const { label, lat, lng, setLocation, useMyLocation } = useAppLocation();
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { hits: suggestions, loading } = useAddressSuggest(draft, open, {
+    lat,
+    lng,
+  });
 
   useEffect(() => {
     if (!open) return;
     setDraft("");
-    setSuggestions([]);
     function close(e: MouseEvent) {
       if (rootRef.current?.contains(e.target as Node)) return;
       setOpen(false);
@@ -33,30 +28,7 @@ function AreaSelect() {
     return () => window.removeEventListener("click", close, true);
   }, [open]);
 
-  useEffect(() => {
-    if (!open) return;
-    const q = draft.trim();
-    if (q.length < 2) {
-      setSuggestions([]);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    const t = window.setTimeout(() => {
-      fetch(`http://localhost:3001/api/geocode?q=${encodeURIComponent(q)}`)
-        .then((r) => r.json())
-        .then((data: Suggestion[]) => {
-          setSuggestions(Array.isArray(data) ? data : []);
-        })
-        .catch(() => setSuggestions([]))
-        .finally(() => setLoading(false));
-    }, 120);
-
-    return () => window.clearTimeout(t);
-  }, [draft, open]);
-
-  function pickSuggestion(item: Suggestion) {
+  function pickSuggestion(item: GeoHit) {
     setLocation({ label: item.label, lat: item.lat, lng: item.lng });
     setOpen(false);
   }
@@ -66,7 +38,7 @@ function AreaSelect() {
     setOpen(false);
   }
 
-  const showSuggestions = draft.trim().length >= 2;
+  const showSuggestions = draft.trim().length >= 3;
 
   return (
     <div ref={rootRef} className="area-select" onClick={(e) => e.stopPropagation()}>
@@ -104,8 +76,7 @@ function AreaSelect() {
               className="area-select-locate"
               aria-label="Käytä sijaintiani"
               onClick={() => {
-                useMyLocation();
-                setOpen(false);
+                void useMyLocation().then(() => setOpen(false));
               }}
             >
               <LocateFixed size={16} strokeWidth={2.2} />

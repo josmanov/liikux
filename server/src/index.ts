@@ -295,16 +295,55 @@ async function nominatimSearch(q: string, limit: number) {
   return rows.map(hitFromNominatim);
 }
 
-async function photonSearch(q: string) {
-  const url =
-    "https://photon.komoot.io/api/?" +
-    new URLSearchParams({
-      q,
-      lang: "en",
-      limit: "14",
-      bbox: "19.5,59.5,31.6,70.1",
-    });
+const ADDRESS_TYPES = new Set(["house", "street", "locality", "district", "city"]);
 
+function labelFromPhotonProps(
+  p: Record<string, string | number | undefined>,
+  fallback: string,
+) {
+  const road = String(p.street || p.name || "");
+  const num = String(p.housenumber || "");
+  const city = String(p.city || p.town || p.village || "");
+  if (road && num && city) return `${road} ${num}, ${city}`;
+  if (road && city) return `${road}, ${city}`;
+  if (city) return city;
+  return String(p.name || p.street || fallback);
+}
+
+function hitFitsQuery(
+  hit: GeocodeHit,
+  q: string,
+  street: string,
+  number: string,
+) {
+  const l = hit.label.toLowerCase();
+  const ql = q.toLowerCase();
+  if (l.startsWith(ql)) return true;
+  const head = l.split(",")[0] ?? "";
+  const sl = street.toLowerCase();
+  if (!head.startsWith(sl) && !l.startsWith(sl)) return false;
+  if (!number) return true;
+  const n = number.toLowerCase();
+  return head.includes(n) || l.includes(n);
+}
+
+async function photonSearch(
+  q: string,
+  bias?: { lat: number; lng: number },
+) {
+  const params = new URLSearchParams({
+    q,
+    lang: "default",
+    limit: "12",
+    bbox: "19.5,59.5,31.6,70.1",
+  });
+  if (bias) {
+    params.set("lat", String(bias.lat));
+    params.set("lon", String(bias.lng));
+    params.set("location_bias_scale", "0.55");
+  }
+
+  const url = "https://photon.komoot.io/api/?" + params;
   const upstream = await fetch(url, {
     headers: { "Accept-Language": "fi" },
   });
@@ -326,15 +365,10 @@ async function photonSearch(q: string) {
     if (!coords || coords.length < 2) continue;
     const country = String(p.countrycode || "").toUpperCase();
     if (country && country !== "FI") continue;
+    const kind = String(p.type || "").toLowerCase();
+    if (kind && !ADDRESS_TYPES.has(kind)) continue;
 
-    const road = String(p.street || p.name || "");
-    const num = String(p.housenumber || "");
-    const city = String(p.city || p.town || p.village || "");
-    let label = "";
-    if (road && num && city) label = `${road} ${num}, ${city}`;
-    else if (road && city) label = `${road}, ${city}`;
-    else if (city) label = city;
-    else label = String(p.name || p.street || q);
+    const label = labelFromPhotonProps(p, q);
     if (!label.trim()) continue;
 
     hits.push({
@@ -361,17 +395,24 @@ function dedupeHits(hits: GeocodeHit[]) {
 
 function rankHits(hits: GeocodeHit[], q: string, number: string) {
   const ql = q.toLowerCase();
-  return [...hits].sort((a, b) => {
-    const aNum =
-      number && a.label.toLowerCase().includes(number.toLowerCase()) ? 0 : 1;
-    const bNum =
-      number && b.label.toLowerCase().includes(number.toLowerCase()) ? 0 : 1;
-    if (aNum !== bNum) return aNum - bNum;
-    const aExact = a.label.toLowerCase().startsWith(ql) ? 0 : 1;
-    const bExact = b.label.toLowerCase().startsWith(ql) ? 0 : 1;
-    if (aExact !== bExact) return aExact - bExact;
-    return a.label.localeCompare(b.label, "fi");
-  });
+  return hits
+    .map((h, i) => ({ h, i }))
+    .sort((a, b) => {
+      const aNum =
+        number && a.h.label.toLowerCase().includes(number.toLowerCase())
+          ? 0
+          : 1;
+      const bNum =
+        number && b.h.label.toLowerCase().includes(number.toLowerCase())
+          ? 0
+          : 1;
+      if (aNum !== bNum) return aNum - bNum;
+      const aExact = a.h.label.toLowerCase().startsWith(ql) ? 0 : 1;
+      const bExact = b.h.label.toLowerCase().startsWith(ql) ? 0 : 1;
+      if (aExact !== bExact) return aExact - bExact;
+      return a.i - b.i;
+    })
+    .map((x) => x.h);
 }
 
 app.get("/api/geocode", async (req, res) => {
@@ -381,12 +422,120 @@ app.get("/api/geocode", async (req, res) => {
     return;
   }
 
+  const lat = Number(req.query.lat);
+  const lng = Number(req.query.lng);
+  const bias =
+    Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : undefined;
+  const cacheKey =
+    "geocode:" +
+    q.toLowerCase() +
+    (bias ? `:${lat.toFixed(2)},${lng.toFixed(2)}` : "");
+
   try {
-    const { number } = parseStreetQuery(q);
-    const hits = await photonSearch(q);
-    res.json(rankHits(dedupeHits(hits), q, number).slice(0, 6));
+    const { data, hit } = await cached(cacheKey, 10 * 60 * 1000, async () => {
+      const { street, number } = parseStreetQuery(q);
+      const raw = dedupeHits(await photonSearch(q, bias));
+      const matched = raw.filter((h) => hitFitsQuery(h, q, street, number));
+      return rankHits(matched, q, number).slice(0, 6);
+    });
+    res.setHeader("X-Cache", hit ? "HIT" : "MISS");
+    res.json(data);
   } catch {
     res.status(502).json([]);
+  }
+});
+
+function shortStreetLabel(road: string, num: string, city: string) {
+  if (road && num && city) return `${road} ${num}, ${city}`;
+  if (road && city) return `${road}, ${city}`;
+  if (road && num) return `${road} ${num}`;
+  return "";
+}
+
+async function nominatimReverse(lat: number, lng: number) {
+  const url =
+    "https://nominatim.openstreetmap.org/reverse?" +
+    new URLSearchParams({
+      format: "json",
+      lat: String(lat),
+      lon: String(lng),
+      zoom: "18",
+      addressdetails: "1",
+    });
+  const upstream = await fetch(url, {
+    headers: {
+      "User-Agent": "Liikux/1.0 (localhost dev)",
+      "Accept-Language": "fi",
+    },
+  });
+  if (!upstream.ok) return null;
+  const row = (await upstream.json()) as NominatimRow;
+  const a = row.address ?? {};
+  const road = a.road || a.pedestrian || a.street || "";
+  const num = a.house_number || "";
+  const city = a.city || a.town || a.municipality || a.village || "";
+  const label = shortStreetLabel(road, num, city);
+  if (!label) return null;
+  return { label };
+}
+
+async function photonReverse(lat: number, lng: number) {
+  const url =
+    "https://photon.komoot.io/reverse?" +
+    new URLSearchParams({
+      lat: String(lat),
+      lon: String(lng),
+      lang: "default",
+    });
+  const upstream = await fetch(url, {
+    headers: { "Accept-Language": "fi" },
+  });
+  if (!upstream.ok) return null;
+  const data = (await upstream.json()) as {
+    features?: Array<{
+      geometry?: { coordinates?: number[] };
+      properties?: Record<string, string | number | undefined>;
+    }>;
+  };
+  const f = data.features?.[0];
+  if (!f) return null;
+  const p = f.properties ?? {};
+  const road = String(p.street || "");
+  const num = String(p.housenumber || "");
+  const city = String(p.city || p.town || p.village || "");
+  const label =
+    shortStreetLabel(road, num, city) || labelFromPhotonProps(p, "");
+  if (!label.trim() || label.trim().toLowerCase() === city.toLowerCase()) {
+    return null;
+  }
+  return { label };
+}
+
+async function reverseAddress(lat: number, lng: number) {
+  const fromNom = await nominatimReverse(lat, lng);
+  if (fromNom && /\d/.test(fromNom.label)) return fromNom;
+  const fromPh = await photonReverse(lat, lng);
+  if (fromPh && /\d/.test(fromPh.label)) return fromPh;
+  return fromNom || fromPh;
+}
+
+app.get("/api/geocode/reverse", async (req, res) => {
+  const lat = Number(req.query.lat);
+  const lng = Number(req.query.lng);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    res.status(400).json(null);
+    return;
+  }
+
+  const cacheKey = `rev-street:${lat.toFixed(4)},${lng.toFixed(4)}`;
+  try {
+    const { data, hit } = await cached(cacheKey, 10 * 60 * 1000, () =>
+      reverseAddress(lat, lng),
+    );
+    res.setHeader("X-Cache", hit ? "HIT" : "MISS");
+    res.json(data);
+  } catch {
+    res.status(502).json(null);
   }
 });
 

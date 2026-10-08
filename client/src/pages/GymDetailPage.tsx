@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { LngLatBounds, Map, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { ArrowLeft, Check, Copy, MapPin } from "lucide-react";
+import { ArrowLeft, Check, Copy, LocateFixed, MapPin } from "lucide-react";
 import {
   type Chain,
   type Gym,
@@ -11,19 +11,13 @@ import {
 import { cleanGymDisplayName, formatPriceFrom } from "../data/format";
 import { getChainWebsite } from "../data/chainWebsites";
 import { useAppLocation } from "../context/LocationContext";
+import { fetchGeocode, type GeoHit } from "../data/geocode";
 import { pathGyms } from "../i18n/lang";
 import LoadSpin from "../components/LoadSpin";
 import { useLang } from "../i18n/useLang";
 import "./GymDetailPage.css";
 
 type GymDetail = Gym & { chain: Chain | null };
-
-type GeoHit = {
-  id: string;
-  label: string;
-  lat: number;
-  lng: number;
-};
 
 const PROMO_TAGS = ["Ilmainen kokeilu", "Free trial"];
 
@@ -77,7 +71,12 @@ function makeOriginPin() {
 function GymDetailPage() {
   const { slug } = useParams();
   const { lang, t } = useLang();
-  const { label: locationLabel } = useAppLocation();
+  const {
+    label: locationLabel,
+    lat: originLat,
+    lng: originLng,
+    useMyLocation,
+  } = useAppLocation();
   const [gym, setGym] = useState<GymDetail | null>(null);
   const [status, setStatus] = useState<"loading" | "ok" | "missing">("loading");
   const [fromDraft, setFromDraft] = useState("");
@@ -92,10 +91,23 @@ function GymDetailPage() {
   const originMarkerRef = useRef<Marker | null>(null);
 
   useEffect(() => {
-    setFromDraft(locationLabel === "Lähellä minua" ? "" : locationLabel);
-    setFromPoint(null);
-    setGeoStatus("idle");
-  }, [slug]);
+    if (locationLabel === "Lähellä minua" || !locationLabel.trim()) {
+      setFromDraft("");
+      setFromPoint(null);
+      setGeoStatus("idle");
+      return;
+    }
+    setFromDraft(locationLabel);
+    if (originLat != null && originLng != null) {
+      setFromPoint({
+        id: "origin",
+        label: locationLabel,
+        lat: originLat,
+        lng: originLng,
+      });
+      setGeoStatus("idle");
+    }
+  }, [slug, locationLabel, originLat, originLng]);
 
   useEffect(() => {
     if (!slug) {
@@ -201,8 +213,7 @@ function GymDetailPage() {
     }
 
     setGeoStatus("loading");
-    fetch(`http://localhost:3001/api/geocode?q=${encodeURIComponent(q)}`)
-      .then((r) => r.json() as Promise<GeoHit[]>)
+    fetchGeocode(q, { lat: originLat, lng: originLng })
       .then((rows) => {
         const hit = rows[0];
         if (!hit) {
@@ -525,6 +536,17 @@ function GymDetailPage() {
                 }}
                 onBlur={lookupAddress}
               />
+              <button
+                type="button"
+                className="gym-detail-locate"
+                aria-label="Käytä sijaintiani"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  void useMyLocation();
+                }}
+              >
+                <LocateFixed size={16} strokeWidth={2.3} />
+              </button>
               <span className="gym-detail-crumb-sep" aria-hidden="true">
                 &gt;
               </span>

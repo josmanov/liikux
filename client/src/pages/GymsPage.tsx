@@ -23,6 +23,7 @@ import { LngLatBounds, Map, Marker, type MapLayerMouseEvent } from "maplibre-gl"
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type Chain, type Gym, resolveGymOffer } from "../data/types";
 import { fetchGymsAndChains } from "../data/api";
+import { useAddressSuggest } from "../data/geocode";
 import { useLockPageScroll } from "../hooks/useLockPageScroll";
 import {
   chainForGym,
@@ -50,6 +51,29 @@ function markerScaleForZoom(zoom: number) {
 
 function pinTouchPx(scale: number) {
   return 36 * scale;
+}
+
+function gymsNearViewport(gyms: Gym[], map: Map) {
+  const b = map.getBounds();
+  const padX = (b.getEast() - b.getWest()) * 0.4;
+  const padY = (b.getNorth() - b.getSouth()) * 0.4;
+  const west = b.getWest() - padX;
+  const east = b.getEast() + padX;
+  const south = b.getSouth() - padY;
+  const north = b.getNorth() + padY;
+  return gyms.filter(
+    (g) =>
+      g.lng != null &&
+      g.lat != null &&
+      g.lng >= west &&
+      g.lng <= east &&
+      g.lat >= south &&
+      g.lat <= north,
+  );
+}
+
+function clusterMarkerKey(group: Gym[]) {
+  return "c:" + group.map((g) => g.id).sort().join("|");
 }
 
 function clusterGymsByScreenTouch(gyms: Gym[], map: Map, touchPx: number) {
@@ -273,13 +297,6 @@ function filterIdFromChainSlug(slug: string, chains: Chain[]) {
   );
 }
 
-type AddressHit = {
-  id: string;
-  label: string;
-  lat: number;
-  lng: number;
-};
-
 const distancePresetMeta = [
   { id: "1", km: 1 },
   { id: "3", km: 3 },
@@ -423,6 +440,7 @@ function GymsPage() {
     lat: locationLat,
     lng: locationLng,
     setLocation,
+    useMyLocation,
   } = useAppLocation();
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [chains, setChains] = useState<Chain[]>([]);
@@ -449,9 +467,12 @@ function GymsPage() {
   const [chainsOpen, setChainsOpen] = useState(false);
   const [chainQuery, setChainQuery] = useState("");
   const [addressDraft, setAddressDraft] = useState(locationLabel);
-  const [addressHits, setAddressHits] = useState<AddressHit[]>([]);
-  const [addressLoading, setAddressLoading] = useState(false);
   const [addressSuggest, setAddressSuggest] = useState(false);
+  const { hits: addressHits, loading: addressLoading } = useAddressSuggest(
+    addressDraft,
+    addressSuggest && addressDraft.trim() !== locationLabel,
+    { lat: locationLat, lng: locationLng },
+  );
   const [mapReady, setMapReady] = useState(false);
   const [dataReady, setDataReady] = useState(false);
   const [maakunnatReady, setMaakunnatReady] = useState(false);
@@ -504,28 +525,6 @@ function GymsPage() {
     window.addEventListener("favorites-changed", syncFavs);
     return () => window.removeEventListener("favorites-changed", syncFavs);
   }, []);
-
-  useEffect(() => {
-    const q = addressDraft.trim();
-    if (!addressSuggest || q.length < 2 || q === locationLabel) {
-      setAddressHits([]);
-      setAddressLoading(false);
-      return;
-    }
-
-    setAddressLoading(true);
-    const t = window.setTimeout(() => {
-      fetch(`http://localhost:3001/api/geocode?q=${encodeURIComponent(q)}`)
-        .then((r) => r.json())
-        .then((data: AddressHit[]) => {
-          setAddressHits(Array.isArray(data) ? data : []);
-        })
-        .catch(() => setAddressHits([]))
-        .finally(() => setAddressLoading(false));
-    }, 120);
-
-    return () => window.clearTimeout(t);
-  }, [addressDraft, addressSuggest, locationLabel]);
 
   useEffect(() => {
     document.documentElement.classList.add("browse-no-scrollbar");
@@ -1219,131 +1218,164 @@ function GymsPage() {
       };
     }
 
+    function putPin(g: Gym, scale: number) {
+      const old = markersRef.current.get(g.id);
+      if (old) {
+        old.getElement().style.setProperty("--pin-scale", String(scale));
+        return;
+      }
+
+      const chain =
+        g.chain ?? chainsByIdRef.current.get(g.chainId) ?? undefined;
+      const brandImg =
+        chain?.image && !chain.image.includes("/pins/")
+          ? chain.image
+          : null;
+      const el = document.createElement("div");
+      el.className = ["gym-pin", brandImg ? "is-brand-pin" : "is-plain-pin"]
+        .filter(Boolean)
+        .join(" ");
+      el.dataset.gymId = g.id;
+      el.style.setProperty("--pin-scale", String(scale));
+      if (g.id === selectedIdRef.current) {
+        el.classList.add("is-front");
+        el.style.zIndex = "6";
+      }
+
+      const hit = document.createElement("button");
+      hit.type = "button";
+      hit.className = [
+        "gym-pin-hit",
+        brandImg ? "is-brand" : "",
+        brandImg && chain?.logoFit === "contain" ? "is-logo" : "",
+        brandImg && chain?.logoClass ? chain.logoClass : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+      if (g.id === selectedIdRef.current) hit.classList.add("is-selected");
+      if (g.id === hoveredIdRef.current) hit.classList.add("is-hovered");
+      hit.setAttribute("aria-label", g.name);
+
+      const media = document.createElement("span");
+      media.className = "gym-pin-media";
+      const img = document.createElement("img");
+      img.src = brandImg || "/pins/gym-pin.png";
+      img.alt = "";
+      img.decoding = "async";
+      media.appendChild(img);
+      hit.appendChild(media);
+
+      if (g.priceFrom != null) {
+        const priceText = formatPricePill(g.priceFrom);
+        if (priceText) {
+          const pill = document.createElement("span");
+          pill.className = "gym-pin-price";
+          pill.textContent = priceText;
+          hit.appendChild(pill);
+        }
+      }
+
+      el.appendChild(hit);
+
+      hit.addEventListener("mouseenter", () => setHoveredId(g.id));
+      hit.addEventListener("mouseleave", () => setHoveredId(null));
+      hit.addEventListener("click", () => {
+        markersRef.current.forEach((m, mid) => {
+          const node = m.getElement();
+          if (mid === g.id) {
+            node.classList.add("is-front");
+            node.style.zIndex = "8";
+          } else if (mid !== hoveredIdRef.current) {
+            node.classList.remove("is-front");
+            node.style.zIndex = "";
+          }
+        });
+        const idx = inViewGymsRef.current.findIndex((x) => x.id === g.id);
+        if (idx >= 0) {
+          setPage(Math.floor(idx / pageSizeRef.current) + 1);
+        }
+        selectFromMapRef.current = true;
+        setSelectedId(g.id);
+      });
+
+      const marker = new Marker({ element: el })
+        .setLngLat([g.lng, g.lat])
+        .addTo(map);
+      markersRef.current.set(g.id, marker);
+    }
+
+    function putCluster(group: Gym[], scale: number) {
+      const key = clusterMarkerKey(group);
+      const old = markersRef.current.get(key);
+      if (old) {
+        old.getElement().style.setProperty("--pin-scale", String(scale));
+        return key;
+      }
+
+      let lng = 0;
+      let lat = 0;
+      group.forEach((g) => {
+        lng += g.lng;
+        lat += g.lat;
+      });
+      lng /= group.length;
+      lat /= group.length;
+
+      const el = document.createElement("button");
+      el.type = "button";
+      el.className = "gym-cluster";
+      el.style.setProperty("--pin-scale", String(scale));
+      el.textContent = String(group.length);
+      el.setAttribute("aria-label", `${group.length} salia`);
+      el.addEventListener("click", () => {
+        const bounds = new LngLatBounds();
+        group.forEach((g) => {
+          bounds.extend([g.lng, g.lat]);
+        });
+        map.fitBounds(bounds, { padding: 72, maxZoom: 16 });
+      });
+
+      const marker = new Marker({ element: el })
+        .setLngLat([lng, lat])
+        .addTo(map);
+      markersRef.current.set(key, marker);
+      return key;
+    }
+
     function syncPins() {
-      clearMarkers();
+      if (regionPickModeRef.current) {
+        clearMarkers();
+        return;
+      }
 
-      if (regionPickModeRef.current) return;
-
-      const gyms = visibleGymsRef.current.filter(
-        (g) => g.lng != null && g.lat != null,
-      );
-      if (gyms.length === 0) return;
+      const gyms = gymsNearViewport(visibleGymsRef.current, map);
+      if (gyms.length === 0) {
+        clearMarkers();
+        return;
+      }
 
       const zoom = map.getZoom();
       const scale = markerScaleForZoom(zoom);
       const touchPx = pinTouchPx(scale);
       const groups = clusterGymsByScreenTouch(gyms, map, touchPx);
+      const keep = new Set<string>();
 
-      groups.forEach((group, groupIndex) => {
+      groups.forEach((group) => {
         if (group.length === 1) {
-          const g = group[0];
-          const chain =
-            g.chain ?? chainsByIdRef.current.get(g.chainId) ?? undefined;
-          const brandImg =
-            chain?.image && !chain.image.includes("/pins/")
-              ? chain.image
-              : null;
-          const el = document.createElement("div");
-          el.className = ["gym-pin", brandImg ? "is-brand-pin" : "is-plain-pin"]
-            .filter(Boolean)
-            .join(" ");
-          el.dataset.gymId = g.id;
-          el.style.setProperty("--pin-scale", String(scale));
-          if (g.id === selectedIdRef.current) {
-            el.classList.add("is-front");
-            el.style.zIndex = "6";
-          }
-
-          const hit = document.createElement("button");
-          hit.type = "button";
-          hit.className = [
-            "gym-pin-hit",
-            brandImg ? "is-brand" : "",
-            brandImg && chain?.logoFit === "contain" ? "is-logo" : "",
-            brandImg && chain?.logoClass ? chain.logoClass : "",
-          ]
-            .filter(Boolean)
-            .join(" ");
-          if (g.id === selectedIdRef.current) hit.classList.add("is-selected");
-          if (g.id === hoveredIdRef.current) hit.classList.add("is-hovered");
-          hit.setAttribute("aria-label", g.name);
-
-          const media = document.createElement("span");
-          media.className = "gym-pin-media";
-          const img = document.createElement("img");
-          img.src = brandImg || "/pins/gym-pin.png";
-          img.alt = "";
-          img.decoding = "async";
-          media.appendChild(img);
-          hit.appendChild(media);
-
-          if (g.priceFrom != null) {
-            const priceText = formatPricePill(g.priceFrom);
-            if (priceText) {
-              const pill = document.createElement("span");
-              pill.className = "gym-pin-price";
-              pill.textContent = priceText;
-              hit.appendChild(pill);
-            }
-          }
-
-          el.appendChild(hit);
-
-          hit.addEventListener("mouseenter", () => setHoveredId(g.id));
-          hit.addEventListener("mouseleave", () => setHoveredId(null));
-          hit.addEventListener("click", () => {
-            markersRef.current.forEach((m, mid) => {
-              const node = m.getElement();
-              if (mid === g.id) {
-                node.classList.add("is-front");
-                node.style.zIndex = "8";
-              } else if (mid !== hoveredIdRef.current) {
-                node.classList.remove("is-front");
-                node.style.zIndex = "";
-              }
-            });
-            const idx = inViewGymsRef.current.findIndex((x) => x.id === g.id);
-            if (idx >= 0) {
-              setPage(Math.floor(idx / pageSizeRef.current) + 1);
-            }
-            selectFromMapRef.current = true;
-            setSelectedId(g.id);
-          });
-
-          const marker = new Marker({ element: el })
-            .setLngLat([g.lng, g.lat])
-            .addTo(map);
-          markersRef.current.set(g.id, marker);
+          putPin(group[0], scale);
+          keep.add(group[0].id);
           return;
         }
+        keep.add(putCluster(group, scale));
+      });
 
-        let lng = 0;
-        let lat = 0;
-        group.forEach((g) => {
-          lng += g.lng;
-          lat += g.lat;
-        });
-        lng /= group.length;
-        lat /= group.length;
-
-        const el = document.createElement("button");
-        el.type = "button";
-        el.className = "gym-cluster";
-        el.style.setProperty("--pin-scale", String(scale));
-        el.textContent = String(group.length);
-        el.setAttribute("aria-label", `${group.length} salia`);
-        el.addEventListener("click", () => {
-          const bounds = new LngLatBounds();
-          group.forEach((g) => {
-            bounds.extend([g.lng, g.lat]);
-          });
-          map.fitBounds(bounds, { padding: 72, maxZoom: 16 });
-        });
-
-        const marker = new Marker({ element: el })
-          .setLngLat([lng, lat])
-          .addTo(map);
-        markersRef.current.set(`cluster-${groupIndex}`, marker);
+      const stale: string[] = [];
+      markersRef.current.forEach((_marker, id) => {
+        if (!keep.has(id)) stale.push(id);
+      });
+      stale.forEach((id) => {
+        markersRef.current.get(id)?.remove();
+        markersRef.current.delete(id);
       });
     }
 
@@ -1376,25 +1408,21 @@ function GymsPage() {
       });
     }
 
-    let zoomRaf = 0;
+    let pinRaf = 0;
 
-    function onMapZoom() {
+    function onMapMove() {
       if (regionPickModeRef.current) return;
-      if (zoomRaf !== 0) return;
-      zoomRaf = requestAnimationFrame(() => {
-        zoomRaf = 0;
+      if (pinRaf !== 0) return;
+      pinRaf = requestAnimationFrame(() => {
+        pinRaf = 0;
         syncPins();
       });
     }
 
     function onMoveEnd() {
-      pushBounds();
-    }
-
-    function onZoomEnd() {
-      if (zoomRaf !== 0) {
-        cancelAnimationFrame(zoomRaf);
-        zoomRaf = 0;
+      if (pinRaf !== 0) {
+        cancelAnimationFrame(pinRaf);
+        pinRaf = 0;
       }
       syncPins();
       pushBounds();
@@ -1405,15 +1433,13 @@ function GymsPage() {
     setMapBounds(readBounds());
     map.resize();
 
-    map.on("zoom", onMapZoom);
+    map.on("move", onMapMove);
     map.on("moveend", onMoveEnd);
-    map.on("zoomend", onZoomEnd);
 
     return () => {
-      if (zoomRaf !== 0) cancelAnimationFrame(zoomRaf);
-      map.off("zoom", onMapZoom);
+      if (pinRaf !== 0) cancelAnimationFrame(pinRaf);
+      map.off("move", onMapMove);
       map.off("moveend", onMoveEnd);
-      map.off("zoomend", onZoomEnd);
       clearMarkers();
       originMarkerRef.current?.remove();
       originMarkerRef.current = null;
@@ -2093,7 +2119,7 @@ function GymsPage() {
                     }}
                     onFocus={() => {
                       if (
-                        addressDraft.trim().length >= 2 &&
+                        addressDraft.trim().length >= 3 &&
                         addressDraft.trim() !== locationLabel
                       ) {
                         setAddressSuggest(true);
@@ -2107,8 +2133,19 @@ function GymsPage() {
                       if (e.key === "Escape") setAddressSuggest(false);
                     }}
                   />
+                  <button
+                    type="button"
+                    className="browse-map-locate"
+                    aria-label={t("useMyLocation")}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      void useMyLocation();
+                    }}
+                  >
+                    <LocateFixed size={15} strokeWidth={2.4} />
+                  </button>
                 </label>
-                {addressSuggest && addressDraft.trim().length >= 2 &&
+                {addressSuggest && addressDraft.trim().length >= 3 &&
                 addressDraft.trim() !== locationLabel ? (
                   <ul className="browse-address-hits">
                     {addressLoading && addressHits.length === 0 ? (

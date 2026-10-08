@@ -606,6 +606,26 @@
   color: var(--color-muted);
 }
 
+.gym-detail-locate {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--gd-border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-bg) 55%, transparent);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.gym-detail-locate:hover {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+
 .gym-detail-crumb-sep {
   flex-shrink: 0;
   color: var(--color-muted);

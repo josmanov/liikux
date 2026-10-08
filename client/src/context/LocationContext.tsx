@@ -5,6 +5,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { fetchReverseLabel } from "../data/geocode";
 
 type LocationCoords = {
   lat: number;
@@ -21,7 +22,7 @@ type LocationContextValue = {
     lat?: number | null;
     lng?: number | null;
   }) => void;
-  useMyLocation: () => void;
+  useMyLocation: () => Promise<void>;
 };
 
 const LocationContext = createContext<LocationContextValue | null>(null);
@@ -83,25 +84,23 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         setLng(fromCity?.lng ?? null);
       },
       useMyLocation: () => {
-        if (!navigator.geolocation) {
-          setLabelState("Lähellä minua");
-          setLat(null);
-          setLng(null);
-          return;
-        }
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            setLabelState("Lähellä minua");
-            setLat(pos.coords.latitude);
-            setLng(pos.coords.longitude);
-          },
-          () => {
-            setLabelState("Lähellä minua");
-            setLat(null);
-            setLng(null);
-          },
-          { enableHighAccuracy: false, timeout: 8000 },
-        );
+        if (!navigator.geolocation) return Promise.resolve();
+        return new Promise<void>((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              const nextLat = pos.coords.latitude;
+              const nextLng = pos.coords.longitude;
+              setLat(nextLat);
+              setLng(nextLng);
+              fetchReverseLabel(nextLat, nextLng).then((place) => {
+                if (place) setLabelState(place);
+                resolve();
+              });
+            },
+            () => resolve(),
+            { enableHighAccuracy: false, timeout: 8000 },
+          );
+        });
       },
     }),
     [label, lat, lng],
