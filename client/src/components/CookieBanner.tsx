@@ -6,6 +6,7 @@ import {
 } from "../data/cookieConsent";
 import { syncAnalyticsFromConsent } from "../analytics";
 import UxSwitch from "./UxSwitch";
+import { useLockPageScroll } from "../hooks/useLockPageScroll";
 import "./CookieBanner.css";
 
 function CookieBanner() {
@@ -35,14 +36,7 @@ function CookieBanner() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!manageOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [manageOpen]);
+  useLockPageScroll(manageOpen);
 
   function save(analytics: boolean, functional: boolean) {
     writeCookieConsent({ analytics, functional });

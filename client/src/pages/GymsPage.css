@@ -429,12 +429,14 @@
   justify-content: center;
   padding: 1.25rem;
   background: rgba(2, 6, 23, 0.72);
+  overscroll-behavior: none;
 }
 
 .browse-extras-modal {
   width: min(28rem, 100%);
   max-height: min(90vh, 40rem);
   overflow: auto;
+  overscroll-behavior: contain;
   border-radius: 14px;
   border: 1px solid var(--color-border);
   background: var(--color-surface);

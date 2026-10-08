@@ -10,6 +10,7 @@ import { readFavoriteSlugs } from "../data/favorites";
 import { pathGym } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import LoadSpin from "./LoadSpin";
+import { useLockPageScroll } from "../hooks/useLockPageScroll";
 
 type Props = {
   open: boolean;
@@ -24,14 +25,11 @@ function FavoritesPopup({ open, onClose }: Props) {
   const [favoriteSlugs, setFavoriteSlugs] = useState<string[]>([]);
   const [favReady, setFavReady] = useState(false);
 
+  useLockPageScroll(open);
+
   useEffect(() => {
     if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     setFavoriteSlugs(readFavoriteSlugs());
-    return () => {
-      document.body.style.overflow = prev;
-    };
   }, [open]);
 
   useEffect(() => {

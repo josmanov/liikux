@@ -11,6 +11,7 @@ import { useChainPopup } from "../context/ChainPopupContext";
 import { pathGym } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import LoadSpin from "./LoadSpin";
+import { useLockPageScroll } from "../hooks/useLockPageScroll";
 
 function distanceKm(
   lat1: number,
@@ -43,15 +44,7 @@ function ChainPopup() {
   const [chainsReady, setChainsReady] = useState(false);
   const [gymsReady, setGymsReady] = useState(true);
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [open]);
+  useLockPageScroll(open);
 
   useEffect(() => {
     if (!open) {

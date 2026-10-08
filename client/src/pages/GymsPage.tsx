@@ -22,6 +22,7 @@ import { LngLatBounds, Map, Marker, type MapLayerMouseEvent } from "maplibre-gl"
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type Chain, type Gym, resolveGymOffer } from "../data/types";
 import { fetchGymsAndChains } from "../data/api";
+import { useLockPageScroll } from "../hooks/useLockPageScroll";
 import {
   chainForGym,
   gymHasDayPass,
@@ -835,28 +836,18 @@ function GymsPage() {
     };
   }, [openFilter]);
 
-  useEffect(() => {
-    if (!extrasOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [extrasOpen]);
+  useLockPageScroll(extrasOpen || chainsOpen);
 
   useEffect(() => {
     if (!chainsOpen) {
       setChainQuery("");
       return;
     }
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setChainsOpen(false);
     }
     window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
     };
   }, [chainsOpen]);
