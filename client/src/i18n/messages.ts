@@ -68,6 +68,9 @@ const fi = {
   chainGymCountOne: "1 kuntosali",
   chainCityCount: "{count} kaupunkia",
   chainCityCountOne: "1 kaupunki",
+  notFoundTitle: "Sivua ei löytynyt",
+  notFoundText: "Tarkista osoite tai palaa etusivulle.",
+  backHome: "Etusivulle",
 };
 
 const en: typeof fi = {
@@ -138,6 +141,9 @@ const en: typeof fi = {
   chainGymCountOne: "1 gym",
   chainCityCount: "{count} cities",
   chainCityCountOne: "1 city",
+  notFoundTitle: "Page not found",
+  notFoundText: "Check the address or go back to the home page.",
+  backHome: "Home",
 };
 
 const catalogs = { fi, en };

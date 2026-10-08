@@ -128,7 +128,13 @@ function Header() {
               : "Vaihda suomeksi"
           }
           onClick={() => {
-            window.location.assign(switchLangPath(location.pathname, nextLang));
+            window.location.assign(
+              switchLangPath(
+                location.pathname,
+                nextLang,
+                location.search,
+              ),
+            );
           }}
         >
           <span className={nextLang === "en" ? "fi fi-gb" : "fi fi-fi"}></span>

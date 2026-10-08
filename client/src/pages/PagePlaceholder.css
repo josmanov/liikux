@@ -12,3 +12,11 @@
 .page p {
   color: var(--color-muted);
 }
+
+.page-back {
+  display: inline-block;
+  margin-top: 1.25rem;
+  color: var(--color-brand);
+  font-weight: 700;
+  text-decoration: none;
+}

@@ -1,8 +1,8 @@
 import "./GymsPage.css";
 import "../components/ChainPopup.css";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowUpDown,
   ChevronDown,
@@ -38,6 +38,14 @@ import {
   formatPricePill,
 } from "../data/format";
 import { useAppLocation } from "../context/LocationContext";
+import {
+  PRICE_MAX,
+  PRICE_MIN,
+  PRICE_STEP,
+  buildBrowseSearch,
+  parseBrowseSearch,
+  sameIds,
+} from "../data/browseSearch";
 import { toggleFavoriteSlug, readFavoriteSlugs } from "../data/favorites";
 import { pathGym } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
@@ -307,9 +315,6 @@ const distancePresetMeta = [
   { id: "all", km: null as number | null },
 ];
 
-const PRICE_MIN = 0;
-const PRICE_MAX = 100;
-
 function DualRange({
   lo,
   hi,
@@ -336,7 +341,7 @@ function DualRange({
         type="range"
         min={PRICE_MIN}
         max={PRICE_MAX}
-        step={1}
+        step={PRICE_STEP}
         value={lo}
         aria-label="Minimihinta"
         className="browse-dual-input is-lo"
@@ -346,7 +351,7 @@ function DualRange({
         type="range"
         min={PRICE_MIN}
         max={PRICE_MAX}
-        step={1}
+        step={PRICE_STEP}
         value={hi}
         aria-label="Maksimihinta"
         className="browse-dual-input is-hi"
@@ -413,6 +418,11 @@ function pageNums(current: number, count: number): Array<number | "gap"> {
 function GymsPage() {
   const { slug: chainSlug } = useParams();
   const routeLocation = useLocation();
+  const navigate = useNavigate();
+  const browseStart = parseBrowseSearch(
+    routeLocation.search,
+    allChainFilterIds,
+  );
   const { lang, t } = useLang();
   const sortOptions = [
     { id: "nearest", label: t("sortNearest") },
@@ -449,20 +459,22 @@ function GymsPage() {
   const [favoriteSlugs, setFavoriteSlugs] = useState<string[]>(() =>
     readFavoriteSlugs(),
   );
-  const [query, setQuery] = useState("");
-  const [sortId, setSortId] = useState("nearest");
-  const [page, setPage] = useState(1);
+  const [query, setQuery] = useState(browseStart.q);
+  const [sortId, setSortId] = useState(browseStart.sort);
+  const [page, setPage] = useState(browseStart.page);
   const [openFilter, setOpenFilter] = useState<FilterKey | null>(null);
-  const [selectedChains, setSelectedChains] = useState<string[]>([
-    ...allChainFilterIds,
-  ]);
-  const [selectedAudiences, setSelectedAudiences] = useState<string[]>([]);
-  const [distanceFilter, setDistanceFilter] = useState("all");
-  const [priceMin, setPriceMin] = useState(PRICE_MIN);
-  const [priceMax, setPriceMax] = useState(PRICE_MAX);
-  const [extraOnly247, setExtraOnly247] = useState(false);
-  const [extraFreeTrial, setExtraFreeTrial] = useState(false);
-  const [extraDayPass, setExtraDayPass] = useState(false);
+  const [selectedChains, setSelectedChains] = useState<string[]>(
+    browseStart.chains,
+  );
+  const [selectedAudiences, setSelectedAudiences] = useState<string[]>(
+    browseStart.women ? ["women"] : [],
+  );
+  const [distanceFilter, setDistanceFilter] = useState(browseStart.km);
+  const [priceMin, setPriceMin] = useState(browseStart.priceMin);
+  const [priceMax, setPriceMax] = useState(browseStart.priceMax);
+  const [extraOnly247, setExtraOnly247] = useState(browseStart.only247);
+  const [extraFreeTrial, setExtraFreeTrial] = useState(browseStart.freeTrial);
+  const [extraDayPass, setExtraDayPass] = useState(browseStart.dayPass);
   const [extrasOpen, setExtrasOpen] = useState(false);
   const [chainsOpen, setChainsOpen] = useState(false);
   const [chainQuery, setChainQuery] = useState("");
@@ -506,6 +518,7 @@ function GymsPage() {
     { nimi: string; maakunta: string; geometry: MaakuntaGeom }[]
   >([]);
   const fitKeyRef = useRef("");
+  const prevFilterKeyRef = useRef<string | null>(null);
   const originRef = useRef({ lat: 60.1699, lng: 24.9384 });
   const focusOriginRef = useRef(
     (routeLocation.state as { focusOrigin?: boolean } | null)?.focusOrigin ===
@@ -569,16 +582,83 @@ function GymsPage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => {
-    if (!chainSlug) return;
-    const filterId = filterIdFromChainSlug(chainSlug, chains);
-    if (filterId) setSelectedChains([filterId]);
-  }, [chainSlug, chains]);
+  useLayoutEffect(() => {
+    const parsed = parseBrowseSearch(routeLocation.search, allChainFilterIds);
+    if (chainSlug) {
+      const filterId = filterIdFromChainSlug(chainSlug, chains);
+      if (filterId) {
+        setSelectedChains((cur) =>
+          cur.length === 1 && cur[0] === filterId ? cur : [filterId],
+        );
+      }
+    } else {
+      setSelectedChains((cur) =>
+        sameIds(cur, parsed.chains) ? cur : parsed.chains,
+      );
+    }
+    setQuery((cur) => (cur === parsed.q ? cur : parsed.q));
+    setSortId((cur) => (cur === parsed.sort ? cur : parsed.sort));
+    setPage((cur) => (cur === parsed.page ? cur : parsed.page));
+    setSelectedAudiences((cur) => {
+      const next = parsed.women ? ["women"] : [];
+      return sameIds(cur, next) ? cur : next;
+    });
+    setDistanceFilter((cur) => (cur === parsed.km ? cur : parsed.km));
+    setPriceMin((cur) => (cur === parsed.priceMin ? cur : parsed.priceMin));
+    setPriceMax((cur) => (cur === parsed.priceMax ? cur : parsed.priceMax));
+    setExtraOnly247((cur) => (cur === parsed.only247 ? cur : parsed.only247));
+    setExtraFreeTrial((cur) =>
+      cur === parsed.freeTrial ? cur : parsed.freeTrial,
+    );
+    setExtraDayPass((cur) => (cur === parsed.dayPass ? cur : parsed.dayPass));
+  }, [routeLocation.search, chainSlug, chains]);
 
   useEffect(() => {
-    if (chainSlug) return;
-    setSelectedChains([...allChainFilterIds]);
-  }, [chainSlug]);
+    const search = buildBrowseSearch(
+      {
+        chains: selectedChains,
+        women: selectedAudiences.includes("women"),
+        km: distanceFilter,
+        priceMin,
+        priceMax,
+        only247: extraOnly247,
+        freeTrial: extraFreeTrial,
+        dayPass: extraDayPass,
+        sort: sortId,
+        q: query,
+        page,
+      },
+      allChainFilterIds,
+      Boolean(chainSlug),
+    );
+    const current = routeLocation.search.startsWith("?")
+      ? routeLocation.search.slice(1)
+      : routeLocation.search;
+    if (search === current) return;
+    navigate(
+      {
+        pathname: routeLocation.pathname,
+        search: search ? `?${search}` : "",
+      },
+      { replace: true, state: routeLocation.state },
+    );
+  }, [
+    selectedChains,
+    selectedAudiences,
+    distanceFilter,
+    priceMin,
+    priceMax,
+    extraOnly247,
+    extraFreeTrial,
+    extraDayPass,
+    sortId,
+    query,
+    page,
+    chainSlug,
+    navigate,
+    routeLocation.pathname,
+    routeLocation.state,
+  ]);
 
   const sortLabel =
     sortOptions.find((o) => o.id === sortId)?.label ?? t("sortNearest");
@@ -799,22 +879,29 @@ function GymsPage() {
       ? distanceKm(origin.lat, origin.lng, selectedGym.lat, selectedGym.lng)
       : null;
 
-  useEffect(() => {
-    setPage(1);
-    window.scrollTo({ top: 0, behavior: "auto" });
-  }, [
+  const filterKey = [
     query,
     sortId,
-    selectedChains,
-    selectedAudiences,
+    selectedChains.join(","),
+    selectedAudiences.join(","),
     distanceFilter,
-    priceMin,
-    priceMax,
-    priceFilterOn,
-    extraOnly247,
-    extraFreeTrial,
-    extraDayPass,
-  ]);
+    String(priceMin),
+    String(priceMax),
+    String(extraOnly247),
+    String(extraFreeTrial),
+    String(extraDayPass),
+  ].join("|");
+
+  useEffect(() => {
+    if (prevFilterKeyRef.current == null) {
+      prevFilterKeyRef.current = filterKey;
+      return;
+    }
+    if (prevFilterKeyRef.current === filterKey) return;
+    prevFilterKeyRef.current = filterKey;
+    setPage(1);
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [filterKey]);
 
   useEffect(() => {
     setPage(1);

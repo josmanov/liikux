@@ -21,19 +21,26 @@ export function pathChain(lang: Lang, slug: string) {
   return lang === "en" ? `/en/chain/${slug}` : `/fi/ketju/${slug}`;
 }
 
-export function switchLangPath(pathname: string, next: Lang): string {
+export function switchLangPath(
+  pathname: string,
+  next: Lang,
+  search = "",
+): string {
+  let path = pathHome(next);
   if (pathname === "/" || pathname === "/en") {
-    return pathHome(next);
+    path = pathHome(next);
+  } else {
+    const gymsMatch = pathname.match(/^\/(fi|en)\/(kuntosalit|gyms)$/);
+    if (gymsMatch) path = pathGyms(next);
+    else {
+      const chainMatch = pathname.match(/^\/(fi|en)\/(ketju|chain)\/([^/]+)$/);
+      if (chainMatch) path = pathChain(next, chainMatch[3]);
+      else {
+        const gymMatch = pathname.match(/^\/(fi|en)\/(sali|gym)\/([^/]+)$/);
+        if (gymMatch) path = pathGym(next, gymMatch[3]);
+      }
+    }
   }
-
-  const gymsMatch = pathname.match(/^\/(fi|en)\/(kuntosalit|gyms)$/);
-  if (gymsMatch) return pathGyms(next);
-
-  const chainMatch = pathname.match(/^\/(fi|en)\/(ketju|chain)\/([^/]+)$/);
-  if (chainMatch) return pathChain(next, chainMatch[3]);
-
-  const gymMatch = pathname.match(/^\/(fi|en)\/(sali|gym)\/([^/]+)$/);
-  if (gymMatch) return pathGym(next, gymMatch[3]);
-
-  return pathHome(next);
+  if (!search || search === "?") return path;
+  return path + (search.startsWith("?") ? search : `?${search}`);
 }
