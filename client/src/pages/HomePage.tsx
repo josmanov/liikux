@@ -354,6 +354,11 @@ function HomePage() {
                 </div>
               ) : null}
             </div>
+            <p className="hero-or">{t("heroOr")}</p>
+            <Link to={pathGyms(lang)} className="hero-browse">
+              {t("browseGyms")}
+              <span aria-hidden="true">→</span>
+            </Link>
             <p className="hero-stats">
               {t("heroStats", {
                 gyms: gymCount,

@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import AreaSelect from "./AreaSelect";
 import FavoritesPopup from "./FavoritesPopup";
 import HeaderSearch from "./HeaderSearch";
-import { pathGyms, switchLangPath } from "../i18n/lang";
+import { switchLangPath } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import "flag-icons/css/flag-icons.min.css";
 import "./uiverse-playstore.css";
@@ -50,9 +50,6 @@ function Header() {
         >
           <span className={nextLang === "en" ? "fi fi-gb" : "fi fi-fi"}></span>
         </button>
-        <Link to={pathGyms(lang)} className="header-cta">
-          {t("browseGyms")}
-        </Link>
       </div>
 
       <FavoritesPopup
