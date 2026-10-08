@@ -8,10 +8,13 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Euro,
+  Link2,
   LocateFixed,
   MapPin,
   Minus,
   Plus,
+  Route,
   SlidersHorizontal,
   X,
 } from "lucide-react";
@@ -283,13 +286,54 @@ const distancePresetMeta = [
   { id: "all", km: null as number | null },
 ];
 
-const pricePresetMeta = [
-  { id: "30", max: 30 },
-  { id: "40", max: 40 },
-  { id: "50", max: 50 },
-  { id: "70", max: 70 },
-  { id: "max", max: null as number | null },
-];
+const PRICE_MIN = 0;
+const PRICE_MAX = 100;
+
+function DualRange({
+  lo,
+  hi,
+  onLo,
+  onHi,
+}: {
+  lo: number;
+  hi: number;
+  onLo: (n: number) => void;
+  onHi: (n: number) => void;
+}) {
+  const span = PRICE_MAX - PRICE_MIN || 1;
+  const left = ((lo - PRICE_MIN) / span) * 100;
+  const right = ((hi - PRICE_MIN) / span) * 100;
+  return (
+    <div className="browse-dual">
+      <div className="browse-dual-rail">
+        <div
+          className="browse-dual-fill"
+          style={{ left: `${left}%`, width: `${Math.max(0, right - left)}%` }}
+        />
+      </div>
+      <input
+        type="range"
+        min={PRICE_MIN}
+        max={PRICE_MAX}
+        step={1}
+        value={lo}
+        aria-label="Minimihinta"
+        className="browse-dual-input is-lo"
+        onChange={(e) => onLo(Math.min(Number(e.target.value), hi))}
+      />
+      <input
+        type="range"
+        min={PRICE_MIN}
+        max={PRICE_MAX}
+        step={1}
+        value={hi}
+        aria-label="Maksimihinta"
+        className="browse-dual-input is-hi"
+        onChange={(e) => onHi(Math.max(Number(e.target.value), lo))}
+      />
+    </div>
+  );
+}
 
 const cityCenters: Record<string, { lat: number; lng: number }> = {
   Helsinki: { lat: 60.1699, lng: 24.9384 },
@@ -318,7 +362,7 @@ type FilterKey = "sort" | "price" | "distance";
 
 function filterChainVisual(id: string, list: Chain[]) {
   if (id === OTHER_CHAIN_FILTER_ID) {
-    return { image: "/pins/gym-pin.png", logo: true, logoClass: "" };
+    return { image: "/pins/gym-pin.png", logo: true, logoClass: "is-other" };
   }
   const chain = list.find((c) => chainMatchesFilterKey(c, id));
   const image =
@@ -361,10 +405,6 @@ function GymsPage() {
         ? t("distanceAll")
         : `${opt.km} km`,
   }));
-  const pricePresets = pricePresetMeta.map((opt) => ({
-    ...opt,
-    label: opt.max == null ? "Max" : `${opt.max}€`,
-  }));
   const localizedChainFilterOptions = chainFilterOptionIds.map((id) => ({
     id,
     label:
@@ -391,14 +431,14 @@ function GymsPage() {
   ]);
   const [selectedAudiences, setSelectedAudiences] = useState<string[]>([]);
   const [distanceFilter, setDistanceFilter] = useState("all");
-  const [priceFilter, setPriceFilter] = useState("max");
-  const [priceDrag, setPriceDrag] = useState<number | null>(null);
-  const priceDragging = useRef(false);
+  const [priceMin, setPriceMin] = useState(PRICE_MIN);
+  const [priceMax, setPriceMax] = useState(PRICE_MAX);
   const [extraOnly247, setExtraOnly247] = useState(false);
   const [extraFreeTrial, setExtraFreeTrial] = useState(false);
   const [extraDayPass, setExtraDayPass] = useState(false);
   const [extrasOpen, setExtrasOpen] = useState(false);
   const [chainsOpen, setChainsOpen] = useState(false);
+  const [chainQuery, setChainQuery] = useState("");
   const [addressDraft, setAddressDraft] = useState(locationLabel);
   const [addressHits, setAddressHits] = useState<AddressHit[]>([]);
   const [addressLoading, setAddressLoading] = useState(false);
@@ -531,15 +571,6 @@ function GymsPage() {
       ? (localizedChainFilterOptions.find((o) => o.id === selectedChains[0])
           ?.label ?? t("gymsTitle"))
       : t("gymsTitle");
-  const chainLabel =
-    selectedChains.length === 0
-      ? t("chains")
-      : !chainFilterActive
-        ? t("chains")
-        : selectedChains.length === 1
-          ? (localizedChainFilterOptions.find((o) => o.id === selectedChains[0])
-              ?.label ?? t("chains"))
-          : t("chainsN", { n: selectedChains.length });
   const womenOnly = selectedAudiences.includes("women");
   const distancePresetIndex = Math.max(
     0,
@@ -547,25 +578,8 @@ function GymsPage() {
   );
   const maxDistanceKm =
     distancePresets[distancePresetIndex]?.km ?? null;
-  const pricePresetIndex = Math.max(
-    0,
-    pricePresets.findIndex((o) => o.id === priceFilter),
-  );
-  const priceCap = pricePresets[pricePresetIndex]?.max ?? null;
-  const priceShown = priceDrag ?? pricePresetIndex;
-  const priceLockIndex = Math.max(
-    0,
-    Math.min(pricePresets.length - 1, Math.round(priceShown)),
-  );
-
-  function lockPrice(raw: number) {
-    const i = Math.max(
-      0,
-      Math.min(pricePresets.length - 1, Math.round(raw)),
-    );
-    setPriceFilter(pricePresets[i]?.id ?? "max");
-    setPriceDrag(null);
-  }
+  const priceFilterOn = priceMin > PRICE_MIN || priceMax < PRICE_MAX;
+  const priceInfo = priceFilterOn ? `· ${priceMin}–${priceMax} €` : "";
 
   const origin = useMemo(() => {
     if (locationLat != null && locationLng != null) {
@@ -621,11 +635,13 @@ function GymsPage() {
         const chain = chainForGym(gym, chains);
         if (!gymMatchesAudience(gym, chain, ["women"])) return false;
       }
-      if (priceCap != null) {
+      if (priceFilterOn) {
         const chain = chainForGym(gym, chains);
         const priceFrom =
           gym.priceFrom != null ? gym.priceFrom : (chain?.priceFrom ?? null);
-        if (priceFrom == null || priceFrom > priceCap) return false;
+        if (priceFrom == null) return false;
+        if (priceFrom < priceMin) return false;
+        if (priceMax < PRICE_MAX && priceFrom > priceMax) return false;
       }
       if (extraOnly247) {
         const chain = chainForGym(gym, chains);
@@ -681,7 +697,9 @@ function GymsPage() {
     sortId,
     selectedChainFilter,
     selectedAudiences,
-    priceFilter,
+    priceMin,
+    priceMax,
+    priceFilterOn,
     extraOnly247,
     extraFreeTrial,
     extraDayPass,
@@ -759,7 +777,9 @@ function GymsPage() {
     selectedChains,
     selectedAudiences,
     distanceFilter,
-    priceFilter,
+    priceMin,
+    priceMax,
+    priceFilterOn,
     extraOnly247,
     extraFreeTrial,
     extraDayPass,
@@ -825,7 +845,10 @@ function GymsPage() {
   }, [extrasOpen]);
 
   useEffect(() => {
-    if (!chainsOpen) return;
+    if (!chainsOpen) {
+      setChainQuery("");
+      return;
+    }
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     function onKey(e: KeyboardEvent) {
@@ -1510,8 +1533,12 @@ function GymsPage() {
             <div className="browse-filter">
               <button
                 type="button"
-                className="browse-filter-btn"
-                aria-expanded={chainsOpen}
+                className={[
+                  "browse-filter-btn",
+                  chainFilterActive ? "is-on" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
                 aria-haspopup="dialog"
                 onClick={() => {
                   setOpenFilter(null);
@@ -1519,13 +1546,11 @@ function GymsPage() {
                   setChainsOpen(true);
                 }}
               >
-                <img
-                  className="browse-filter-icon"
-                  src="/icons/ketjut.png"
-                  alt=""
-                />
-                <span className="browse-filter-label">{chainLabel}</span>
-                <ChevronDown size={16} strokeWidth={2.2} />
+                <Link2 className="browse-filter-icon" size={18} strokeWidth={2.2} />
+                <span className="browse-filter-label">{t("chains")}</span>
+                <span className="browse-filter-info">
+                  {chainFilterActive ? `· ${selectedChains.length}` : ""}
+                </span>
               </button>
             </div>
 
@@ -1534,7 +1559,7 @@ function GymsPage() {
                 type="button"
                 className={[
                   "browse-filter-btn",
-                  priceCap != null ? "is-on" : "",
+                  priceFilterOn ? "is-on" : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
@@ -1542,10 +1567,9 @@ function GymsPage() {
                 aria-haspopup="dialog"
                 onClick={() => toggleFilter("price")}
               >
-                <img className="browse-filter-icon" src="/icons/hinta.png" alt="" />
-                <span className="browse-filter-label">
-                  {priceCap == null ? "Hinta" : `Hinta ≤ ${priceCap} €`}
-                </span>
+                <Euro className="browse-filter-icon" size={18} strokeWidth={2.2} />
+                <span className="browse-filter-label">Hinta</span>
+                <span className="browse-filter-info">{priceInfo}</span>
                 <ChevronDown size={16} strokeWidth={2.2} />
               </button>
               {openFilter === "price" ? (
@@ -1558,62 +1582,22 @@ function GymsPage() {
                   <div className="browse-range">
                     <div className="browse-distance-head">
                       <span className="browse-slider-title">
-                        <img src="/icons/hinta.png" alt="" />
+                        <Euro size={16} strokeWidth={2.2} />
                         Hinta
                       </span>
                       <strong>
-                        {pricePresets[priceLockIndex]?.max == null
-                          ? "Max"
-                          : `${pricePresets[priceLockIndex].max} €`}
+                        {priceMin} – {priceMax} €
                       </strong>
                     </div>
-                    <input
-                      className="browse-distance-slider"
-                      type="range"
-                      min={0}
-                      max={pricePresets.length - 1}
-                      step="any"
-                      value={priceShown}
-                      aria-label="Hinta"
-                      aria-valuetext={
-                        pricePresets[priceLockIndex]?.max == null
-                          ? "Max"
-                          : `${pricePresets[priceLockIndex].max} euroa`
-                      }
-                      onPointerDown={() => {
-                        priceDragging.current = true;
-                      }}
-                      onChange={(e) => {
-                        const v = Number(e.target.value);
-                        if (priceDragging.current) setPriceDrag(v);
-                        else lockPrice(v);
-                      }}
-                      onPointerUp={(e) => {
-                        priceDragging.current = false;
-                        lockPrice(Number(e.currentTarget.value));
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
-                        e.preventDefault();
-                        const dir = e.key === "ArrowRight" ? 1 : -1;
-                        lockPrice(pricePresetIndex + dir);
-                      }}
+                    <DualRange
+                      lo={priceMin}
+                      hi={priceMax}
+                      onLo={setPriceMin}
+                      onHi={setPriceMax}
                     />
-                    <div className="browse-distance-marks">
-                      {pricePresets.map((opt, i) => (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          className={
-                            i === priceLockIndex
-                              ? "browse-distance-mark is-on"
-                              : "browse-distance-mark"
-                          }
-                          onClick={() => lockPrice(i)}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
+                    <div className="browse-dual-ends">
+                      <span>{PRICE_MIN} €</span>
+                      <span>{PRICE_MAX} €</span>
                     </div>
                   </div>
                 </div>
@@ -1633,13 +1617,10 @@ function GymsPage() {
                 aria-haspopup="dialog"
                 onClick={() => toggleFilter("distance")}
               >
-                <img
-                  className="browse-filter-icon"
-                  src="/icons/etaisyys.png"
-                  alt=""
-                />
-                <span className="browse-filter-label">
-                  {maxDistanceKm == null ? "Etäisyys" : `${maxDistanceKm} km`}
+                <Route className="browse-filter-icon" size={18} strokeWidth={2.2} />
+                <span className="browse-filter-label">Etäisyys</span>
+                <span className="browse-filter-info">
+                  {maxDistanceKm != null ? `· ${maxDistanceKm} km` : ""}
                 </span>
                 <ChevronDown size={16} strokeWidth={2.2} />
               </button>
@@ -1653,33 +1634,48 @@ function GymsPage() {
                   <div className="browse-range">
                     <div className="browse-distance-head">
                       <span className="browse-slider-title">
-                        <img src="/icons/etaisyys.png" alt="" />
+                        <Route size={16} strokeWidth={2.2} />
                         Max etäisyys
                       </span>
                       <strong>
                         {maxDistanceKm == null ? "Kaikki" : `${maxDistanceKm} km`}
                       </strong>
                     </div>
-                    <input
-                      className="browse-distance-slider"
-                      type="range"
-                      min={0}
-                      max={distancePresets.length - 1}
-                      step={1}
-                      value={distancePresetIndex}
-                      aria-label="Max etäisyys"
-                      aria-valuetext={
-                        maxDistanceKm == null
-                          ? "Kaikki"
-                          : `${maxDistanceKm} kilometriä`
-                      }
-                      onChange={(e) => {
-                        const next =
-                          distancePresets[Number(e.target.value)] ??
-                          distancePresets[0];
-                        setDistanceFilter(next.id);
-                      }}
-                    />
+                    <div className="browse-dual">
+                      <div className="browse-dual-rail">
+                        <div
+                          className="browse-dual-fill"
+                          style={{
+                            left: "0%",
+                            width: `${
+                              (distancePresetIndex /
+                                Math.max(1, distancePresets.length - 1)) *
+                              100
+                            }%`,
+                          }}
+                        />
+                      </div>
+                      <input
+                        className="browse-dual-input is-hi"
+                        type="range"
+                        min={0}
+                        max={distancePresets.length - 1}
+                        step={1}
+                        value={distancePresetIndex}
+                        aria-label="Max etäisyys"
+                        aria-valuetext={
+                          maxDistanceKm == null
+                            ? "Kaikki"
+                            : `${maxDistanceKm} kilometriä`
+                        }
+                        onChange={(e) => {
+                          const next =
+                            distancePresets[Number(e.target.value)] ??
+                            distancePresets[0];
+                          setDistanceFilter(next.id);
+                        }}
+                      />
+                    </div>
                     <div className="browse-distance-marks">
                       {distancePresets.map((opt) => (
                         <button
@@ -1692,7 +1688,7 @@ function GymsPage() {
                           }
                           onClick={() => setDistanceFilter(opt.id)}
                         >
-                          {opt.id === "all" ? "Kaikki" : `${opt.km}km`}
+                          {opt.id === "all" ? "Kaikki" : `${opt.km} km`}
                         </button>
                       ))}
                     </div>
@@ -1711,16 +1707,16 @@ function GymsPage() {
                   .filter(Boolean)
                   .join(" ")}
               >
-                <UxSwitch
-                  size="sm"
-                  checked={womenOnly}
-                  onChange={(on) => setSelectedAudiences(on ? ["women"] : [])}
-                />
-                <span className="browse-filter-label">{t("audienceWomen")}</span>
                 <img
                   className="browse-filter-icon"
                   src="/icons/kenelle-women.png"
                   alt=""
+                />
+                <span className="browse-filter-label">{t("audienceWomen")}</span>
+                <UxSwitch
+                  size="sm"
+                  checked={womenOnly}
+                  onChange={(on) => setSelectedAudiences(on ? ["women"] : [])}
                 />
               </label>
               <button
@@ -1748,8 +1744,8 @@ function GymsPage() {
                   setSelectedChains([...allChainFilterIds]);
                   setSelectedAudiences([]);
                   setDistanceFilter("all");
-                  setPriceFilter("max");
-                  setPriceDrag(null);
+                  setPriceMin(PRICE_MIN);
+                  setPriceMax(PRICE_MAX);
                   setExtraOnly247(false);
                   setExtraFreeTrial(false);
                   setExtraDayPass(false);
@@ -2239,13 +2235,31 @@ function GymsPage() {
               onClick={() => setChainsOpen(false)}
             >
               <div
-                className="chain-popup-card"
+                className="chain-popup-card browse-chains-card"
                 role="dialog"
                 aria-modal="true"
                 aria-label={t("chains")}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="browse-chains-top">
+                  <div className="group">
+                    <svg
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                      className="search-icon"
+                    >
+                      <g>
+                        <path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
+                      </g>
+                    </svg>
+                    <input
+                      className="input"
+                      type="search"
+                      placeholder={t("chainSearch")}
+                      value={chainQuery}
+                      onChange={(e) => setChainQuery(e.target.value)}
+                    />
+                  </div>
                   <button
                     type="button"
                     className="browse-chains-action"
@@ -2255,11 +2269,17 @@ function GymsPage() {
                   </button>
                   <button
                     type="button"
-                    className="browse-chains-action"
+                    className="browse-chains-clear"
                     onClick={() => setSelectedChains([])}
                   >
                     {t("clear")}
                   </button>
+                  <p className="browse-chains-picked">
+                    {t("chainsPicked", {
+                      n: selectedChains.length,
+                      total: allChainFilterIds.length,
+                    })}
+                  </p>
                   <button
                     type="button"
                     className="chain-popup-close"
@@ -2279,7 +2299,13 @@ function GymsPage() {
                       );
                     }}
                   >
-                    {localizedChainFilterOptions.map((opt, i) => {
+                    {localizedChainFilterOptions
+                      .filter((opt) => {
+                        const q = chainQuery.trim().toLowerCase();
+                        if (!q) return true;
+                        return opt.label.toLowerCase().includes(q);
+                      })
+                      .map((opt, i) => {
                       const on = selectedChains.includes(opt.id);
                       const visual = filterChainVisual(opt.id, chains);
                       return (
@@ -2301,18 +2327,24 @@ function GymsPage() {
                             >
                               <img src={visual.image} alt="" />
                             </span>
-                            <UxSwitch
-                              checked={on}
-                              onChange={() => {
-                                setSelectedChains((cur) =>
-                                  cur.includes(opt.id)
-                                    ? cur.filter((id) => id !== opt.id)
-                                    : [...cur, opt.id],
-                                );
-                              }}
-                            />
-                            <span className="browse-chains-name">
-                              {opt.label}
+                            <span className="browse-chains-main">
+                              <span className="browse-chains-name">
+                                {opt.label}
+                              </span>
+                              <span className="browse-chains-hint">
+                                {t("chainFilterHint")}
+                              </span>
+                              <UxSwitch
+                                size="sm"
+                                checked={on}
+                                onChange={() => {
+                                  setSelectedChains((cur) =>
+                                    cur.includes(opt.id)
+                                      ? cur.filter((id) => id !== opt.id)
+                                      : [...cur, opt.id],
+                                  );
+                                }}
+                              />
                             </span>
                           </label>
                         </li>

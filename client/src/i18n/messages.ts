@@ -55,6 +55,9 @@ const fi = {
   mapGoToLocation: "Siirry sijaintiin",
   missingGym: "Puuttuuko sali?",
   missingGymHint: "Ilmoita siitä meille.",
+  chainSearch: "Etsi ketjua...",
+  chainFilterHint: "Näytä tämän ketjun kuntosalit listassa ja kartalla.",
+  chainsPicked: "{n} / {total} valittu",
 };
 
 const en: typeof fi = {
@@ -112,6 +115,9 @@ const en: typeof fi = {
   mapGoToLocation: "Go to location",
   missingGym: "Missing a gym?",
   missingGymHint: "Tell us about it.",
+  chainSearch: "Search chains...",
+  chainFilterHint: "Show this chain's gyms in the list and on the map.",
+  chainsPicked: "{n} / {total} selected",
 };
 
 const catalogs = { fi, en };
