@@ -65,6 +65,10 @@ function makeOriginPin() {
   el.className = "gym-detail-origin-pin";
   el.style.zIndex = "1000";
   el.setAttribute("aria-label", "Lähtöosoite");
+  el.innerHTML =
+    '<span class="gym-origin-pin-ring"></span>' +
+    '<span class="gym-origin-pin-ring is-late"></span>' +
+    '<span class="gym-origin-pin-core"></span>';
   return el;
 }
 

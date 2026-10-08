@@ -1474,6 +1474,10 @@ function GymsPage() {
       el.className = "gym-origin-pin";
       el.style.zIndex = "1000";
       el.setAttribute("aria-label", "Lähtöosoite");
+      el.innerHTML =
+        '<span class="gym-origin-pin-ring"></span>' +
+        '<span class="gym-origin-pin-ring is-late"></span>' +
+        '<span class="gym-origin-pin-core"></span>';
       originMarkerRef.current = new Marker({ element: el })
         .setLngLat([origin.lng, origin.lat])
         .addTo(map);

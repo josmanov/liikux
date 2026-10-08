@@ -678,13 +678,57 @@
 }
 
 .gym-detail-origin-pin {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #2563eb;
-  border: 3px solid #fff;
+  position: relative;
+  width: 40px;
+  height: 40px;
+  overflow: visible;
   transform: translate(-50%, -50%);
   z-index: 1000;
+  pointer-events: none;
+}
+
+.gym-detail-origin-pin .gym-origin-pin-core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: #2563eb;
+  border: 2.5px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  z-index: 2;
+}
+
+.gym-detail-origin-pin .gym-origin-pin-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(37, 99, 235, 0.55);
+  background: transparent;
+  box-sizing: border-box;
+  animation: gym-detail-origin-echo 2.8s ease-out infinite;
+  z-index: 1;
+}
+
+.gym-detail-origin-pin .gym-origin-pin-ring.is-late {
+  animation-delay: 1.4s;
+}
+
+@keyframes gym-detail-origin-echo {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
 }
 
 @media (max-width: 900px) {
