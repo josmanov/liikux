@@ -334,6 +334,17 @@ function filterChainVisual(id: string, list: Chain[]) {
 
 const PAGE_SIZE_START = 8;
 
+function pageNums(current: number, count: number): Array<number | "gap"> {
+  if (count <= 6) {
+    return Array.from({ length: count }, (_, i) => i + 1);
+  }
+  if (current <= 4) return [1, 2, 3, 4, "gap", count];
+  if (current >= count - 3) {
+    return [1, "gap", count - 3, count - 2, count - 1, count];
+  }
+  return [1, "gap", current - 1, current, current + 1, "gap", count];
+}
+
 function GymsPage() {
   const { slug: chainSlug } = useParams();
   const routeLocation = useLocation();
@@ -475,8 +486,10 @@ function GymsPage() {
       const raw = getComputedStyle(list).getPropertyValue("--row-min").trim();
       const rowMin = Number.parseFloat(raw) || 96;
       const rows = Math.max(4, Math.floor(box.clientHeight / rowMin));
-      list.style.setProperty("--browse-row-count", String(rows));
-      const next = rows * 2;
+      const gymRows = Math.max(3, rows - 1);
+      list.style.setProperty("--browse-row-count", String(gymRows));
+      box.style.setProperty("--browse-row-count", String(rows));
+      const next = Math.max(2, gymRows * 2);
       setPageSize((cur) => (cur === next ? cur : next));
     }
 
@@ -708,9 +721,15 @@ function GymsPage() {
     const start = (safePage - 1) * pageSize;
     return inViewGyms.slice(start, start + pageSize);
   }, [inViewGyms, safePage, pageSize]);
-  const rowSlots = Math.max(1, Math.floor(pageSize / 2));
-  const emptyRows = rowSlots - Math.ceil(pageGyms.length / 2);
-  const showMissing = !regionPickMode && emptyRows > 0;
+  const listLoading =
+    !dataReady ||
+    !mapReady ||
+    (!regionPickMode && gyms.length > 0 && inViewGyms.length === 0 && !mapBounds);
+  const showMissing =
+    !listLoading &&
+    !regionPickMode &&
+    pageGyms.length < pageSize &&
+    (inViewGyms.length > 0 || gyms.length === 0);
 
   const selectedGym = useMemo(() => {
     if (!selectedId) return null;
@@ -1757,31 +1776,6 @@ function GymsPage() {
                       })
                     : t("placesCount", { count: inViewGyms.length })}
               </p>
-              {inViewGyms.length > pageSize ? (
-                <nav className="browse-pager" aria-label="Sivutus">
-                  <button
-                    type="button"
-                    className="browse-pager-btn"
-                    aria-label="Edellinen"
-                    disabled={safePage <= 1}
-                    onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  >
-                    <ChevronLeft size={16} strokeWidth={2.2} />
-                  </button>
-                  <p className="browse-pager-status">
-                    {safePage}/{pageCount}
-                  </p>
-                  <button
-                    type="button"
-                    className="browse-pager-btn"
-                    aria-label="Seuraava"
-                    disabled={safePage >= pageCount}
-                    onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-                  >
-                    <ChevronRight size={16} strokeWidth={2.2} />
-                  </button>
-                </nav>
-              ) : null}
             </div>
             <div className="browse-sort">
               <button
@@ -1926,16 +1920,63 @@ function GymsPage() {
                   </li>
                 );
               })}
+              {showMissing ? (
+                <li className="browse-missing-slot">
+                  <p className="browse-missing">
+                    {t("missingGym")}
+                    <span>{t("missingGymHint")}</span>
+                  </p>
+                </li>
+              ) : null}
             </ul>
-            {showMissing ? (
-              <p
-                className="browse-missing"
-                style={{ height: `${(emptyRows / rowSlots) * 100}%` }}
-              >
-                {t("missingGym")}
-                <span>{t("missingGymHint")}</span>
-              </p>
-            ) : null}
+            {listLoading ? (
+              <div className="browse-list-loading">
+                <LoadSpin />
+              </div>
+            ) : regionPickMode ? null : (
+              <div className="browse-pagebar">
+                <button
+                  type="button"
+                  className="browse-pager-btn"
+                  aria-label="Edellinen"
+                  disabled={safePage <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  <ChevronLeft size={16} strokeWidth={2.2} />
+                </button>
+                <div className="browse-pages">
+                  {pageNums(safePage, pageCount).map((item, i) =>
+                    item === "gap" ? (
+                      <span className="browse-page-gap" key={`gap-${i}`}>
+                        …
+                      </span>
+                    ) : (
+                      <button
+                        key={item}
+                        type="button"
+                        className={
+                          item === safePage
+                            ? "browse-page-num is-on"
+                            : "browse-page-num"
+                        }
+                        onClick={() => setPage(item)}
+                      >
+                        {item}
+                      </button>
+                    ),
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="browse-pager-btn"
+                  aria-label="Seuraava"
+                  disabled={safePage >= pageCount}
+                  onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                >
+                  <ChevronRight size={16} strokeWidth={2.2} />
+                </button>
+              </div>
+            )}
           </div>
         </section>
         <section className="browse-map-col">
