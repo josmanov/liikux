@@ -13,11 +13,6 @@ type Suggestion = {
   lng: number;
 };
 
-function shortLabel(label: string) {
-  if (label.length <= 22) return label;
-  return label.slice(0, 20) + "…";
-}
-
 function AreaSelect() {
   const { label, setLocation, useMyLocation } = useAppLocation();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -83,7 +78,7 @@ function AreaSelect() {
         onClick={() => setOpen((v) => !v)}
       >
         <MapPin className="area-select-pin" size={16} strokeWidth={2.2} />
-        <span className="area-select-label">{shortLabel(label)}</span>
+        <span className="area-select-label">{label}</span>
         <ChevronDown className="area-select-chevron" size={16} strokeWidth={2.2} />
       </button>
 

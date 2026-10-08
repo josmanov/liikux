@@ -10,6 +10,7 @@
   max-width: 100%;
   overflow-x: hidden;
   gap: 0;
+  min-height: 0;
 }
 
 /*
@@ -25,13 +26,29 @@
   justify-content: flex-start;
   gap: 0;
   width: 100%;
-  min-height: calc(100dvh - 90px);
+  flex: 1;
+  min-height: 0;
   margin: 0;
   padding: 1.5rem 1.25rem 2rem;
   text-align: center;
   overflow: hidden;
   position: relative;
   isolation: isolate;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: -8%;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 120% 100% at 50% 42%,
+    rgba(190, 205, 230, 0.045) 0%,
+    rgba(255, 214, 150, 0.022) 48%,
+    rgba(150, 175, 210, 0.014) 78%,
+    transparent 100%
+  );
 }
 
 /*
@@ -67,6 +84,50 @@
   mask-repeat: no-repeat;
 }
 */
+
+.hero-icon-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 18%,
+    #000 76%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 18%,
+    #000 76%,
+    transparent 100%
+  );
+}
+
+.hero-icon-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0.05;
+  color: #fff;
+  -webkit-mask-image: radial-gradient(
+    ellipse 46% 82% at 50% 38%,
+    transparent 36%,
+    #000 72%
+  );
+  mask-image: radial-gradient(
+    ellipse 46% 82% at 50% 38%,
+    transparent 36%,
+    #000 72%
+  );
+}
+
+.hero-icon-bg-item {
+  position: absolute;
+}
 
 .hero-top,
 .hero .rail {

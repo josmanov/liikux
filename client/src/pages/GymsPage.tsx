@@ -104,6 +104,7 @@ const FINLAND_CENTER: [number, number] = [
   (HANGO[0] + NUORGAM[0]) / 2,
   (HANGO[1] + NUORGAM[1]) / 2,
 ];
+const ORIGIN_ZOOM = 12;
 const MAP_MAX_BOUNDS: [[number, number], [number, number]] = [
   [4.0, 53.5],
   [44.0, 73.0],
@@ -484,6 +485,7 @@ function GymsPage() {
     { nimi: string; maakunta: string; geometry: MaakuntaGeom }[]
   >([]);
   const fitKeyRef = useRef("");
+  const originRef = useRef({ lat: 60.1699, lng: 24.9384 });
   const focusOriginRef = useRef(
     (routeLocation.state as { focusOrigin?: boolean } | null)?.focusOrigin ===
       true,
@@ -606,6 +608,7 @@ function GymsPage() {
     );
     return cityCenters[key ?? "Helsinki"];
   }, [locationLabel, locationLat, locationLng]);
+  originRef.current = origin;
 
   const extrasActive = extraOnly247 || extraFreeTrial || extraDayPass;
   const extrasLabel = t("filtersAll");
@@ -888,11 +891,12 @@ function GymsPage() {
   useEffect(() => {
     if (!mapRef.current) return;
 
+    const start = originRef.current;
     const map = new Map({
       container: mapRef.current,
       style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
-      center: FINLAND_CENTER,
-      zoom: 4,
+      center: [start.lng, start.lat],
+      zoom: ORIGIN_ZOOM,
       maxBounds: MAP_MAX_BOUNDS,
     });
 
@@ -906,23 +910,77 @@ function GymsPage() {
       centerFinlandIfMaxOut(map);
     }
 
-    map.on("load", () => {
-      map.resize();
-      applyFinlandMinZoom(map);
-      map.fitBounds(FINLAND_VIEW, {
-        padding: 36,
-        duration: 0,
+    let dead = false;
+    let revealed = false;
+
+    function settleStartView() {
+      if (dead || revealed) return;
+      const o = originRef.current;
+      map.jumpTo({
+        center: [o.lng, o.lat],
+        zoom: ORIGIN_ZOOM,
       });
+      applyFinlandMinZoom(map);
       if (map.getZoom() < map.getMinZoom()) {
         map.setZoom(map.getMinZoom());
       }
+
+      let nimi: string | null = null;
+      for (const f of maakuntaFeaturesRef.current) {
+        if (pointInPolygon(o.lng, o.lat, f.geometry)) {
+          nimi = f.nimi;
+          break;
+        }
+      }
+      selectedMaakuntaRef.current = nimi;
+      regionPickModeRef.current = nimi == null;
+      setSelectedMaakunta(nimi);
+      fitKeyRef.current = `origin:${o.lat}:${o.lng}`;
+
+      if (nimi) {
+        const hideOpen = ["!=", ["get", "nimi"], nimi] as [
+          "!=",
+          ["get", string],
+          string,
+        ];
+        for (const id of ["maakunnat-fill", "maakunnat-line", "maakunnat-label"]) {
+          if (map.getLayer(id)) map.setFilter(id, hideOpen);
+        }
+      }
+
+      function reveal() {
+        if (dead || revealed) return;
+        revealed = true;
+        window.clearTimeout(failSafe);
+        map.resize();
+        setMapReady(true);
+      }
+
+      const failSafe = window.setTimeout(reveal, 700);
+      map.once("idle", reveal);
+      if (map.areTilesLoaded()) {
+        window.setTimeout(reveal, 40);
+      }
+    }
+
+    map.on("load", () => {
+      map.resize();
+      applyFinlandMinZoom(map);
+      const o = originRef.current;
+      map.jumpTo({
+        center: [o.lng, o.lat],
+        zoom: ORIGIN_ZOOM,
+      });
 
       void (async () => {
         try {
           const maskRes = await fetch("/geo/finland-mask.json");
           const outlineRes = await fetch("/geo/finland.json");
           const maakuntaRes = await fetch("/geo/maakunnat.json");
-          if (!maskRes.ok || !outlineRes.ok) return;
+          if (!maskRes.ok || !outlineRes.ok) {
+            settleStartView();
+            return;
+          }
           const maskData = await maskRes.json();
           const outlineData = await outlineRes.json();
 
@@ -1096,9 +1154,8 @@ function GymsPage() {
         } catch {
           /* peite ei kaada karttaa */
         }
+        settleStartView();
       })();
-
-      setMapReady(true);
     });
 
     map.on("zoomend", onMaxOutView);
@@ -1106,6 +1163,7 @@ function GymsPage() {
     window.addEventListener("resize", onResize);
 
     return () => {
+      dead = true;
       window.removeEventListener("resize", onResize);
       map.off("zoomend", onMaxOutView);
       map.off("moveend", onMaxOutView);
@@ -1486,9 +1544,7 @@ function GymsPage() {
     setSelectedMaakunta(nimi);
 
     const shouldZoom =
-      focusOriginRef.current ||
-      key !== fitKeyRef.current ||
-      map.getZoom() < 11.5;
+      focusOriginRef.current || key !== fitKeyRef.current;
     if (!shouldZoom) return;
 
     fitKeyRef.current = key;
@@ -1496,7 +1552,7 @@ function GymsPage() {
 
     map.easeTo({
       center: [origin.lng, origin.lat],
-      zoom: 12,
+      zoom: ORIGIN_ZOOM,
       duration: 650,
     });
   }, [mapReady, maakunnatReady, origin.lat, origin.lng]);
@@ -1526,7 +1582,7 @@ function GymsPage() {
         <LoadSpin />
       </div>
     ) : null}
-    <main className={browseReady ? "browse load-reveal" : "browse load-hold"}>
+    <main className={browseReady ? "browse load-reveal" : "browse"}>
       <div
         className="browse-toolbar"
         ref={listChromeRef}

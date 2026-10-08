@@ -5,13 +5,16 @@ import type { LucideIcon } from "lucide-react";
 import {
   Bike,
   Dumbbell,
+  Flame,
   Footprints,
   Goal,
   ArrowRight,
+  HeartPulse,
   LocateFixed,
   Mountain,
   PersonStanding,
   Target,
+  Timer,
   Trophy,
   Waves,
 } from "lucide-react";
@@ -42,6 +45,57 @@ const picks = [
     animated: true,
   },
 ];
+
+const patternIcons = [
+  Dumbbell,
+  Bike,
+  Footprints,
+  HeartPulse,
+  Timer,
+  Flame,
+  Trophy,
+  PersonStanding,
+] as const;
+
+const PATTERN_CELL = 84;
+const PATTERN_COLS = 24;
+const PATTERN_ROWS = 14;
+
+const heroPatternItems = Array.from({ length: PATTERN_ROWS }, (_, r) =>
+  Array.from({ length: PATTERN_COLS }, (_, c) => {
+    const Icon = patternIcons[(r * 3 + c * 5 + r * c) % patternIcons.length];
+    const wobble = (((r * 13 + c * 17) % 13) - 6) * 2.4;
+    return {
+      key: `${r}-${c}`,
+      Icon,
+      left: c * PATTERN_CELL + (r % 2 ? PATTERN_CELL / 2 : 0) - 10,
+      top: r * PATTERN_CELL + 4 + wobble,
+      rot: (((r * 7 + c * 11) % 5) - 2) * 10,
+    };
+  }),
+).flat();
+
+function HeroIconPattern() {
+  return (
+    <div className="hero-icon-wrap" aria-hidden="true">
+      <div className="hero-icon-bg">
+        {heroPatternItems.map((item) => (
+          <item.Icon
+            key={item.key}
+            className="hero-icon-bg-item"
+            size={34}
+            strokeWidth={1.55}
+            style={{
+              left: item.left,
+              top: item.top,
+              transform: `rotate(${item.rot}deg)`,
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const lajit: {
   name: string;
@@ -272,6 +326,7 @@ function HomePage() {
       ) : null}
     <main className={homeReady ? "shell load-reveal" : "shell load-hold"}>
       <section className="hero">
+        <HeroIconPattern />
         <div className="hero-top">
           <h1 className="title">{t("heroTitle")}</h1>
           <div className="hero-search-wrap">
