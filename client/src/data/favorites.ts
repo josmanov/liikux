@@ -14,6 +14,7 @@ export function readFavoriteSlugs(): string[] {
 
 export function writeFavoriteSlugs(slugs: string[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(slugs));
+  window.dispatchEvent(new Event("favorites-changed"));
 }
 
 export function toggleFavoriteSlug(slug: string): string[] {

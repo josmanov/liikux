@@ -157,6 +157,10 @@
   background: #fff;
 }
 
+.gym-detail-logo.is-pin img {
+  inset: 8px 26%;
+}
+
 .gym-detail-logo.is-text {
   display: grid;
   place-items: center;

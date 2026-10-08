@@ -12,9 +12,11 @@ import LoadSpin from "./LoadSpin";
 function HeaderSearch() {
   const navigate = useNavigate();
   const { openChain } = useChainPopup();
-  const { lang } = useLang();
+  const { lang, t } = useLang();
   const wrapRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
+  const [expanded, setExpanded] = useState(false);
   const [open, setOpen] = useState(false);
   const [chains, setChains] = useState<Chain[]>([]);
   const [gyms, setGyms] = useState<Gym[]>([]);
@@ -37,15 +39,27 @@ function HeaderSearch() {
       });
   }
 
+  function collapse() {
+    setExpanded(false);
+    setOpen(false);
+    setQuery("");
+  }
+
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
       if (!wrapRef.current?.contains(e.target as Node)) {
-        setOpen(false);
+        collapse();
       }
     }
     window.addEventListener("click", onDocClick);
     return () => window.removeEventListener("click", onDocClick);
   }, []);
+
+  useEffect(() => {
+    if (expanded) {
+      inputRef.current?.focus();
+    }
+  }, [expanded]);
 
   const q = query.trim().toLowerCase();
   const chainHits =
@@ -65,54 +79,71 @@ function HeaderSearch() {
               g.address.toLowerCase().includes(q),
           )
           .slice(0, 8);
-  const showPanel = open && q.length >= 1;
+  const showPanel = expanded && open && q.length >= 1;
   const hasHits = chainHits.length > 0 || gymHits.length > 0;
 
   function goFirst() {
     if (chainHits[0]) {
       openChain(chainHits[0].slug);
-      setQuery("");
-      setOpen(false);
+      collapse();
       return;
     }
     if (gymHits[0]) {
       navigate(pathGym(lang, gymHits[0].slug));
-      setQuery("");
-      setOpen(false);
+      collapse();
     }
   }
 
   return (
     <div
-      className="header-search"
+      className={expanded ? "header-search is-open" : "header-search"}
       ref={wrapRef}
       onClick={(e) => e.stopPropagation()}
     >
-      <Search className="header-search-icon" size={16} strokeWidth={2.2} />
-      <input
-        className="header-search-input"
-        type="search"
-        placeholder="Etsi..."
-        value={query}
-        onChange={(e) => {
-          ensureData();
-          setQuery(e.target.value);
-          setOpen(true);
-        }}
-        onFocus={() => {
-          ensureData();
-          setOpen(true);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            goFirst();
+      <div className="header-search-field">
+        <input
+          ref={inputRef}
+          className="header-search-input"
+          type="search"
+          placeholder="Etsi..."
+          value={query}
+          tabIndex={expanded ? 0 : -1}
+          onChange={(e) => {
+            ensureData();
+            setQuery(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => {
+            ensureData();
+            setOpen(true);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              goFirst();
+            }
+            if (e.key === "Escape") {
+              collapse();
+            }
+          }}
+        />
+      </div>
+      <button
+        type="button"
+        className="header-search-toggle"
+        aria-label={t("search")}
+        aria-expanded={expanded}
+        onClick={() => {
+          if (expanded) {
+            collapse();
+          } else {
+            ensureData();
+            setExpanded(true);
           }
-          if (e.key === "Escape") {
-            setOpen(false);
-          }
         }}
-      />
+      >
+        <Search size={22} strokeWidth={2.7} />
+      </button>
 
       {showPanel ? (
         <div className="header-search-panel" role="listbox">
@@ -138,8 +169,7 @@ function HeaderSearch() {
                           className="header-search-hit"
                           onClick={() => {
                             openChain(chain.slug);
-                            setQuery("");
-                            setOpen(false);
+                            collapse();
                           }}
                         >
                           {chain.image ? (
@@ -167,8 +197,7 @@ function HeaderSearch() {
                           to={pathGym(lang, gym.slug)}
                           className="header-search-hit"
                           onClick={() => {
-                            setQuery("");
-                            setOpen(false);
+                            collapse();
                           }}
                         >
                           <span className="header-search-hit-fallback" />

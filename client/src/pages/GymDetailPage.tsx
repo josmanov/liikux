@@ -261,7 +261,10 @@ function GymDetailPage() {
     getChainWebsite(chain?.slug) ||
     null;
   const heroSrc = chain?.image || null;
-  const heroIsLogo = Boolean(chain?.image && chain.logoFit === "contain");
+  const heroIsPin = Boolean(chain?.image?.includes("/pins/"));
+  const heroIsLogo = Boolean(
+    chain?.image && chain.logoFit === "contain" && !heroIsPin,
+  );
   const heroIsText = !chain?.image;
   const promoTag =
     services.find((s) => PROMO_TAGS.includes(s)) ??
@@ -299,8 +302,9 @@ function GymDetailPage() {
               className={[
                 "gym-detail-logo",
                 heroIsLogo ? "is-logo" : "",
+                heroIsPin ? "is-pin" : "",
                 heroIsText ? "is-text" : "",
-                chain?.logoClass || "",
+                heroIsPin ? "" : chain?.logoClass || "",
               ]
                 .filter(Boolean)
                 .join(" ")}

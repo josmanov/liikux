@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, X } from "lucide-react";
 import "./ChainPopup.css";
 import { type Chain, type Gym, resolveGymOffer } from "../data/types";
-import { fetchChains, fetchChainGyms } from "../data/api";
+import { fetchChains, fetchChainGyms, fetchGyms } from "../data/api";
 import { cleanGymDisplayName, formatPriceFrom } from "../data/format";
 import { useAppLocation } from "../context/LocationContext";
 import { useChainPopup } from "../context/ChainPopupContext";
@@ -34,13 +34,35 @@ function formatKm(km: number) {
   return `${Math.round(km)} km`;
 }
 
+function statsByChain(rows: Gym[]) {
+  const map = new Map<string, { gyms: number; cities: Set<string> }>();
+  for (const g of rows) {
+    let row = map.get(g.chainId);
+    if (!row) {
+      row = { gyms: 0, cities: new Set() };
+      map.set(g.chainId, row);
+    }
+    row.gyms += 1;
+    const city = g.city.trim().toLowerCase();
+    if (city) row.cities.add(city);
+  }
+  const out: Record<string, { gyms: number; cities: number }> = {};
+  for (const [id, row] of map) {
+    out[id] = { gyms: row.gyms, cities: row.cities.size };
+  }
+  return out;
+}
+
 function ChainPopup() {
   const { open, chainSlug, close, openChain } = useChainPopup();
   const location = useAppLocation();
-  const { lang } = useLang();
+  const { lang, t } = useLang();
   const [query, setQuery] = useState("");
   const [chains, setChains] = useState<Chain[]>([]);
   const [gyms, setGyms] = useState<Gym[]>([]);
+  const [chainStats, setChainStats] = useState<
+    Record<string, { gyms: number; cities: number }>
+  >({});
   const [chainsReady, setChainsReady] = useState(false);
   const [gymsReady, setGymsReady] = useState(true);
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
@@ -59,14 +81,16 @@ function ChainPopup() {
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    fetchChains()
-      .then((chainData) => {
+    Promise.all([fetchChains(), fetchGyms()])
+      .then(([chainData, gymData]) => {
         if (cancelled) return;
         setChains(chainData);
+        setChainStats(statsByChain(gymData));
       })
       .catch(() => {
         if (cancelled) return;
         setChains([]);
+        setChainStats({});
       })
       .finally(() => {
         if (!cancelled) setChainsReady(true);
@@ -128,11 +152,18 @@ function ChainPopup() {
   const q = query.trim().toLowerCase();
 
   const chainList = useMemo(() => {
-    return chains.filter((chain) => {
-      if (chain.slug === "muut") return false;
+    const list = chains.filter((chain) => {
       if (!q) return true;
-      return chain.name.toLowerCase().includes(q);
+      const name =
+        chain.slug === "muut" ? "muut kuntosalit" : chain.name.toLowerCase();
+      return name.includes(q) || chain.name.toLowerCase().includes(q);
     });
+    list.sort((a, b) => {
+      if (a.slug === "muut") return 1;
+      if (b.slug === "muut") return -1;
+      return a.name.localeCompare(b.name, "fi");
+    });
+    return list;
   }, [chains, q]);
 
   const gymList = useMemo(() => {
@@ -172,54 +203,61 @@ function ChainPopup() {
   return createPortal(
     <div className="chain-popup-overlay" onClick={close}>
       <div className="chain-popup-card" onClick={(e) => e.stopPropagation()}>
-        <div className="chain-popup-top">
-          {showingGyms ? (
+        <div className="chain-popup-banner">
+          <div className="chain-popup-banner-row">
+            {showingGyms ? (
+              <button
+                type="button"
+                className="chain-popup-back"
+                onClick={() => {
+                  setSelectedSlug(null);
+                  setQuery("");
+                }}
+                aria-label="Takaisin ketjuihin"
+              >
+                <ArrowLeft size={18} strokeWidth={2.4} />
+              </button>
+            ) : null}
+            <h2 className="chain-popup-title">
+              {showingGyms && selectedChain
+                ? selectedChain.slug === "muut"
+                  ? "Muut kuntosalit"
+                  : selectedChain.name
+                : t("allGymChains")}
+            </h2>
             <button
               type="button"
-              className="chain-popup-back"
-              onClick={() => {
-                setSelectedSlug(null);
-                setQuery("");
-              }}
-              aria-label="Takaisin ketjuihin"
+              className="chain-popup-close"
+              onClick={close}
+              aria-label="Sulje"
             >
-              <ArrowLeft size={18} strokeWidth={2.4} />
+              <X size={20} strokeWidth={2.4} />
             </button>
-          ) : null}
-          <div className="group">
-            <svg viewBox="0 0 24 24" aria-hidden="true" className="search-icon">
-              <g>
-                <path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
-              </g>
-            </svg>
-            <input
-              className="input"
-              type="search"
-              placeholder={showingGyms ? "Etsi salia..." : "Etsi ketjua..."}
-              name="searchbar"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
           </div>
-          <button
-            type="button"
-            className="chain-popup-close"
-            onClick={close}
-            aria-label="Sulje"
-          >
-            <X size={20} strokeWidth={2.4} />
-          </button>
-        </div>
-
-        {showingGyms && selectedChain ? (
-          <div className="chain-popup-heading">
-            <strong>{selectedChain.name}</strong>
-            <span>
+          <div className="chain-popup-top">
+            <div className="group">
+              <svg viewBox="0 0 24 24" aria-hidden="true" className="search-icon">
+                <g>
+                  <path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
+                </g>
+              </svg>
+              <input
+                className="input"
+                type="search"
+                placeholder={showingGyms ? "Etsi salia..." : "Etsi ketjua..."}
+                name="searchbar"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+          </div>
+          {showingGyms && selectedChain ? (
+            <p className="chain-popup-sub">
               {gymList.length} salia
               {location.label ? ` · lähimmät ensin (${location.label})` : ""}
-            </span>
-          </div>
-        ) : null}
+            </p>
+          ) : null}
+        </div>
 
         {!chainsReady || (showingGyms && !gymsReady) ? (
           <div className="load-box">
@@ -254,18 +292,39 @@ function ChainPopup() {
                     <span
                       className={[
                         "chain-popup-media",
-                        chain.logoFit === "contain" ? "is-logo" : "",
-                        chain.logoClass || "",
+                        chain.image?.includes("/pins/")
+                          ? "is-pin"
+                          : chain.logoFit === "contain"
+                            ? "is-logo"
+                            : "",
+                        chain.image?.includes("/pins/")
+                          ? ""
+                          : chain.logoClass || "",
                       ]
                         .filter(Boolean)
                         .join(" ")}
                     >
-                      <img src={chain.image} alt="" />
+                      <img src={chain.image || "/pins/gym-pin.png"} alt="" />
                     </span>
                     <div className="chain-popup-text">
-                      <strong>{chain.name}</strong>
+                      <strong>
+                        {chain.slug === "muut"
+                          ? "Muut kuntosalit"
+                          : chain.name}
+                      </strong>
                       <p className="chain-popup-blurb">
-                        Näytä kaikki ketjun kuntosalit etäisyyden mukaan.
+                        {(chainStats[chain.id]?.gyms ?? 0) === 1
+                          ? t("chainGymCountOne")
+                          : t("chainGymCount", {
+                              count: chainStats[chain.id]?.gyms ?? 0,
+                            })}
+                      </p>
+                      <p className="chain-popup-cities">
+                        {(chainStats[chain.id]?.cities ?? 0) === 1
+                          ? t("chainCityCountOne")
+                          : t("chainCityCount", {
+                              count: chainStats[chain.id]?.cities ?? 0,
+                            })}
                       </p>
                     </div>
                   </button>
@@ -291,16 +350,25 @@ function ChainPopup() {
                       <span
                         className={[
                           "chain-popup-media",
-                          selectedChain?.logoFit === "contain"
-                            ? "is-logo"
-                            : "",
-                          selectedChain?.logoClass || "",
+                          selectedChain?.image?.includes("/pins/")
+                            ? "is-pin"
+                            : selectedChain?.logoFit === "contain"
+                              ? "is-logo"
+                              : "",
+                          selectedChain?.image?.includes("/pins/")
+                            ? ""
+                            : selectedChain?.logoClass || "",
                         ]
                           .filter(Boolean)
                           .join(" ")}
                       >
                         <img
-                          src={selectedChain?.image || "/pins/gym-pin.png"}
+                          src={
+                            selectedChain?.image &&
+                            !selectedChain.image.includes("/pins/")
+                              ? selectedChain.image
+                              : "/pins/gym-pin.png"
+                          }
                           alt=""
                         />
                       </span>

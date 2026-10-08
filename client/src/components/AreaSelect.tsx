@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown, LocateFixed, MapPin, Search } from "lucide-react";
 import { useAppLocation } from "../context/LocationContext";
 import "./AreaSelect.css";
@@ -20,6 +20,7 @@ function shortLabel(label: string) {
 
 function AreaSelect() {
   const { label, setLocation, useMyLocation } = useAppLocation();
+  const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -29,11 +30,12 @@ function AreaSelect() {
     if (!open) return;
     setDraft("");
     setSuggestions([]);
-    function close() {
+    function close(e: MouseEvent) {
+      if (rootRef.current?.contains(e.target as Node)) return;
       setOpen(false);
     }
-    window.addEventListener("click", close);
-    return () => window.removeEventListener("click", close);
+    window.addEventListener("click", close, true);
+    return () => window.removeEventListener("click", close, true);
   }, [open]);
 
   useEffect(() => {
@@ -72,7 +74,7 @@ function AreaSelect() {
   const showSuggestions = draft.trim().length >= 2;
 
   return (
-    <div className="area-select" onClick={(e) => e.stopPropagation()}>
+    <div ref={rootRef} className="area-select" onClick={(e) => e.stopPropagation()}>
       <button
         type="button"
         className="area-select-btn"

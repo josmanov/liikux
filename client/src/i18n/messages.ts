@@ -3,6 +3,9 @@ import type { Lang } from "./lang";
 const fi = {
   browseGyms: "Selaa kuntosaleja",
   favorites: "Suosikit",
+  addFavorite: "Lisää suosikkeihin",
+  removeFavorite: "Poista suosikeista",
+  favoriteCount: "{count} kuntosalia",
   langFi: "Suomi",
   langEn: "English",
   heroTitle: "Etsi sali. Nosta rajojasi.",
@@ -40,6 +43,8 @@ const fi = {
   pricePremium: "Yli 50 €/kk",
   priceDayPass: "Päivälippu",
   sortNearest: "Lähimmät ensin",
+  sortCheap: "Halvin ensin",
+  sortExpensive: "Kallein ensin",
   sortNameAsc: "Nimi A–Ö",
   sortNameDesc: "Nimi Ö–A",
   otherChains: "Yksityiset / muut",
@@ -59,11 +64,18 @@ const fi = {
   chainSearch: "Etsi ketjua...",
   chainFilterHint: "Näytä tämän ketjun kuntosalit listassa ja kartalla.",
   chainsPicked: "{n} / {total} valittu",
+  chainGymCount: "{count} kuntosalia",
+  chainGymCountOne: "1 kuntosali",
+  chainCityCount: "{count} kaupunkia",
+  chainCityCountOne: "1 kaupunki",
 };
 
 const en: typeof fi = {
   browseGyms: "Browse gyms",
   favorites: "Favorites",
+  addFavorite: "Add to favorites",
+  removeFavorite: "Remove from favorites",
+  favoriteCount: "{count} gyms",
   langFi: "Finnish",
   langEn: "English",
   heroTitle: "Find a gym. Push your limits.",
@@ -101,6 +113,8 @@ const en: typeof fi = {
   pricePremium: "Over €50/mo",
   priceDayPass: "Day pass",
   sortNearest: "Nearest first",
+  sortCheap: "Cheapest first",
+  sortExpensive: "Most expensive first",
   sortNameAsc: "Name A–Z",
   sortNameDesc: "Name Z–A",
   otherChains: "Private / other",
@@ -120,6 +134,10 @@ const en: typeof fi = {
   chainSearch: "Search chains...",
   chainFilterHint: "Show this chain's gyms in the list and on the map.",
   chainsPicked: "{n} / {total} selected",
+  chainGymCount: "{count} gyms",
+  chainGymCountOne: "1 gym",
+  chainCityCount: "{count} cities",
+  chainCityCountOne: "1 city",
 };
 
 const catalogs = { fi, en };

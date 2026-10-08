@@ -7,6 +7,7 @@ import {
   Dumbbell,
   Footprints,
   Goal,
+  ArrowRight,
   LocateFixed,
   Mountain,
   PersonStanding,
@@ -357,7 +358,7 @@ function HomePage() {
             <p className="hero-or">{t("heroOr")}</p>
             <Link to={pathGyms(lang)} className="hero-browse">
               {t("browseGyms")}
-              <span aria-hidden="true">→</span>
+              <ArrowRight size={16} strokeWidth={2.4} />
             </Link>
             <p className="hero-stats">
               {t("heroStats", {

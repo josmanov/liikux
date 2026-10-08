@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Euro,
+  Heart,
   Link2,
   LocateFixed,
   MapPin,
@@ -36,6 +37,7 @@ import {
   formatPricePill,
 } from "../data/format";
 import { useAppLocation } from "../context/LocationContext";
+import { toggleFavoriteSlug, readFavoriteSlugs } from "../data/favorites";
 import { pathGym } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import UxSwitch from "../components/UxSwitch";
@@ -396,6 +398,8 @@ function GymsPage() {
   const { lang, t } = useLang();
   const sortOptions = [
     { id: "nearest", label: t("sortNearest") },
+    { id: "price-asc", label: t("sortCheap") },
+    { id: "price-desc", label: t("sortExpensive") },
     { id: "name-asc", label: t("sortNameAsc") },
     { id: "name-desc", label: t("sortNameDesc") },
   ];
@@ -423,6 +427,9 @@ function GymsPage() {
   const [chains, setChains] = useState<Chain[]>([]);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [favoriteSlugs, setFavoriteSlugs] = useState<string[]>(() =>
+    readFavoriteSlugs(),
+  );
   const [query, setQuery] = useState("");
   const [sortId, setSortId] = useState("nearest");
   const [page, setPage] = useState(1);
@@ -487,6 +494,14 @@ function GymsPage() {
   useEffect(() => {
     setAddressDraft(locationLabel);
   }, [locationLabel]);
+
+  useEffect(() => {
+    function syncFavs() {
+      setFavoriteSlugs(readFavoriteSlugs());
+    }
+    window.addEventListener("favorites-changed", syncFavs);
+    return () => window.removeEventListener("favorites-changed", syncFavs);
+  }, []);
 
   useEffect(() => {
     const q = addressDraft.trim();
@@ -676,6 +691,19 @@ function GymsPage() {
       list = [...list].sort((a, b) => a.name.localeCompare(b.name, "fi"));
     } else if (sortId === "name-desc") {
       list = [...list].sort((a, b) => b.name.localeCompare(a.name, "fi"));
+    } else if (sortId === "price-asc" || sortId === "price-desc") {
+      const dir = sortId === "price-asc" ? 1 : -1;
+      list = [...list].sort((a, b) => {
+        const chainA = chainForGym(a, chains);
+        const chainB = chainForGym(b, chains);
+        const pa = resolveGymOffer(a, chainA as Chain | null).priceFrom;
+        const pb = resolveGymOffer(b, chainB as Chain | null).priceFrom;
+        if (pa == null && pb == null) return a.name.localeCompare(b.name, "fi");
+        if (pa == null) return 1;
+        if (pb == null) return -1;
+        if (pa !== pb) return (pa - pb) * dir;
+        return a.name.localeCompare(b.name, "fi");
+      });
     } else if (sortId === "nearest") {
       list = [...list].sort((a, b) => {
         const da =
@@ -1818,13 +1846,13 @@ function GymsPage() {
                 const priceLabel = pricePill
                   ? pricePill.replace("€/kk", " €/kk")
                   : null;
+                const isFav = favoriteSlugs.includes(gym.slug);
                 return (
                   <li
                     key={gym.id}
                     style={{ animationDelay: `${Math.min(i, 18) * 28}ms` }}
                   >
-                    <Link
-                      to={pathGym(lang, gym.slug)}
+                    <div
                       data-gym-id={gym.id}
                       className={[
                         "browse-row",
@@ -1836,74 +1864,96 @@ function GymsPage() {
                       onMouseEnter={() => setHoveredId(gym.id)}
                       onMouseLeave={() => setHoveredId(null)}
                     >
-                      <span
-                        className={[
-                          "browse-row-media",
-                          chain?.image && !chain.image.includes("/pins/")
-                            ? chain.logoFit === "contain"
-                              ? "is-logo"
-                              : ""
-                            : "is-pin",
-                          chain?.image && !chain.image.includes("/pins/")
-                            ? chain.logoClass || ""
-                            : "",
-                        ]
-                          .filter(Boolean)
-                          .join(" ")}
+                      <Link
+                        to={pathGym(lang, gym.slug)}
+                        className="browse-row-main"
                       >
-                        <img
-                          src={
+                        <span
+                          className={[
+                            "browse-row-media",
                             chain?.image && !chain.image.includes("/pins/")
-                              ? chain.image
-                              : "/pins/gym-pin.png"
-                          }
-                          alt=""
-                        />
-                      </span>
-                      <div className="browse-row-text">
-                        <strong>{cleanGymDisplayName(gym.name)}</strong>
-                        <span className="browse-row-address">
-                          {gym.address
-                            .replace(
-                              new RegExp(
-                                `,?\\s*\\d{5}\\s+${gym.city}\\s*$`,
-                                "i",
-                              ),
-                              "",
-                            )
-                            .replace(
-                              new RegExp(`,\\s*${gym.city}\\s*$`, "i"),
-                              "",
-                            )
-                            .trim()}
+                              ? chain.logoFit === "contain"
+                                ? "is-logo"
+                                : ""
+                              : "is-pin",
+                            chain?.image && !chain.image.includes("/pins/")
+                              ? chain.logoClass || ""
+                              : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                        >
+                          <img
+                            src={
+                              chain?.image && !chain.image.includes("/pins/")
+                                ? chain.image
+                                : "/pins/gym-pin.png"
+                            }
+                            alt=""
+                          />
                         </span>
-                        <div className="browse-row-tags">
-                          {offer.is247 === true ? (
-                            <span className="browse-tag is-247">24/7</span>
-                          ) : null}
-                          {offer.freeTrial === true ? (
-                            <span className="browse-tag is-trial">
-                              Ilmainen kokeilu
-                            </span>
-                          ) : null}
-                          {offer.dayPass === true ? (
-                            <span className="browse-tag is-daypass">
-                              Päivälippu
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-                      <span className="browse-row-side">
-                        <span className="browse-row-price">
-                          {priceLabel ?? t("priceUnknown")}
-                        </span>
-                        {distKm != null ? (
-                          <span className="browse-row-distance">
-                            {formatDistanceKm(distKm)}
+                        <div className="browse-row-text">
+                          <strong>{cleanGymDisplayName(gym.name)}</strong>
+                          <span className="browse-row-address">
+                            {gym.address
+                              .replace(
+                                new RegExp(
+                                  `,?\\s*\\d{5}\\s+${gym.city}\\s*$`,
+                                  "i",
+                                ),
+                                "",
+                              )
+                              .replace(
+                                new RegExp(`,\\s*${gym.city}\\s*$`, "i"),
+                                "",
+                              )
+                              .trim()}
                           </span>
-                        ) : null}
-                      </span>
-                    </Link>
+                          <div className="browse-row-tags">
+                            {offer.is247 === true ? (
+                              <span className="browse-tag is-247">24/7</span>
+                            ) : null}
+                            {offer.freeTrial === true ? (
+                              <span className="browse-tag is-trial">
+                                Ilmainen kokeilu
+                              </span>
+                            ) : null}
+                            {offer.dayPass === true ? (
+                              <span className="browse-tag is-daypass">
+                                Päivälippu
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                        <span className="browse-row-side">
+                          <span className="browse-row-price">
+                            {priceLabel ?? t("priceUnknown")}
+                          </span>
+                          {distKm != null ? (
+                            <span className="browse-row-distance">
+                              {formatDistanceKm(distKm)}
+                            </span>
+                          ) : null}
+                        </span>
+                      </Link>
+                      <button
+                        type="button"
+                        className={
+                          isFav ? "browse-row-fav is-on" : "browse-row-fav"
+                        }
+                        aria-label={
+                          isFav ? t("removeFavorite") : t("addFavorite")
+                        }
+                        aria-pressed={isFav}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setFavoriteSlugs(toggleFavoriteSlug(gym.slug));
+                        }}
+                      >
+                        <Heart size={18} strokeWidth={2.2} />
+                      </button>
+                    </div>
                   </li>
                 );
               })}
@@ -2232,53 +2282,58 @@ function GymsPage() {
                 aria-label={t("chains")}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="browse-chains-top">
-                  <div className="group">
-                    <svg
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                      className="search-icon"
+                <div className="chain-popup-banner">
+                  <div className="chain-popup-banner-row">
+                    <h2 className="chain-popup-title">{t("chains")}</h2>
+                    <button
+                      type="button"
+                      className="chain-popup-close"
+                      onClick={() => setChainsOpen(false)}
+                      aria-label="Sulje"
                     >
-                      <g>
-                        <path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
-                      </g>
-                    </svg>
-                    <input
-                      className="input"
-                      type="search"
-                      placeholder={t("chainSearch")}
-                      value={chainQuery}
-                      onChange={(e) => setChainQuery(e.target.value)}
-                    />
+                      <X size={20} strokeWidth={2.4} />
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    className="browse-chains-action"
-                    onClick={() => setSelectedChains([...allChainFilterIds])}
-                  >
-                    {t("all")}
-                  </button>
-                  <button
-                    type="button"
-                    className="browse-chains-clear"
-                    onClick={() => setSelectedChains([])}
-                  >
-                    {t("clear")}
-                  </button>
+                  <div className="browse-chains-top">
+                    <div className="group">
+                      <svg
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                        className="search-icon"
+                      >
+                        <g>
+                          <path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
+                        </g>
+                      </svg>
+                      <input
+                        className="input"
+                        type="search"
+                        placeholder={t("chainSearch")}
+                        value={chainQuery}
+                        onChange={(e) => setChainQuery(e.target.value)}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      className="browse-chains-action"
+                      onClick={() => setSelectedChains([...allChainFilterIds])}
+                    >
+                      {t("all")}
+                    </button>
+                    <button
+                      type="button"
+                      className="browse-chains-clear"
+                      onClick={() => setSelectedChains([])}
+                    >
+                      {t("clear")}
+                    </button>
+                  </div>
                   <p className="browse-chains-picked">
                     {t("chainsPicked", {
                       n: selectedChains.length,
                       total: allChainFilterIds.length,
                     })}
                   </p>
-                  <button
-                    type="button"
-                    className="chain-popup-close"
-                    onClick={() => setChainsOpen(false)}
-                    aria-label="Sulje"
-                  >
-                    <X size={20} strokeWidth={2.4} />
-                  </button>
                 </div>
                 <div className="chain-popup-scroll">
                   <ul
