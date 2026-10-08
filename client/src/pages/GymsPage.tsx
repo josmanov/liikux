@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation, useParams } from "react-router-dom";
 import {
+  ArrowUpDown,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -28,7 +29,6 @@ import {
 import {
   cleanGymDisplayName,
   formatDistanceKm,
-  formatPriceFrom,
   formatPricePill,
 } from "../data/format";
 import { useAppLocation } from "../context/LocationContext";
@@ -332,7 +332,7 @@ function filterChainVisual(id: string, list: Chain[]) {
   };
 }
 
-const PAGE_SIZE = 24;
+const PAGE_SIZE_START = 8;
 
 function GymsPage() {
   const { slug: chainSlug } = useParams();
@@ -407,6 +407,9 @@ function GymsPage() {
   } | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const listChromeRef = useRef<HTMLDivElement>(null);
+  const listScrollRef = useRef<HTMLDivElement>(null);
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_START);
+  const pageSizeRef = useRef(PAGE_SIZE_START);
   const mapInstanceRef = useRef<Map | null>(null);
   const markersRef = useRef(new globalThis.Map<string, Marker>());
   const originMarkerRef = useRef<Marker | null>(null);
@@ -460,6 +463,27 @@ function GymsPage() {
     return () => {
       document.documentElement.classList.remove("browse-no-scrollbar");
     };
+  }, []);
+
+  useEffect(() => {
+    const box = listScrollRef.current;
+    if (!box) return;
+
+    function fitRows() {
+      const list = box.querySelector<HTMLElement>(".browse-rows");
+      if (!list) return;
+      const raw = getComputedStyle(list).getPropertyValue("--row-min").trim();
+      const rowMin = Number.parseFloat(raw) || 96;
+      const rows = Math.max(4, Math.floor(box.clientHeight / rowMin));
+      list.style.setProperty("--browse-row-count", String(rows));
+      const next = rows * 2;
+      setPageSize((cur) => (cur === next ? cur : next));
+    }
+
+    fitRows();
+    const watch = new ResizeObserver(fitRows);
+    watch.observe(box);
+    return () => watch.disconnect();
   }, []);
 
   useEffect(() => {
@@ -541,7 +565,7 @@ function GymsPage() {
   }, [locationLabel, locationLat, locationLng]);
 
   const extrasActive = extraOnly247 || extraFreeTrial || extraDayPass;
-  const extrasLabel = extrasActive ? t("filtersOn") : t("filters");
+  const extrasLabel = t("filtersAll");
 
   const selectedChainFilter = useMemo(() => {
     if (selectedChains.length === 0) {
@@ -675,13 +699,18 @@ function GymsPage() {
 
   inViewGymsRef.current = inViewGyms;
 
-  const pageCount = Math.max(1, Math.ceil(inViewGyms.length / PAGE_SIZE));
+  pageSizeRef.current = pageSize;
+
+  const pageCount = Math.max(1, Math.ceil(inViewGyms.length / pageSize));
   const safePage = Math.min(page, pageCount);
 
   const pageGyms = useMemo(() => {
-    const start = (safePage - 1) * PAGE_SIZE;
-    return inViewGyms.slice(start, start + PAGE_SIZE);
-  }, [inViewGyms, safePage]);
+    const start = (safePage - 1) * pageSize;
+    return inViewGyms.slice(start, start + pageSize);
+  }, [inViewGyms, safePage, pageSize]);
+  const rowSlots = Math.max(1, Math.floor(pageSize / 2));
+  const emptyRows = rowSlots - Math.ceil(pageGyms.length / 2);
+  const showMissing = !regionPickMode && emptyRows > 0;
 
   const selectedGym = useMemo(() => {
     if (!selectedId) return null;
@@ -1156,7 +1185,7 @@ function GymsPage() {
             });
             const idx = inViewGymsRef.current.findIndex((x) => x.id === g.id);
             if (idx >= 0) {
-              setPage(Math.floor(idx / PAGE_SIZE) + 1);
+              setPage(Math.floor(idx / pageSizeRef.current) + 1);
             }
             selectFromMapRef.current = true;
             setSelectedId(g.id);
@@ -1437,13 +1466,11 @@ function GymsPage() {
       </div>
     ) : null}
     <main className={browseReady ? "browse load-reveal" : "browse load-hold"}>
-      <div className="browse-body">
-        <section className="browse-list-col">
-          <div className="browse-list-chrome" ref={listChromeRef}>
-          <div
-            className="browse-list-tools"
-            onClick={(e) => e.stopPropagation()}
-          >
+      <div
+        className="browse-toolbar"
+        ref={listChromeRef}
+        onClick={(e) => e.stopPropagation()}
+      >
             <div className="browse-search">
               <svg
                 viewBox="0 0 24 24"
@@ -1460,197 +1487,7 @@ function GymsPage() {
                 onChange={(e) => setQuery(e.target.value)}
               />
             </div>
-
-            <div className="browse-sort">
-              <button
-                type="button"
-                className="browse-sort-btn"
-                aria-expanded={openFilter === "sort"}
-                aria-haspopup="listbox"
-                onClick={() => toggleFilter("sort")}
-              >
-                <span className="browse-sort-label">{sortLabel}</span>
-                <ChevronDown
-                  className="browse-sort-chevron"
-                  size={16}
-                  strokeWidth={2.2}
-                />
-              </button>
-              {openFilter === "sort" ? (
-                <ul className="browse-sort-menu" role="listbox">
-                  {sortOptions.map((opt) => (
-                    <li key={opt.id}>
-                      <button
-                        type="button"
-                        className={opt.id === sortId ? "is-on" : ""}
-                        role="option"
-                        aria-selected={opt.id === sortId}
-                        onClick={() => {
-                          setSortId(opt.id);
-                          setOpenFilter(null);
-                        }}
-                      >
-                        {opt.label}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </div>
-          </div>
-
-          <header className="browse-list-head">
-            <h1>{pageTitle}</h1>
-            <p className="browse-list-count">
-              {regionPickMode
-                ? t("pickRegion")
-                : selectedMaakunta
-                  ? t("placesInRegion", {
-                      region: selectedMaakunta,
-                      count: inViewGyms.length,
-                    })
-                  : t("placesCount", { count: inViewGyms.length })}
-            </p>
-          </header>
-          </div>
-
-          <div className="browse-list-scroll">
-            {regionPickMode ? (
-              <p className="browse-region-empty">{t("pickRegion")}</p>
-            ) : null}
-            <ul className={browseReady ? "browse-rows list-pop" : "browse-rows"}>
-              {pageGyms.map((gym, i) => {
-                const chain = chainForGym(gym, chains);
-                const offer = resolveGymOffer(gym, chain as Chain | null);
-                const distKm =
-                  gym.lat != null && gym.lng != null
-                    ? distanceKm(origin.lat, origin.lng, gym.lat, gym.lng)
-                    : null;
-                const priceLabel = formatPriceFrom(offer.priceFrom);
-                return (
-                  <li
-                    key={gym.id}
-                    style={{ animationDelay: `${Math.min(i, 18) * 28}ms` }}
-                  >
-                    <Link
-                      to={pathGym(lang, gym.slug)}
-                      data-gym-id={gym.id}
-                      className={[
-                        "browse-row",
-                        hoveredId === gym.id ? "is-hovered" : "",
-                        selectedId === gym.id ? "is-selected" : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                      onMouseEnter={() => setHoveredId(gym.id)}
-                      onMouseLeave={() => setHoveredId(null)}
-                    >
-                      <span
-                        className={[
-                          "browse-row-media",
-                          chain?.image && !chain.image.includes("/pins/")
-                            ? chain.logoFit === "contain"
-                              ? "is-logo"
-                              : ""
-                            : "is-pin",
-                          chain?.image && !chain.image.includes("/pins/")
-                            ? chain.logoClass || ""
-                            : "",
-                        ]
-                          .filter(Boolean)
-                          .join(" ")}
-                      >
-                        <img
-                          src={
-                            chain?.image && !chain.image.includes("/pins/")
-                              ? chain.image
-                              : "/pins/gym-pin.png"
-                          }
-                          alt=""
-                        />
-                      </span>
-                      <div className="browse-row-text">
-                        <div className="browse-row-top">
-                          <strong>{cleanGymDisplayName(gym.name)}</strong>
-                          {distKm != null ? (
-                            <span className="browse-row-distance">
-                              {formatDistanceKm(distKm)}
-                            </span>
-                          ) : null}
-                        </div>
-                        <span className="browse-row-city">{gym.city}</span>
-                        <span className="browse-row-address">
-                          {gym.address
-                            .replace(
-                              new RegExp(`,\\s*${gym.city}\\s*$`, "i"),
-                              "",
-                            )
-                            .trim()}
-                        </span>
-                        <span className="browse-row-price">
-                          {priceLabel ?? t("priceUnknown")}
-                        </span>
-                        <div className="browse-row-tags">
-                          {offer.is247 === true ? (
-                            <span className="browse-tag is-247">24/7</span>
-                          ) : null}
-                          {offer.freeTrial === true ? (
-                            <span className="browse-tag is-trial">
-                              Ilmainen kokeilu
-                            </span>
-                          ) : null}
-                          {offer.dayPass === true ? (
-                            <span className="browse-tag is-daypass">
-                              Päivälippu
-                            </span>
-                          ) : null}
-                        </div>
-                      </div>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-
-            {inViewGyms.length > PAGE_SIZE ? (
-              <nav className="browse-pager" aria-label="Sivutus">
-                <button
-                  type="button"
-                  className="browse-pager-btn"
-                  disabled={safePage <= 1}
-                  onClick={() => {
-                  setPage((p) => Math.max(1, p - 1));
-                  window.scrollTo(0, 0);
-                }}
-                >
-                  <ChevronLeft size={18} strokeWidth={2.2} />
-                  <span>Edellinen</span>
-                </button>
-                <p className="browse-pager-status">
-                  Sivu {safePage} / {pageCount}
-                </p>
-                <button
-                  type="button"
-                  className="browse-pager-btn"
-                  disabled={safePage >= pageCount}
-                  onClick={() => {
-                  setPage((p) => Math.min(pageCount, p + 1));
-                  window.scrollTo(0, 0);
-                }}
-                >
-                  <span>Seuraava</span>
-                  <ChevronRight size={18} strokeWidth={2.2} />
-                </button>
-              </nav>
-            ) : null}
-          </div>
-        </section>
-
-        <section className="browse-map-col">
-          <div
-            className="browse-map-filters"
-            onClick={(e) => e.stopPropagation()}
-          >
+            <span className="browse-toolbar-sep" aria-hidden="true" />
             <div className="browse-filter">
               <button
                 type="button"
@@ -1688,7 +1525,7 @@ function GymsPage() {
               >
                 <img className="browse-filter-icon" src="/icons/hinta.png" alt="" />
                 <span className="browse-filter-label">
-                  {priceCap == null ? "Hinta" : `${priceCap} €`}
+                  {priceCap == null ? "Hinta" : `Hinta ≤ ${priceCap} €`}
                 </span>
                 <ChevronDown size={16} strokeWidth={2.2} />
               </button>
@@ -1901,11 +1738,207 @@ function GymsPage() {
                   setExtrasOpen(false);
                 }}
               >
-                {t("clear")}
+                {t("clearFiltersBtn")}
               </button>
             </div>
+      </div>
+      <div className="browse-body">
+        <section className="browse-list-frame">
+          <header className="browse-list-head">
+            <div className="browse-list-head-side">
+              <h1>{pageTitle}</h1>
+              <p className="browse-list-count">
+                {regionPickMode
+                  ? t("pickRegion")
+                  : selectedMaakunta
+                    ? t("placesInRegion", {
+                        region: selectedMaakunta,
+                        count: inViewGyms.length,
+                      })
+                    : t("placesCount", { count: inViewGyms.length })}
+              </p>
+              {inViewGyms.length > pageSize ? (
+                <nav className="browse-pager" aria-label="Sivutus">
+                  <button
+                    type="button"
+                    className="browse-pager-btn"
+                    aria-label="Edellinen"
+                    disabled={safePage <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  >
+                    <ChevronLeft size={16} strokeWidth={2.2} />
+                  </button>
+                  <p className="browse-pager-status">
+                    {safePage}/{pageCount}
+                  </p>
+                  <button
+                    type="button"
+                    className="browse-pager-btn"
+                    aria-label="Seuraava"
+                    disabled={safePage >= pageCount}
+                    onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                  >
+                    <ChevronRight size={16} strokeWidth={2.2} />
+                  </button>
+                </nav>
+              ) : null}
+            </div>
+            <div className="browse-sort">
+              <button
+                type="button"
+                className="browse-sort-btn"
+                aria-expanded={openFilter === "sort"}
+                aria-haspopup="listbox"
+                onClick={() => toggleFilter("sort")}
+              >
+                <ArrowUpDown size={16} strokeWidth={2.2} />
+                <span className="browse-sort-label">{sortLabel}</span>
+                <ChevronDown
+                  className="browse-sort-chevron"
+                  size={16}
+                  strokeWidth={2.2}
+                />
+              </button>
+              {openFilter === "sort" ? (
+                <ul className="browse-sort-menu" role="listbox">
+                  {sortOptions.map((opt) => (
+                    <li key={opt.id}>
+                      <button
+                        type="button"
+                        className={opt.id === sortId ? "is-on" : ""}
+                        role="option"
+                        aria-selected={opt.id === sortId}
+                        onClick={() => {
+                          setSortId(opt.id);
+                          setOpenFilter(null);
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          </header>
+          <div className="browse-list-scroll" ref={listScrollRef}>
+            {regionPickMode ? (
+              <p className="browse-region-empty">{t("pickRegion")}</p>
+            ) : null}
+            <ul className={browseReady ? "browse-rows list-pop" : "browse-rows"}>
+              {pageGyms.map((gym, i) => {
+                const chain = chainForGym(gym, chains);
+                const offer = resolveGymOffer(gym, chain as Chain | null);
+                const distKm =
+                  gym.lat != null && gym.lng != null
+                    ? distanceKm(origin.lat, origin.lng, gym.lat, gym.lng)
+                    : null;
+                const pricePill = formatPricePill(offer.priceFrom);
+                const priceLabel = pricePill
+                  ? pricePill.replace("€/kk", " €/kk")
+                  : null;
+                return (
+                  <li
+                    key={gym.id}
+                    style={{ animationDelay: `${Math.min(i, 18) * 28}ms` }}
+                  >
+                    <Link
+                      to={pathGym(lang, gym.slug)}
+                      data-gym-id={gym.id}
+                      className={[
+                        "browse-row",
+                        hoveredId === gym.id ? "is-hovered" : "",
+                        selectedId === gym.id ? "is-selected" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      onMouseEnter={() => setHoveredId(gym.id)}
+                      onMouseLeave={() => setHoveredId(null)}
+                    >
+                      <span
+                        className={[
+                          "browse-row-media",
+                          chain?.image && !chain.image.includes("/pins/")
+                            ? chain.logoFit === "contain"
+                              ? "is-logo"
+                              : ""
+                            : "is-pin",
+                          chain?.image && !chain.image.includes("/pins/")
+                            ? chain.logoClass || ""
+                            : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      >
+                        <img
+                          src={
+                            chain?.image && !chain.image.includes("/pins/")
+                              ? chain.image
+                              : "/pins/gym-pin.png"
+                          }
+                          alt=""
+                        />
+                      </span>
+                      <div className="browse-row-text">
+                        <strong>{cleanGymDisplayName(gym.name)}</strong>
+                        <span className="browse-row-address">
+                          {gym.address
+                            .replace(
+                              new RegExp(
+                                `,?\\s*\\d{5}\\s+${gym.city}\\s*$`,
+                                "i",
+                              ),
+                              "",
+                            )
+                            .replace(
+                              new RegExp(`,\\s*${gym.city}\\s*$`, "i"),
+                              "",
+                            )
+                            .trim()}
+                        </span>
+                        <div className="browse-row-tags">
+                          {offer.is247 === true ? (
+                            <span className="browse-tag is-247">24/7</span>
+                          ) : null}
+                          {offer.freeTrial === true ? (
+                            <span className="browse-tag is-trial">
+                              Ilmainen kokeilu
+                            </span>
+                          ) : null}
+                          {offer.dayPass === true ? (
+                            <span className="browse-tag is-daypass">
+                              Päivälippu
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                      <span className="browse-row-side">
+                        <span className="browse-row-price">
+                          {priceLabel ?? t("priceUnknown")}
+                        </span>
+                        {distKm != null ? (
+                          <span className="browse-row-distance">
+                            {formatDistanceKm(distKm)}
+                          </span>
+                        ) : null}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+            {showMissing ? (
+              <p
+                className="browse-missing"
+                style={{ height: `${(emptyRows / rowSlots) * 100}%` }}
+              >
+                {t("missingGym")}
+                <span>{t("missingGymHint")}</span>
+              </p>
+            ) : null}
           </div>
-
+        </section>
+        <section className="browse-map-col">
           <div className="browse-map-frame">
             <div
               className="browse-map-side"

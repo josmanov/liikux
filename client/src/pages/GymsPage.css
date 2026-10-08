@@ -1,30 +1,62 @@
-html.browse-no-scrollbar,
-html.browse-no-scrollbar body {
-  scrollbar-width: none;
-}
-
-html.browse-no-scrollbar::-webkit-scrollbar,
-html.browse-no-scrollbar body::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  display: none;
-}
-
 .browse {
-  --browse-side: 3rem;
-  padding: 0 var(--browse-side) 1.25rem;
+  --browse-side: 32px;
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - 5.75rem);
+  min-height: 0;
+  padding: 16px var(--browse-side) 16px;
   box-sizing: border-box;
-  --header-bar-h: calc(3.4375rem + 2.2rem + 1px);
-  --browse-sticky-top: var(--header-bar-h);
-  --browse-panel-h: calc(100dvh - var(--header-bar-h) - 1.25rem);
+}
+
+.browse-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  padding: 0 0 16px;
+  position: relative;
+  z-index: 30;
+  background: var(--color-bg);
+}
+
+.browse-toolbar .browse-filters-actions {
+  display: contents;
+}
+
+.browse-toolbar-sep {
+  width: 1px;
+  height: 28px;
+  margin: 0 6px;
+  background: rgba(148, 163, 184, 0.45);
+  flex-shrink: 0;
+}
+
+.browse-list-head .browse-sort {
+  margin-left: auto;
 }
 
 .browse-body {
   display: grid;
-  grid-template-columns: minmax(340px, 520px) minmax(0, 1fr);
-  column-gap: var(--browse-side);
-  align-items: start;
-  min-height: var(--browse-panel-h);
+  grid-template-columns: 1fr 1fr;
+  column-gap: 1.25rem;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+.browse-list-frame {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  border-radius: 16px;
+  border: 1px solid #25324f;
+  background: #121c33;
+  overflow: hidden;
+  box-sizing: border-box;
+  padding: 0;
 }
 
 .browse-list-col {
@@ -78,7 +110,13 @@ html.browse-no-scrollbar body::-webkit-scrollbar {
 }
 
 .browse-list-scroll {
+  position: relative;
   width: 100%;
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   box-sizing: border-box;
 }
 
@@ -118,8 +156,8 @@ html.browse-no-scrollbar body::-webkit-scrollbar {
   align-items: center;
   gap: 0.4rem;
   min-height: 2.35rem;
-  height: 45px;
-  padding: 0.35rem 0.8rem;
+  height: 44px;
+  padding: 0 18px;
   border: 1.5px solid var(--color-border);
   border-radius: 999px;
   background: var(--color-surface);
@@ -146,11 +184,18 @@ html.browse-no-scrollbar body::-webkit-scrollbar {
 
 .browse-women-pill.is-on {
   border-color: var(--color-brand);
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
-.browse-filter-btn.is-on,
 .browse-filter-btn[aria-expanded="true"] {
   border-color: var(--color-brand);
+}
+
+.browse-filter-btn.is-on:not(.browse-women-pill) {
+  border-color: var(--color-brand);
+  background: var(--color-brand);
+  color: #1c1400;
 }
 
 .browse-filter-menu-range {
@@ -217,23 +262,23 @@ html.browse-no-scrollbar body::-webkit-scrollbar {
 .browse-filters-clear {
   display: inline-flex;
   align-items: center;
-  height: 45px;
-  padding: 0.35rem 0.95rem;
-  border: 1.5px solid #ef4444;
-  border-radius: 999px;
-  background: rgba(239, 68, 68, 0.12);
-  color: #f87171;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #ef4444;
   font-family: var(--font-body);
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   box-sizing: border-box;
   white-space: nowrap;
 }
 
 .browse-filters-clear:hover {
-  background: rgba(239, 68, 68, 0.22);
-  color: #fca5a5;
+  background: transparent;
+  color: #f87171;
 }
 
 .browse-filters-more {
@@ -661,21 +706,21 @@ html.browse-no-scrollbar body::-webkit-scrollbar {
   line-height: 28px;
   align-items: center;
   position: relative;
-  flex: 0 0 280px;
-  width: 280px;
-  min-width: 280px;
-  max-width: 280px;
+  flex: 0 1 440px;
+  width: 440px;
+  min-width: 220px;
+  max-width: 440px;
 }
 
 .browse-search-input {
   font-family: var(--font-body);
   width: 100%;
-  height: 45px;
-  padding-left: 2.5rem;
-  padding-right: 0.85rem;
+  height: 44px;
+  padding-left: 44px;
+  padding-right: 18px;
   box-shadow: 0 0 0 1.5px #2b2c37, 0 0 25px -17px #000;
   border: 0;
-  border-radius: 12px;
+  border-radius: 22px;
   background-color: #16171d;
   outline: none;
   color: #bdbecb;
@@ -711,7 +756,22 @@ html.browse-no-scrollbar body::-webkit-scrollbar {
   position: relative;
   flex: 0 0 auto;
   flex-shrink: 0;
-  margin-left: auto;
+  margin-left: 0;
+}
+
+.browse-list-head .browse-sort-btn {
+  height: 36px;
+  min-height: 0;
+  padding: 0 12px;
+  gap: 8px;
+  border: 0;
+  border-radius: 18px;
+  background: transparent;
+  font-size: 14px;
+}
+
+.browse-list-head .browse-sort-label {
+  flex: none;
 }
 
 .browse-sort-btn {
@@ -720,10 +780,8 @@ html.browse-no-scrollbar body::-webkit-scrollbar {
   gap: 0.45rem;
   min-height: 2.35rem;
   height: 45px;
-  width: 168px;
-  min-width: 168px;
-  max-width: 168px;
-  padding: 0.35rem 0.85rem;
+  width: auto;
+  padding: 0.35rem 0.95rem;
   border: 1.5px solid var(--color-border);
   border-radius: 999px;
   background: var(--color-surface);
@@ -790,26 +848,69 @@ html.browse-no-scrollbar body::-webkit-scrollbar {
 }
 
 .browse-list-head {
+  position: relative;
+  z-index: 4;
   flex-shrink: 0;
   display: flex;
   flex-direction: row;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.5rem 0 0.85rem;
+  padding: 10px 20px;
   box-sizing: border-box;
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .browse-list-head h1 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.browse-list-head-side {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
 }
 
 .browse-list-count {
   margin: 0;
   color: var(--color-muted);
-  font-size: 0.9rem;
+  font-size: 13px;
   white-space: nowrap;
+}
+
+.browse-missing {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0.4rem 1.25rem;
+  box-sizing: border-box;
+  pointer-events: none;
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.browse-missing span {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--color-brand);
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0;
 }
 
 .browse-region-empty {
@@ -823,18 +924,20 @@ html.browse-no-scrollbar body::-webkit-scrollbar {
 .browse-pager {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-top: 1rem;
-  padding: 0.35rem 0 0.75rem;
+  gap: 0.2rem;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0;
 }
 
 .browse-pager-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  height: 2.35rem;
-  padding: 0 0.85rem;
+  gap: 0.25rem;
+  height: 1.8rem;
+  width: 1.8rem;
+  padding: 0;
+  justify-content: center;
   border: 1.5px solid var(--color-border);
   border-radius: 999px;
   background: var(--color-surface);
@@ -867,40 +970,48 @@ html.browse-no-scrollbar body::-webkit-scrollbar {
 }
 
 .browse-rows {
+  --row-min: 78px;
   list-style: none;
   margin: 0;
   padding: 0;
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
+  grid-template-rows: repeat(var(--browse-row-count, 4), minmax(var(--row-min), 1fr));
+  align-content: stretch;
+  gap: 0;
   position: relative;
   z-index: 0;
-  transform: translateZ(0);
+}
+
+.browse-rows li {
+  min-width: 0;
+  min-height: 0;
 }
 
 .browse-row {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
-  gap: 0.75rem;
+  align-items: center;
+  gap: 8px;
+  min-height: 0;
+  overflow: hidden;
   width: 100%;
   height: 100%;
-  padding: 0.75rem;
-  border: 1.5px solid var(--color-border);
-  background: linear-gradient(
-    to top right,
-    transparent,
-    rgba(121, 121, 121, 0.16),
-    transparent
-  );
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  padding: 6px 12px;
+  border: 0;
+  border-left: 3px solid transparent;
+  border-bottom: 1px solid #1b2842;
+  background: transparent;
   text-align: left;
   cursor: pointer;
   font: inherit;
   color: inherit;
   text-decoration: none;
-  border-radius: 14px;
+  border-radius: 0;
   box-sizing: border-box;
   scroll-margin-top: 8rem;
   scroll-margin-bottom: 1rem;
@@ -908,25 +1019,18 @@ html.browse-no-scrollbar body::-webkit-scrollbar {
   z-index: 0;
 }
 
+.browse-rows li:nth-child(odd) .browse-row {
+  border-right: 1px solid #1b2842;
+}
+
 .browse-row.is-hovered {
-  background: linear-gradient(
-    to top right,
-    transparent,
-    rgba(121, 121, 121, 0.28),
-    transparent
-  );
-  border-color: #64748b;
+  background: #2a4468;
 }
 
 .browse-row.is-selected {
-  background: linear-gradient(
-    to top right,
-    transparent,
-    rgba(121, 121, 121, 0.2),
-    transparent
-  );
-  border-color: var(--color-brand);
-  box-shadow: inset 0 0 0 1.5px var(--color-brand);
+  background: #16233f;
+  border-left-color: var(--color-brand);
+  box-shadow: none;
   z-index: 0;
 }
 
@@ -934,12 +1038,11 @@ html.browse-no-scrollbar body::-webkit-scrollbar {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  position: sticky;
-  top: var(--browse-sticky-top);
-  align-self: start;
-  height: var(--browse-panel-h);
-  max-height: var(--browse-panel-h);
-  overflow: visible;
+  min-height: 0;
+  position: relative;
+  align-self: stretch;
+  height: 100%;
+  overflow: hidden;
   box-sizing: border-box;
   background: var(--color-bg);
 }
@@ -958,9 +1061,10 @@ html.browse-no-scrollbar body::-webkit-scrollbar {
 .browse-map-frame {
   position: relative;
   flex: 1 1 auto;
+  height: 100%;
   min-height: 0;
-  margin-top: 0.5rem;
-  border-radius: 12px;
+  margin-top: 0;
+  border-radius: 16px;
   overflow: hidden;
   border: 1px solid #e5e5e5;
   background: #e8e8e8;
@@ -1419,11 +1523,11 @@ html.browse-no-scrollbar body::-webkit-scrollbar {
   position: relative;
   display: grid;
   place-items: center;
-  width: 56px;
-  height: 56px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
   aspect-ratio: 1;
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
   isolation: isolate;
   border: 1px solid var(--color-border);
@@ -1584,7 +1688,7 @@ html.browse-no-scrollbar body::-webkit-scrollbar {
 .browse-row-text {
   display: flex;
   flex-direction: column;
-  gap: 0.28rem;
+  gap: 0;
   min-width: 0;
   flex: 1;
 }
@@ -1597,17 +1701,34 @@ html.browse-no-scrollbar body::-webkit-scrollbar {
 }
 
 .browse-row-text strong {
-  font-size: 0.95rem;
-  line-height: 1.25;
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
   color: var(--color-text);
   min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.browse-row-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-left: auto;
+  text-align: right;
 }
 
 .browse-row-distance {
   flex-shrink: 0;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--color-brand);
+  font-size: 12px;
+  margin-top: 1px;
+  font-weight: 600;
+  color: var(--color-muted);
   white-space: nowrap;
 }
 
@@ -1619,32 +1740,39 @@ html.browse-no-scrollbar body::-webkit-scrollbar {
 }
 
 .browse-row-address {
-  font-size: 0.78rem;
+  font-size: 12px;
+  margin-top: 1px;
   color: var(--color-muted);
   line-height: 1.35;
   opacity: 0.9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .browse-row-price {
-  font-size: 0.82rem;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--color-text);
-  line-height: 1.3;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .browse-row-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-top: 0.15rem;
+  align-content: flex-start;
+  gap: 4px;
+  margin-top: 3px;
+  min-height: 0;
 }
 
 .browse-tag {
   display: inline-flex;
   align-items: center;
-  padding: 0.18rem 0.45rem;
-  border-radius: 999px;
-  font-size: 0.68rem;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 10px;
   font-weight: 700;
   line-height: 1.2;
   white-space: nowrap;

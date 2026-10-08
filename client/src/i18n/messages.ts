@@ -44,6 +44,8 @@ const fi = {
   otherChains: "Yksityiset / muut",
   filters: "Suodattimet",
   filtersOn: "Suodattimet (päällä)",
+  filtersAll: "Kaikki suodattimet",
+  clearFiltersBtn: "Tyhjennä suodatus",
   backToBrowse: "Selaa kuntosaleja",
   open: "Avaa",
   clearFilters: "Tyhjennä",
@@ -51,6 +53,8 @@ const fi = {
   mapZoomIn: "Lähennä",
   mapZoomOut: "Loitonna",
   mapGoToLocation: "Siirry sijaintiin",
+  missingGym: "Puuttuuko sali?",
+  missingGymHint: "Ilmoita siitä meille.",
 };
 
 const en: typeof fi = {
@@ -97,6 +101,8 @@ const en: typeof fi = {
   otherChains: "Private / other",
   filters: "Filters",
   filtersOn: "Filters (on)",
+  filtersAll: "All filters",
+  clearFiltersBtn: "Clear filters",
   backToBrowse: "Browse gyms",
   open: "Open",
   clearFilters: "Clear",
@@ -104,6 +110,8 @@ const en: typeof fi = {
   mapZoomIn: "Zoom in",
   mapZoomOut: "Zoom out",
   mapGoToLocation: "Go to location",
+  missingGym: "Missing a gym?",
+  missingGymHint: "Tell us about it.",
 };
 
 const catalogs = { fi, en };
