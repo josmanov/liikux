@@ -4,6 +4,7 @@ import { Heart } from "lucide-react";
 import AreaSelect from "./AreaSelect";
 import FavoritesPopup from "./FavoritesPopup";
 import HeaderSearch from "./HeaderSearch";
+import { readFavoriteSlugs } from "../data/favorites";
 import { pathGyms, switchLangPath } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import { useChainPopup } from "../context/ChainPopupContext";
@@ -25,7 +26,20 @@ function Header() {
   const [favHover, setFavHover] = useState(false);
   const [favShown, setFavShown] = useState(0);
   const [favFilled, setFavFilled] = useState(false);
+  const [favCount, setFavCount] = useState(() => readFavoriteSlugs().length);
   const favOn = favHover || favoritesOpen;
+
+  useEffect(() => {
+    function syncFavs() {
+      setFavCount(readFavoriteSlugs().length);
+    }
+    window.addEventListener("favorites-changed", syncFavs);
+    window.addEventListener("storage", syncFavs);
+    return () => {
+      window.removeEventListener("favorites-changed", syncFavs);
+      window.removeEventListener("storage", syncFavs);
+    };
+  }, []);
 
   useEffect(() => {
     if (favOn) {
@@ -75,7 +89,9 @@ function Header() {
               (favShown > 0 ? " is-typing" : "") +
               (favFilled ? " is-full" : "")
             }
-            aria-label={favWord}
+            aria-label={
+              favCount > 0 ? `${favWord}, ${favCount}` : favWord
+            }
             onMouseEnter={() => setFavHover(true)}
             onMouseLeave={() => setFavHover(false)}
             onClick={() => setFavoritesOpen(true)}
@@ -90,7 +106,12 @@ function Header() {
                 </span>
               ))}
             </span>
-            <Heart size={20} strokeWidth={2.4} />
+            <span className="header-fav-icon">
+              <Heart size={20} strokeWidth={2.4} />
+              {favCount > 0 ? (
+                <span className="header-fav-count">{favCount}</span>
+              ) : null}
+            </span>
           </button>
         </nav>
       </div>

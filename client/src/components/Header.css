@@ -86,6 +86,31 @@
   gap: 0;
 }
 
+.header-fav-icon {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.header-fav-count {
+  position: absolute;
+  top: -0.4rem;
+  right: -0.52rem;
+  z-index: 1;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.22rem;
+  border-radius: 99px;
+  background: #e53935;
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1.05rem;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 0 0 2px var(--color-bg);
+}
+
 .header-fav svg {
   flex-shrink: 0;
   fill: transparent;
