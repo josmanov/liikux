@@ -45,7 +45,7 @@
 
 .header-search-input {
   font-family: var(--font-body);
-  width: 13.5rem;
+  width: 100%;
   min-height: 2.35rem;
   height: 2.35rem;
   padding-left: 0.9rem;

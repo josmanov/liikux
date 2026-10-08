@@ -4,10 +4,11 @@
   display: flex;
   flex-direction: column;
   background-color: var(--color-bg);
+  overflow-x: clip;
 }
 
 .layout.is-home .layout-content {
-  flex: 0 0 auto;
+  flex: 1 0 auto;
 }
 
 .layout.is-home .shell {

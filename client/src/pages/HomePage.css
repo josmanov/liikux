@@ -8,9 +8,8 @@
   padding: 0;
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden;
+  overflow: clip;
   gap: 0;
-  min-height: 0;
 }
 
 /*
@@ -26,12 +25,12 @@
   justify-content: flex-start;
   gap: 0;
   width: 100%;
-  flex: 1;
-  min-height: 0;
+  flex: 1 0 auto;
+  min-height: calc(100dvh - 5.75rem);
   margin: 0;
   padding: 1.5rem 1.25rem 2rem;
   text-align: center;
-  overflow-x: hidden;
+  overflow: clip;
   position: relative;
   isolation: isolate;
 }
@@ -39,7 +38,7 @@
 .hero::before {
   content: "";
   position: absolute;
-  inset: -8%;
+  inset: 0;
   z-index: 0;
   pointer-events: none;
   background: radial-gradient(
@@ -87,22 +86,26 @@
 
 .hero-icon-wrap {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: min(58%, calc(100% - 15rem));
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
+  contain: paint;
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0%,
-    #000 18%,
-    #000 76%,
+    #000 12%,
+    #000 70%,
     transparent 100%
   );
   mask-image: linear-gradient(
     to bottom,
     transparent 0%,
-    #000 18%,
-    #000 76%,
+    #000 12%,
+    #000 70%,
     transparent 100%
   );
 }
@@ -111,6 +114,7 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
+  contain: paint;
   opacity: 0.05;
   color: #fff;
   -webkit-mask-image: radial-gradient(
