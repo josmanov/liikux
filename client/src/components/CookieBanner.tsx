@@ -5,11 +5,13 @@ import {
   writeCookieConsent,
 } from "../data/cookieConsent";
 import { syncAnalyticsFromConsent } from "../analytics";
+import { useLang } from "../i18n/useLang";
 import UxSwitch from "./UxSwitch";
 import { useLockPageScroll } from "../hooks/useLockPageScroll";
 import "./CookieBanner.css";
 
 function CookieBanner() {
+  const { t } = useLang();
   const [bannerOpen, setBannerOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
   const [analyticsOn, setAnalyticsOn] = useState(false);
@@ -58,14 +60,11 @@ function CookieBanner() {
   return (
     <>
       {bannerOpen ? (
-        <div className="cookie-banner" role="dialog" aria-label="Evästeet">
+        <div className="cookie-banner" role="dialog" aria-label={t("cookies")}>
           <div className="cookie-banner-top">
             <div className="cookie-banner-main">
-              <p className="cookie-banner-title">Evästeet</p>
-              <p className="cookie-banner-text">
-                Pakolliset pitävät sivun kunnossa. Analytiikka ja toiminnalliset
-                ovat valinnaisia — voit sallia kaikki tai valita itse.
-              </p>
+              <p className="cookie-banner-title">{t("cookies")}</p>
+              <p className="cookie-banner-text">{t("cookieBannerText")}</p>
             </div>
 
             <div className="cookie-banner-actions">
@@ -74,21 +73,21 @@ function CookieBanner() {
                 className="cookie-banner-btn cookie-banner-btn-ghost"
                 onClick={openManage}
               >
-                Hallinnoi
+                {t("cookieManage")}
               </button>
               <button
                 type="button"
                 className="cookie-banner-btn cookie-banner-btn-ghost"
                 onClick={() => save(false, false)}
               >
-                Vain pakolliset
+                {t("cookieNecessaryOnly")}
               </button>
               <button
                 type="button"
                 className="cookie-banner-btn"
                 onClick={() => save(true, true)}
               >
-                Salli kaikki
+                {t("cookieAllowAll")}
               </button>
             </div>
           </div>
@@ -107,32 +106,29 @@ function CookieBanner() {
             className="cookie-modal"
             role="dialog"
             aria-modal="true"
-            aria-label="Hallinnoi evästeitä"
+            aria-label={t("cookieManageTitle")}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="cookie-modal-head">
-              <h2 className="cookie-modal-title">Hallinnoi evästeitä</h2>
-              <p className="cookie-modal-text">
-                Valitse mitä sallitaan. Pakolliset ovat aina käytössä.
-              </p>
+              <h2 className="cookie-modal-title">{t("cookieManageTitle")}</h2>
+              <p className="cookie-modal-text">{t("cookieManageText")}</p>
             </div>
 
             <div className="cookie-modal-options">
               <div className="cookie-row is-locked">
                 <span>
-                  <strong>Pakolliset</strong>
+                  <strong>{t("cookieNecessary")}</strong>
                   <span className="cookie-row-desc">
-                    Sivun toiminta, suosikit, kielivalinnat. Aina päällä.
+                    {t("cookieNecessaryDesc")}
                   </span>
                 </span>
                 <UxSwitch checked disabled dim />
               </div>
               <div className="cookie-row">
                 <span>
-                  <strong>Toiminnalliset</strong>
+                  <strong>{t("cookieFunctional")}</strong>
                   <span className="cookie-row-desc">
-                    Parantavat käyttökokemusta (esim. muistetut suodattimet ja
-                    asetukset).
+                    {t("cookieFunctionalDesc")}
                   </span>
                 </span>
                 <UxSwitch
@@ -142,10 +138,9 @@ function CookieBanner() {
               </div>
               <div className="cookie-row">
                 <span>
-                  <strong>Analytiikka</strong>
+                  <strong>{t("cookieAnalytics")}</strong>
                   <span className="cookie-row-desc">
-                    Käyttötilastot (esim. Google Analytics). Ladataan vain jos
-                    sallit.
+                    {t("cookieAnalyticsDesc")}
                   </span>
                 </span>
                 <UxSwitch
@@ -161,7 +156,7 @@ function CookieBanner() {
                 className="cookie-banner-btn"
                 onClick={() => save(analyticsOn, functionalOn)}
               >
-                Tallenna
+                {t("cookieSave")}
               </button>
             </div>
           </div>

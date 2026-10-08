@@ -320,11 +320,15 @@ function DualRange({
   hi,
   onLo,
   onHi,
+  minLabel,
+  maxLabel,
 }: {
   lo: number;
   hi: number;
   onLo: (n: number) => void;
   onHi: (n: number) => void;
+  minLabel: string;
+  maxLabel: string;
 }) {
   const span = PRICE_MAX - PRICE_MIN || 1;
   const left = ((lo - PRICE_MIN) / span) * 100;
@@ -343,7 +347,7 @@ function DualRange({
         max={PRICE_MAX}
         step={PRICE_STEP}
         value={lo}
-        aria-label="Minimihinta"
+        aria-label={minLabel}
         className="browse-dual-input is-lo"
         onChange={(e) => onLo(Math.min(Number(e.target.value), hi))}
       />
@@ -353,7 +357,7 @@ function DualRange({
         max={PRICE_MAX}
         step={PRICE_STEP}
         value={hi}
-        aria-label="Maksimihinta"
+        aria-label={maxLabel}
         className="browse-dual-input is-hi"
         onChange={(e) => onHi(Math.max(Number(e.target.value), lo))}
       />
@@ -1353,7 +1357,7 @@ function GymsPage() {
       hit.appendChild(media);
 
       if (g.priceFrom != null) {
-        const priceText = formatPricePill(g.priceFrom);
+        const priceText = formatPricePill(g.priceFrom, lang);
         if (priceText) {
           const pill = document.createElement("span");
           pill.className = "gym-pin-price";
@@ -1413,7 +1417,10 @@ function GymsPage() {
       el.className = "gym-cluster";
       el.style.setProperty("--pin-scale", String(scale));
       el.textContent = String(group.length);
-      el.setAttribute("aria-label", `${group.length} salia`);
+      el.setAttribute(
+        "aria-label",
+        t("gymsCount", { count: group.length }),
+      );
       el.addEventListener("click", () => {
         const bounds = new LngLatBounds();
         group.forEach((g) => {
@@ -1473,7 +1480,7 @@ function GymsPage() {
       const el = document.createElement("div");
       el.className = "gym-origin-pin";
       el.style.zIndex = "1000";
-      el.setAttribute("aria-label", "Lähtöosoite");
+      el.setAttribute("aria-label", t("fromAddressAria"));
       el.innerHTML =
         '<span class="gym-origin-pin-ring"></span>' +
         '<span class="gym-origin-pin-ring is-late"></span>' +
@@ -1535,7 +1542,16 @@ function GymsPage() {
       originMarkerRef.current?.remove();
       originMarkerRef.current = null;
     };
-  }, [visibleGyms, mapReady, origin.lat, origin.lng, selectedMaakunta, chains]);
+  }, [
+    visibleGyms,
+    mapReady,
+    origin.lat,
+    origin.lng,
+    selectedMaakunta,
+    chains,
+    lang,
+    t,
+  ]);
 
   useEffect(() => {
     if (!maakunnatReady || maakuntaFeaturesRef.current.length === 0) return;
@@ -1760,7 +1776,7 @@ function GymsPage() {
                 onClick={() => toggleFilter("price")}
               >
                 <Euro className="browse-filter-icon" size={18} strokeWidth={2.2} />
-                <span className="browse-filter-label">Hinta</span>
+                <span className="browse-filter-label">{t("price")}</span>
                 <span className="browse-filter-info">{priceInfo}</span>
                 <ChevronDown size={16} strokeWidth={2.2} />
               </button>
@@ -1768,14 +1784,14 @@ function GymsPage() {
                 <div
                   className="browse-filter-menu browse-filter-menu-range"
                   role="dialog"
-                  aria-label="Hinta"
+                  aria-label={t("price")}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="browse-range">
                     <div className="browse-distance-head">
                       <span className="browse-slider-title">
                         <Euro size={16} strokeWidth={2.2} />
-                        Hinta
+                        {t("price")}
                       </span>
                       <strong>
                         {priceMin} – {priceMax} €
@@ -1786,6 +1802,8 @@ function GymsPage() {
                       hi={priceMax}
                       onLo={setPriceMin}
                       onHi={setPriceMax}
+                      minLabel={t("priceMinAria")}
+                      maxLabel={t("priceMaxAria")}
                     />
                     <div className="browse-dual-ends">
                       <span>{PRICE_MIN} €</span>
@@ -1810,7 +1828,7 @@ function GymsPage() {
                 onClick={() => toggleFilter("distance")}
               >
                 <Route className="browse-filter-icon" size={18} strokeWidth={2.2} />
-                <span className="browse-filter-label">Etäisyys</span>
+                <span className="browse-filter-label">{t("distance")}</span>
                 <span className="browse-filter-info">
                   {maxDistanceKm != null ? `· ${maxDistanceKm} km` : ""}
                 </span>
@@ -1820,17 +1838,19 @@ function GymsPage() {
                 <div
                   className="browse-filter-menu browse-filter-menu-range is-wide"
                   role="dialog"
-                  aria-label="Etäisyys"
+                  aria-label={t("distance")}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="browse-range">
                     <div className="browse-distance-head">
                       <span className="browse-slider-title">
                         <Route size={16} strokeWidth={2.2} />
-                        Max etäisyys
+                        {t("distanceMax")}
                       </span>
                       <strong>
-                        {maxDistanceKm == null ? "Kaikki" : `${maxDistanceKm} km`}
+                        {maxDistanceKm == null
+                          ? t("distanceAll")
+                          : `${maxDistanceKm} km`}
                       </strong>
                     </div>
                     <div className="browse-dual">
@@ -1854,11 +1874,11 @@ function GymsPage() {
                         max={distancePresets.length - 1}
                         step={1}
                         value={distancePresetIndex}
-                        aria-label="Max etäisyys"
+                        aria-label={t("distanceMax")}
                         aria-valuetext={
                           maxDistanceKm == null
-                            ? "Kaikki"
-                            : `${maxDistanceKm} kilometriä`
+                            ? t("distanceAll")
+                            : t("distanceKm", { km: maxDistanceKm })
                         }
                         onChange={(e) => {
                           const next =
@@ -1880,7 +1900,7 @@ function GymsPage() {
                           }
                           onClick={() => setDistanceFilter(opt.id)}
                         >
-                          {opt.id === "all" ? "Kaikki" : `${opt.km} km`}
+                          {opt.label}
                         </button>
                       ))}
                     </div>
@@ -2015,9 +2035,11 @@ function GymsPage() {
                   gym.lat != null && gym.lng != null
                     ? distanceKm(origin.lat, origin.lng, gym.lat, gym.lng)
                     : null;
-                const pricePill = formatPricePill(offer.priceFrom);
+                const pricePill = formatPricePill(offer.priceFrom, lang);
                 const priceLabel = pricePill
-                  ? pricePill.replace("€/kk", " €/kk")
+                  ? pricePill
+                      .replace("€/kk", " €/kk")
+                      .replace("€/mo", " €/mo")
                   : null;
                 const isFav = favoriteSlugs.includes(gym.slug);
                 return (
@@ -2088,12 +2110,12 @@ function GymsPage() {
                             ) : null}
                             {offer.freeTrial === true ? (
                               <span className="browse-tag is-trial">
-                                Ilmainen kokeilu
+                                {t("freeTrial")}
                               </span>
                             ) : null}
                             {offer.dayPass === true ? (
                               <span className="browse-tag is-daypass">
-                                Päivälippu
+                                {t("priceDayPass")}
                               </span>
                             ) : null}
                           </div>
@@ -2148,7 +2170,7 @@ function GymsPage() {
                 <button
                   type="button"
                   className="browse-pager-btn"
-                  aria-label="Edellinen"
+                  aria-label={t("previous")}
                   disabled={safePage <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
@@ -2179,7 +2201,7 @@ function GymsPage() {
                 <button
                   type="button"
                   className="browse-pager-btn"
-                  aria-label="Seuraava"
+                  aria-label={t("next")}
                   disabled={safePage >= pageCount}
                   onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
                 >
@@ -2306,7 +2328,7 @@ function GymsPage() {
                 <LocateFixed size={17} strokeWidth={2.4} />
               </button>
             </div>
-            <div className="browse-map" aria-label="Kartta" ref={mapRef} />
+            <div className="browse-map" aria-label={t("map")} ref={mapRef} />
             <p className="browse-region-hint">
               {selectedMaakunta ?? t("pickRegion")}
             </p>
@@ -2315,7 +2337,7 @@ function GymsPage() {
                 <button
                   type="button"
                   className="browse-map-preview-close"
-                  aria-label="Sulje"
+                  aria-label={t("close")}
                   onClick={() => setSelectedId(null)}
                 >
                   <X size={16} strokeWidth={2.2} />
@@ -2385,17 +2407,15 @@ function GymsPage() {
           >
             <div className="browse-extras-head">
               <h2 className="browse-extras-title">{t("filters")}</h2>
-              <p className="browse-extras-text">
-                Valitse lisäehdot. Voit ottaa useita päälle yhtä aikaa.
-              </p>
+              <p className="browse-extras-text">{t("extrasHint")}</p>
             </div>
 
             <div className="browse-extras-options">
               <label className="browse-extras-row">
                 <span>
-                  <strong>24/7</strong>
+                  <strong>{t("open247")}</strong>
                   <span className="browse-extras-desc">
-                    Avoinna ympäri vuorokauden.
+                    {t("open247Desc")}
                   </span>
                 </span>
                 <UxSwitch
@@ -2405,9 +2425,9 @@ function GymsPage() {
               </label>
               <label className="browse-extras-row">
                 <span>
-                  <strong>Ilmainen kokeilu</strong>
+                  <strong>{t("freeTrial")}</strong>
                   <span className="browse-extras-desc">
-                    Ketju tai sali tarjoaa kokeilujakson.
+                    {t("freeTrialDesc")}
                   </span>
                 </span>
                 <UxSwitch
@@ -2417,9 +2437,9 @@ function GymsPage() {
               </label>
               <label className="browse-extras-row">
                 <span>
-                  <strong>Päivälippu</strong>
+                  <strong>{t("priceDayPass")}</strong>
                   <span className="browse-extras-desc">
-                    Kertakäynti tai päivälippu saatavilla.
+                    {t("dayPassDesc")}
                   </span>
                 </span>
                 <UxSwitch
@@ -2446,7 +2466,7 @@ function GymsPage() {
                 className="browse-extras-btn"
                 onClick={() => setExtrasOpen(false)}
               >
-                Valmis
+                {t("done")}
               </button>
             </div>
           </div>
@@ -2473,7 +2493,7 @@ function GymsPage() {
                       type="button"
                       className="chain-popup-close"
                       onClick={() => setChainsOpen(false)}
-                      aria-label="Sulje"
+                      aria-label={t("close")}
                     >
                       <X size={20} strokeWidth={2.4} />
                     </button>

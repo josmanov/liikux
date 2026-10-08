@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, LocateFixed, MapPin, Search } from "lucide-react";
 import { useAppLocation } from "../context/LocationContext";
 import { useAddressSuggest, type GeoHit } from "../data/geocode";
+import { useLang } from "../i18n/useLang";
 import "./AreaSelect.css";
 import LoadSpin from "./LoadSpin";
 
 const cities = ["Helsinki", "Espoo", "Vantaa", "Tampere", "Turku", "Oulu"];
 
 function AreaSelect() {
+  const { t } = useLang();
   const { label, lat, lng, setLocation, useMyLocation } = useAppLocation();
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -55,13 +57,13 @@ function AreaSelect() {
       </button>
 
       {open ? (
-        <div className="area-select-panel" role="dialog" aria-label="Sijainti">
+        <div className="area-select-panel" role="dialog" aria-label={t("location")}>
           <div className="area-select-field">
             <Search className="area-select-field-icon" size={16} strokeWidth={2.2} />
             <input
               className="area-select-input"
               type="text"
-              placeholder="Syötä osoite…"
+              placeholder={t("addressPlaceholder")}
               value={draft}
               autoFocus
               onChange={(e) => setDraft(e.target.value)}
@@ -74,7 +76,7 @@ function AreaSelect() {
             <button
               type="button"
               className="area-select-locate"
-              aria-label="Käytä sijaintiani"
+              aria-label={t("useMyLocation")}
               onClick={() => {
                 void useMyLocation().then(() => setOpen(false));
               }}
@@ -91,7 +93,7 @@ function AreaSelect() {
                 </li>
               ) : null}
               {!loading && suggestions.length === 0 ? (
-                <li className="area-select-hint">Ei tuloksia</li>
+                <li className="area-select-hint">{t("noResults")}</li>
               ) : null}
               {suggestions.map((item) => (
                 <li key={item.id}>

@@ -213,7 +213,7 @@ function ChainPopup() {
                   setSelectedSlug(null);
                   setQuery("");
                 }}
-                aria-label="Takaisin ketjuihin"
+                aria-label={t("backToChains")}
               >
                 <ArrowLeft size={18} strokeWidth={2.4} />
               </button>
@@ -221,7 +221,7 @@ function ChainPopup() {
             <h2 className="chain-popup-title">
               {showingGyms && selectedChain
                 ? selectedChain.slug === "muut"
-                  ? "Muut kuntosalit"
+                  ? t("otherGyms")
                   : selectedChain.name
                 : t("allGymChains")}
             </h2>
@@ -229,7 +229,7 @@ function ChainPopup() {
               type="button"
               className="chain-popup-close"
               onClick={close}
-              aria-label="Sulje"
+              aria-label={t("close")}
             >
               <X size={20} strokeWidth={2.4} />
             </button>
@@ -244,7 +244,7 @@ function ChainPopup() {
               <input
                 className="input"
                 type="search"
-                placeholder={showingGyms ? "Etsi salia..." : "Etsi ketjua..."}
+                placeholder={showingGyms ? t("gymSearch") : t("chainSearch")}
                 name="searchbar"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -253,8 +253,10 @@ function ChainPopup() {
           </div>
           {showingGyms && selectedChain ? (
             <p className="chain-popup-sub">
-              {gymList.length} salia
-              {location.label ? ` · lähimmät ensin (${location.label})` : ""}
+              {t("gymsCount", { count: gymList.length })}
+              {location.label
+                ? ` ${t("nearestFirstAt", { label: location.label })}`
+                : ""}
             </p>
           ) : null}
         </div>
@@ -309,7 +311,7 @@ function ChainPopup() {
                     <div className="chain-popup-text">
                       <strong>
                         {chain.slug === "muut"
-                          ? "Muut kuntosalit"
+                          ? t("otherGyms")
                           : chain.name}
                       </strong>
                       <p className="chain-popup-blurb">
@@ -332,7 +334,7 @@ function ChainPopup() {
               ))
             : gymList.map(({ gym, km }, i) => {
                 const offer = resolveGymOffer(gym, selectedChain);
-                const priceLabel = formatPriceFrom(offer.priceFrom);
+                const priceLabel = formatPriceFrom(offer.priceFrom, lang);
                 const hours =
                   offer.is247 === true
                     ? "24/7"
@@ -380,7 +382,7 @@ function ChainPopup() {
                         </p>
                         <p className="chain-popup-meta">
                           {km != null ? <span>{formatKm(km)}</span> : null}
-                          <span>{priceLabel ?? "Hinta ei tiedossa"}</span>
+                          <span>{priceLabel ?? t("priceUnknown")}</span>
                           {hours ? <span>{hours}</span> : null}
                         </p>
                       </div>
@@ -390,12 +392,14 @@ function ChainPopup() {
               })}
           {!showingGyms && chainList.length === 0 ? (
             <li className="chain-popup-empty">
-              Ei ketjuja{q ? ` haulla “${query}”` : ""}.
+              {q ? t("noChainsQuery", { q: query }) : t("noChains")}
             </li>
           ) : null}
           {showingGyms && gymList.length === 0 ? (
             <li className="chain-popup-empty">
-              Ei saleja{q ? ` haulla “${query}”` : ""} tässä ketjussa.
+              {q
+                ? t("noGymsInChainQuery", { q: query })
+                : t("noGymsInChain")}
             </li>
           ) : null}
         </ul>

@@ -105,7 +105,7 @@ function HeaderSearch() {
           ref={inputRef}
           className="header-search-input"
           type="search"
-          placeholder="Etsi..."
+          placeholder={t("searchShort")}
           value={query}
           tabIndex={expanded ? 0 : -1}
           onChange={(e) => {
@@ -152,12 +152,12 @@ function HeaderSearch() {
               <LoadSpin size="sm" />
             </div>
           ) : !hasHits ? (
-            <p className="header-search-empty">Ei tuloksia</p>
+            <p className="header-search-empty">{t("noResults")}</p>
           ) : (
             <>
               {chainHits.length > 0 ? (
                 <div className="header-search-section">
-                  <p className="header-search-section-label">Ketjut</p>
+                  <p className="header-search-section-label">{t("chains")}</p>
                   <ul className="list-pop">
                     {chainHits.map((chain, i) => (
                       <li
@@ -186,7 +186,7 @@ function HeaderSearch() {
               ) : null}
               {gymHits.length > 0 ? (
                 <div className="header-search-section">
-                  <p className="header-search-section-label">Salit</p>
+                  <p className="header-search-section-label">{t("gymsShort")}</p>
                   <ul className="list-pop">
                     {gymHits.map((gym, i) => (
                       <li

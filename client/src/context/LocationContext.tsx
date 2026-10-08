@@ -1,6 +1,7 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -27,6 +28,7 @@ type LocationContextValue = {
 
 const LocationContext = createContext<LocationContextValue | null>(null);
 
+const STORAGE_KEY = "liikux-location";
 const DEFAULT_LABEL = "Helsinki";
 
 const cityCenters: Record<string, LocationCoords> = {
@@ -45,10 +47,70 @@ function coordsForLabel(label: string): LocationCoords | null {
   return key ? cityCenters[key] : null;
 }
 
+function readStoredLocation(): {
+  label: string;
+  lat: number | null;
+  lng: number | null;
+} {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return {
+        label: DEFAULT_LABEL,
+        lat: cityCenters.Helsinki.lat,
+        lng: cityCenters.Helsinki.lng,
+      };
+    }
+    const parsed = JSON.parse(raw) as {
+      label?: unknown;
+      lat?: unknown;
+      lng?: unknown;
+    };
+    const label =
+      typeof parsed.label === "string" && parsed.label.trim()
+        ? parsed.label.trim()
+        : DEFAULT_LABEL;
+    const lat = typeof parsed.lat === "number" ? parsed.lat : null;
+    const lng = typeof parsed.lng === "number" ? parsed.lng : null;
+    if (lat != null && lng != null) {
+      return { label, lat, lng };
+    }
+    const fromCity = coordsForLabel(label);
+    return {
+      label,
+      lat: fromCity?.lat ?? cityCenters.Helsinki.lat,
+      lng: fromCity?.lng ?? cityCenters.Helsinki.lng,
+    };
+  } catch {
+    return {
+      label: DEFAULT_LABEL,
+      lat: cityCenters.Helsinki.lat,
+      lng: cityCenters.Helsinki.lng,
+    };
+  }
+}
+
+function writeStoredLocation(next: {
+  label: string;
+  lat: number | null;
+  lng: number | null;
+}) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  } catch {
+    /* ignore */
+  }
+}
+
 export function LocationProvider({ children }: { children: ReactNode }) {
-  const [label, setLabelState] = useState(DEFAULT_LABEL);
-  const [lat, setLat] = useState<number | null>(cityCenters.Helsinki.lat);
-  const [lng, setLng] = useState<number | null>(cityCenters.Helsinki.lng);
+  const start = readStoredLocation();
+  const [label, setLabelState] = useState(start.label);
+  const [lat, setLat] = useState<number | null>(start.lat);
+  const [lng, setLng] = useState<number | null>(start.lng);
+
+  useEffect(() => {
+    writeStoredLocation({ label, lat, lng });
+  }, [label, lat, lng]);
 
   const value = useMemo(
     () => ({

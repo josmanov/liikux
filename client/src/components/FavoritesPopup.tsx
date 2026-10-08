@@ -138,7 +138,7 @@ function FavoritesPopup({ open, onClose }: Props) {
               type="button"
               className="chain-popup-close"
               onClick={handleClose}
-              aria-label="Sulje"
+              aria-label={t("close")}
             >
               <X size={20} strokeWidth={2.4} />
             </button>
@@ -153,7 +153,7 @@ function FavoritesPopup({ open, onClose }: Props) {
               <input
                 className="input"
                 type="search"
-                placeholder="Etsi suosikkia..."
+                placeholder={t("favoriteSearch")}
                 name="searchbar"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
@@ -189,7 +189,7 @@ function FavoritesPopup({ open, onClose }: Props) {
                     : "/pins/gym-pin.png";
                 const isPin = img.includes("/pins/");
                 const offer = resolveGymOffer(gym, chain ?? null);
-                const priceLabel = formatPriceFrom(offer.priceFrom);
+                const priceLabel = formatPriceFrom(offer.priceFrom, lang);
                 const distKm =
                   originLat != null &&
                   originLng != null &&
@@ -267,8 +267,8 @@ function FavoritesPopup({ open, onClose }: Props) {
               {list.length === 0 ? (
                 <li className="chain-popup-empty">
                   {q
-                    ? `Ei suosikkeja haulla “${query}”.`
-                    : "Ei suosikkeja vielä. Merkitse sali suosikiksi, niin se näkyy täällä."}
+                    ? t("favoritesEmptyQuery", { q: query })
+                    : t("favoritesEmpty")}
                 </li>
               ) : null}
             </ul>

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { langFromPath, type Lang } from "./lang";
 import { t, type MessageKey } from "./messages";
@@ -11,9 +11,12 @@ export function useLang() {
     document.documentElement.lang = lang;
   }, [lang]);
 
-  function tr(key: MessageKey, vars?: Record<string, string | number>) {
-    return t(lang, key, vars);
-  }
+  const tr = useCallback(
+    (key: MessageKey, vars?: Record<string, string | number>) => {
+      return t(lang, key, vars);
+    },
+    [lang],
+  );
 
   return { lang, t: tr };
 }

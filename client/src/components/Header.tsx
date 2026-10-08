@@ -122,11 +122,7 @@ function Header() {
           type="button"
           className="header-lang playstore-button is-plain"
           aria-label={nextLang === "en" ? t("langEn") : t("langFi")}
-          title={
-            nextLang === "en"
-              ? "Switch to English"
-              : "Vaihda suomeksi"
-          }
+          title={nextLang === "en" ? t("switchToEn") : t("switchToFi")}
           onClick={() => {
             window.location.assign(
               switchLangPath(

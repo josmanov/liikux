@@ -1,22 +1,30 @@
+import type { Lang } from "../i18n/lang";
+
 export function formatDistanceKm(km: number) {
   if (km < 10) return `${km.toFixed(1).replace(".", ",")} km`;
   return `${Math.round(km)} km`;
 }
 
-export function formatPriceFrom(eur: number | null | undefined) {
+export function formatPriceFrom(
+  eur: number | null | undefined,
+  lang: Lang = "fi",
+) {
   if (eur == null || !Number.isFinite(eur)) return null;
   const text = Number.isInteger(eur)
     ? String(eur)
     : String(Number(eur.toFixed(2))).replace(".", ",");
-  return `alk. ${text} €/kk`;
+  return lang === "en" ? `from ${text} €/mo` : `alk. ${text} €/kk`;
 }
 
-export function formatPricePill(eur: number | null | undefined) {
+export function formatPricePill(
+  eur: number | null | undefined,
+  lang: Lang = "fi",
+) {
   if (eur == null || !Number.isFinite(eur)) return null;
   const text = Number.isInteger(eur)
     ? String(eur)
     : String(Number(eur.toFixed(1))).replace(".", ",");
-  return `${text}€/kk`;
+  return lang === "en" ? `${text}€/mo` : `${text}€/kk`;
 }
 
 export function cleanGymDisplayName(name: string) {
