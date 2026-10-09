@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ChevronDown, LocateFixed, MapPin, Search } from "lucide-react";
 import { useAppLocation } from "../context/LocationContext";
+import { fetchGyms } from "../data/api";
 import { useAddressSuggest, type GeoHit } from "../data/geocode";
+import { pathGyms } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import "./AreaSelect.css";
 import LoadSpin from "./LoadSpin";
@@ -9,15 +12,32 @@ import LoadSpin from "./LoadSpin";
 const cities = ["Helsinki", "Espoo", "Vantaa", "Tampere", "Turku", "Oulu"];
 
 function AreaSelect() {
-  const { t } = useLang();
+  const { lang, t } = useLang();
+  const navigate = useNavigate();
   const { label, lat, lng, setLocation, useMyLocation } = useAppLocation();
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
+  const [cityCounts, setCityCounts] = useState<Record<string, number> | null>(
+    null,
+  );
   const { hits: suggestions, loading } = useAddressSuggest(draft, open, {
     lat,
     lng,
   });
+
+  useEffect(() => {
+    fetchGyms().then((gyms) => {
+      const next: Record<string, number> = {};
+      for (const name of cities) next[name] = 0;
+      for (const gym of gyms) {
+        const city = gym.city.trim().toLowerCase();
+        const key = cities.find((name) => name.toLowerCase() === city);
+        if (key) next[key] += 1;
+      }
+      setCityCounts(next);
+    });
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -30,14 +50,19 @@ function AreaSelect() {
     return () => window.removeEventListener("click", close, true);
   }, [open]);
 
+  function goBrowse() {
+    setOpen(false);
+    navigate(pathGyms(lang), { state: { focusOrigin: true } });
+  }
+
   function pickSuggestion(item: GeoHit) {
     setLocation({ label: item.label, lat: item.lat, lng: item.lng });
-    setOpen(false);
+    goBrowse();
   }
 
   function pickCity(name: string) {
     setLocation({ label: name });
-    setOpen(false);
+    goBrowse();
   }
 
   const showSuggestions = draft.trim().length >= 3;
@@ -68,9 +93,11 @@ function AreaSelect() {
               autoFocus
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                }
+                if (e.key !== "Enter") return;
+                e.preventDefault();
+                const first = suggestions[0];
+                if (!first) return;
+                pickSuggestion(first);
               }}
             />
             <button
@@ -78,7 +105,7 @@ function AreaSelect() {
               className="area-select-locate"
               aria-label={t("useMyLocation")}
               onClick={() => {
-                void useMyLocation().then(() => setOpen(false));
+                void useMyLocation().then(() => goBrowse());
               }}
             >
               <LocateFixed size={16} strokeWidth={2.2} />
@@ -121,7 +148,16 @@ function AreaSelect() {
                       aria-selected={name === label}
                       onClick={() => pickCity(name)}
                     >
-                      {name}
+                      <span>{name}</span>
+                      {cityCounts ? (
+                        <span className="area-select-city-count">
+                          {cityCounts[name] === 1
+                            ? t("chainGymCountOne")
+                            : t("chainGymCount", {
+                                count: cityCounts[name] ?? 0,
+                              })}
+                        </span>
+                      ) : null}
                     </button>
                   </li>
                 ))}

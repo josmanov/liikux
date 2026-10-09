@@ -309,6 +309,8 @@ function HomePage() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
+                    const first = suggestions[0];
+                    if (first) goBrowseWithPick(first);
                   }
                   if (e.key === "Escape") {
                     setSuggestOpen(false);

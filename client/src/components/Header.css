@@ -67,8 +67,9 @@
   cursor: pointer;
 }
 
-.header-nav-link:hover {
-  color: #fff;
+.header-nav-link:hover:not(.header-fav) {
+  color: #64748b;
+  background: transparent;
 }
 
 .header-nav-link.is-on::after {
@@ -127,7 +128,11 @@
   overflow: hidden;
   white-space: nowrap;
   padding-right: 0;
-  transition: padding-right 0.1s ease;
+  transition: padding-right 0.1s ease, color 0.15s ease;
+}
+
+.header-fav:hover .header-fav-label {
+  color: #64748b;
 }
 
 .header-fav.is-typing .header-fav-label {

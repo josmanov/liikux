@@ -24,10 +24,11 @@ function Header() {
     location.pathname.startsWith(lang === "en" ? "/en/chain/" : "/fi/ketju/");
   const favWord = t("favorites");
   const [favHover, setFavHover] = useState(false);
+  const [favKept, setFavKept] = useState(false);
   const [favShown, setFavShown] = useState(0);
   const [favFilled, setFavFilled] = useState(false);
   const [favCount, setFavCount] = useState(() => readFavoriteSlugs().length);
-  const favOn = favHover || favoritesOpen;
+  const favOn = favHover || favKept || favoritesOpen;
 
   useEffect(() => {
     function syncFavs() {
@@ -60,6 +61,10 @@ function Header() {
     setFavFilled(false);
   }, [favOn, favShown, favWord]);
 
+  useEffect(() => {
+    if (favFilled && favHover) setFavKept(true);
+  }, [favFilled, favHover]);
+
   return (
     <header className="header">
       <div className="header-left">
@@ -87,7 +92,7 @@ function Header() {
             className={
               "header-nav-link header-fav" +
               (favShown > 0 ? " is-typing" : "") +
-              (favFilled ? " is-full" : "")
+              (favHover ? " is-full" : "")
             }
             aria-label={
               favCount > 0 ? `${favWord}, ${favCount}` : favWord

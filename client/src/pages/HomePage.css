@@ -952,9 +952,10 @@
 }
 
 .lajit-all:hover {
-  background: var(--color-brand);
+  background: var(--color-surface);
   border-color: var(--color-brand);
-  color: var(--color-on-brand);
+  color: var(--color-text);
+  outline: none;
 }
 
 @media (max-width: 900px) {

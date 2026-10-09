@@ -878,10 +878,19 @@
   cursor: pointer;
 }
 
-.browse-filter-menu button:hover,
-.browse-filter-menu button.is-on {
-  background: rgba(255, 191, 0, 0.18);
+.browse-filter-menu button:hover:not(.browse-filter-menu-action):not(.browse-filter-check):not(.browse-distance-mark) {
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--color-text);
+}
+
+.browse-filter-menu button.is-on:not(.browse-filter-menu-action):not(.browse-distance-mark) {
+  background: transparent;
   color: var(--color-brand);
+  box-shadow: inset 0 0 0 1.5px var(--color-brand);
+}
+
+.browse-filter-menu button.is-on:hover:not(.browse-filter-menu-action):not(.browse-distance-mark) {
+  background: rgba(0, 0, 0, 0.28);
 }
 
 .browse-filter-menu .browse-filter-menu-action.is-on {
@@ -1035,10 +1044,19 @@
   cursor: pointer;
 }
 
-.browse-sort-menu button:hover,
+.browse-sort-menu button:hover {
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--color-text);
+}
+
 .browse-sort-menu button.is-on {
-  background: rgba(255, 191, 0, 0.18);
+  background: transparent;
   color: var(--color-brand);
+  box-shadow: inset 0 0 0 1.5px var(--color-brand);
+}
+
+.browse-sort-menu button.is-on:hover {
+  background: rgba(0, 0, 0, 0.28);
 }
 
 .browse-list-head {
@@ -1356,6 +1374,114 @@
   width: 70%;
 }
 
+.browse-region-drop {
+  display: flex;
+  flex-direction: column;
+  width: 11.5rem;
+  max-width: 100%;
+  margin-top: 0.4rem;
+}
+
+.browse-region-drop-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+  width: auto;
+  min-height: 2.15rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 12px;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.browse-region-drop-btn svg {
+  flex-shrink: 0;
+  transition: transform 0.28s ease;
+}
+
+.browse-region-drop.is-open .browse-region-drop-btn svg {
+  transform: rotate(180deg);
+}
+
+.browse-region-drop-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  transition:
+    max-height 0.35s ease,
+    opacity 0.28s ease,
+    margin 0.28s ease;
+}
+
+.browse-region-drop.is-open .browse-region-drop-list {
+  max-height: 15.5rem;
+  margin-top: 0.35rem;
+  padding: 0.25rem 0.1rem 0.25rem 0;
+  opacity: 1;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.4) transparent;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(8, 12, 22, 0.94);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+.browse-region-drop-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.browse-region-drop-list::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 8px 0;
+}
+
+.browse-region-drop-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.38);
+  border-radius: 999px;
+}
+
+.browse-region-drop-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.browse-region-drop-list button {
+  display: block;
+  width: 100%;
+  padding: 0.45rem 0.45rem 0.45rem 0.7rem;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1.5px transparent;
+}
+
+.browse-region-drop-list button:hover,
+.browse-region-drop-list button.is-on:hover {
+  background: transparent;
+  color: #64748b;
+}
+
+.browse-region-drop-list button.is-on {
+  color: var(--color-brand);
+  box-shadow: inset 0 0 0 1.5px var(--color-brand);
+}
+
 .browse-map-address {
   display: flex;
   align-items: center;
@@ -1541,6 +1667,20 @@
   min-height: 0;
 }
 
+.browse-map-col .maplibregl-canvas,
+.gym-pin,
+.gym-cluster,
+.gym-origin-pin {
+  transition: filter 0.35s ease;
+}
+
+.browse.is-pin-selected .maplibregl-canvas,
+.browse.is-pin-selected .gym-pin:not(:has(.is-selected)),
+.browse.is-pin-selected .gym-cluster,
+.browse.is-pin-selected .gym-origin-pin {
+  filter: brightness(0.58);
+}
+
 .browse-region-hint {
   position: absolute;
   top: 0.75rem;
@@ -1571,8 +1711,9 @@
   z-index: 5;
   display: flex;
   align-items: center;
-  width: min(340px, calc(100% - 1.5rem));
-  padding: 0.55rem 2rem 0.55rem 0.55rem;
+  width: min(390px, calc(100% - 1.5rem));
+  padding: 0.55rem 1.7rem 0.55rem 0.55rem;
+  gap: 0.45rem;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: var(--color-surface);
@@ -1782,9 +1923,23 @@
 }
 
 .browse-map-preview-distance {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  min-width: 0;
   font-size: 0.78rem;
   font-weight: 600;
   color: #facc15;
+}
+
+.browse-map-preview-price {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #e2e8f0;
 }
 
 .browse-map-preview-open {
@@ -1799,6 +1954,7 @@
   color: #0b1220;
   font-size: 0.82rem;
   font-weight: 700;
+  text-decoration: none;
 }
 
 .browse-row-media {
@@ -2180,8 +2336,8 @@
 }
 
 .gym-pin.is-brand-pin {
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
 }
 
 .gym-pin.is-front {
@@ -2194,13 +2350,13 @@
   bottom: calc(100% + 6px);
   transform: translateX(-50%);
   z-index: 4;
-  padding: 0.12rem 0.38rem 0.18rem;
-  border: 1.5px solid #0b1220;
+  padding: 0.16rem 0.4rem 0.19rem;
+  border: 1.5px solid #111;
   border-radius: 999px;
-  background: var(--color-brand);
-  color: #0b1220;
+  background: #fff;
+  color: #111;
   font-family: var(--font-body);
-  font-size: 0.58rem;
+  font-size: 0.59rem;
   font-weight: 700;
   line-height: 1.1;
   white-space: nowrap;
@@ -2212,6 +2368,32 @@
   bottom: calc(100% + 6px);
 }
 
+.gym-pin-fav {
+  display: none;
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  z-index: 6;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 1px #111;
+  pointer-events: none;
+}
+
+.gym-pin.is-fav .gym-pin-fav {
+  display: grid;
+  place-items: center;
+}
+
+.gym-pin-fav svg {
+  width: 9px;
+  height: 9px;
+  fill: #e53935;
+  stroke: none;
+}
+
 .gym-pin-price::after {
   content: "";
   position: absolute;
@@ -2219,7 +2401,7 @@
   top: 100%;
   transform: translateX(-50%);
   border: 4px solid transparent;
-  border-top-color: #0b1220;
+  border-top-color: #111;
 }
 
 .gym-pin-price::before {
@@ -2230,29 +2412,48 @@
   transform: translateX(-50%);
   margin-top: -1.5px;
   border: 3px solid transparent;
-  border-top-color: var(--color-brand);
+  border-top-color: #fff;
   z-index: 1;
 }
 
 .gym-cluster {
-  width: 28px;
-  height: 28px;
+  position: relative;
+  width: 40px;
+  height: 40px;
   padding: 0;
-  border: 2px solid #0b1220;
-  border-radius: 999px;
-  background: #51bbd6;
-  color: #0b1220;
-  font-size: 0.72rem;
-  font-weight: 700;
-  line-height: 1;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  box-shadow: none;
+  display: block;
   transform: scale(var(--pin-scale, 1));
   transform-origin: center center;
   will-change: transform;
+}
+
+.gym-cluster img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.gym-cluster-count {
+  position: absolute;
+  left: 50%;
+  top: 61%;
+  transform: translate(-50%, -50%);
+  color: #111;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.gym-cluster-count.is-long {
+  font-size: 0.62rem;
 }
 
 .gym-pin-hit {
@@ -2266,7 +2467,7 @@
   background: transparent;
   cursor: pointer;
   overflow: visible;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 0 0 1.5px #111;
   transform: scale(1);
   transform-origin: center bottom;
   transition:
@@ -2287,6 +2488,7 @@
   background: #fff;
   padding: 3px;
   box-sizing: border-box;
+  box-shadow: 0 0 0 1.5px #111;
 }
 
 .gym-pin.is-plain-pin .gym-pin-media img {
@@ -2456,13 +2658,8 @@
 .gym-pin-hit.is-selected {
   transform: scale(1.35);
   outline: none;
-  border: 1.5px solid #0b1220;
-  box-sizing: border-box;
-  box-shadow:
-    0 0 0 1.5px #ffffff,
-    0 0 0 2.5px #0b1220,
-    0 0 12px 4px rgba(0, 0, 0, 0.32),
-    0 5px 14px rgba(0, 0, 0, 0.4);
+  border: 0;
+  box-shadow: 0 0 0 1.5px #111;
   z-index: 3;
 }
 

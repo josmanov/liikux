@@ -94,18 +94,29 @@ function HeaderSearch() {
     }
   }
 
+  function openField() {
+    ensureData();
+    setExpanded(true);
+  }
+
   return (
     <div
       className={expanded ? "header-search is-open" : "header-search"}
       ref={wrapRef}
-      onClick={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        openField();
+        inputRef.current?.focus();
+      }}
     >
       <div className="header-search-field">
+        <Search className="header-search-icon" size={20} strokeWidth={2.5} />
         <input
           ref={inputRef}
           className="header-search-input"
-          type="search"
+          type="text"
           placeholder={t("searchShort")}
+          aria-label={t("search")}
           value={query}
           tabIndex={expanded ? 0 : -1}
           onChange={(e) => {
@@ -128,22 +139,6 @@ function HeaderSearch() {
           }}
         />
       </div>
-      <button
-        type="button"
-        className="header-search-toggle"
-        aria-label={t("search")}
-        aria-expanded={expanded}
-        onClick={() => {
-          if (expanded) {
-            collapse();
-          } else {
-            ensureData();
-            setExpanded(true);
-          }
-        }}
-      >
-        <Search size={22} strokeWidth={2.7} />
-      </button>
 
       {showPanel ? (
         <div className="header-search-panel" role="listbox">

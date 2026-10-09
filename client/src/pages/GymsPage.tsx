@@ -493,6 +493,8 @@ function GymsPage() {
   const [dataReady, setDataReady] = useState(false);
   const [maakunnatReady, setMaakunnatReady] = useState(false);
   const [selectedMaakunta, setSelectedMaakunta] = useState<string | null>(null);
+  const [regionNames, setRegionNames] = useState<string[]>([]);
+  const [regionMenuOpen, setRegionMenuOpen] = useState(false);
   const [gymMaakuntaMap, setGymMaakuntaMap] = useState<Record<string, string>>(
     {},
   );
@@ -511,8 +513,10 @@ function GymsPage() {
   const markersRef = useRef(new globalThis.Map<string, Marker>());
   const originMarkerRef = useRef<Marker | null>(null);
   const selectFromMapRef = useRef(false);
+  const skipBoundsResetRef = useRef(false);
   const hoveredIdRef = useRef<string | null>(null);
   const selectedIdRef = useRef<string | null>(null);
+  const favoriteSlugsRef = useRef(favoriteSlugs);
   const visibleGymsRef = useRef<Gym[]>([]);
   const inViewGymsRef = useRef<Gym[]>([]);
   const chainsByIdRef = useRef(new globalThis.Map<string, Chain>());
@@ -522,6 +526,7 @@ function GymsPage() {
     { nimi: string; maakunta: string; geometry: MaakuntaGeom }[]
   >([]);
   const fitKeyRef = useRef("");
+  const regionDropRef = useRef<HTMLDivElement>(null);
   const prevFilterKeyRef = useRef<string | null>(null);
   const originRef = useRef({ lat: 60.1699, lng: 24.9384 });
   const focusOriginRef = useRef(
@@ -827,7 +832,18 @@ function GymsPage() {
   visibleGymsRef.current = visibleGyms;
   selectedMaakuntaRef.current = selectedMaakunta;
   regionPickModeRef.current = regionPickMode;
+  favoriteSlugsRef.current = favoriteSlugs;
   chainsByIdRef.current = new globalThis.Map(chains.map((c) => [c.id, c]));
+
+  useEffect(() => {
+    if (!regionMenuOpen) return;
+    function close(e: MouseEvent) {
+      if (regionDropRef.current?.contains(e.target as Node)) return;
+      setRegionMenuOpen(false);
+    }
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [regionMenuOpen]);
 
   const inViewGyms = useMemo(() => {
     if (regionPickMode) return [];
@@ -883,6 +899,16 @@ function GymsPage() {
       ? distanceKm(origin.lat, origin.lng, selectedGym.lat, selectedGym.lng)
       : null;
 
+  const selectedPriceText = (() => {
+    if (!selectedGym) return null;
+    const pill = formatPricePill(
+      resolveGymOffer(selectedGym, selectedChain).priceFrom,
+      lang,
+    );
+    if (!pill) return t("priceUnknown");
+    return pill.replace("€/kk", " €/kk").replace("€/mo", " €/mo");
+  })();
+
   const filterKey = [
     query,
     sortId,
@@ -908,6 +934,10 @@ function GymsPage() {
   }, [filterKey]);
 
   useEffect(() => {
+    if (skipBoundsResetRef.current) {
+      skipBoundsResetRef.current = false;
+      return;
+    }
     setPage(1);
     const id = window.requestAnimationFrame(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -1240,6 +1270,11 @@ function GymsPage() {
               /* fontti ei kaada alueita */
             }
             setMaakunnatReady(true);
+            setRegionNames(
+              maakuntaFeaturesRef.current
+                .map((f) => f.nimi)
+                .sort((a, b) => a.localeCompare(b, "fi")),
+            );
           }
         } catch {
           /* peite ei kaada karttaa */
@@ -1327,6 +1362,8 @@ function GymsPage() {
         .filter(Boolean)
         .join(" ");
       el.dataset.gymId = g.id;
+      el.dataset.gymSlug = g.slug;
+      if (favoriteSlugsRef.current.includes(g.slug)) el.classList.add("is-fav");
       el.style.setProperty("--pin-scale", String(scale));
       if (g.id === selectedIdRef.current) {
         el.classList.add("is-front");
@@ -1356,6 +1393,12 @@ function GymsPage() {
       media.appendChild(img);
       hit.appendChild(media);
 
+      const fav = document.createElement("span");
+      fav.className = "gym-pin-fav";
+      fav.innerHTML =
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-9.2C5 8 6.8 6.2 9.1 6.2c1.3 0 2.3.6 2.9 1.6.6-1 1.6-1.6 2.9-1.6 2.3 0 4.1 1.8 4.1 4.6C19 15.6 12 20 12 20z"/></svg>';
+      hit.appendChild(fav);
+
       if (g.priceFrom != null) {
         const priceText = formatPricePill(g.priceFrom, lang);
         if (priceText) {
@@ -1370,7 +1413,8 @@ function GymsPage() {
 
       hit.addEventListener("mouseenter", () => setHoveredId(g.id));
       hit.addEventListener("mouseleave", () => setHoveredId(null));
-      hit.addEventListener("click", () => {
+      hit.addEventListener("click", (e) => {
+        e.stopPropagation();
         markersRef.current.forEach((m, mid) => {
           const node = m.getElement();
           if (mid === g.id) {
@@ -1416,7 +1460,14 @@ function GymsPage() {
       el.type = "button";
       el.className = "gym-cluster";
       el.style.setProperty("--pin-scale", String(scale));
-      el.textContent = String(group.length);
+      const img = document.createElement("img");
+      img.src = "/pins/cluster-kettlebell.png";
+      img.alt = "";
+      const count = document.createElement("span");
+      count.className =
+        group.length > 9 ? "gym-cluster-count is-long" : "gym-cluster-count";
+      count.textContent = String(group.length);
+      el.append(img, count);
       el.setAttribute(
         "aria-label",
         t("gymsCount", { count: group.length }),
@@ -1524,6 +1575,38 @@ function GymsPage() {
       }
       syncPins();
       pushBounds();
+      const picked = selectedIdRef.current;
+      if (!picked) return;
+      const g = visibleGymsRef.current.find((x) => x.id === picked);
+      if (!g || g.lat == null || g.lng == null) return;
+      const b = map.getBounds();
+      const onScreen =
+        g.lng >= b.getWest() &&
+        g.lng <= b.getEast() &&
+        g.lat >= b.getSouth() &&
+        g.lat <= b.getNorth();
+      if (!onScreen) setSelectedId(null);
+    }
+
+    let dragged = false;
+    function onDragStart() {
+      dragged = true;
+    }
+    function onDragEnd() {
+      window.setTimeout(() => {
+        dragged = false;
+      }, 0);
+    }
+    function onMapClick(e: MapLayerMouseEvent) {
+      if (dragged) return;
+      const target = e.originalEvent.target;
+      if (
+        target instanceof Element &&
+        target.closest(".gym-pin, .gym-cluster")
+      ) {
+        return;
+      }
+      setSelectedId(null);
     }
 
     syncPins();
@@ -1533,11 +1616,17 @@ function GymsPage() {
 
     map.on("move", onMapMove);
     map.on("moveend", onMoveEnd);
+    map.on("dragstart", onDragStart);
+    map.on("dragend", onDragEnd);
+    map.on("click", onMapClick);
 
     return () => {
       if (pinRaf !== 0) cancelAnimationFrame(pinRaf);
       map.off("move", onMapMove);
       map.off("moveend", onMoveEnd);
+      map.off("dragstart", onDragStart);
+      map.off("dragend", onDragEnd);
+      map.off("click", onMapClick);
       clearMarkers();
       originMarkerRef.current?.remove();
       originMarkerRef.current = null;
@@ -1706,7 +1795,44 @@ function GymsPage() {
     selectedIdRef.current = selectedId;
   }, [hoveredId, selectedId]);
 
+  useEffect(() => {
+    const favs = new Set(favoriteSlugs);
+    markersRef.current.forEach((marker) => {
+      const el = marker.getElement();
+      const slug = el.dataset.gymSlug;
+      el.classList.toggle("is-fav", !!slug && favs.has(slug));
+    });
+  }, [favoriteSlugs]);
+
   const browseReady = dataReady && mapReady;
+
+  function focusGymFromList(gym: Gym) {
+    const map = mapInstanceRef.current;
+    if (!map || gym.lat == null || gym.lng == null) return;
+    selectFromMapRef.current = false;
+    skipBoundsResetRef.current = true;
+    setSelectedId(gym.id);
+    map.easeTo({
+      center: [gym.lng, gym.lat],
+      zoom: Math.max(map.getZoom(), 15.2),
+      duration: 700,
+    });
+  }
+
+  function focusRegion(nimi: string) {
+    const map = mapInstanceRef.current;
+    const full = maakuntaFeaturesRef.current.find((x) => x.nimi === nimi);
+    setRegionMenuOpen(false);
+    if (!map || !full) return;
+    selectedMaakuntaRef.current = nimi;
+    regionPickModeRef.current = false;
+    setSelectedMaakunta(nimi);
+    map.fitBounds(geomBBox(full.geometry), {
+      padding: { top: 72, bottom: 72, left: 72, right: 72 },
+      duration: 750,
+      maxZoom: 9.5,
+    });
+  }
 
   return (
     <>
@@ -1715,7 +1841,13 @@ function GymsPage() {
         <LoadSpin />
       </div>
     ) : null}
-    <main className={browseReady ? "browse load-reveal" : "browse"}>
+    <main
+      className={
+        "browse" +
+        (browseReady ? " load-reveal" : "") +
+        (selectedId ? " is-pin-selected" : "")
+      }
+    >
       <div
         className="browse-toolbar"
         ref={listChromeRef}
@@ -2072,6 +2204,12 @@ function GymsPage() {
                       <Link
                         to={pathGym(lang, gym.slug)}
                         className="browse-row-main"
+                        onClick={(e) => {
+                          if (gym.lat == null || gym.lng == null) return;
+                          if (selectedId === gym.id) return;
+                          e.preventDefault();
+                          focusGymFromList(gym);
+                        }}
                       >
                         <span
                           className={[
@@ -2221,7 +2359,11 @@ function GymsPage() {
             )}
           </div>
         </section>
-        <section className="browse-map-col">
+        <section
+          className={
+            "browse-map-col"
+          }
+        >
           <div className="browse-map-frame">
             <div
               className="browse-map-side"
@@ -2268,6 +2410,39 @@ function GymsPage() {
                     <LocateFixed size={15} strokeWidth={2.4} />
                   </button>
                 </label>
+                <div
+                  ref={regionDropRef}
+                  className={
+                    regionMenuOpen
+                      ? "browse-region-drop is-open"
+                      : "browse-region-drop"
+                  }
+                >
+                  <button
+                    type="button"
+                    className="browse-region-drop-btn browse-glass"
+                    aria-expanded={regionMenuOpen}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => setRegionMenuOpen((v) => !v)}
+                  >
+                    <span>{selectedMaakunta ?? t("regions")}</span>
+                    <ChevronDown size={16} strokeWidth={2.2} />
+                  </button>
+                  <ul className="browse-region-drop-list">
+                    {regionNames.map((name) => (
+                      <li key={name}>
+                        <button
+                          type="button"
+                          className={name === selectedMaakunta ? "is-on" : ""}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => focusRegion(name)}
+                        >
+                          {name}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
                 {addressSuggest && addressDraft.trim().length >= 3 &&
                 addressDraft.trim() !== locationLabel ? (
                   <ul className="browse-address-hits">
@@ -2390,10 +2565,45 @@ function GymsPage() {
                     {selectedDistanceKm != null ? (
                       <span className="browse-map-preview-distance">
                         {formatDistanceKm(selectedDistanceKm)}
+                        {selectedPriceText ? (
+                          <span className="browse-map-preview-price">
+                            {selectedPriceText}
+                          </span>
+                        ) : null}
+                      </span>
+                    ) : selectedPriceText ? (
+                      <span className="browse-map-preview-price">
+                        {selectedPriceText}
                       </span>
                     ) : null}
                   </span>
-                  <span className="browse-map-preview-open">{t("open")}</span>
+                </Link>
+                <button
+                  type="button"
+                  className={
+                    favoriteSlugs.includes(selectedGym.slug)
+                      ? "browse-row-fav is-on"
+                      : "browse-row-fav"
+                  }
+                  aria-label={
+                    favoriteSlugs.includes(selectedGym.slug)
+                      ? t("removeFavorite")
+                      : t("addFavorite")
+                  }
+                  aria-pressed={favoriteSlugs.includes(selectedGym.slug)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setFavoriteSlugs(toggleFavoriteSlug(selectedGym.slug));
+                  }}
+                >
+                  <Heart size={18} strokeWidth={2.2} />
+                </button>
+                <Link
+                  className="browse-map-preview-open"
+                  to={pathGym(lang, selectedGym.slug)}
+                >
+                  {t("open")}
                 </Link>
               </div>
             ) : null}

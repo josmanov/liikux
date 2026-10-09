@@ -9,6 +9,7 @@ import {
   resolveGymOffer,
 } from "../data/types";
 import { cleanGymDisplayName, formatPriceFrom } from "../data/format";
+import { offerPhrase } from "../data/offerText";
 import { getChainWebsite } from "../data/chainWebsites";
 import { useAppLocation } from "../context/LocationContext";
 import { fetchGeocode, type GeoHit } from "../data/geocode";
@@ -422,20 +423,33 @@ function GymDetailPage() {
               <h2>{t("memberships")}</h2>
               {memberships.length > 0 ? (
                 <ul className="gym-detail-plans">
-                  {memberships.map((m) => (
+                  {memberships.map((m) => {
+                    const rawPrice = m.priceEur as unknown;
+                    const eur =
+                      typeof rawPrice === "number"
+                        ? rawPrice
+                        : rawPrice &&
+                            typeof rawPrice === "object" &&
+                            "hinta" in rawPrice
+                          ? Number((rawPrice as { hinta: number }).hinta)
+                          : null;
+                    return (
                     <li key={m.name}>
                       <span>
-                        {m.name}
-                        {m.note ? ` · ${m.note}` : ""}
+                        {offerPhrase(lang, m.name)}
+                        {m.note ? ` · ${offerPhrase(lang, m.note)}` : ""}
                       </span>
                       <strong>
-                        {Number.isInteger(m.priceEur)
-                          ? m.priceEur
-                          : String(m.priceEur).replace(".", ",")}{" "}
+                        {eur == null
+                          ? "—"
+                          : Number.isInteger(eur)
+                            ? eur
+                            : String(eur).replace(".", ",")}{" "}
                         €
                       </strong>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               ) : (
                 <p className="gym-detail-muted">{t("noMemberships")}</p>
@@ -453,7 +467,7 @@ function GymDetailPage() {
                         key={s}
                         className={isPromo ? "is-promo" : undefined}
                       >
-                        {isPromo ? t("freeTrial") : s}
+                        {isPromo ? t("freeTrial") : offerPhrase(lang, s)}
                       </li>
                     );
                   })}
