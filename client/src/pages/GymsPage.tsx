@@ -2027,6 +2027,16 @@ function GymsPage() {
             {regionPickMode ? (
               <p className="browse-region-empty">{t("pickRegion")}</p>
             ) : null}
+            {!listLoading &&
+            !regionPickMode &&
+            inViewGyms.length === 0 &&
+            gyms.length > 0 ? (
+              <p className="browse-region-empty">
+                {visibleGyms.length === 0
+                  ? t("noGymsFilters")
+                  : t("noGymsInView")}
+              </p>
+            ) : null}
             <ul className={browseReady ? "browse-rows list-pop" : "browse-rows"}>
               {pageGyms.map((gym, i) => {
                 const chain = chainForGym(gym, chains);
