@@ -19,7 +19,7 @@ import {
   SlidersHorizontal,
   X,
 } from "lucide-react";
-import { LngLatBounds, Map, Marker, type MapLayerMouseEvent } from "maplibre-gl";
+import { Map, Marker, type MapLayerMouseEvent } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type Chain, type Gym, resolveGymOffer } from "../data/types";
 import { fetchGymsAndChains } from "../data/api";
@@ -59,6 +59,33 @@ function markerScaleForZoom(zoom: number) {
 
 function pinTouchPx(scale: number) {
   return 36 * scale;
+}
+
+function zoomWhereClusterSplits(map: Map, group: Gym[]) {
+  const z0 = map.getZoom();
+  const maxZoom = Math.min(map.getMaxZoom(), z0 + 5.2);
+  const pts = group.map((g) => map.project([g.lng, g.lat]));
+  let maxD = 0;
+  for (let i = 0; i < pts.length; i++) {
+    for (let j = i + 1; j < pts.length; j++) {
+      const dx = pts[i].x - pts[j].x;
+      const dy = pts[i].y - pts[j].y;
+      const d = Math.hypot(dx, dy);
+      if (d > maxD) maxD = d;
+    }
+  }
+  if (maxD < 0.8) return Math.min(z0 + 1.4, maxZoom);
+
+  let lo = z0;
+  let hi = maxZoom;
+  for (let n = 0; n < 14; n++) {
+    const mid = (lo + hi) / 2;
+    const spread = maxD * 2 ** (mid - z0);
+    const need = pinTouchPx(markerScaleForZoom(mid)) + 8;
+    if (spread > need) hi = mid;
+    else lo = mid;
+  }
+  return hi;
 }
 
 function gymsNearViewport(gyms: Gym[], map: Map) {
@@ -1472,12 +1499,16 @@ function GymsPage() {
         "aria-label",
         t("gymsCount", { count: group.length }),
       );
-      el.addEventListener("click", () => {
-        const bounds = new LngLatBounds();
-        group.forEach((g) => {
-          bounds.extend([g.lng, g.lat]);
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const zoom = zoomWhereClusterSplits(map, group);
+        const delta = Math.max(0, zoom - map.getZoom());
+        map.easeTo({
+          center: [lng, lat],
+          zoom,
+          duration: Math.min(520, Math.max(280, 240 + delta * 80)),
+          easing: (t) => 1 - (1 - t) ** 3,
         });
-        map.fitBounds(bounds, { padding: 72, maxZoom: 16 });
       });
 
       const marker = new Marker({ element: el })
