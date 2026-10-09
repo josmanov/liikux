@@ -19,7 +19,7 @@ import {
   SlidersHorizontal,
   X,
 } from "lucide-react";
-import { Map, Marker, type MapLayerMouseEvent } from "maplibre-gl";
+import { LngLatBounds, Map, Marker, type MapLayerMouseEvent } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type Chain, type Gym, resolveGymOffer } from "../data/types";
 import { fetchGymsAndChains } from "../data/api";
@@ -86,6 +86,31 @@ function zoomWhereClusterSplits(map: Map, group: Gym[]) {
     else lo = mid;
   }
   return hi;
+}
+
+function frameOriginAndGym(
+  map: Map,
+  originLng: number,
+  originLat: number,
+  gymLng: number,
+  gymLat: number,
+) {
+  const bounds = new LngLatBounds();
+  bounds.extend([originLng, originLat]);
+  bounds.extend([gymLng, gymLat]);
+  const cam = map.cameraForBounds(bounds, {
+    padding: { top: 110, bottom: 150, left: 96, right: 96 },
+  });
+  const now = map.getZoom();
+  let zoom = cam?.zoom ?? FRAME_ZOOM;
+  if (!Number.isFinite(zoom) || zoom > FRAME_ZOOM) zoom = FRAME_ZOOM;
+  if (zoom > now && now >= FRAME_ZOOM - 0.05) zoom = now;
+  map.easeTo({
+    center: cam?.center ?? [(originLng + gymLng) / 2, (originLat + gymLat) / 2],
+    zoom,
+    duration: 700,
+    easing: (t) => 1 - (1 - t) ** 3,
+  });
 }
 
 function gymsNearViewport(gyms: Gym[], map: Map) {
@@ -164,6 +189,7 @@ const FINLAND_CENTER: [number, number] = [
   (HANGO[1] + NUORGAM[1]) / 2,
 ];
 const ORIGIN_ZOOM = 12;
+const FRAME_ZOOM = 12.6;
 const MAP_MAX_BOUNDS: [[number, number], [number, number]] = [
   [4.0, 53.5],
   [44.0, 73.0],
@@ -1394,7 +1420,7 @@ function GymsPage() {
       el.style.setProperty("--pin-scale", String(scale));
       if (g.id === selectedIdRef.current) {
         el.classList.add("is-front");
-        el.style.zIndex = "6";
+        el.style.zIndex = "8";
       }
 
       const hit = document.createElement("button");
@@ -1458,6 +1484,10 @@ function GymsPage() {
         }
         selectFromMapRef.current = true;
         setSelectedId(g.id);
+        const here = originRef.current;
+        if (g.lat != null && g.lng != null) {
+          frameOriginAndGym(map, here.lng, here.lat, g.lng, g.lat);
+        }
       });
 
       const marker = new Marker({ element: el })
@@ -1533,8 +1563,18 @@ function GymsPage() {
       const zoom = map.getZoom();
       const scale = markerScaleForZoom(zoom);
       const touchPx = pinTouchPx(scale);
-      const groups = clusterGymsByScreenTouch(gyms, map, touchPx);
+      const pickedId = selectedIdRef.current;
+      const picked = pickedId
+        ? gyms.find((g) => g.id === pickedId)
+        : undefined;
+      const pool = picked ? gyms.filter((g) => g.id !== picked.id) : gyms;
+      const groups = clusterGymsByScreenTouch(pool, map, touchPx);
       const keep = new Set<string>();
+
+      if (picked) {
+        putPin(picked, scale);
+        keep.add(picked.id);
+      }
 
       groups.forEach((group) => {
         if (group.length === 1) {
@@ -1822,6 +1862,8 @@ function GymsPage() {
       else if (id === hoveredId) el.style.zIndex = "5";
       else el.style.zIndex = "";
     });
+    const originEl = originMarkerRef.current?.getElement();
+    if (originEl) originEl.style.zIndex = "1000";
     hoveredIdRef.current = hoveredId;
     selectedIdRef.current = selectedId;
   }, [hoveredId, selectedId]);
@@ -2630,6 +2672,35 @@ function GymsPage() {
                 >
                   <Heart size={18} strokeWidth={2.2} />
                 </button>
+                {selectedGym.lat != null && selectedGym.lng != null ? (
+                  <a
+                    className="browse-map-preview-maps"
+                    href={
+                      "https://www.google.com/maps/dir/?api=1&origin=" +
+                      origin.lat +
+                      "," +
+                      origin.lng +
+                      "&destination=" +
+                      selectedGym.lat +
+                      "," +
+                      selectedGym.lng
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={t("mapsRoute")}
+                  >
+                    <img
+                      className="is-line"
+                      src="/pins/google-maps-outline.png"
+                      alt=""
+                    />
+                    <img
+                      className="is-fill"
+                      src="/pins/google-maps-pin.png"
+                      alt=""
+                    />
+                  </a>
+                ) : null}
                 <Link
                   className="browse-map-preview-open"
                   to={pathGym(lang, selectedGym.slug)}
