@@ -2472,17 +2472,66 @@
 
 @media (max-width: 900px) {
   .browse {
-    --browse-side: 1.25rem;
-    padding-bottom: 1.25rem;
+    --browse-side: 1rem;
+    height: auto;
+    min-height: 0;
+    padding-bottom: 1.5rem;
+  }
+
+  .browse-toolbar {
+    flex-wrap: wrap;
+    row-gap: 0.55rem;
+    padding-bottom: 0.7rem;
+  }
+
+  .browse-search {
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .browse-toolbar-sep {
+    display: none;
+  }
+
+  .browse-toolbar .browse-filters-more {
+    margin-left: 0;
   }
 
   .browse-body {
-    grid-template-columns: 1fr;
-    gap: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    height: auto;
+    flex: none;
   }
 
-  .browse-list-col {
+  .browse-list-frame {
+    height: auto;
+    overflow: visible;
+  }
+
+  .browse-list-frame {
     order: 1;
+  }
+
+  .browse-list-head {
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.35rem 0.75rem;
+  }
+
+  .browse-list-head .browse-sort {
+    margin-left: 0;
+  }
+
+  .browse-list-head-side {
+    flex-wrap: wrap;
+  }
+
+  .browse-list-count {
+    white-space: normal;
   }
 
   .browse-list-chrome {
@@ -2496,16 +2545,26 @@
     display: none;
   }
 
+  .browse-list-scroll {
+    overflow: visible;
+    flex: none;
+  }
+
   .browse-map-col {
     position: relative;
     top: auto;
-    height: 42vh;
-    max-height: 42vh;
     order: 0;
+    flex: none;
+    height: 42vh;
+    min-height: 220px;
+    max-height: 420px;
   }
 
   .browse-rows {
+    overflow: visible;
     grid-template-columns: 1fr 1fr;
+    grid-template-rows: none;
+    grid-auto-rows: minmax(78px, auto);
   }
 }
 

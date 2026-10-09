@@ -762,7 +762,19 @@
     top: auto;
     height: 42vh;
     max-height: none;
-    min-height: 280px;
+    min-height: 240px;
     order: 0;
+  }
+
+  .gym-detail-map-float {
+    flex-wrap: wrap;
+    width: auto;
+    padding: 0.55rem 0.7rem;
+    gap: 0.4rem;
+  }
+
+  .gym-detail-from {
+    flex: 1 1 8rem;
+    max-width: none;
   }
 }
