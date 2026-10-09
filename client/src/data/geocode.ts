@@ -59,6 +59,14 @@ export function fetchReverseLabel(
     .catch(() => null);
 }
 
+const suggestCache = new Map<string, GeoHit[]>();
+
+function suggestKey(q: string, lat: number | null, lng: number | null) {
+  const bias =
+    lat != null && lng != null ? `${lat.toFixed(2)},${lng.toFixed(2)}` : "";
+  return `${q.toLowerCase()}|${bias}`;
+}
+
 export function useAddressSuggest(
   draft: string,
   enabled: boolean,
@@ -77,6 +85,14 @@ export function useAddressSuggest(
       return;
     }
 
+    const key = suggestKey(q, lat, lng);
+    const cached = suggestCache.get(key);
+    if (cached) {
+      setHits(cached);
+      setLoading(false);
+      return;
+    }
+
     setHits((prev) => prev.filter((h) => labelMatchesQuery(h.label, q)));
     setLoading(true);
     const ac = new AbortController();
@@ -84,6 +100,7 @@ export function useAddressSuggest(
       fetchGeocode(q, { lat, lng, signal: ac.signal })
         .then((data) => {
           if (ac.signal.aborted) return;
+          suggestCache.set(key, data);
           setHits(data);
         })
         .catch((err: unknown) => {
@@ -93,7 +110,7 @@ export function useAddressSuggest(
         .finally(() => {
           if (!ac.signal.aborted) setLoading(false);
         });
-    }, 320);
+    }, 180);
 
     return () => {
       window.clearTimeout(t);

@@ -436,7 +436,8 @@ app.get("/api/geocode", async (req, res) => {
       const { street, number } = parseStreetQuery(q);
       const raw = dedupeHits(await photonSearch(q, bias));
       const matched = raw.filter((h) => hitFitsQuery(h, q, street, number));
-      return rankHits(matched, q, number).slice(0, 6);
+      const picked = matched.length > 0 ? matched : raw;
+      return rankHits(picked, q, number).slice(0, 6);
     });
     res.setHeader("X-Cache", hit ? "HIT" : "MISS");
     res.json(data);
@@ -512,11 +513,11 @@ async function photonReverse(lat: number, lng: number) {
 }
 
 async function reverseAddress(lat: number, lng: number) {
-  const fromNom = await nominatimReverse(lat, lng);
-  if (fromNom && /\d/.test(fromNom.label)) return fromNom;
-  const fromPh = await photonReverse(lat, lng);
+  const fromPh = await photonReverse(lat, lng).catch(() => null);
   if (fromPh && /\d/.test(fromPh.label)) return fromPh;
-  return fromNom || fromPh;
+  const fromNom = await nominatimReverse(lat, lng).catch(() => null);
+  if (fromNom && /\d/.test(fromNom.label)) return fromNom;
+  return fromPh || fromNom;
 }
 
 app.get("/api/geocode/reverse", async (req, res) => {
