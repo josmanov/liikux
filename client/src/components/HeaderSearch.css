@@ -40,6 +40,11 @@
   color: #fff;
   pointer-events: none;
   flex-shrink: 0;
+  transition: color 0.22s ease;
+}
+
+.header-search:not(.is-open) .header-search-field:hover .header-search-icon {
+  color: #64748b;
 }
 
 .header-search-input {

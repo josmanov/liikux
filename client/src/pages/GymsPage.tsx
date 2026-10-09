@@ -63,29 +63,31 @@ function pinTouchPx(scale: number) {
 
 function zoomWhereClusterSplits(map: Map, group: Gym[]) {
   const z0 = map.getZoom();
-  const maxZoom = Math.min(map.getMaxZoom(), z0 + 5.2);
+  const maxZoom = Math.min(map.getMaxZoom(), z0 + 5.5);
   const pts = group.map((g) => map.project([g.lng, g.lat]));
-  let maxD = 0;
+  let minD = Infinity;
   for (let i = 0; i < pts.length; i++) {
     for (let j = i + 1; j < pts.length; j++) {
       const dx = pts[i].x - pts[j].x;
       const dy = pts[i].y - pts[j].y;
       const d = Math.hypot(dx, dy);
-      if (d > maxD) maxD = d;
+      if (d > 0 && d < minD) minD = d;
     }
   }
-  if (maxD < 0.8) return Math.min(z0 + 1.4, maxZoom);
+  if (!Number.isFinite(minD) || minD < 0.5) {
+    return Math.min(z0 + 2.4, maxZoom);
+  }
 
   let lo = z0;
   let hi = maxZoom;
-  for (let n = 0; n < 14; n++) {
+  for (let n = 0; n < 16; n++) {
     const mid = (lo + hi) / 2;
-    const spread = maxD * 2 ** (mid - z0);
-    const need = pinTouchPx(markerScaleForZoom(mid)) + 8;
+    const spread = minD * 2 ** (mid - z0);
+    const need = pinTouchPx(markerScaleForZoom(mid)) + 16;
     if (spread > need) hi = mid;
     else lo = mid;
   }
-  return hi;
+  return Math.min(hi + 0.2, maxZoom);
 }
 
 function frameOriginAndGym(

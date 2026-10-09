@@ -1,3 +1,18 @@
+:root {
+  --logo-scale-easyfit: 2;
+  --logo-scale-elixia: 1.2;
+  --logo-scale-fressi: 1.5;
+  --logo-scale-fitness24: 2.8;
+  --logo-scale-gofitness: 1;
+  --logo-scale-olefit: 0.9;
+  --logo-scale-ladyline: 1;
+  --logo-scale-forever: 1;
+  --logo-scale-unisport: 1.56;
+  --logo-scale-mm: 1;
+  --logo-scale-esport: 1;
+  --logo-scale-liikku: 1.5;
+}
+
 .browse {
   --browse-side: 32px;
   display: flex;
@@ -1807,17 +1822,16 @@
 }
 
 .browse-map-preview-media.logo-easyfit img {
-  transform: scale(2);
+  transform: scale(var(--logo-scale-easyfit));
   object-position: center;
 }
 
 .browse-map-preview-media.logo-elixia {
   background: #fff;
-  padding: 0.45rem 0.55rem;
 }
 
 .browse-map-preview-media.logo-elixia img {
-  transform: scale(1.2);
+  transform: scale(var(--logo-scale-elixia));
   object-position: center;
 }
 
@@ -1826,7 +1840,7 @@
 }
 
 .browse-map-preview-media.logo-fressi img {
-  transform: scale(1.5);
+  transform: scale(var(--logo-scale-fressi));
   object-position: center;
 }
 
@@ -1834,30 +1848,27 @@
   background: #002d54;
 }
 
-.browse-map-preview-media.is-logo.logo-fitness24 img,
 .browse-map-preview-media.logo-fitness24 img {
-  object-fit: cover;
-  object-position: center center;
-  transform: scale(1.5);
+  object-fit: contain;
+  object-position: center;
+  transform: scale(var(--logo-scale-fitness24));
 }
 
 .browse-map-preview-media.logo-gofitness {
   background: #fff;
-  padding: 0.45rem 0.55rem;
 }
 
 .browse-map-preview-media.logo-gofitness img {
-  transform: scale(1);
+  transform: scale(var(--logo-scale-gofitness));
   object-position: center;
 }
 
 .browse-map-preview-media.logo-olefit {
   background: #fff;
-  padding: 0.55rem 0.7rem;
 }
 
 .browse-map-preview-media.logo-olefit img {
-  transform: scale(1.155);
+  transform: scale(var(--logo-scale-olefit));
   object-position: center;
   object-fit: contain;
 }
@@ -1866,23 +1877,22 @@
 .browse-map-preview-media.logo-forever,
 .browse-map-preview-media.logo-unisport {
   background: #fff;
-  padding: 0.45rem 0.55rem;
 }
 
 .browse-map-preview-media.logo-ladyline img {
-  transform: scale(1);
+  transform: scale(var(--logo-scale-ladyline));
   object-position: center;
   object-fit: contain;
 }
 
 .browse-map-preview-media.logo-unisport img {
-  transform: scale(1.3);
+  transform: scale(var(--logo-scale-unisport));
   object-position: center;
   object-fit: contain;
 }
 
 .browse-map-preview-media.logo-forever img {
-  transform: scale(1.1);
+  transform: scale(var(--logo-scale-forever));
   object-position: center;
   object-fit: contain;
 }
@@ -1890,12 +1900,16 @@
 .browse-map-preview-media.logo-mm,
 .browse-map-preview-media.logo-esport {
   background: #000;
-  padding: 0.45rem 0.55rem;
 }
 
-.browse-map-preview-media.logo-mm img,
+.browse-map-preview-media.logo-mm img {
+  transform: scale(var(--logo-scale-mm));
+  object-position: center;
+  object-fit: contain;
+}
+
 .browse-map-preview-media.logo-esport img {
-  transform: scale(1);
+  transform: scale(var(--logo-scale-esport));
   object-position: center;
   object-fit: contain;
 }
@@ -1905,7 +1919,7 @@
 }
 
 .browse-map-preview-media.logo-liikku img {
-  transform: scale(1.2);
+  transform: scale(var(--logo-scale-liikku));
   object-position: center;
 }
 
@@ -2059,17 +2073,16 @@
 }
 
 .browse-row-media.logo-easyfit img {
-  transform: scale(2);
+  transform: scale(var(--logo-scale-easyfit));
   object-position: center;
 }
 
 .browse-row-media.logo-elixia {
   background: #fff;
-  padding: 0.45rem 0.55rem;
 }
 
 .browse-row-media.logo-elixia img {
-  transform: scale(1.2);
+  transform: scale(var(--logo-scale-elixia));
   object-position: center;
 }
 
@@ -2078,7 +2091,7 @@
 }
 
 .browse-row-media.logo-fressi img {
-  transform: scale(1.5);
+  transform: scale(var(--logo-scale-fressi));
   object-position: center;
 }
 
@@ -2087,83 +2100,76 @@
 }
 
 .browse-row-media.logo-fitness24 img {
-  object-fit: cover;
-  object-position: center center;
-  transform: scale(1.5);
+  object-fit: contain;
+  object-position: center;
+  transform: scale(var(--logo-scale-fitness24));
 }
 
 .browse-row-media.logo-gofitness {
   background: #fff;
-  padding: 0.45rem 0.55rem;
 }
 
 .browse-row-media.logo-gofitness img {
-  transform: scale(1);
+  transform: scale(var(--logo-scale-gofitness));
   object-position: center;
 }
 
 .browse-row-media.logo-olefit {
   background: #fff;
-  padding: 0.55rem 0.7rem;
 }
 
 .browse-row-media.logo-olefit img {
-  transform: scale(1.155);
+  transform: scale(var(--logo-scale-olefit));
   object-position: center;
   object-fit: contain;
 }
 
 .browse-row-media.logo-ladyline {
   background: #fff;
-  padding: 0.45rem 0.55rem;
 }
 
 .browse-row-media.logo-ladyline img {
-  transform: scale(1);
+  transform: scale(var(--logo-scale-ladyline));
   object-position: center;
   object-fit: contain;
 }
 
 .browse-row-media.logo-forever {
   background: #fff;
-  padding: 0.45rem 0.55rem;
 }
 
 .browse-row-media.logo-forever img {
-  transform: scale(1.1);
+  transform: scale(var(--logo-scale-forever));
   object-position: center;
   object-fit: contain;
 }
 
 .browse-row-media.logo-unisport {
   background: #fff;
-  padding: 0.45rem 0.55rem;
 }
 
 .browse-row-media.logo-unisport img {
-  transform: scale(1.3);
+  transform: scale(var(--logo-scale-unisport));
   object-position: center;
   object-fit: contain;
 }
 
 .browse-row-media.logo-mm {
   background: #000;
-  padding: 0.45rem 0.55rem;
 }
 
 .browse-row-media.logo-mm img {
-  transform: scale(1);
+  transform: scale(var(--logo-scale-mm));
   object-position: center;
   object-fit: contain;
 }
 
 .browse-row-media.logo-esport {
   background: #000;
-  padding: 0.45rem 0.55rem;
 }
 
 .browse-row-media.logo-esport img {
-  transform: scale(1);
+  transform: scale(var(--logo-scale-esport));
   object-position: center;
   object-fit: contain;
 }
@@ -2173,7 +2179,7 @@
 }
 
 .browse-row-media.logo-liikku img {
-  transform: scale(1.2);
+  transform: scale(var(--logo-scale-liikku));
   object-position: center;
 }
 
@@ -2422,30 +2428,36 @@
   bottom: calc(100% + 6px);
 }
 
+.gym-pin,
+.gym-pin-hit {
+  cursor: pointer;
+}
+
 .gym-pin-fav {
   display: none;
   position: absolute;
-  top: -5px;
-  right: -5px;
-  z-index: 6;
-  width: 13px;
-  height: 13px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 0 0 1px #111;
+  inset: 0;
+  z-index: 5;
+  place-items: center;
+  border-radius: inherit;
+  background: rgba(0, 0, 0, 0.22);
   pointer-events: none;
+  cursor: pointer;
 }
 
 .gym-pin.is-fav .gym-pin-fav {
   display: grid;
-  place-items: center;
 }
 
 .gym-pin-fav svg {
-  width: 9px;
-  height: 9px;
+  pointer-events: none;
+  width: 58%;
+  height: 58%;
   fill: #e53935;
-  stroke: none;
+  stroke: #e53935;
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.4));
 }
 
 .gym-pin-price::after {
@@ -2540,7 +2552,7 @@
 .gym-pin.is-plain-pin .gym-pin-hit {
   border-radius: 6px;
   background: #fff;
-  padding: 3px;
+  padding: 0;
   box-sizing: border-box;
   box-shadow: 0 0 0 1.5px #111;
 }
@@ -2572,19 +2584,17 @@
 }
 
 .gym-pin-hit.logo-easyfit img {
-  transform: scale(2);
+  transform: scale(var(--logo-scale-easyfit));
   object-position: center;
 }
 
 .gym-pin-hit.logo-elixia {
   background: #fff;
-  padding: 0.45rem 0.55rem;
-  box-sizing: border-box;
 }
 
 .gym-pin-hit.is-brand.logo-elixia img,
 .gym-pin-hit.logo-elixia img {
-  transform: scale(1.2);
+  transform: scale(var(--logo-scale-elixia));
   object-position: center;
 }
 
@@ -2593,7 +2603,7 @@
 }
 
 .gym-pin-hit.logo-fressi img {
-  transform: scale(1.5);
+  transform: scale(var(--logo-scale-fressi));
   object-position: center;
 }
 
@@ -2603,93 +2613,79 @@
 
 .gym-pin-hit.is-brand.logo-fitness24 img,
 .gym-pin-hit.logo-fitness24 img {
-  object-fit: cover;
-  object-position: center center;
-  transform: scale(1.5);
+  object-fit: contain;
+  object-position: center;
+  transform: scale(var(--logo-scale-fitness24));
 }
 
 .gym-pin-hit.logo-gofitness {
   background: #fff;
-  padding: 0.45rem 0.55rem;
-  box-sizing: border-box;
 }
 
 .gym-pin-hit.logo-gofitness img {
-  transform: scale(1);
+  transform: scale(var(--logo-scale-gofitness));
   object-position: center;
 }
 
 .gym-pin-hit.logo-olefit {
   background: #fff;
-  padding: 0.28rem 0.35rem;
-  box-sizing: border-box;
 }
 
 .gym-pin-hit.is-brand.logo-olefit img,
 .gym-pin-hit.logo-olefit img {
-  transform: none;
+  transform: scale(var(--logo-scale-olefit));
   object-position: center;
   object-fit: contain;
 }
 
 .gym-pin-hit.logo-ladyline {
   background: #fff;
-  padding: 0.45rem 0.55rem;
-  box-sizing: border-box;
 }
 
 .gym-pin-hit.logo-ladyline img {
-  transform: scale(1);
+  transform: scale(var(--logo-scale-ladyline));
   object-position: center;
   object-fit: contain;
 }
 
 .gym-pin-hit.logo-forever {
   background: #fff;
-  padding: 0.45rem 0.55rem;
-  box-sizing: border-box;
 }
 
 .gym-pin-hit.is-brand.logo-forever img,
 .gym-pin-hit.logo-forever img {
-  transform: scale(1.1);
+  transform: scale(var(--logo-scale-forever));
   object-position: center;
   object-fit: contain;
 }
 
 .gym-pin-hit.logo-unisport {
   background: #fff;
-  padding: 0.45rem 0.55rem;
-  box-sizing: border-box;
 }
 
 .gym-pin-hit.is-brand.logo-unisport img,
 .gym-pin-hit.logo-unisport img {
-  transform: scale(1.56);
+  transform: scale(var(--logo-scale-unisport));
   object-position: center;
   object-fit: contain;
 }
 
 .gym-pin-hit.logo-mm {
   background: #000;
-  padding: 0.45rem 0.55rem;
-  box-sizing: border-box;
 }
 
 .gym-pin-hit.logo-mm img {
-  transform: scale(1);
+  transform: scale(var(--logo-scale-mm));
   object-position: center;
   object-fit: contain;
 }
 
 .gym-pin-hit.logo-esport {
   background: #000;
-  padding: 0.45rem 0.55rem;
-  box-sizing: border-box;
 }
 
 .gym-pin-hit.logo-esport img {
-  transform: scale(1);
+  transform: scale(var(--logo-scale-esport));
   object-position: center;
   object-fit: contain;
 }
@@ -2700,7 +2696,7 @@
 
 .gym-pin-hit.is-brand.logo-liikku img,
 .gym-pin-hit.logo-liikku img {
-  transform: scale(1.2);
+  transform: scale(var(--logo-scale-liikku));
   object-position: center;
 }
 

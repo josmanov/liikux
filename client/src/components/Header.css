@@ -65,6 +65,7 @@
   font-weight: 650;
   text-decoration: none;
   cursor: pointer;
+  transition: color 0.22s ease;
 }
 
 .header-nav-link:hover:not(.header-fav) {
@@ -128,7 +129,7 @@
   overflow: hidden;
   white-space: nowrap;
   padding-right: 0;
-  transition: padding-right 0.1s ease, color 0.15s ease;
+  transition: padding-right 0.1s ease, color 0.22s ease;
 }
 
 .header-fav:hover .header-fav-label {
@@ -163,6 +164,21 @@
     display: flex;
     align-items: center;
     gap: 1rem;
+}
+
+.header-lang.playstore-button.is-plain {
+  transition:
+    opacity 0.22s ease,
+    filter 0.22s ease,
+    transform 0.22s ease;
+}
+
+.header-lang.playstore-button.is-plain:hover {
+  background: transparent;
+  color: inherit;
+  opacity: 0.55;
+  filter: grayscale(0.35) brightness(0.9);
+  transform: none;
 }
 
 .header-lang {
