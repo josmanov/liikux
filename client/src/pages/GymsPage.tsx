@@ -12,6 +12,7 @@ import {
   Heart,
   Link2,
   LocateFixed,
+  Map as MapIcon,
   MapPin,
   Minus,
   Plus,
@@ -554,6 +555,7 @@ function GymsPage() {
   const [selectedMaakunta, setSelectedMaakunta] = useState<string | null>(null);
   const [regionNames, setRegionNames] = useState<string[]>([]);
   const [regionMenuOpen, setRegionMenuOpen] = useState(false);
+  const [mapSheet, setMapSheet] = useState<null | "address" | "region">(null);
   const [gymMaakuntaMap, setGymMaakuntaMap] = useState<Record<string, string>>(
     {},
   );
@@ -1072,7 +1074,13 @@ function GymsPage() {
     };
   }, [openFilter]);
 
-  useLockPageScroll(extrasOpen || chainsOpen);
+  useLockPageScroll(extrasOpen || chainsOpen || mapSheet != null);
+
+  useEffect(() => {
+    if (mapSheet !== "address") return;
+    setAddressDraft(locationLabel);
+    setAddressSuggest(false);
+  }, [mapSheet, locationLabel]);
 
   useEffect(() => {
     if (!chainsOpen) {
@@ -1937,6 +1945,7 @@ function GymsPage() {
     const map = mapInstanceRef.current;
     const full = maakuntaFeaturesRef.current.find((x) => x.nimi === nimi);
     setRegionMenuOpen(false);
+    setMapSheet(null);
     if (!map || !full) return;
     selectedMaakuntaRef.current = nimi;
     regionPickModeRef.current = false;
@@ -2539,114 +2548,136 @@ function GymsPage() {
               className="browse-map-side"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="browse-map-address-wrap">
-                <label className="browse-map-address browse-glass">
-                  <MapPin size={15} strokeWidth={2.3} />
-                  <input
-                    type="text"
-                    placeholder={t("addressPlaceholder")}
-                    aria-label={t("addressAria")}
-                    value={addressDraft}
-                    autoComplete="off"
-                    onChange={(e) => {
-                      setAddressDraft(e.target.value);
-                      setAddressSuggest(true);
-                    }}
-                    onFocus={() => {
-                      if (
-                        addressDraft.trim().length >= 3 &&
-                        addressDraft.trim() !== locationLabel
-                      ) {
-                        setAddressSuggest(true);
-                      }
-                    }}
-                    onBlur={() => {
-                      setAddressSuggest(false);
-                      setAddressDraft(locationLabel);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") setAddressSuggest(false);
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="browse-map-locate"
-                    aria-label={t("useMyLocation")}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => {
-                      void useMyLocation();
-                    }}
-                  >
-                    <LocateFixed size={15} strokeWidth={2.4} />
-                  </button>
-                </label>
-                <div
-                  ref={regionDropRef}
-                  className={[
-                    "browse-region-drop",
-                    regionMenuOpen ? "is-open" : "",
-                    selectedId ? "is-away" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                  aria-hidden={selectedId ? true : undefined}
+              <div className="browse-map-chips">
+                <button
+                  type="button"
+                  className="browse-map-chip browse-glass"
+                  aria-label={t("fromAddressAria")}
+                  aria-expanded={mapSheet === "address"}
+                  onClick={() => setMapSheet("address")}
                 >
-                  <button
-                    type="button"
-                    className="browse-region-drop-btn browse-glass"
-                    aria-expanded={regionMenuOpen}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => setRegionMenuOpen((v) => !v)}
+                  <MapPin size={18} strokeWidth={2.3} />
+                </button>
+                <button
+                  type="button"
+                  className="browse-map-chip browse-glass"
+                  aria-label={t("regions")}
+                  aria-expanded={mapSheet === "region"}
+                  onClick={() => setMapSheet("region")}
+                >
+                  <MapIcon size={18} strokeWidth={2.3} />
+                </button>
+              </div>
+              <div className="browse-map-desk-tools">
+                <div className="browse-map-address-wrap">
+                  <label className="browse-map-address browse-glass">
+                    <MapPin size={15} strokeWidth={2.3} />
+                    <input
+                      type="text"
+                      placeholder={t("addressPlaceholder")}
+                      aria-label={t("addressAria")}
+                      value={addressDraft}
+                      autoComplete="off"
+                      onChange={(e) => {
+                        setAddressDraft(e.target.value);
+                        setAddressSuggest(true);
+                      }}
+                      onFocus={() => {
+                        if (
+                          addressDraft.trim().length >= 3 &&
+                          addressDraft.trim() !== locationLabel
+                        ) {
+                          setAddressSuggest(true);
+                        }
+                      }}
+                      onBlur={() => {
+                        setAddressSuggest(false);
+                        setAddressDraft(locationLabel);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Escape") setAddressSuggest(false);
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="browse-map-locate"
+                      aria-label={t("useMyLocation")}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        void useMyLocation();
+                      }}
+                    >
+                      <LocateFixed size={15} strokeWidth={2.4} />
+                    </button>
+                  </label>
+                  <div
+                    ref={regionDropRef}
+                    className={[
+                      "browse-region-drop",
+                      regionMenuOpen ? "is-open" : "",
+                      selectedId ? "is-away" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    aria-hidden={selectedId ? true : undefined}
                   >
-                    <span>{selectedMaakunta ?? t("regions")}</span>
-                    <ChevronDown size={16} strokeWidth={2.2} />
-                  </button>
-                  <ul className="browse-region-drop-list">
-                    {regionNames.map((name) => (
-                      <li key={name}>
-                        <button
-                          type="button"
-                          className={name === selectedMaakunta ? "is-on" : ""}
-                          onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => focusRegion(name)}
-                        >
-                          {name}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+                    <button
+                      type="button"
+                      className="browse-region-drop-btn browse-glass"
+                      aria-expanded={regionMenuOpen}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => setRegionMenuOpen((v) => !v)}
+                    >
+                      <span>{selectedMaakunta ?? t("regions")}</span>
+                      <ChevronDown size={16} strokeWidth={2.2} />
+                    </button>
+                    <ul className="browse-region-drop-list">
+                      {regionNames.map((name) => (
+                        <li key={name}>
+                          <button
+                            type="button"
+                            className={name === selectedMaakunta ? "is-on" : ""}
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => focusRegion(name)}
+                          >
+                            {name}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  {addressSuggest && addressDraft.trim().length >= 3 &&
+                  addressDraft.trim() !== locationLabel ? (
+                    <ul className="browse-address-hits">
+                      {addressLoading && addressHits.length === 0 ? (
+                        <li className="browse-address-hint">
+                          <LoadSpin size="sm" />
+                        </li>
+                      ) : null}
+                      {!addressLoading && addressHits.length === 0 ? (
+                        <li className="browse-address-hint">{t("noResults")}</li>
+                      ) : null}
+                      {addressHits.map((item) => (
+                        <li key={item.id}>
+                          <button
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => {
+                              setAddressSuggest(false);
+                              setLocation({
+                                label: item.label,
+                                lat: item.lat,
+                                lng: item.lng,
+                              });
+                            }}
+                          >
+                            {item.label}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                 </div>
-                {addressSuggest && addressDraft.trim().length >= 3 &&
-                addressDraft.trim() !== locationLabel ? (
-                  <ul className="browse-address-hits">
-                    {addressLoading && addressHits.length === 0 ? (
-                      <li className="browse-address-hint">
-                        <LoadSpin size="sm" />
-                      </li>
-                    ) : null}
-                    {!addressLoading && addressHits.length === 0 ? (
-                      <li className="browse-address-hint">{t("noResults")}</li>
-                    ) : null}
-                    {addressHits.map((item) => (
-                      <li key={item.id}>
-                        <button
-                          type="button"
-                          onMouseDown={(e) => e.preventDefault()}
-                          onClick={() => {
-                            setAddressSuggest(false);
-                            setLocation({
-                              label: item.label,
-                              lat: item.lat,
-                              lng: item.lng,
-                            });
-                          }}
-                        >
-                          {item.label}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
               </div>
             </div>
             <div className="browse-map-controls">
@@ -2813,6 +2844,127 @@ function GymsPage() {
         </section>
 
       </div>
+
+      {mapSheet
+        ? createPortal(
+            <div
+              className="browse-map-sheet-root"
+              role="presentation"
+              onClick={() => setMapSheet(null)}
+            >
+              <div
+                className="browse-map-sheet"
+                role="dialog"
+                aria-modal="true"
+                aria-label={
+                  mapSheet === "address" ? t("fromAddressAria") : t("regions")
+                }
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="browse-map-sheet-head">
+                  <h2 className="browse-map-sheet-title">
+                    {mapSheet === "address"
+                      ? t("fromAddressAria")
+                      : t("regions")}
+                  </h2>
+                  <button
+                    type="button"
+                    className="browse-map-sheet-close"
+                    aria-label={t("close")}
+                    onClick={() => setMapSheet(null)}
+                  >
+                    <X size={18} strokeWidth={2.3} />
+                  </button>
+                </div>
+
+                {mapSheet === "address" ? (
+                  <div className="browse-map-sheet-body">
+                    <label className="browse-map-sheet-field">
+                      <MapPin size={16} strokeWidth={2.3} />
+                      <input
+                        type="search"
+                        autoFocus
+                        placeholder={t("addressPlaceholder")}
+                        aria-label={t("addressAria")}
+                        value={addressDraft}
+                        autoComplete="off"
+                        onChange={(e) => {
+                          setAddressDraft(e.target.value);
+                          setAddressSuggest(true);
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="browse-map-locate"
+                        aria-label={t("useMyLocation")}
+                        onClick={() => {
+                          void useMyLocation();
+                          setMapSheet(null);
+                        }}
+                      >
+                        <LocateFixed size={16} strokeWidth={2.4} />
+                      </button>
+                    </label>
+                    <ul className="browse-map-sheet-hits">
+                      {addressDraft.trim().length >= 3 &&
+                      addressDraft.trim() !== locationLabel ? (
+                        <>
+                          {addressLoading && addressHits.length === 0 ? (
+                            <li className="browse-address-hint">
+                              <LoadSpin size="sm" />
+                            </li>
+                          ) : null}
+                          {!addressLoading && addressHits.length === 0 ? (
+                            <li className="browse-address-hint">
+                              {t("noResults")}
+                            </li>
+                          ) : null}
+                          {addressHits.map((item) => (
+                            <li key={item.id}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAddressSuggest(false);
+                                  setLocation({
+                                    label: item.label,
+                                    lat: item.lat,
+                                    lng: item.lng,
+                                  });
+                                  setMapSheet(null);
+                                }}
+                              >
+                                {item.label}
+                              </button>
+                            </li>
+                          ))}
+                        </>
+                      ) : (
+                        <li className="browse-address-hint">
+                          {locationLabel}
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                ) : (
+                  <ul className="browse-map-sheet-hits is-regions">
+                    {regionNames.map((name) => (
+                      <li key={name}>
+                        <button
+                          type="button"
+                          className={name === selectedMaakunta ? "is-on" : ""}
+                          onClick={() => focusRegion(name)}
+                        >
+                          {name}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
 
       {extrasOpen ? (
         <div
