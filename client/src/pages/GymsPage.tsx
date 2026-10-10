@@ -1,6 +1,13 @@
 import "./GymsPage.css";
 import "../components/ChainPopup.css";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  startTransition,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
@@ -678,8 +685,6 @@ function GymsPage() {
   const freezeListBoundsRef = useRef(false);
   const [mapSelectPending, setMapSelectPending] = useState(false);
   const [listRevealKey, setListRevealKey] = useState(0);
-  const [listBusy, setListBusy] = useState(false);
-  const listBusyTimerRef = useRef(0);
   const skipBoundsResetRef = useRef(false);
   const hoveredIdRef = useRef<string | null>(null);
   const selectedIdRef = useRef<string | null>(null);
@@ -696,6 +701,7 @@ function GymsPage() {
   const lastOriginKeyRef = useRef("");
   const regionUserPickedRef = useRef(false);
   const mapPinchRef = useRef(false);
+  const mapTouchCountRef = useRef(0);
   const afterPinchSyncRef = useRef<(() => void) | null>(null);
   const regionDropRef = useRef<HTMLDivElement>(null);
   const prevFilterKeyRef = useRef<string | null>(null);
@@ -1105,7 +1111,6 @@ function GymsPage() {
     mapSelectPending &&
     !!selectedId &&
     !pageGyms.some((g) => g.id === selectedId);
-  const listRefreshing = listBusy && !listLoading && !pageJumpLoading;
   const listFillTarget = mobileList ? PAGE_SIZE_MOBILE_MIN : pageSize;
   const showMissing =
     !listLoading &&
@@ -1147,22 +1152,9 @@ function GymsPage() {
   useLayoutEffect(() => {
     if (skipBoundsResetRef.current) {
       skipBoundsResetRef.current = false;
-      if (listBusyTimerRef.current) {
-        window.clearTimeout(listBusyTimerRef.current);
-        listBusyTimerRef.current = 0;
-      }
-      setListBusy(false);
       return;
     }
     setPage(1);
-    setListBusy(true);
-    if (listBusyTimerRef.current) {
-      window.clearTimeout(listBusyTimerRef.current);
-    }
-    listBusyTimerRef.current = window.setTimeout(() => {
-      setListBusy(false);
-      listBusyTimerRef.current = 0;
-    }, 320);
     const id = window.requestAnimationFrame(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     });
@@ -1170,14 +1162,6 @@ function GymsPage() {
       window.cancelAnimationFrame(id);
     };
   }, [mapBounds]);
-
-  useEffect(() => {
-    return () => {
-      if (listBusyTimerRef.current) {
-        window.clearTimeout(listBusyTimerRef.current);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (inViewGyms.length > 0) return;
@@ -1315,28 +1299,24 @@ function GymsPage() {
     mapInstanceRef.current = map;
 
     const canvas = map.getCanvasContainer();
-    let pinchUnlockTimer = 0;
     function onTouchStart(e: TouchEvent) {
+      mapTouchCountRef.current = e.touches.length;
       if (e.touches.length >= 2) {
         mapPinchRef.current = true;
-        window.clearTimeout(pinchUnlockTimer);
-        map.dragPan.disable();
       }
     }
     function onTouchEnd(e: TouchEvent) {
+      mapTouchCountRef.current = e.touches.length;
       if (!mapPinchRef.current) return;
-      if (e.touches.length >= 2) return;
-      window.clearTimeout(pinchUnlockTimer);
-      pinchUnlockTimer = window.setTimeout(() => {
-        mapPinchRef.current = false;
-        if (!mapInstanceRef.current) return;
-        map.dragPan.enable();
-        afterPinchSyncRef.current?.();
-      }, 160);
+      if (e.touches.length > 0) return;
+      mapPinchRef.current = false;
+      afterPinchSyncRef.current?.();
     }
     canvas.addEventListener("touchstart", onTouchStart, { passive: true });
     canvas.addEventListener("touchend", onTouchEnd, { passive: true });
     canvas.addEventListener("touchcancel", onTouchEnd, { passive: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    window.addEventListener("touchcancel", onTouchEnd, { passive: true });
 
     function onResize() {
       applyFinlandMinZoom(map);
@@ -1575,10 +1555,18 @@ function GymsPage() {
     return () => {
       dead = true;
       window.clearTimeout(bootFailSafe);
-      window.clearTimeout(pinchUnlockTimer);
+      mapPinchRef.current = false;
+      mapTouchCountRef.current = 0;
       canvas.removeEventListener("touchstart", onTouchStart);
       canvas.removeEventListener("touchend", onTouchEnd);
       canvas.removeEventListener("touchcancel", onTouchEnd);
+      window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("touchcancel", onTouchEnd);
+      try {
+        map.dragPan.enable();
+      } catch {
+        /* map gone */
+      }
       window.removeEventListener("resize", onResize);
       map.off("zoomend", onMaxOutView);
       map.off("moveend", onMaxOutView);
@@ -1875,56 +1863,47 @@ function GymsPage() {
 
     function pushBounds() {
       const next = readBounds();
-      setMapBounds((prev) => {
-        if (
-          prev &&
-          Math.abs(prev.west - next.west) < 1e-7 &&
-          Math.abs(prev.south - next.south) < 1e-7 &&
-          Math.abs(prev.east - next.east) < 1e-7 &&
-          Math.abs(prev.north - next.north) < 1e-7
-        ) {
-          return prev;
-        }
-        return next;
+      startTransition(() => {
+        setMapBounds((prev) => {
+          if (
+            prev &&
+            Math.abs(prev.west - next.west) < 1e-7 &&
+            Math.abs(prev.south - next.south) < 1e-7 &&
+            Math.abs(prev.east - next.east) < 1e-7 &&
+            Math.abs(prev.north - next.north) < 1e-7
+          ) {
+            return prev;
+          }
+          return next;
+        });
       });
     }
 
     let pinRaf = 0;
 
-    function onMapMove() {
-      if (regionPickModeRef.current) return;
-      if (mapPinchRef.current) return;
-      if (window.matchMedia(BROWSE_MOBILE_MQ).matches) return;
-      if (pinRaf !== 0) return;
-      pinRaf = requestAnimationFrame(() => {
-        pinRaf = 0;
-        if (mapPinchRef.current) return;
-        syncPins();
-      });
+    let idleListTimer = 0;
+    function fingersDown() {
+      return mapPinchRef.current || mapTouchCountRef.current > 0;
     }
-
-    function onMoveEnd(e: { originalEvent?: Event }) {
-      if (pinRaf !== 0) {
-        cancelAnimationFrame(pinRaf);
-        pinRaf = 0;
+    function runIdleListSync(e?: { originalEvent?: Event }) {
+      if (regionPickModeRef.current) return;
+      if (fingersDown()) {
+        window.clearTimeout(idleListTimer);
+        idleListTimer = window.setTimeout(() => runIdleListSync(e), 120);
+        return;
       }
-      if (mapPinchRef.current) return;
       syncPins();
       if (freezeListBoundsRef.current) {
-        if (e.originalEvent) {
+        if (e?.originalEvent) {
           freezeListBoundsRef.current = false;
           pushBounds();
-        } else {
-          if (listBusyTimerRef.current) {
-            window.clearTimeout(listBusyTimerRef.current);
-            listBusyTimerRef.current = 0;
-          }
-          setListBusy(false);
+        } else if (!e) {
+          pushBounds();
         }
       } else {
         pushBounds();
       }
-      if (!e.originalEvent) return;
+      if (!e?.originalEvent) return;
       const picked = selectedIdRef.current;
       if (!picked) return;
       const g = visibleGymsRef.current.find((x) => x.id === picked);
@@ -1935,37 +1914,42 @@ function GymsPage() {
         g.lng <= b.getEast() &&
         g.lat >= b.getSouth() &&
         g.lat <= b.getNorth();
-      if (!onScreen) setSelectedId(null);
+      if (!onScreen) {
+        startTransition(() => setSelectedId(null));
+      }
+    }
+    function scheduleIdleListSync(e?: { originalEvent?: Event }) {
+      window.clearTimeout(idleListTimer);
+      const wait = window.matchMedia(BROWSE_MOBILE_MQ).matches ? 220 : 80;
+      idleListTimer = window.setTimeout(() => runIdleListSync(e), wait);
+    }
+
+    function onMapMove() {
+      if (regionPickModeRef.current) return;
+      if (pinRaf !== 0) return;
+      pinRaf = requestAnimationFrame(() => {
+        pinRaf = 0;
+        if (regionPickModeRef.current) return;
+        syncPins();
+      });
+    }
+
+    function onMoveEnd(e: { originalEvent?: Event }) {
+      if (pinRaf !== 0) {
+        cancelAnimationFrame(pinRaf);
+        pinRaf = 0;
+      }
+      syncPins();
+      scheduleIdleListSync(e);
     }
 
     afterPinchSyncRef.current = () => {
-      if (regionPickModeRef.current) return;
-      syncPins();
-      pushBounds();
+      scheduleIdleListSync();
     };
 
     let dragged = false;
-    function bumpListBusy() {
-      if (regionPickModeRef.current) return;
-      if (mapPinchRef.current) return;
-      if (window.matchMedia(BROWSE_MOBILE_MQ).matches) return;
-      setListBusy(true);
-      if (listBusyTimerRef.current) {
-        window.clearTimeout(listBusyTimerRef.current);
-      }
-      listBusyTimerRef.current = window.setTimeout(() => {
-        setListBusy(false);
-        listBusyTimerRef.current = 0;
-      }, 900);
-    }
     function onDragStart() {
       dragged = true;
-      bumpListBusy();
-    }
-    function onZoomStart(e: { originalEvent?: Event }) {
-      if (!e.originalEvent) return;
-      if (mapPinchRef.current) return;
-      bumpListBusy();
     }
     function onDragEnd() {
       window.setTimeout(() => {
@@ -1981,6 +1965,30 @@ function GymsPage() {
       ) {
         return;
       }
+      if (window.matchMedia(BROWSE_MOBILE_MQ).matches) {
+        const box = map.getCanvas().getBoundingClientRect();
+        const x = box.left + e.point.x;
+        const y = box.top + e.point.y;
+        let best: HTMLElement | null = null;
+        let bestD = 48;
+        markersRef.current.forEach((marker) => {
+          const el = marker.getElement();
+          const btn = el.matches(".gym-cluster")
+            ? el
+            : el.querySelector<HTMLElement>(".gym-pin-hit");
+          if (!btn) return;
+          const r = btn.getBoundingClientRect();
+          const d = Math.hypot(r.left + r.width / 2 - x, r.top + r.height / 2 - y);
+          if (d < bestD) {
+            bestD = d;
+            best = btn;
+          }
+        });
+        if (best) {
+          best.click();
+          return;
+        }
+      }
       freezeListBoundsRef.current = false;
       setSelectedId(null);
     }
@@ -1993,17 +2001,16 @@ function GymsPage() {
     map.on("move", onMapMove);
     map.on("moveend", onMoveEnd);
     map.on("dragstart", onDragStart);
-    map.on("zoomstart", onZoomStart);
     map.on("dragend", onDragEnd);
     map.on("click", onMapClick);
 
     return () => {
       if (pinRaf !== 0) cancelAnimationFrame(pinRaf);
+      window.clearTimeout(idleListTimer);
       afterPinchSyncRef.current = null;
       map.off("move", onMapMove);
       map.off("moveend", onMoveEnd);
       map.off("dragstart", onDragStart);
-      map.off("zoomstart", onZoomStart);
       map.off("dragend", onDragEnd);
       map.off("click", onMapClick);
       clearMarkers();
@@ -2902,7 +2909,7 @@ function GymsPage() {
                 </p>
               </div>
             ) : null}
-            {listLoading || pageJumpLoading || listRefreshing ? (
+            {listLoading || pageJumpLoading ? (
               <div className="browse-list-loading">
                 <LoadSpin />
               </div>

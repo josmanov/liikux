@@ -2020,6 +2020,11 @@
   transition: filter 0.35s ease;
 }
 
+.browse-map-col .maplibregl-canvas-container.maplibregl-touch-zoom-rotate,
+.browse-map-col .maplibregl-canvas-container.maplibregl-touch-zoom-rotate .maplibregl-canvas {
+  touch-action: none;
+}
+
 .browse.is-pin-selected .maplibregl-canvas,
 .browse.is-pin-selected .gym-pin:not(:has(.is-selected)),
 .browse.is-pin-selected .gym-cluster {
@@ -3279,6 +3284,14 @@
     flex: 1 1 auto;
     min-height: 0;
     height: 100%;
+  }
+
+  .browse-map-col .maplibregl-marker,
+  .browse-map-col .gym-pin,
+  .browse-map-col .gym-pin-hit,
+  .browse-map-col .gym-cluster,
+  .browse-map-col .gym-origin-pin {
+    pointer-events: none;
   }
 
   .browse-map-side {
