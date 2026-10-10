@@ -59,9 +59,9 @@ const patternIcons = [
   PersonStanding,
 ] as const;
 
-const PATTERN_CELL = 84;
-const PATTERN_COLS = 24;
-const PATTERN_ROWS = 14;
+const PATTERN_CELL = 120;
+const PATTERN_COLS = 8;
+const PATTERN_ROWS = 5;
 
 const heroPatternItems = Array.from({ length: PATTERN_ROWS }, (_, r) =>
   Array.from({ length: PATTERN_COLS }, (_, c) => {
@@ -280,13 +280,7 @@ function HomePage() {
   const chainCount = listedChains.length;
 
   return (
-    <>
-      {!homeReady ? (
-        <div className="load-cover">
-          <LoadSpin />
-        </div>
-      ) : null}
-    <main className={homeReady ? "shell load-reveal" : "shell load-hold"}>
+    <main className="shell">
       <section className="hero">
         <HeroIconPattern />
         <div className="hero-top">
@@ -378,13 +372,19 @@ function HomePage() {
               {t("browseGyms")}
               <ArrowRight size={16} strokeWidth={2.4} />
             </Link>
-            <p className="hero-stats">
-              {t("heroStats", {
-                gyms: gymCount,
-                chains: chainCount,
-                cities: cityCount,
-              })}
-            </p>
+            {homeReady ? (
+              <p className="hero-stats">
+                {t("heroStats", {
+                  gyms: gymCount,
+                  chains: chainCount,
+                  cities: cityCount,
+                })}
+              </p>
+            ) : (
+              <p className="hero-stats hero-stats-pending" aria-hidden="true">
+                &nbsp;
+              </p>
+            )}
           </div>
         </div>
 
@@ -409,29 +409,42 @@ function HomePage() {
               <div
                 className={homeReady ? "rail-track list-pop" : "rail-track"}
               >
-                {suositutKetjut.map((chain, i) => (
-                  <button
-                    key={chain.id}
-                    type="button"
-                    className="place-card"
-                    style={{ animationDelay: `${Math.min(i, 18) * 28}ms` }}
-                    onClick={() => openChain(chain.slug)}
-                  >
-                    <span
-                      className={[
-                        "place-card-media",
-                        chain.logoFit === "contain" ? "is-logo" : "",
-                        chain.logoClass || "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                    >
-                      <span className="place-card-shine" aria-hidden="true" />
-                      <img src={chain.image} alt="" />
-                    </span>
-                    <span className="place-card-name">{chain.name}</span>
-                  </button>
-                ))}
+                {homeReady
+                  ? suositutKetjut.map((chain, i) => (
+                      <button
+                        key={chain.id}
+                        type="button"
+                        className="place-card"
+                        style={{
+                          animationDelay: `${Math.min(i, 18) * 28}ms`,
+                        }}
+                        onClick={() => openChain(chain.slug)}
+                      >
+                        <span
+                          className={[
+                            "place-card-media",
+                            chain.logoFit === "contain" ? "is-logo" : "",
+                            chain.logoClass || "",
+                          ]
+                            .filter(Boolean)
+                            .join(" ")}
+                        >
+                          <span
+                            className="place-card-shine"
+                            aria-hidden="true"
+                          />
+                          <img src={chain.image} alt="" />
+                        </span>
+                        <span className="place-card-name">{chain.name}</span>
+                      </button>
+                    ))
+                  : Array.from({ length: 6 }, (_, i) => (
+                      <div
+                        key={`chain-skel-${i}`}
+                        className="place-card is-skel"
+                        aria-hidden="true"
+                      />
+                    ))}
               </div>
             </div>
           </div>
@@ -465,7 +478,6 @@ function HomePage() {
       </section>
       */}
     </main>
-    </>
   );
 }
 

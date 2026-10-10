@@ -645,6 +645,19 @@
   cursor: pointer;
 }
 
+.place-card.is-skel {
+  min-height: 7.5rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-surface) 80%, transparent);
+  border: 1.5px solid var(--color-border);
+  cursor: default;
+  pointer-events: none;
+}
+
+.hero-stats-pending {
+  min-height: 1.2em;
+}
+
 .place-card-media {
   position: relative;
   display: grid;
