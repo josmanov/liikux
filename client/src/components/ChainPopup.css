@@ -34,6 +34,25 @@
   width: min(560px, 100%);
 }
 
+.chain-popup-card.is-fav .chain-popup-top .group {
+  flex: 1 1 0;
+  width: auto;
+  max-width: 14.5rem;
+  min-width: 0;
+}
+
+.chain-popup-card.is-fav .chain-popup-top .area-select {
+  flex: 1 1 auto;
+  flex-shrink: 0;
+  min-width: 11.5rem;
+  max-width: 16rem;
+}
+
+.chain-popup-card.is-fav .chain-popup-top .area-select-btn {
+  width: 100%;
+  max-width: 100%;
+}
+
 .chain-popup-banner {
   flex-shrink: 0;
   margin-bottom: 1rem;

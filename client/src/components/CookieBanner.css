@@ -25,6 +25,35 @@
   -webkit-backdrop-filter: var(--popup-glass-blur);
 }
 
+.cookie-lang-btn {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.cookie-lang-btn:hover {
+  background: color-mix(in srgb, var(--color-border) 40%, transparent);
+}
+
+.cookie-lang-btn .fi {
+  display: block;
+  width: 1.45rem;
+  height: 1.1rem;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
 .cookie-banner-top {
   display: flex;
   flex-direction: column;
@@ -38,6 +67,7 @@
 
 .cookie-banner-title {
   margin: 0 0 0.4rem;
+  padding: 0 2.2rem;
   font-family: var(--font-display);
   font-size: 1.35rem;
   font-weight: 700;
@@ -112,6 +142,7 @@
 }
 
 .cookie-modal {
+  position: relative;
   width: min(28rem, 100%);
   max-height: min(90vh, 40rem);
   overflow: auto;

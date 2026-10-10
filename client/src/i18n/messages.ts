@@ -34,6 +34,9 @@ const fi = {
   allGymChains: "Kuntosaliketjut",
   showAllChains: "Näytä kaikki {count} ketjua",
   footerNav: "Alatunniste",
+  footerTerms: "Käyttöehdot",
+  footerPrivacy: "Tietosuoja",
+  footerCookies: "Evästeet",
   cookieSettings: "Evästeasetukset",
   cookies: "Evästeet",
   cookieBannerText:
@@ -200,6 +203,9 @@ const en: typeof fi = {
   allGymChains: "All gym chains",
   showAllChains: "Show all {count} chains",
   footerNav: "Footer",
+  footerTerms: "Terms",
+  footerPrivacy: "Privacy",
+  footerCookies: "Cookies",
   cookieSettings: "Cookie settings",
   cookies: "Cookies",
   cookieBannerText:

@@ -12,7 +12,7 @@ import {
 import { rateLimit } from "./rateLimit.js";
 
 const app = express();
-const PORT = 3001;
+const PORT = Number(process.env.PORT) || 3001;
 const LIST_CACHE_MS = 2 * 60 * 1000;
 
 app.use(cors());

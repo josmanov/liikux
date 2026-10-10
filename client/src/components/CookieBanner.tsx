@@ -1,27 +1,41 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   COOKIE_SETTINGS_EVENT,
   readCookieConsent,
   writeCookieConsent,
 } from "../data/cookieConsent";
 import { syncAnalyticsFromConsent } from "../analytics";
+import { switchLangPath, type Lang } from "../i18n/lang";
+import { t as tr, type MessageKey } from "../i18n/messages";
 import { useLang } from "../i18n/useLang";
 import UxSwitch from "./UxSwitch";
 import { useLockPageScroll } from "../hooks/useLockPageScroll";
+import "flag-icons/css/flag-icons.min.css";
 import "./CookieBanner.css";
 
 function CookieBanner() {
-  const { t } = useLang();
+  const { lang, t } = useLang();
+  const location = useLocation();
   const [bannerOpen, setBannerOpen] = useState(false);
   const [manageOpen, setManageOpen] = useState(false);
+  const [firstChoice, setFirstChoice] = useState(false);
+  const [pickLang, setPickLang] = useState<Lang>(lang);
   const [analyticsOn, setAnalyticsOn] = useState(false);
   const [functionalOn, setFunctionalOn] = useState(false);
+
+  function bt(key: MessageKey) {
+    return firstChoice ? tr(pickLang, key) : t(key);
+  }
 
   useEffect(() => {
     const current = readCookieConsent();
     setAnalyticsOn(current.analytics);
     setFunctionalOn(current.functional);
-    setBannerOpen(!current.decided);
+    const undecided = !current.decided;
+    setBannerOpen(undecided);
+    setFirstChoice(undecided);
+    if (undecided) setPickLang(lang);
     syncAnalyticsFromConsent();
 
     function onOpenSettings() {
@@ -30,23 +44,36 @@ function CookieBanner() {
       setFunctionalOn(latest.functional);
       setManageOpen(true);
       setBannerOpen(false);
+      if (!latest.decided) {
+        setFirstChoice(true);
+      } else {
+        setFirstChoice(false);
+      }
     }
 
     window.addEventListener(COOKIE_SETTINGS_EVENT, onOpenSettings);
     return () => {
       window.removeEventListener(COOKIE_SETTINGS_EVENT, onOpenSettings);
     };
-  }, []);
+  }, [lang]);
 
   useLockPageScroll(bannerOpen || manageOpen);
 
-  function save(analytics: boolean, functional: boolean) {
+  function finish(analytics: boolean, functional: boolean) {
     writeCookieConsent({ analytics, functional });
     setAnalyticsOn(analytics);
     setFunctionalOn(functional);
     setManageOpen(false);
     setBannerOpen(false);
     syncAnalyticsFromConsent();
+
+    if (firstChoice && pickLang !== lang) {
+      window.location.assign(
+        switchLangPath(location.pathname, pickLang, location.search),
+      );
+      return;
+    }
+    setFirstChoice(false);
   }
 
   function openManage() {
@@ -57,6 +84,8 @@ function CookieBanner() {
     setBannerOpen(false);
   }
 
+  const flagLang: Lang = pickLang === "fi" ? "en" : "fi";
+
   return (
     <>
       {bannerOpen ? (
@@ -65,12 +94,29 @@ function CookieBanner() {
             className="cookie-banner"
             role="dialog"
             aria-modal="true"
-            aria-label={t("cookies")}
+            aria-label={bt("cookies")}
           >
+            <button
+              type="button"
+              className="cookie-lang-btn"
+              aria-label={
+                flagLang === "en" ? tr(pickLang, "langEn") : tr(pickLang, "langFi")
+              }
+              title={
+                flagLang === "en"
+                  ? tr(pickLang, "switchToEn")
+                  : tr(pickLang, "switchToFi")
+              }
+              onClick={() => setPickLang(flagLang)}
+            >
+              <span
+                className={flagLang === "en" ? "fi fi-gb" : "fi fi-fi"}
+              />
+            </button>
             <div className="cookie-banner-top">
               <div className="cookie-banner-main">
-                <p className="cookie-banner-title">{t("cookies")}</p>
-                <p className="cookie-banner-text">{t("cookieBannerText")}</p>
+                <p className="cookie-banner-title">{bt("cookies")}</p>
+                <p className="cookie-banner-text">{bt("cookieBannerText")}</p>
               </div>
 
               <div className="cookie-banner-actions">
@@ -79,21 +125,21 @@ function CookieBanner() {
                   className="cookie-banner-btn cookie-banner-btn-ghost"
                   onClick={openManage}
                 >
-                  {t("cookieManage")}
+                  {bt("cookieManage")}
                 </button>
                 <button
                   type="button"
                   className="cookie-banner-btn cookie-banner-btn-ghost"
-                  onClick={() => save(false, false)}
+                  onClick={() => finish(false, false)}
                 >
-                  {t("cookieNecessaryOnly")}
+                  {bt("cookieNecessaryOnly")}
                 </button>
                 <button
                   type="button"
                   className="cookie-banner-btn"
-                  onClick={() => save(true, true)}
+                  onClick={() => finish(true, true)}
                 >
-                  {t("cookieAllowAll")}
+                  {bt("cookieAllowAll")}
                 </button>
               </div>
             </div>
@@ -113,29 +159,29 @@ function CookieBanner() {
             className="cookie-modal"
             role="dialog"
             aria-modal="true"
-            aria-label={t("cookieManageTitle")}
+            aria-label={bt("cookieManageTitle")}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="cookie-modal-head">
-              <h2 className="cookie-modal-title">{t("cookieManageTitle")}</h2>
-              <p className="cookie-modal-text">{t("cookieManageText")}</p>
+              <h2 className="cookie-modal-title">{bt("cookieManageTitle")}</h2>
+              <p className="cookie-modal-text">{bt("cookieManageText")}</p>
             </div>
 
             <div className="cookie-modal-options">
               <div className="cookie-row is-locked">
                 <span>
-                  <strong>{t("cookieNecessary")}</strong>
+                  <strong>{bt("cookieNecessary")}</strong>
                   <span className="cookie-row-desc">
-                    {t("cookieNecessaryDesc")}
+                    {bt("cookieNecessaryDesc")}
                   </span>
                 </span>
                 <UxSwitch checked disabled dim />
               </div>
               <div className="cookie-row">
                 <span>
-                  <strong>{t("cookieFunctional")}</strong>
+                  <strong>{bt("cookieFunctional")}</strong>
                   <span className="cookie-row-desc">
-                    {t("cookieFunctionalDesc")}
+                    {bt("cookieFunctionalDesc")}
                   </span>
                 </span>
                 <UxSwitch
@@ -145,9 +191,9 @@ function CookieBanner() {
               </div>
               <div className="cookie-row">
                 <span>
-                  <strong>{t("cookieAnalytics")}</strong>
+                  <strong>{bt("cookieAnalytics")}</strong>
                   <span className="cookie-row-desc">
-                    {t("cookieAnalyticsDesc")}
+                    {bt("cookieAnalyticsDesc")}
                   </span>
                 </span>
                 <UxSwitch
@@ -161,9 +207,9 @@ function CookieBanner() {
               <button
                 type="button"
                 className="cookie-banner-btn"
-                onClick={() => save(analyticsOn, functionalOn)}
+                onClick={() => finish(analyticsOn, functionalOn)}
               >
-                {t("cookieSave")}
+                {bt("cookieSave")}
               </button>
             </div>
           </div>

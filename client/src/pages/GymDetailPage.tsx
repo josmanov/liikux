@@ -623,161 +623,205 @@ function GymDetailPage() {
                 <img src={heroSrc} alt="" />
               </div>
               <div className="gym-detail-brand-side">
-                <div className="gym-detail-brand-actions">
-                  {gym.lat != null && gym.lng != null ? (
-                    <a
-                      className="gym-detail-maps-btn"
-                      href={
-                        "https://www.google.com/maps/dir/?api=1&origin=" +
-                        (fromPoint?.lat ?? originLat ?? gym.lat) +
-                        "," +
-                        (fromPoint?.lng ?? originLng ?? gym.lng) +
-                        "&destination=" +
-                        gym.lat +
-                        "," +
-                        gym.lng
+                <div className="gym-detail-brand-summary">
+                  <div className="gym-detail-meta">
+                    {chain && !chainIsOther ? (
+                      <p className="gym-detail-chain-name">{chain.name}</p>
+                    ) : null}
+                    <h1 className="gym-detail-name">
+                      {cleanGymDisplayName(gym.name)}
+                    </h1>
+                    {streetLine || gym.city ? (
+                      <p className="gym-detail-address-line">
+                        <MapPin
+                          size={15}
+                          strokeWidth={2.3}
+                          aria-hidden="true"
+                        />
+                        <span>
+                          {[streetLine, gym.city?.trim()]
+                            .filter(Boolean)
+                            .join(", ")}
+                        </span>
+                      </p>
+                    ) : null}
+                  </div>
+
+                  {(hours247 || promoTag) && (
+                    <div className="gym-detail-badges">
+                      {hours247 ? (
+                        <span className="gym-detail-badge">24/7</span>
+                      ) : null}
+                      {promoTag ? (
+                        <span className="gym-detail-badge is-promo">
+                          {promoTag}
+                        </span>
+                      ) : null}
+                    </div>
+                  )}
+
+                  <div className="gym-detail-brand-actions">
+                    {gym.lat != null && gym.lng != null ? (
+                      <a
+                        className="gym-detail-maps-btn"
+                        href={
+                          "https://www.google.com/maps/dir/?api=1&origin=" +
+                          (fromPoint?.lat ?? originLat ?? gym.lat) +
+                          "," +
+                          (fromPoint?.lng ?? originLng ?? gym.lng) +
+                          "&destination=" +
+                          gym.lat +
+                          "," +
+                          gym.lng
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={t("mapsRoute")}
+                      >
+                        <img
+                          className="is-line"
+                          src="/pins/google-maps-outline.png"
+                          alt=""
+                        />
+                        <img
+                          className="is-fill"
+                          src="/pins/google-maps-pin.png"
+                          alt=""
+                        />
+                      </a>
+                    ) : null}
+                    <button
+                      type="button"
+                      className={
+                        isFav
+                          ? "gym-detail-fav-btn is-on"
+                          : "gym-detail-fav-btn"
                       }
+                      aria-label={
+                        isFav ? t("removeFavorite") : t("addFavorite")
+                      }
+                      aria-pressed={isFav}
+                      onClick={() => {
+                        setFavoriteSlugs(toggleFavoriteSlug(gym.slug));
+                      }}
+                    >
+                      <Heart size={28} strokeWidth={2.2} />
+                    </button>
+                  </div>
+
+                  <div className="gym-detail-stats">
+                    <div className="gym-detail-stat">
+                      <span className="gym-detail-stat-label">
+                        {t("statsFrom")}
+                      </span>
+                      <strong className="gym-detail-stat-value is-price">
+                        {priceText != null ? `${priceText} €` : "—"}
+                      </strong>
+                    </div>
+                    <div className="gym-detail-stat">
+                      <span className="gym-detail-stat-label">
+                        {t("statsDistance")}
+                      </span>
+                      <strong className="gym-detail-stat-value">
+                        {tripKm != null ? formatDistanceKm(tripKm) : "—"}
+                      </strong>
+                    </div>
+                  </div>
+
+                  {hours247 || hoursWeekday || hoursWeekend ? (
+                    <ul className="gym-detail-hours-inline">
+                      {hours247 ? (
+                        <li>
+                          <span>{t("hoursAccess")}</span>
+                          <strong>24/7</strong>
+                        </li>
+                      ) : null}
+                      {!hours247 && hoursWeekday ? (
+                        <li>
+                          <span>{t("weekdays")}</span>
+                          <strong>
+                            {cleanHoursValue(hoursWeekday, hours247)}
+                          </strong>
+                        </li>
+                      ) : null}
+                      {!hours247 && hoursWeekend ? (
+                        <li>
+                          <span>{t("weekend")}</span>
+                          <strong>
+                            {cleanHoursValue(hoursWeekend, hours247)}
+                          </strong>
+                        </li>
+                      ) : null}
+                    </ul>
+                  ) : null}
+                </div>
+
+                <div className="gym-detail-brand-foot">
+                  {siteUrl ? (
+                    <a
+                      className="gym-detail-cta"
+                      href={siteUrl}
                       target="_blank"
                       rel="noreferrer"
-                      aria-label={t("mapsRoute")}
                     >
-                      <img
-                        className="is-line"
-                        src="/pins/google-maps-outline.png"
-                        alt=""
-                      />
-                      <img
-                        className="is-fill"
-                        src="/pins/google-maps-pin.png"
-                        alt=""
-                      />
+                      {t("visitGymSite")}
                     </a>
                   ) : null}
-                  <button
-                    type="button"
-                    className={
-                      isFav
-                        ? "gym-detail-fav-btn is-on"
-                        : "gym-detail-fav-btn"
-                    }
-                    aria-label={
-                      isFav ? t("removeFavorite") : t("addFavorite")
-                    }
-                    aria-pressed={isFav}
-                    onClick={() => {
-                      setFavoriteSlugs(toggleFavoriteSlug(gym.slug));
-                    }}
-                  >
-                    <Heart size={28} strokeWidth={2.2} />
-                  </button>
                 </div>
-                {siteUrl ? (
-                  <a
-                    className="gym-detail-cta"
-                    href={siteUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    {t("visitGymSite")}
-                  </a>
-                ) : null}
-              </div>
-            </div>
-
-            <div className="gym-detail-meta">
-              {chain && !chainIsOther ? (
-                <p className="gym-detail-chain-name">{chain.name}</p>
-              ) : null}
-              <h1 className="gym-detail-name">
-                {cleanGymDisplayName(gym.name)}
-              </h1>
-              {streetLine || gym.city ? (
-                <p className="gym-detail-address-line">
-                  <MapPin size={15} strokeWidth={2.3} aria-hidden="true" />
-                  <span>
-                    {[streetLine, gym.city?.trim()].filter(Boolean).join(", ")}
-                  </span>
-                </p>
-              ) : null}
-            </div>
-
-            {(hours247 || promoTag) && (
-              <div className="gym-detail-badges">
-                {hours247 ? (
-                  <span className="gym-detail-badge">24/7</span>
-                ) : null}
-                {promoTag ? (
-                  <span className="gym-detail-badge is-promo">{promoTag}</span>
-                ) : null}
-              </div>
-            )}
-
-            <div className="gym-detail-stats">
-              <div className="gym-detail-stat">
-                <span className="gym-detail-stat-label">{t("statsFrom")}</span>
-                <strong className="gym-detail-stat-value is-price">
-                  {priceText != null ? `${priceText} €` : "—"}
-                </strong>
-              </div>
-              <div className="gym-detail-stat">
-                <span className="gym-detail-stat-label">
-                  {t("statsDistance")}
-                </span>
-                <strong className="gym-detail-stat-value">
-                  {tripKm != null ? formatDistanceKm(tripKm) : "—"}
-                </strong>
               </div>
             </div>
 
             <div className="gym-detail-accs">
-              <DetailAccordion
-                id="hours"
-                openId={openAcc}
-                onToggle={toggleAcc}
-                title={t("hoursAccess")}
-                icon={<Clock size={18} strokeWidth={2.2} />}
-              >
-                {!hasHours ? (
-                  <p className="gym-detail-muted">{t("noHours")}</p>
-                ) : (
-                  <ul className="gym-detail-plans">
-                    {hours247 ? (
-                      <li>
-                        <span>{t("hoursAccess")}</span>
-                        <strong>24/7</strong>
-                      </li>
-                    ) : null}
-                    {!hours247 && hoursWeekday ? (
-                      <li>
-                        <span>{t("weekdays")}</span>
-                        <strong>
-                          {cleanHoursValue(hoursWeekday, hours247)}
-                        </strong>
-                      </li>
-                    ) : null}
-                    {!hours247 && hoursWeekend ? (
-                      <li>
-                        <span>{t("weekend")}</span>
-                        <strong>
-                          {cleanHoursValue(hoursWeekend, hours247)}
-                        </strong>
-                      </li>
-                    ) : null}
-                    {offer.freeTrial === true ? (
-                      <li>
-                        <span>{t("trial")}</span>
-                        <strong>{t("freeTrial")}</strong>
-                      </li>
-                    ) : null}
-                    {offer.dayPass === true ? (
-                      <li>
-                        <span>{t("priceDayPass")}</span>
-                        <strong>{t("available")}</strong>
-                      </li>
-                    ) : null}
-                  </ul>
-                )}
-              </DetailAccordion>
+              <div className="gym-detail-acc-hours-mobile">
+                <DetailAccordion
+                  id="hours"
+                  openId={openAcc}
+                  onToggle={toggleAcc}
+                  title={t("hoursAccess")}
+                  icon={<Clock size={18} strokeWidth={2.2} />}
+                >
+                  {!hasHours ? (
+                    <p className="gym-detail-muted">{t("noHours")}</p>
+                  ) : (
+                    <ul className="gym-detail-plans">
+                      {hours247 ? (
+                        <li>
+                          <span>{t("hoursAccess")}</span>
+                          <strong>24/7</strong>
+                        </li>
+                      ) : null}
+                      {!hours247 && hoursWeekday ? (
+                        <li>
+                          <span>{t("weekdays")}</span>
+                          <strong>
+                            {cleanHoursValue(hoursWeekday, hours247)}
+                          </strong>
+                        </li>
+                      ) : null}
+                      {!hours247 && hoursWeekend ? (
+                        <li>
+                          <span>{t("weekend")}</span>
+                          <strong>
+                            {cleanHoursValue(hoursWeekend, hours247)}
+                          </strong>
+                        </li>
+                      ) : null}
+                      {offer.freeTrial === true ? (
+                        <li>
+                          <span>{t("trial")}</span>
+                          <strong>{t("freeTrial")}</strong>
+                        </li>
+                      ) : null}
+                      {offer.dayPass === true ? (
+                        <li>
+                          <span>{t("priceDayPass")}</span>
+                          <strong>{t("available")}</strong>
+                        </li>
+                      ) : null}
+                    </ul>
+                  )}
+                </DetailAccordion>
+              </div>
 
               <DetailAccordion
                 id="memberships"
