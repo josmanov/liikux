@@ -466,18 +466,19 @@
 .browse-extras-root {
   position: fixed;
   inset: 0;
-  z-index: 90;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1.25rem;
+  box-sizing: border-box;
   background: var(--popup-overlay);
   overscroll-behavior: none;
 }
 
 .browse-extras-modal {
   width: min(28rem, 100%);
-  max-height: min(90vh, 40rem);
+  max-height: min(85vh, 40rem);
   overflow: auto;
   overscroll-behavior: contain;
   border-radius: 14px;
@@ -490,6 +491,7 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  box-sizing: border-box;
 }
 
 .browse-extras-head {
@@ -498,8 +500,17 @@
   gap: 0.35rem;
 }
 
+.browse-extras-banner-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 2.6rem;
+}
+
 .browse-extras-title {
   margin: 0;
+  min-width: 0;
+  flex: 1;
   font-family: var(--font-display);
   font-size: 2rem;
   font-weight: 700;
@@ -1429,11 +1440,12 @@
 .browse-map-sheet-root {
   position: fixed;
   inset: 0;
-  z-index: 95;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1.25rem;
+  box-sizing: border-box;
   background: var(--popup-overlay);
   overscroll-behavior: none;
   animation: browse-sheet-fade 0.22s ease;
@@ -1470,19 +1482,6 @@
   font-size: 1.35rem;
   font-weight: 700;
   color: #fff;
-}
-
-.browse-map-sheet-close {
-  display: grid;
-  place-items: center;
-  width: 2.1rem;
-  height: 2.1rem;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #ddd;
-  cursor: pointer;
-  flex-shrink: 0;
 }
 
 .browse-map-sheet-body {
@@ -1915,7 +1914,8 @@
 
 .browse-region-hint {
   position: absolute;
-  top: 0.75rem;
+  top: auto;
+  bottom: 0.65rem;
   left: 50%;
   z-index: 15;
   margin: 0;
@@ -1934,6 +1934,10 @@
 .browse-region-hint.is-open {
   background: rgba(15, 23, 42, 0.88);
   box-shadow: inset 0 0 0 1.5px #ffbf00;
+}
+
+.browse.is-pin-selected .browse-region-hint {
+  display: none;
 }
 
 .browse-map-preview {
@@ -3301,10 +3305,21 @@
     display: inline-flex;
   }
 
+  .browse-extras-root,
+  .browse-map-sheet-root {
+    align-items: flex-start;
+    justify-content: center;
+    padding: calc(var(--header-h, 3.9rem) + 0.65rem) 0.85rem 0.85rem;
+  }
+
   .browse-extras-modal {
     width: min(420px, 100%);
-    max-height: min(88vh, 720px);
+    max-height: calc(100dvh - var(--header-h, 3.9rem) - 1.5rem);
     overflow-y: auto;
+  }
+
+  .browse-map-sheet {
+    max-height: calc(100dvh - var(--header-h, 3.9rem) - 1.5rem);
   }
 
   .browse-extras-jump {

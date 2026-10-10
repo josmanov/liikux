@@ -1848,10 +1848,14 @@ function GymsPage() {
       const bbox = geomBBox(
         (full?.geometry ?? f.geometry) as MaakuntaGeom,
       );
+      const mobile = window.matchMedia(BROWSE_MOBILE_MQ).matches;
+      const pad = mobile
+        ? { top: 24, bottom: 28, left: 24, right: 24 }
+        : { top: 72, bottom: 72, left: 72, right: 72 };
       map.fitBounds(bbox, {
-        padding: { top: 72, bottom: 72, left: 72, right: 72 },
+        padding: pad,
         duration: 750,
-        maxZoom: 9.5,
+        maxZoom: mobile ? 10.5 : 9.5,
       });
     }
 
@@ -1950,10 +1954,18 @@ function GymsPage() {
     selectedMaakuntaRef.current = nimi;
     regionPickModeRef.current = false;
     setSelectedMaakunta(nimi);
-    map.fitBounds(geomBBox(full.geometry), {
-      padding: { top: 72, bottom: 72, left: 72, right: 72 },
-      duration: 750,
-      maxZoom: 9.5,
+    const bbox = geomBBox(full.geometry);
+    const mobile = window.matchMedia(BROWSE_MOBILE_MQ).matches;
+    const pad = mobile
+      ? { top: 24, bottom: 28, left: 24, right: 24 }
+      : { top: 72, bottom: 72, left: 72, right: 72 };
+    requestAnimationFrame(() => {
+      map.resize();
+      map.fitBounds(bbox, {
+        padding: pad,
+        duration: 750,
+        maxZoom: mobile ? 10.5 : 9.5,
+      });
     });
   }
 
@@ -2869,11 +2881,11 @@ function GymsPage() {
                   </h2>
                   <button
                     type="button"
-                    className="browse-map-sheet-close"
+                    className="chain-popup-close"
                     aria-label={t("close")}
                     onClick={() => setMapSheet(null)}
                   >
-                    <X size={18} strokeWidth={2.3} />
+                    <X size={20} strokeWidth={2.4} />
                   </button>
                 </div>
 
@@ -2966,7 +2978,8 @@ function GymsPage() {
           )
         : null}
 
-      {extrasOpen ? (
+      {extrasOpen
+        ? createPortal(
         <div
           className="browse-extras-root"
           role="presentation"
@@ -2980,7 +2993,17 @@ function GymsPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="browse-extras-head">
-              <h2 className="browse-extras-title">{t("filters")}</h2>
+              <div className="browse-extras-banner-row">
+                <h2 className="browse-extras-title">{t("filters")}</h2>
+                <button
+                  type="button"
+                  className="chain-popup-close"
+                  aria-label={t("close")}
+                  onClick={() => setExtrasOpen(false)}
+                >
+                  <X size={20} strokeWidth={2.4} />
+                </button>
+              </div>
               <p className="browse-extras-text browse-extras-hint-desk">
                 {t("extrasHint")}
               </p>
@@ -3176,8 +3199,10 @@ function GymsPage() {
               </button>
             </div>
           </div>
-        </div>
-      ) : null}
+        </div>,
+            document.body,
+          )
+        : null}
 
       {chainsOpen
         ? createPortal(
