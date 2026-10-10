@@ -373,7 +373,6 @@ const chainFilterOptionIds = [
   "easyfit",
   "fressi",
   "fitness24",
-  "gofitness",
   "olefit",
   "liikku",
   "forever",
@@ -389,7 +388,6 @@ const chainFilterBrandLabels: Record<string, string> = {
   easyfit: "EasyFit",
   fressi: "Fressi",
   fitness24: "Fitness24Seven",
-  gofitness: "GoFitness",
   olefit: "Ole.Fit",
   liikku: "Liikku",
   forever: "Forever",
@@ -579,13 +577,6 @@ function GymsPage() {
         ? t("distanceAll")
         : `${opt.km} km`,
   }));
-  const localizedChainFilterOptions = chainFilterOptionIds.map((id) => ({
-    id,
-    label:
-      id === OTHER_CHAIN_FILTER_ID
-        ? t("otherChains")
-        : chainFilterBrandLabels[id],
-  }));
   const {
     label: locationLabel,
     lat: locationLat,
@@ -595,6 +586,30 @@ function GymsPage() {
   } = useAppLocation();
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [chains, setChains] = useState<Chain[]>([]);
+  const localizedChainFilterOptions = useMemo(() => {
+    return chainFilterOptionIds
+      .filter((id) => {
+        if (chains.length === 0) return true;
+        if (id === OTHER_CHAIN_FILTER_ID) {
+          return chains.some(
+            (c) => !isListedBrandChain(c) && (c.gymCount ?? 0) > 0,
+          );
+        }
+        const match = chains.find((c) => chainMatchesFilterKey(c, id));
+        return !!match && (match.gymCount ?? 0) > 0;
+      })
+      .map((id) => ({
+        id,
+        label:
+          id === OTHER_CHAIN_FILTER_ID
+            ? t("otherChains")
+            : chainFilterBrandLabels[id],
+      }));
+  }, [chains, t]);
+  const visibleChainFilterIds = useMemo(
+    () => localizedChainFilterOptions.map((o) => o.id),
+    [localizedChainFilterOptions],
+  );
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [favoriteSlugs, setFavoriteSlugs] = useState<string[]>(() =>
@@ -835,7 +850,19 @@ function GymsPage() {
 
   const sortLabel =
     sortOptions.find((o) => o.id === sortId)?.label ?? t("sortNearest");
-  const chainFilterActive = selectedChains.length < allChainFilterIds.length;
+  useEffect(() => {
+    if (visibleChainFilterIds.length === 0) return;
+    setSelectedChains((cur) => {
+      const allowed = new Set(visibleChainFilterIds);
+      const next = cur.filter((id) => allowed.has(id));
+      if (next.length === cur.length) return cur;
+      if (next.length === 0) return [...visibleChainFilterIds];
+      return next;
+    });
+  }, [visibleChainFilterIds]);
+
+  const chainFilterActive =
+    selectedChains.length < visibleChainFilterIds.length;
   const pageTitle =
     selectedChains.length === 1
       ? (localizedChainFilterOptions.find((o) => o.id === selectedChains[0])
@@ -2484,7 +2511,7 @@ function GymsPage() {
                 type="button"
                 className="browse-filters-clear"
                 onClick={() => {
-                  setSelectedChains([...allChainFilterIds]);
+                  setSelectedChains([...visibleChainFilterIds]);
                   setSelectedAudiences([]);
                   setDistanceFilter("all");
                   setPriceMin(PRICE_MIN);
@@ -3386,7 +3413,7 @@ function GymsPage() {
                 type="button"
                 className="browse-extras-btn browse-extras-btn-ghost browse-extras-clear-mobile"
                 onClick={() => {
-                  setSelectedChains([...allChainFilterIds]);
+                  setSelectedChains([...visibleChainFilterIds]);
                   setSelectedAudiences([]);
                   setDistanceFilter("all");
                   setPriceMin(PRICE_MIN);
@@ -3459,7 +3486,9 @@ function GymsPage() {
                     <button
                       type="button"
                       className="browse-chains-action"
-                      onClick={() => setSelectedChains([...allChainFilterIds])}
+                      onClick={() =>
+                        setSelectedChains([...visibleChainFilterIds])
+                      }
                     >
                       {t("all")}
                     </button>
@@ -3474,7 +3503,7 @@ function GymsPage() {
                   <p className="browse-chains-picked">
                     {t("chainsPicked", {
                       n: selectedChains.length,
-                      total: allChainFilterIds.length,
+                      total: visibleChainFilterIds.length,
                     })}
                   </p>
                 </div>

@@ -154,14 +154,26 @@ function HeaderSearch() {
     const seen = new Set<string>();
     for (const row of nearby) {
       const chain = byId.get(row.gym.chainId);
-      if (!chain || chain.slug === "muut" || seen.has(chain.id)) continue;
+      if (
+        !chain ||
+        chain.slug === "muut" ||
+        seen.has(chain.id) ||
+        (chain.gymCount ?? 0) <= 0
+      ) {
+        continue;
+      }
       seen.add(chain.id);
       out.push(chain);
       if (out.length >= 4) break;
     }
     if (out.length < 4) {
       const ranked = [...chains]
-        .filter((c) => c.slug !== "muut" && !seen.has(c.id))
+        .filter(
+          (c) =>
+            c.slug !== "muut" &&
+            !seen.has(c.id) &&
+            (c.gymCount ?? 0) > 0,
+        )
         .sort(
           (a, b) =>
             (b.gymCount ?? 0) - (a.gymCount ?? 0) ||
@@ -179,7 +191,12 @@ function HeaderSearch() {
   const searching = q.length >= 1;
   const chainHits = searching
     ? chains
-        .filter((c) => c.name.toLowerCase().includes(q) && c.slug !== "muut")
+        .filter(
+          (c) =>
+            c.name.toLowerCase().includes(q) &&
+            c.slug !== "muut" &&
+            (c.gymCount ?? 0) > 0,
+        )
         .slice(0, 5)
     : suggestedChains;
   const gymHits = searching

@@ -812,15 +812,15 @@
   bottom: calc(100% + 2px);
   transform: translateX(-50%);
   z-index: 5;
-  max-width: 10.5rem;
-  padding: 0.2rem 0.45rem;
+  max-width: 11rem;
+  padding: 0.22rem 0.5rem;
   border-radius: 8px;
   border: 1.5px solid rgba(255, 255, 255, 0.35);
-  background: rgba(8, 12, 22, 0.9);
+  background: rgba(8, 12, 22, 0.88);
   color: #fff;
   font-family: var(--font-body);
-  font-size: 0.66rem;
-  font-weight: 650;
+  font-size: 0.68rem;
+  font-weight: 600;
   line-height: 1.2;
   text-align: center;
   white-space: nowrap;
@@ -837,7 +837,7 @@
   top: 100%;
   transform: translateX(-50%);
   border: 5px solid transparent;
-  border-top-color: rgba(8, 12, 22, 0.9);
+  border-top-color: rgba(8, 12, 22, 0.88);
 }
 
 .gym-detail-origin-pin {
@@ -871,6 +871,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
   pointer-events: none;
+}
+
+.gym-detail-pin-address,
+.gym-detail-origin-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  bottom: calc(100% + 2px);
+  max-width: 11rem;
+  padding: 0.22rem 0.5rem;
 }
 
 .gym-detail-origin-label::after {

@@ -1417,9 +1417,7 @@
 .browse-row.is-selected {
   background: var(--popup-glass);
   border-left-color: transparent;
-  box-shadow:
-    var(--popup-shadow),
-    inset 0 0 0 1.5px #fff;
+  box-shadow: var(--popup-shadow);
   backdrop-filter: var(--popup-glass-blur);
   -webkit-backdrop-filter: var(--popup-glass-blur);
   z-index: 1;
@@ -2862,6 +2860,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
   pointer-events: none;
+}
+
+.gym-origin-pin-label,
+.gym-pin-address {
+  font-size: 0.68rem;
+  font-weight: 600;
+  bottom: calc(100% + 2px);
+  max-width: 11rem;
+  padding: 0.22rem 0.5rem;
 }
 
 .gym-pin-address::after {

@@ -257,7 +257,7 @@ function HomePage() {
   }, []);
 
   const listedChains = chains
-    .filter((c) => c.slug !== "muut")
+    .filter((c) => c.slug !== "muut" && (c.gymCount ?? 0) > 0)
     .slice()
     .sort((a, b) => {
       const diff = (b.gymCount ?? 0) - (a.gymCount ?? 0);

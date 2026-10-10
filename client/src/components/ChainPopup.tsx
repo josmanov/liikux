@@ -187,6 +187,8 @@ function ChainPopup() {
 
   const chainList = useMemo(() => {
     const list = chains.filter((chain) => {
+      const gymN = chain.gymCount ?? chainStats[chain.id]?.gyms ?? 0;
+      if (gymN <= 0) return false;
       if (!q) return true;
       const rawName = (chain.name || "").toLowerCase();
       const name = chain.slug === "muut" ? "muut kuntosalit" : rawName;
