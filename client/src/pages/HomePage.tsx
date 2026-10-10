@@ -244,9 +244,9 @@ function HomePage() {
     Promise.all([
       fetchChains().catch(() => [] as Chain[]),
       fetchHomeStats().catch(() => ({ gymCount: 0, cityCount: 0 })),
-    ]).then(([data, stats]) => {
+    ]).then(([chainData, stats]) => {
       if (cancelled) return;
-      setChains(data);
+      setChains(chainData);
       setGymCount(stats.gymCount);
       setCityCount(stats.cityCount);
       setHomeReady(true);
@@ -256,8 +256,15 @@ function HomePage() {
     };
   }, []);
 
-  const listedChains = chains.filter((c) => c.slug !== "muut");
-  const suositutKetjut = listedChains.slice(0, 10);
+  const listedChains = chains
+    .filter((c) => c.slug !== "muut")
+    .slice()
+    .sort((a, b) => {
+      const diff = (b.gymCount ?? 0) - (a.gymCount ?? 0);
+      if (diff !== 0) return diff;
+      return a.name.localeCompare(b.name, "fi");
+    });
+  const suositutKetjut = listedChains.slice(0, 8);
   const chainCount = listedChains.length;
 
   return (
@@ -370,42 +377,13 @@ function HomePage() {
           </div>
         </div>
 
-        <div
-          id="suositut"
-          className={`rail reveal ${railReveal.inView || homeReady ? "is-in" : ""}`}
-          ref={railReveal.ref}
-        >
-          <div className="rail-head">
+        <div className="hero-bottom">
+          <div
+            id="suositut"
+            className={`rail reveal ${railReveal.inView || homeReady ? "is-in" : ""}`}
+            ref={railReveal.ref}
+          >
             <h2 className="rail-title">{t("popularInFinland")}</h2>
-          </div>
-          <div className="rail-viewport">
-            <div
-              className={homeReady ? "rail-track list-pop" : "rail-track"}
-            >
-              {suositutKetjut.map((chain, i) => (
-                <button
-                  key={chain.id}
-                  type="button"
-                  className="place-card"
-                  style={{ animationDelay: `${Math.min(i, 18) * 28}ms` }}
-                  onClick={() => openChain(chain.slug)}
-                >
-                  <span
-                    className={[
-                      "place-card-media",
-                      chain.logoFit === "contain" ? "is-logo" : "",
-                      chain.logoClass || "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                  >
-                    <span className="place-card-shine" aria-hidden="true" />
-                    <img src={chain.image} alt="" />
-                  </span>
-                  <span className="place-card-name">{chain.name}</span>
-                </button>
-              ))}
-            </div>
             {chainCount > 0 ? (
               <button
                 type="button"
@@ -416,6 +394,35 @@ function HomePage() {
                 <span aria-hidden="true">›</span>
               </button>
             ) : null}
+            <div className="rail-viewport">
+              <div
+                className={homeReady ? "rail-track list-pop" : "rail-track"}
+              >
+                {suositutKetjut.map((chain, i) => (
+                  <button
+                    key={chain.id}
+                    type="button"
+                    className="place-card"
+                    style={{ animationDelay: `${Math.min(i, 18) * 28}ms` }}
+                    onClick={() => openChain(chain.slug)}
+                  >
+                    <span
+                      className={[
+                        "place-card-media",
+                        chain.logoFit === "contain" ? "is-logo" : "",
+                        chain.logoClass || "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                    >
+                      <span className="place-card-shine" aria-hidden="true" />
+                      <img src={chain.image} alt="" />
+                    </span>
+                    <span className="place-card-name">{chain.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>

@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 
 import { db } from "../db/index.js";
 import { chains, enrichRuns, gyms } from "../db/schema.js";
@@ -26,9 +26,22 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.get("/api/chains", async (_req, res) => {
-  const { data, hit } = await cached("chains", LIST_CACHE_MS, () =>
-    db.select().from(chains),
-  );
+  const { data, hit } = await cached("chains-gymcount-v1", LIST_CACHE_MS, async () => {
+    const chainRows = await db.select().from(chains);
+    const countRows = await db
+      .select({
+        chainId: gyms.chainId,
+        n: sql<number>`count(*)::int`,
+      })
+      .from(gyms)
+      .where(eq(gyms.listed, true))
+      .groupBy(gyms.chainId);
+    const byId = new Map(countRows.map((r) => [r.chainId, Number(r.n) || 0]));
+    return chainRows.map((c) => ({
+      ...c,
+      gymCount: byId.get(c.id) ?? 0,
+    }));
+  });
   res.setHeader("Cache-Control", "public, max-age=120");
   res.setHeader("X-Cache", hit ? "HIT" : "MISS");
   res.json(data);

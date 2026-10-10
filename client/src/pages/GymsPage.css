@@ -17,7 +17,7 @@
   --browse-side: 32px;
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - 5.75rem);
+  height: calc(100dvh - var(--header-h, 3.5rem));
   min-height: 0;
   padding: 16px var(--browse-side) 16px;
   box-sizing: border-box;

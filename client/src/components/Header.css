@@ -166,10 +166,15 @@
   overflow: hidden;
 }
 
+.header-fav {
+  flex-shrink: 0;
+}
+
 .header-right {
     display: flex;
     align-items: center;
     gap: 1rem;
+    margin-left: auto;
 }
 
 .header-lang.playstore-button.is-plain {
@@ -238,8 +243,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.55rem;
-    padding: 0.55rem 0.85rem;
+    gap: 0.45rem;
+    padding: 0.8rem 1rem;
+    min-height: 3.9rem;
   }
 
   .header-left {
@@ -249,7 +255,7 @@
   }
 
   .header-logo img {
-    height: 2.15rem;
+    height: 2.5rem;
   }
 
   .header-area-desktop,
@@ -259,12 +265,20 @@
     display: none;
   }
 
-  .header-right {
-    gap: 0.15rem;
+  .header-left {
+    gap: 0;
   }
 
   .header-fav {
+    order: 2;
+    margin-left: auto;
     padding: 0.15rem 0.35rem;
+  }
+
+  .header-right {
+    order: 3;
+    margin-left: 0;
+    gap: 0.15rem;
   }
 
   .header-fav-label {
@@ -278,8 +292,8 @@
   .header-menu-btn {
     display: grid;
     place-items: center;
-    width: 2.4rem;
-    height: 2.4rem;
+    width: 2.45rem;
+    height: 2.45rem;
     padding: 0;
     border: 0;
     border-radius: 10px;

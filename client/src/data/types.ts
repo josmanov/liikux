@@ -24,6 +24,7 @@ export type Chain = {
   audienceJson?: string | null;
   sourceUrl?: string | null;
   checkedAt?: string | null;
+  gymCount?: number;
 };
 
 export type ChainSummary = Pick<

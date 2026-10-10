@@ -117,36 +117,37 @@ function Header() {
         </nav>
       </div>
 
+      <button
+        type="button"
+        className={
+          "header-nav-link header-fav" +
+          (favShown > 0 ? " is-typing" : "") +
+          (favHover ? " is-full" : "")
+        }
+        aria-label={favCount > 0 ? `${favWord}, ${favCount}` : favWord}
+        onMouseEnter={() => setFavHover(true)}
+        onMouseLeave={() => setFavHover(false)}
+        onClick={() => setFavoritesOpen(true)}
+      >
+        <span className="header-fav-label" aria-hidden="true">
+          {favWord.split("").map((ch, i) => (
+            <span
+              key={i}
+              className={i < favShown ? "header-fav-ch is-on" : "header-fav-ch"}
+            >
+              <span>{ch}</span>
+            </span>
+          ))}
+        </span>
+        <span className="header-fav-icon">
+          <Heart size={20} strokeWidth={2.4} />
+          {favCount > 0 ? (
+            <span className="header-fav-count">{favCount}</span>
+          ) : null}
+        </span>
+      </button>
+
       <div className="header-right">
-        <button
-          type="button"
-          className={
-            "header-nav-link header-fav" +
-            (favShown > 0 ? " is-typing" : "") +
-            (favHover ? " is-full" : "")
-          }
-          aria-label={favCount > 0 ? `${favWord}, ${favCount}` : favWord}
-          onMouseEnter={() => setFavHover(true)}
-          onMouseLeave={() => setFavHover(false)}
-          onClick={() => setFavoritesOpen(true)}
-        >
-          <span className="header-fav-label" aria-hidden="true">
-            {favWord.split("").map((ch, i) => (
-              <span
-                key={i}
-                className={i < favShown ? "header-fav-ch is-on" : "header-fav-ch"}
-              >
-                <span>{ch}</span>
-              </span>
-            ))}
-          </span>
-          <span className="header-fav-icon">
-            <Heart size={20} strokeWidth={2.4} />
-            {favCount > 0 ? (
-              <span className="header-fav-count">{favCount}</span>
-            ) : null}
-          </span>
-        </button>
         <HeaderSearch />
         <button
           type="button"

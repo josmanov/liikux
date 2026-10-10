@@ -1,4 +1,5 @@
 .layout {
+  --header-h: 5.75rem;
   position: relative;
   min-height: 100dvh;
   display: flex;
@@ -7,12 +8,18 @@
   overflow-x: clip;
 }
 
+@media (max-width: 760px) {
+  .layout {
+    --header-h: 3.9rem;
+  }
+}
+
 .layout.is-home .layout-content {
   flex: 1 0 auto;
 }
 
 .layout.is-home .shell {
-  min-height: calc(100dvh - 5.75rem);
+  min-height: calc(100dvh - var(--header-h));
   flex: none;
 }
 
