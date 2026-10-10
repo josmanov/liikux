@@ -99,3 +99,56 @@ button {
     animation: none;
   }
 }
+
+.load-cover {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  background: var(--color-bg);
+}
+
+.load-box {
+  min-height: 14rem;
+  display: grid;
+  place-items: center;
+}
+
+.load-spin {
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 50%;
+  border: 5px solid rgba(255, 255, 255, 0.16);
+  border-top-color: #fff;
+  animation: load-spin 0.7s linear infinite;
+}
+
+.load-spin.is-sm {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-width: 3px;
+}
+
+.load-reveal {
+  animation: load-reveal 0.32s ease;
+}
+
+.load-hold {
+  visibility: hidden;
+}
+
+@keyframes load-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes load-reveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

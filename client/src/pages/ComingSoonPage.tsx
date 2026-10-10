@@ -52,7 +52,7 @@ function ComingSoonPage({ releaseAt, onUnlock }: Props) {
       <div className="coming-soon-inner">
         <img
           className="coming-soon-logo"
-          src="/liikux-logo-light.png?v=white"
+          src="/liikux-logo-light.png?v=3"
           alt="Liikux"
         />
         <p className="coming-soon-eyebrow">Tulossa pian</p>

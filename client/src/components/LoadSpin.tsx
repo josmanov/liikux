@@ -1,5 +1,3 @@
-import "./LoadSpin.css";
-
 function LoadSpin({ size = "lg" }: { size?: "lg" | "sm" }) {
   return (
     <div

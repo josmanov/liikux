@@ -11,7 +11,14 @@ function Footer() {
     <footer className="footer">
       <div className="footer-inner">
         <Link to={pathHome(lang)} className="footer-brand">
-          <img src="/liikux-logo-light.png?v=white" alt="Liikux" />
+          <img
+            src="/liikux-logo-light.png?v=3"
+            alt="Liikux"
+            width={140}
+            height={63}
+            decoding="async"
+            loading="lazy"
+          />
         </Link>
         <nav className="footer-nav" aria-label={t("footerNav")}>
           <Link to={pathLegal(lang, "terms")}>{t("footerTerms")}</Link>

@@ -66,7 +66,7 @@ import LoadSpin from "../components/LoadSpin";
 
 function markerScaleForZoom(zoom: number) {
   const t = Math.min(1, Math.max(0, (zoom - 4.2) / 8));
-  return 0.42 + t * 0.58;
+  return 0.78 + t * 0.32;
 }
 
 function pinTouchPx(scale: number) {
@@ -1812,10 +1812,7 @@ function GymsPage() {
       }
 
       const zoom = map.getZoom();
-      const rawScale = markerScaleForZoom(zoom);
-      const scale = window.matchMedia(BROWSE_MOBILE_MQ).matches
-        ? Math.min(rawScale, 0.78)
-        : rawScale;
+      const scale = markerScaleForZoom(zoom);
       const touchPx = pinTouchPx(scale);
       const pickedId = selectedIdRef.current;
       const picked = pickedId

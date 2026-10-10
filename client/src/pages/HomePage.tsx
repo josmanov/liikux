@@ -433,7 +433,14 @@ function HomePage() {
                             className="place-card-shine"
                             aria-hidden="true"
                           />
-                          <img src={chain.image} alt="" />
+                          <img
+                            src={chain.image}
+                            alt=""
+                            width={160}
+                            height={90}
+                            loading="lazy"
+                            decoding="async"
+                          />
                         </span>
                         <span className="place-card-name">{chain.name}</span>
                       </button>

@@ -104,7 +104,14 @@ function Header() {
           className="header-logo"
           onClick={(e) => stayIfSame(e, homePath)}
         >
-          <img src="/liikux-logo-light.png?v=white" alt="Liikux" />
+          <img
+            src="/liikux-logo-light.png?v=3"
+            alt="Liikux"
+            width={140}
+            height={63}
+            decoding="async"
+            fetchPriority="high"
+          />
         </Link>
         <div className="header-area-desktop">
           <AreaSelect />
