@@ -1766,6 +1766,8 @@ function GymsPage() {
       el.type = "button";
       el.className = "gym-cluster";
       el.style.setProperty("--pin-scale", String(scale));
+      const visual = document.createElement("span");
+      visual.className = "gym-cluster-visual";
       const img = document.createElement("img");
       img.src = "/pins/cluster-kettlebell.png";
       img.alt = "";
@@ -1773,7 +1775,8 @@ function GymsPage() {
       count.className =
         group.length > 9 ? "gym-cluster-count is-long" : "gym-cluster-count";
       count.textContent = String(group.length);
-      el.append(img, count);
+      visual.append(img, count);
+      el.append(visual);
       el.setAttribute(
         "aria-label",
         t("gymsCount", { count: group.length }),
