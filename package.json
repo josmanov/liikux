@@ -1,1 +1,11 @@
-{}
+{
+  "name": "liikux",
+  "private": true,
+  "scripts": {
+    "cf:build": "npm ci --prefix client && npm run build --prefix client",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.42.0"
+  }
+}
