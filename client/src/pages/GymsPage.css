@@ -2837,6 +2837,53 @@
   bottom: calc(100% + 6px);
 }
 
+.gym-pin-address {
+  display: none;
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  z-index: 6;
+  max-width: 11rem;
+  padding: 0.22rem 0.5rem;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border-radius: 8px;
+  background: rgba(8, 12, 22, 0.88);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.gym-pin-address::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(8, 12, 22, 0.88);
+}
+
+.gym-pin-hit.is-selected .gym-pin-address {
+  display: block;
+}
+
+.gym-pin-hit.is-selected:has(.gym-pin-price) .gym-pin-address {
+  bottom: calc(100% + 2.1rem);
+}
+
+.gym-pin-hit.is-selected:has(.gym-pin-price) .gym-pin-address::after {
+  display: none;
+}
+
 .gym-pin,
 .gym-pin-hit {
   cursor: pointer;

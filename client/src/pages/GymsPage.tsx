@@ -1602,6 +1602,14 @@ function GymsPage() {
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-9.2C5 8 6.8 6.2 9.1 6.2c1.3 0 2.3.6 2.9 1.6.6-1 1.6-1.6 2.9-1.6 2.3 0 4.1 1.8 4.1 4.6C19 15.6 12 20 12 20z"/></svg>';
       hit.appendChild(fav);
 
+      const street = formatGymStreetLine(g);
+      if (street) {
+        const address = document.createElement("span");
+        address.className = "gym-pin-address";
+        address.textContent = street;
+        hit.appendChild(address);
+      }
+
       if (g.priceFrom != null) {
         const priceText = formatPricePill(g.priceFrom, lang);
         if (priceText) {
