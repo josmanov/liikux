@@ -35,6 +35,8 @@ import {
 import {
   cleanGymDisplayName,
   formatDistanceKm,
+  formatGymStreetLine,
+  formatPriceCard,
   formatPricePill,
 } from "../data/format";
 import { useAppLocation } from "../context/LocationContext";
@@ -462,6 +464,8 @@ function filterChainVisual(id: string, list: Chain[]) {
 }
 
 const PAGE_SIZE_START = 8;
+const PAGE_SIZE_MOBILE = 10;
+const BROWSE_MOBILE_MQ = "(max-width: 900px)";
 
 function pageNums(current: number, count: number): Array<number | "gap"> {
   if (count <= 6) {
@@ -613,10 +617,19 @@ function GymsPage() {
   useEffect(() => {
     const box = listScrollRef.current;
     if (!box) return;
+    const mq = window.matchMedia(BROWSE_MOBILE_MQ);
 
     function fitRows() {
       const list = box.querySelector<HTMLElement>(".browse-rows");
       if (!list) return;
+      if (mq.matches) {
+        list.style.removeProperty("--browse-row-count");
+        box.style.removeProperty("--browse-row-count");
+        setPageSize((cur) =>
+          cur === PAGE_SIZE_MOBILE ? cur : PAGE_SIZE_MOBILE,
+        );
+        return;
+      }
       const raw = getComputedStyle(list).getPropertyValue("--row-min").trim();
       const rowMin = Number.parseFloat(raw) || 96;
       const rows = Math.max(4, Math.floor(box.clientHeight / rowMin));
@@ -630,7 +643,11 @@ function GymsPage() {
     fitRows();
     const watch = new ResizeObserver(fitRows);
     watch.observe(box);
-    return () => watch.disconnect();
+    mq.addEventListener("change", fitRows);
+    return () => {
+      watch.disconnect();
+      mq.removeEventListener("change", fitRows);
+    };
   }, []);
 
   useEffect(() => {
@@ -755,6 +772,14 @@ function GymsPage() {
 
   const extrasActive = extraOnly247 || extraFreeTrial || extraDayPass;
   const extrasLabel = t("filtersAll");
+  const filterBadgeCount =
+    (chainFilterActive ? 1 : 0) +
+    (priceFilterOn ? 1 : 0) +
+    (maxDistanceKm != null ? 1 : 0) +
+    (womenOnly ? 1 : 0) +
+    (extraOnly247 ? 1 : 0) +
+    (extraFreeTrial ? 1 : 0) +
+    (extraDayPass ? 1 : 0);
 
   const selectedChainFilter = useMemo(() => {
     if (selectedChains.length === 0) {
@@ -2156,19 +2181,23 @@ function GymsPage() {
                 type="button"
                 className={[
                   "browse-filters-more",
-                  extrasActive ? "is-active" : "",
+                  filterBadgeCount > 0 || extrasActive ? "is-active" : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
                 aria-haspopup="dialog"
                 aria-expanded={extrasOpen}
+                aria-label={extrasLabel}
                 onClick={() => {
                   setOpenFilter(null);
                   setExtrasOpen(true);
                 }}
               >
                 <SlidersHorizontal size={16} strokeWidth={2.2} />
-                <span>{extrasLabel}</span>
+                <span className="browse-filters-more-label">{extrasLabel}</span>
+                {filterBadgeCount > 0 ? (
+                  <span className="browse-filters-badge">{filterBadgeCount}</span>
+                ) : null}
               </button>
               <button
                 type="button"
@@ -2194,8 +2223,8 @@ function GymsPage() {
         <section className="browse-list-frame">
           <header className="browse-list-head">
             <div className="browse-list-head-side">
-              <h1>{pageTitle}</h1>
-              <p className="browse-list-count">
+              <h1 className="browse-list-title-desk">{pageTitle}</h1>
+              <p className="browse-list-count browse-list-count-desk">
                 {regionPickMode
                   ? t("pickRegion")
                   : selectedMaakunta
@@ -2205,7 +2234,35 @@ function GymsPage() {
                       })
                     : t("placesCount", { count: inViewGyms.length })}
               </p>
+              <p className="browse-list-count browse-list-count-mobile">
+                {regionPickMode
+                  ? t("pickRegion")
+                  : t("browseGymCount", { count: inViewGyms.length })}
+              </p>
             </div>
+            {!regionPickMode ? (
+              <div className="browse-list-pager">
+                <button
+                  type="button"
+                  className="browse-pager-btn"
+                  aria-label={t("previous")}
+                  disabled={safePage <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  <ChevronLeft size={16} strokeWidth={2.2} />
+                </button>
+                <span className="browse-list-page-num">{safePage}</span>
+                <button
+                  type="button"
+                  className="browse-pager-btn"
+                  aria-label={t("next")}
+                  disabled={safePage >= pageCount}
+                  onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+                >
+                  <ChevronRight size={16} strokeWidth={2.2} />
+                </button>
+              </div>
+            ) : null}
             <div className="browse-sort">
               <button
                 type="button"
@@ -2272,6 +2329,15 @@ function GymsPage() {
                       .replace("€/kk", " €/kk")
                       .replace("€/mo", " €/mo")
                   : null;
+                const priceCard = formatPriceCard(offer.priceFrom, lang);
+                const isBrandChain = Boolean(chain && chain.slug !== "muut");
+                const siteName = isBrandChain
+                  ? cleanGymDisplayName(gym.name, {
+                      chainName: chain?.name,
+                      city: gym.city,
+                    })
+                  : cleanGymDisplayName(gym.name);
+                const street = formatGymStreetLine(gym);
                 const isFav = favoriteSlugs.includes(gym.slug);
                 return (
                   <li
@@ -2325,21 +2391,25 @@ function GymsPage() {
                           />
                         </span>
                         <div className="browse-row-text">
-                          <strong>{cleanGymDisplayName(gym.name)}</strong>
+                          <strong className="browse-row-name-desk">
+                            {cleanGymDisplayName(gym.name)}
+                          </strong>
+                          {isBrandChain ? (
+                            <>
+                              <span className="browse-row-chain">
+                                {chain!.name}
+                              </span>
+                              <strong className="browse-row-site">
+                                {siteName}
+                              </strong>
+                            </>
+                          ) : (
+                            <strong className="browse-row-site">
+                              {siteName}
+                            </strong>
+                          )}
                           <span className="browse-row-address">
-                            {gym.address
-                              .replace(
-                                new RegExp(
-                                  `,?\\s*\\d{5}\\s+${gym.city}\\s*$`,
-                                  "i",
-                                ),
-                                "",
-                              )
-                              .replace(
-                                new RegExp(`,\\s*${gym.city}\\s*$`, "i"),
-                                "",
-                              )
-                              .trim()}
+                            {street}
                           </span>
                           <div className="browse-row-tags">
                             {offer.is247 === true ? (
@@ -2356,6 +2426,17 @@ function GymsPage() {
                               </span>
                             ) : null}
                           </div>
+                          <span className="browse-row-meta-mobile">
+                            <span className="browse-row-price">
+                              {priceCard ?? t("priceUnknown")}
+                            </span>
+                            {distKm != null ? (
+                              <span className="browse-row-distance">
+                                {" · "}
+                                {formatDistanceKm(distKm)}
+                              </span>
+                            ) : null}
+                          </span>
                         </div>
                         <span className="browse-row-side">
                           <span className="browse-row-price">
@@ -2748,7 +2829,123 @@ function GymsPage() {
           >
             <div className="browse-extras-head">
               <h2 className="browse-extras-title">{t("filters")}</h2>
-              <p className="browse-extras-text">{t("extrasHint")}</p>
+              <p className="browse-extras-text browse-extras-hint-desk">
+                {t("extrasHint")}
+              </p>
+            </div>
+
+            <div className="browse-extras-mobile-block">
+              <button
+                type="button"
+                className={
+                  "browse-extras-jump" + (chainFilterActive ? " is-on" : "")
+                }
+                onClick={() => {
+                  setExtrasOpen(false);
+                  setChainsOpen(true);
+                }}
+              >
+                <Link2 size={18} strokeWidth={2.2} />
+                <span>
+                  {t("chains")}
+                  {chainFilterActive ? ` · ${selectedChains.length}` : ""}
+                </span>
+                <ChevronRight size={16} strokeWidth={2.2} />
+              </button>
+
+              <div className="browse-extras-section">
+                <div className="browse-distance-head">
+                  <span className="browse-slider-title">
+                    <Euro size={16} strokeWidth={2.2} />
+                    {t("price")}
+                  </span>
+                  <strong>
+                    {priceMin} – {priceMax} €
+                  </strong>
+                </div>
+                <DualRange
+                  lo={priceMin}
+                  hi={priceMax}
+                  onLo={setPriceMin}
+                  onHi={setPriceMax}
+                  minLabel={t("priceMinAria")}
+                  maxLabel={t("priceMaxAria")}
+                />
+                <div className="browse-dual-ends">
+                  <span>{PRICE_MIN} €</span>
+                  <span>{PRICE_MAX} €</span>
+                </div>
+              </div>
+
+              <div className="browse-extras-section">
+                <div className="browse-distance-head">
+                  <span className="browse-slider-title">
+                    <Route size={16} strokeWidth={2.2} />
+                    {t("distanceMax")}
+                  </span>
+                  <strong>
+                    {maxDistanceKm == null
+                      ? t("distanceAll")
+                      : `${maxDistanceKm} km`}
+                  </strong>
+                </div>
+                <div className="browse-dual">
+                  <div className="browse-dual-rail">
+                    <div
+                      className="browse-dual-fill"
+                      style={{
+                        left: "0%",
+                        width: `${
+                          (distancePresetIndex /
+                            Math.max(1, distancePresets.length - 1)) *
+                          100
+                        }%`,
+                      }}
+                    />
+                  </div>
+                  <input
+                    className="browse-dual-input is-hi"
+                    type="range"
+                    min={0}
+                    max={distancePresets.length - 1}
+                    step={1}
+                    value={distancePresetIndex}
+                    aria-label={t("distanceMax")}
+                    onChange={(e) => {
+                      const next =
+                        distancePresets[Number(e.target.value)] ??
+                        distancePresets[0];
+                      setDistanceFilter(next.id);
+                    }}
+                  />
+                </div>
+                <div className="browse-distance-marks">
+                  {distancePresets.map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      className={
+                        opt.id === distanceFilter
+                          ? "browse-distance-mark is-on"
+                          : "browse-distance-mark"
+                      }
+                      onClick={() => setDistanceFilter(opt.id)}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <label className="browse-extras-row">
+                <span>
+                  <strong>{t("audienceWomen")}</strong>
+                </span>
+                <UxSwitch
+                  checked={womenOnly}
+                  onChange={(on) => setSelectedAudiences(on ? ["women"] : [])}
+                />
+              </label>
             </div>
 
             <div className="browse-extras-options">
@@ -2793,8 +2990,24 @@ function GymsPage() {
             <div className="browse-extras-footer">
               <button
                 type="button"
-                className="browse-extras-btn browse-extras-btn-ghost"
+                className="browse-extras-btn browse-extras-btn-ghost browse-extras-clear-desk"
                 onClick={() => {
+                  setExtraOnly247(false);
+                  setExtraFreeTrial(false);
+                  setExtraDayPass(false);
+                }}
+              >
+                {t("clear")}
+              </button>
+              <button
+                type="button"
+                className="browse-extras-btn browse-extras-btn-ghost browse-extras-clear-mobile"
+                onClick={() => {
+                  setSelectedChains([...allChainFilterIds]);
+                  setSelectedAudiences([]);
+                  setDistanceFilter("all");
+                  setPriceMin(PRICE_MIN);
+                  setPriceMax(PRICE_MAX);
                   setExtraOnly247(false);
                   setExtraFreeTrial(false);
                   setExtraDayPass(false);
