@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./AdminDataPage.css";
 import LoadSpin from "../components/LoadSpin";
+import { API } from "../data/apiBase";
 
 type Row = {
   id: string;
@@ -46,8 +47,6 @@ type Change = {
   old: string | number | null;
   new: string | number | null;
 };
-
-const API = "http://localhost:3001";
 
 function fmtDate(iso: string | null) {
   if (!iso) return null;

@@ -38,7 +38,7 @@ function CookieBanner() {
     };
   }, []);
 
-  useLockPageScroll(manageOpen);
+  useLockPageScroll(bannerOpen || manageOpen);
 
   function save(analytics: boolean, functional: boolean) {
     writeCookieConsent({ analytics, functional });
@@ -60,35 +60,42 @@ function CookieBanner() {
   return (
     <>
       {bannerOpen ? (
-        <div className="cookie-banner" role="dialog" aria-label={t("cookies")}>
-          <div className="cookie-banner-top">
-            <div className="cookie-banner-main">
-              <p className="cookie-banner-title">{t("cookies")}</p>
-              <p className="cookie-banner-text">{t("cookieBannerText")}</p>
-            </div>
+        <div className="cookie-banner-root" role="presentation">
+          <div
+            className="cookie-banner"
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("cookies")}
+          >
+            <div className="cookie-banner-top">
+              <div className="cookie-banner-main">
+                <p className="cookie-banner-title">{t("cookies")}</p>
+                <p className="cookie-banner-text">{t("cookieBannerText")}</p>
+              </div>
 
-            <div className="cookie-banner-actions">
-              <button
-                type="button"
-                className="cookie-banner-btn cookie-banner-btn-ghost"
-                onClick={openManage}
-              >
-                {t("cookieManage")}
-              </button>
-              <button
-                type="button"
-                className="cookie-banner-btn cookie-banner-btn-ghost"
-                onClick={() => save(false, false)}
-              >
-                {t("cookieNecessaryOnly")}
-              </button>
-              <button
-                type="button"
-                className="cookie-banner-btn"
-                onClick={() => save(true, true)}
-              >
-                {t("cookieAllowAll")}
-              </button>
+              <div className="cookie-banner-actions">
+                <button
+                  type="button"
+                  className="cookie-banner-btn cookie-banner-btn-ghost"
+                  onClick={openManage}
+                >
+                  {t("cookieManage")}
+                </button>
+                <button
+                  type="button"
+                  className="cookie-banner-btn cookie-banner-btn-ghost"
+                  onClick={() => save(false, false)}
+                >
+                  {t("cookieNecessaryOnly")}
+                </button>
+                <button
+                  type="button"
+                  className="cookie-banner-btn"
+                  onClick={() => save(true, true)}
+                >
+                  {t("cookieAllowAll")}
+                </button>
+              </div>
             </div>
           </div>
         </div>

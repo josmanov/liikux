@@ -1,6 +1,5 @@
 import type { Chain, Gym } from "./types";
-
-const API = "http://localhost:3001";
+import { API } from "./apiBase";
 const CLIENT_TTL_MS = 2 * 60 * 1000;
 
 type CacheEntry<T> = {

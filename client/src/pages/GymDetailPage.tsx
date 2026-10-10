@@ -124,7 +124,7 @@ function GymDetailPage() {
     let cancelled = false;
     setStatus("loading");
 
-    fetch(`http://localhost:3001/api/gyms/${encodeURIComponent(slug)}`)
+    fetch(`/api/gyms/${encodeURIComponent(slug)}`)
       .then(async (r) => {
         if (r.status === 404) return null;
         if (!r.ok) throw new Error("fail");

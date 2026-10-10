@@ -85,6 +85,7 @@
 */
 
 .hero-icon-wrap {
+  display: none;
   position: absolute;
   top: 0;
   left: 0;
@@ -995,9 +996,34 @@
     width: min(400px, 100%);
   }
 
+  .rail-viewport {
+    width: calc(100% - 1.8rem);
+    margin: 0 0.9rem;
+    overflow: visible;
+  }
+
+  .rail-track {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.7rem 0.65rem;
+    width: 100%;
+    transform: none !important;
+  }
+
   .place-card {
-    flex-basis: calc((100% - 2rem) / 3);
-    width: calc((100% - 2rem) / 3);
+    flex-basis: auto;
+    width: auto;
+    gap: 0.35rem;
+  }
+
+  .place-card-media {
+    aspect-ratio: 1;
+    border-radius: 12px;
+  }
+
+  .place-card-name {
+    font-size: 0.72rem;
+    text-align: center;
   }
 
   .lajit-grid {

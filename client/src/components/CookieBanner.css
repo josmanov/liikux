@@ -1,13 +1,23 @@
-.cookie-banner {
+.cookie-banner-root {
   position: fixed;
-  left: 1rem;
-  right: 1rem;
-  bottom: 1rem;
+  inset: 0;
   z-index: 80;
-  max-width: 52rem;
-  margin: 0 auto;
-  padding: 1.05rem 1.2rem;
-  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  overscroll-behavior: none;
+}
+
+.cookie-banner {
+  position: relative;
+  width: min(36rem, 100%);
+  margin: 0;
+  padding: 1.35rem 1.35rem 1.25rem;
+  border-radius: 16px;
   border: 0;
   background: var(--popup-glass);
   box-shadow: var(--popup-shadow);
@@ -17,51 +27,57 @@
 
 .cookie-banner-top {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem 1.4rem;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1.15rem;
 }
 
 .cookie-banner-main {
-  flex: 1 1 auto;
   min-width: 0;
 }
 
 .cookie-banner-title {
-  margin: 0 0 0.3rem;
+  margin: 0 0 0.4rem;
   font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 600;
+  font-size: 1.35rem;
+  font-weight: 700;
   color: var(--color-text);
+  text-align: center;
 }
 
 .cookie-banner-text {
   margin: 0;
   font-family: var(--font-body);
-  font-size: 0.88rem;
-  line-height: 1.45;
+  font-size: 0.95rem;
+  line-height: 1.5;
   color: var(--color-muted);
+  text-align: center;
 }
 
 .cookie-banner-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: stretch;
+  gap: 0.55rem;
+  width: 100%;
 }
 
 .cookie-banner-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 3rem;
   border: none;
-  border-radius: 8px;
-  padding: 0.5rem 0.95rem;
+  border-radius: 10px;
+  padding: 0.65rem 0.55rem;
   font-family: var(--font-body);
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-size: 0.88rem;
+  font-weight: 650;
+  line-height: 1.2;
+  text-align: center;
   cursor: pointer;
-  white-space: nowrap;
+  white-space: normal;
   color: var(--color-on-brand);
   background: var(--brand-gradient);
 }
@@ -89,7 +105,9 @@
   align-items: center;
   justify-content: center;
   padding: 1.25rem;
-  background: var(--popup-overlay);
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   overscroll-behavior: none;
 }
 
@@ -175,13 +193,17 @@
 
 .cookie-modal-footer .cookie-banner-btn {
   min-width: 7.5rem;
+  width: auto;
 }
 
-@media (min-width: 720px) {
+@media (max-width: 420px) {
   .cookie-banner {
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-    width: min(52rem, calc(100% - 2rem));
+    padding: 1.2rem 1rem 1.05rem;
+  }
+
+  .cookie-banner-btn {
+    min-height: 3.15rem;
+    font-size: 0.78rem;
+    padding: 0.55rem 0.35rem;
   }
 }
