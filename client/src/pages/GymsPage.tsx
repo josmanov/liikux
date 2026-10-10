@@ -1302,12 +1302,39 @@ function GymsPage() {
       maxPitch: 0,
       pitchWithRotate: false,
       touchPitch: false,
+      dragRotate: false,
       attributionControl: false,
     });
 
     map.touchPitch.disable();
+    map.dragRotate.disable();
+    map.touchZoomRotate.disableRotation();
     map.setMaxPitch(0);
     mapInstanceRef.current = map;
+
+    const canvas = map.getCanvasContainer();
+    let pinchLock = false;
+    let pinchUnlockTimer = 0;
+    function onTouchStart(e: TouchEvent) {
+      if (e.touches.length >= 2) {
+        pinchLock = true;
+        window.clearTimeout(pinchUnlockTimer);
+        map.dragPan.disable();
+      }
+    }
+    function onTouchEnd(e: TouchEvent) {
+      if (!pinchLock) return;
+      if (e.touches.length >= 2) return;
+      window.clearTimeout(pinchUnlockTimer);
+      pinchUnlockTimer = window.setTimeout(() => {
+        pinchLock = false;
+        if (!mapInstanceRef.current) return;
+        map.dragPan.enable();
+      }, 120);
+    }
+    canvas.addEventListener("touchstart", onTouchStart, { passive: true });
+    canvas.addEventListener("touchend", onTouchEnd, { passive: true });
+    canvas.addEventListener("touchcancel", onTouchEnd, { passive: true });
 
     function onResize() {
       applyFinlandMinZoom(map);
@@ -1545,6 +1572,10 @@ function GymsPage() {
     return () => {
       dead = true;
       window.clearTimeout(bootFailSafe);
+      window.clearTimeout(pinchUnlockTimer);
+      canvas.removeEventListener("touchstart", onTouchStart);
+      canvas.removeEventListener("touchend", onTouchEnd);
+      canvas.removeEventListener("touchcancel", onTouchEnd);
       window.removeEventListener("resize", onResize);
       map.off("zoomend", onMaxOutView);
       map.off("moveend", onMaxOutView);
