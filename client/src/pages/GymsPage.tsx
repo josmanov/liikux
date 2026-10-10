@@ -695,6 +695,8 @@ function GymsPage() {
   const fitKeyRef = useRef("");
   const lastOriginKeyRef = useRef("");
   const regionUserPickedRef = useRef(false);
+  const mapPinchRef = useRef(false);
+  const afterPinchSyncRef = useRef<(() => void) | null>(null);
   const regionDropRef = useRef<HTMLDivElement>(null);
   const prevFilterKeyRef = useRef<string | null>(null);
   const originRef = useRef({ lat: 60.1699, lng: 24.9384 });
@@ -1313,24 +1315,24 @@ function GymsPage() {
     mapInstanceRef.current = map;
 
     const canvas = map.getCanvasContainer();
-    let pinchLock = false;
     let pinchUnlockTimer = 0;
     function onTouchStart(e: TouchEvent) {
       if (e.touches.length >= 2) {
-        pinchLock = true;
+        mapPinchRef.current = true;
         window.clearTimeout(pinchUnlockTimer);
         map.dragPan.disable();
       }
     }
     function onTouchEnd(e: TouchEvent) {
-      if (!pinchLock) return;
+      if (!mapPinchRef.current) return;
       if (e.touches.length >= 2) return;
       window.clearTimeout(pinchUnlockTimer);
       pinchUnlockTimer = window.setTimeout(() => {
-        pinchLock = false;
+        mapPinchRef.current = false;
         if (!mapInstanceRef.current) return;
         map.dragPan.enable();
-      }, 120);
+        afterPinchSyncRef.current?.();
+      }, 160);
     }
     canvas.addEventListener("touchstart", onTouchStart, { passive: true });
     canvas.addEventListener("touchend", onTouchEnd, { passive: true });
@@ -1341,6 +1343,7 @@ function GymsPage() {
     }
 
     function onMaxOutView() {
+      if (mapPinchRef.current) return;
       centerFinlandIfMaxOut(map);
     }
 
@@ -1890,9 +1893,12 @@ function GymsPage() {
 
     function onMapMove() {
       if (regionPickModeRef.current) return;
+      if (mapPinchRef.current) return;
+      if (window.matchMedia(BROWSE_MOBILE_MQ).matches) return;
       if (pinRaf !== 0) return;
       pinRaf = requestAnimationFrame(() => {
         pinRaf = 0;
+        if (mapPinchRef.current) return;
         syncPins();
       });
     }
@@ -1902,6 +1908,7 @@ function GymsPage() {
         cancelAnimationFrame(pinRaf);
         pinRaf = 0;
       }
+      if (mapPinchRef.current) return;
       syncPins();
       if (freezeListBoundsRef.current) {
         if (e.originalEvent) {
@@ -1931,9 +1938,17 @@ function GymsPage() {
       if (!onScreen) setSelectedId(null);
     }
 
+    afterPinchSyncRef.current = () => {
+      if (regionPickModeRef.current) return;
+      syncPins();
+      pushBounds();
+    };
+
     let dragged = false;
     function bumpListBusy() {
       if (regionPickModeRef.current) return;
+      if (mapPinchRef.current) return;
+      if (window.matchMedia(BROWSE_MOBILE_MQ).matches) return;
       setListBusy(true);
       if (listBusyTimerRef.current) {
         window.clearTimeout(listBusyTimerRef.current);
@@ -1949,6 +1964,7 @@ function GymsPage() {
     }
     function onZoomStart(e: { originalEvent?: Event }) {
       if (!e.originalEvent) return;
+      if (mapPinchRef.current) return;
       bumpListBusy();
     }
     function onDragEnd() {
@@ -1983,6 +1999,7 @@ function GymsPage() {
 
     return () => {
       if (pinRaf !== 0) cancelAnimationFrame(pinRaf);
+      afterPinchSyncRef.current = null;
       map.off("move", onMapMove);
       map.off("moveend", onMoveEnd);
       map.off("dragstart", onDragStart);
