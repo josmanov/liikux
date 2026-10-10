@@ -3,6 +3,8 @@
   inset: 0;
   z-index: 1000;
   background: var(--popup-overlay);
+  backdrop-filter: var(--popup-overlay-blur);
+  -webkit-backdrop-filter: var(--popup-overlay-blur);
   display: flex;
   align-items: center;
   justify-content: center;

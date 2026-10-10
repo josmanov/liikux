@@ -314,7 +314,9 @@
     border: 0;
     padding: 0;
     margin: 0;
-    background: rgba(0, 0, 0, 0.48);
+    background: var(--popup-overlay);
+    backdrop-filter: var(--popup-overlay-blur);
+    -webkit-backdrop-filter: var(--popup-overlay-blur);
     opacity: 0;
     pointer-events: none;
     cursor: pointer;
@@ -327,7 +329,7 @@
 
   .header-menu-backdrop:focus,
   .header-menu-backdrop:active {
-    background: rgba(0, 0, 0, 0.48);
+    background: var(--popup-overlay);
     outline: none;
   }
 

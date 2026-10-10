@@ -204,9 +204,9 @@
   border: 0;
   padding: 0;
   margin: 0;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: var(--popup-overlay);
+  backdrop-filter: var(--popup-overlay-blur);
+  -webkit-backdrop-filter: var(--popup-overlay-blur);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -214,7 +214,7 @@
 .header-search-popup-bg:focus,
 .header-search-popup-bg:active {
   outline: none;
-  background: rgba(0, 0, 0, 0.55);
+  background: var(--popup-overlay);
 }
 
 .header-search-popup-card {

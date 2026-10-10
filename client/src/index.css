@@ -19,7 +19,8 @@
   --max-width: 1100px;
   --popup-glass: rgba(10, 10, 14, 0.88);
   --popup-glass-blur: blur(24px) saturate(1.25);
-  --popup-overlay: rgba(0, 0, 0, 0.4);
+  --popup-overlay: rgba(0, 0, 0, 0.42);
+  --popup-overlay-blur: blur(12px) saturate(1.1);
   --popup-shadow: 0 22px 55px rgba(0, 0, 0, 0.62), 0 0 28px rgba(0, 0, 0, 0.4);
 }
 

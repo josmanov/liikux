@@ -6,9 +6,9 @@
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background: rgba(0, 0, 0, 0.42);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: var(--popup-overlay);
+  backdrop-filter: var(--popup-overlay-blur);
+  -webkit-backdrop-filter: var(--popup-overlay-blur);
   overscroll-behavior: none;
 }
 
@@ -105,9 +105,9 @@
   align-items: center;
   justify-content: center;
   padding: 1.25rem;
-  background: rgba(0, 0, 0, 0.42);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: var(--popup-overlay);
+  backdrop-filter: var(--popup-overlay-blur);
+  -webkit-backdrop-filter: var(--popup-overlay-blur);
   overscroll-behavior: none;
 }
 

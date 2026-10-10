@@ -93,6 +93,56 @@ function zoomWhereClusterSplits(map: Map, group: Gym[]) {
   return Math.min(hi + 0.2, maxZoom);
 }
 
+function framePadForOverlays(map: Map) {
+  const mapEl = map.getContainer();
+  const col = mapEl.closest(".browse-map-col") ?? mapEl.parentElement;
+  const mapRect = mapEl.getBoundingClientRect();
+  const w = mapRect.width;
+  const h = mapRect.height;
+  let left = 28;
+  let right = 28;
+  let top = 28;
+  let bottom = 36;
+
+  const chips = col?.querySelector(".browse-map-chips");
+  const side =
+    chips instanceof HTMLElement && getComputedStyle(chips).display !== "none"
+      ? chips
+      : col?.querySelector(".browse-map-side");
+  if (side instanceof HTMLElement && side.offsetParent != null) {
+    const r = side.getBoundingClientRect();
+    left = Math.max(left, Math.ceil(r.right - mapRect.left + 24));
+    top = Math.max(top, Math.ceil(r.top - mapRect.top + 56));
+  }
+
+  const ctrls = col?.querySelector(".browse-map-controls");
+  if (ctrls instanceof HTMLElement && ctrls.offsetParent != null) {
+    const r = ctrls.getBoundingClientRect();
+    right = Math.max(right, Math.ceil(mapRect.right - r.left + 24));
+    top = Math.max(top, Math.ceil(r.top - mapRect.top + 56));
+  }
+
+  const hint = col?.querySelector(".browse-region-hint");
+  if (hint instanceof HTMLElement) {
+    const style = getComputedStyle(hint);
+    if (style.display !== "none" && style.visibility !== "hidden") {
+      const r = hint.getBoundingClientRect();
+      bottom = Math.max(bottom, Math.ceil(mapRect.bottom - r.top + 16));
+    }
+  }
+
+  const maxL = Math.floor(w * 0.42);
+  const maxR = Math.floor(w * 0.42);
+  const maxT = Math.floor(h * 0.36);
+  const maxB = Math.floor(h * 0.36);
+  return {
+    top: Math.min(top, maxT),
+    bottom: Math.min(bottom, maxB),
+    left: Math.min(left, maxL),
+    right: Math.min(right, maxR),
+  };
+}
+
 function frameOriginAndGym(
   map: Map,
   originLng: number,
@@ -103,16 +153,8 @@ function frameOriginAndGym(
   const bounds = new LngLatBounds();
   bounds.extend([originLng, originLat]);
   bounds.extend([gymLng, gymLat]);
-  const w = map.getContainer().clientWidth;
-  const h = map.getContainer().clientHeight;
-  const edge = Math.max(20, Math.min(56, Math.floor(Math.min(w, h) * 0.16)));
   map.fitBounds(bounds, {
-    padding: {
-      top: edge,
-      bottom: edge + 36,
-      left: edge,
-      right: edge,
-    },
+    padding: framePadForOverlays(map),
     maxZoom: FRAME_ZOOM,
     duration: 700,
     easing: (t) => 1 - (1 - t) ** 3,
@@ -575,7 +617,9 @@ function GymsPage() {
   const markersRef = useRef(new globalThis.Map<string, Marker>());
   const originMarkerRef = useRef<Marker | null>(null);
   const selectFromMapRef = useRef(false);
+  const freezeListBoundsRef = useRef(false);
   const [mapSelectPending, setMapSelectPending] = useState(false);
+  const [listRevealKey, setListRevealKey] = useState(0);
   const skipBoundsResetRef = useRef(false);
   const hoveredIdRef = useRef<string | null>(null);
   const selectedIdRef = useRef<string | null>(null);
@@ -931,17 +975,29 @@ function GymsPage() {
 
   const inViewGyms = useMemo(() => {
     if (regionPickMode) return [];
-    if (!mapBounds) return visibleGyms;
-    return visibleGyms.filter((g) => {
-      if (g.lat == null || g.lng == null) return false;
-      return (
-        g.lng >= mapBounds.west &&
-        g.lng <= mapBounds.east &&
-        g.lat >= mapBounds.south &&
-        g.lat <= mapBounds.north
-      );
-    });
-  }, [visibleGyms, mapBounds, regionPickMode]);
+    const inBounds = !mapBounds
+      ? visibleGyms
+      : visibleGyms.filter((g) => {
+          if (g.lat == null || g.lng == null) return false;
+          return (
+            g.lng >= mapBounds.west &&
+            g.lng <= mapBounds.east &&
+            g.lat >= mapBounds.south &&
+            g.lat <= mapBounds.north
+          );
+        });
+    if (!selectedId || inBounds.some((g) => g.id === selectedId)) {
+      return inBounds;
+    }
+    const picked = visibleGyms.find((g) => g.id === selectedId);
+    if (!picked) return inBounds;
+    const order = new globalThis.Map(
+      visibleGyms.map((g, i) => [g.id, i] as const),
+    );
+    return [...inBounds, picked].sort(
+      (a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0),
+    );
+  }, [visibleGyms, mapBounds, regionPickMode, selectedId]);
 
   inViewGymsRef.current = inViewGyms;
 
@@ -1014,7 +1070,13 @@ function GymsPage() {
 
   useEffect(() => {
     if (!selectedId || !selectFromMapRef.current) return;
-    if (!pageGyms.some((g) => g.id === selectedId)) return;
+    const idx = inViewGyms.findIndex((g) => g.id === selectedId);
+    if (idx < 0) return;
+    const needPage = Math.floor(idx / pageSize) + 1;
+    if (safePage !== needPage) {
+      setPage(needPage);
+      return;
+    }
 
     const el = document.querySelector<HTMLElement>(
       `.browse-row[data-gym-id="${selectedId}"]`,
@@ -1035,7 +1097,7 @@ function GymsPage() {
       setMapSelectPending(false);
     });
     return () => window.cancelAnimationFrame(id);
-  }, [selectedId, pageGyms]);
+  }, [selectedId, pageGyms, inViewGyms, pageSize, safePage, listRevealKey]);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -1518,7 +1580,9 @@ function GymsPage() {
         }
         setMapSelectPending(!onPage);
         selectFromMapRef.current = true;
+        freezeListBoundsRef.current = true;
         setSelectedId(g.id);
+        setListRevealKey((n) => n + 1);
         const here = originRef.current;
         if (g.lat != null && g.lng != null) {
           frameOriginAndGym(map, here.lng, here.lat, g.lng, g.lat);
@@ -1596,7 +1660,10 @@ function GymsPage() {
       }
 
       const zoom = map.getZoom();
-      const scale = markerScaleForZoom(zoom);
+      const rawScale = markerScaleForZoom(zoom);
+      const scale = window.matchMedia(BROWSE_MOBILE_MQ).matches
+        ? Math.min(rawScale, 0.78)
+        : rawScale;
       const touchPx = pinTouchPx(scale);
       const pickedId = selectedIdRef.current;
       const picked = pickedId
@@ -1690,7 +1757,14 @@ function GymsPage() {
         pinRaf = 0;
       }
       syncPins();
-      pushBounds();
+      if (freezeListBoundsRef.current) {
+        if (e.originalEvent) {
+          freezeListBoundsRef.current = false;
+          pushBounds();
+        }
+      } else {
+        pushBounds();
+      }
       if (!e.originalEvent) return;
       const picked = selectedIdRef.current;
       if (!picked) return;
@@ -1723,6 +1797,7 @@ function GymsPage() {
       ) {
         return;
       }
+      freezeListBoundsRef.current = false;
       setSelectedId(null);
     }
 
@@ -3226,11 +3301,13 @@ function GymsPage() {
                               <img src={visual.image} alt="" />
                             </span>
                             <span className="browse-chains-main">
-                              <span className="browse-chains-name">
-                                {opt.label}
-                              </span>
-                              <span className="browse-chains-hint">
-                                {t("chainFilterHint")}
+                              <span className="browse-chains-copy">
+                                <span className="browse-chains-name">
+                                  {opt.label}
+                                </span>
+                                <span className="browse-chains-hint">
+                                  {t("chainFilterHint")}
+                                </span>
                               </span>
                               <UxSwitch
                                 size="sm"
