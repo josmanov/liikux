@@ -1,3 +1,7 @@
+.route-fallback {
+  min-height: 40vh;
+}
+
 :root {
   --brand-a: #ffbf00;
   --brand-b: #e6ac00;

@@ -44,6 +44,7 @@ import {
 import { useLockPageScroll } from "../hooks/useLockPageScroll";
 import { useLang } from "../i18n/useLang";
 import { API } from "../data/apiBase";
+import { usePageMeta } from "../seo/usePageMeta";
 import "./GymDetailPage.css";
 
 type GymDetail = Gym & { chain: Chain | null };
@@ -174,6 +175,27 @@ function GymDetailPage() {
   } = useAppLocation();
   const [gym, setGym] = useState<GymDetail | null>(null);
   const [status, setStatus] = useState<"loading" | "ok" | "missing">("loading");
+  const detailTitle = gym
+    ? `${gym.name} | Liikux`
+    : lang === "fi"
+      ? "Kuntosali | Liikux"
+      : "Gym | Liikux";
+  const detailDesc = gym
+    ? lang === "fi"
+      ? `${gym.name}${gym.city ? ` – ${gym.city}` : ""}. Katso osoite, palvelut ja hinta Liikuxissa.`
+      : `${gym.name}${gym.city ? ` – ${gym.city}` : ""}. See address, services and price on Liikux.`
+    : lang === "fi"
+      ? "Kuntosalin tiedot Liikuxissa."
+      : "Gym details on Liikux.";
+  usePageMeta({
+    title: detailTitle,
+    description: detailDesc,
+    path: slug
+      ? lang === "fi"
+        ? `/fi/sali/${slug}`
+        : `/en/gym/${slug}`
+      : undefined,
+  });
   const [fromDraft, setFromDraft] = useState("");
   const [fromPoint, setFromPoint] = useState<GeoHit | null>(null);
   const [geoStatus, setGeoStatus] = useState<"idle" | "loading" | "fail">(

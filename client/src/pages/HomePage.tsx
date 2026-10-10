@@ -29,6 +29,7 @@ import { useAppLocation } from "../context/LocationContext";
 import { useChainPopup } from "../context/ChainPopupContext";
 import { pathGyms } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
+import { usePageMeta } from "../seo/usePageMeta";
 
 const picks = [
   {
@@ -211,6 +212,17 @@ function HomePage() {
   const { label, lat, lng, setLocation } = useAppLocation();
   const navigate = useNavigate();
   const { lang, t } = useLang();
+  usePageMeta({
+    title:
+      lang === "fi"
+        ? "Liikux – etsi kuntosali Suomesta"
+        : "Liikux – find a gym in Finland",
+    description:
+      lang === "fi"
+        ? "Löydä kuntosali lähelläsi. Selaa saleja, ketjuja ja hintoja Suomessa."
+        : "Find a gym near you. Browse gyms, chains and prices in Finland.",
+    path: lang === "fi" ? "/" : "/en",
+  });
   const [addressDraft, setAddressDraft] = useState("");
   const [suggestOpen, setSuggestOpen] = useState(false);
   const { hits: suggestions, loading: suggestLoading } = useAddressSuggest(

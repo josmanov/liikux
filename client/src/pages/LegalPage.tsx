@@ -1,6 +1,7 @@
 import { Link, Navigate, useLocation } from "react-router-dom";
 import { pathHome, type Lang } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
+import { usePageMeta } from "../seo/usePageMeta";
 import "./LegalPage.css";
 
 type LegalSlug = "terms" | "privacy" | "cookies";
@@ -97,12 +98,16 @@ function LegalPage() {
   const { lang, t } = useLang();
   const { pathname } = useLocation();
   const key = resolveSlug(lang, pathname);
+  const page = key ? COPY[lang][key] : null;
+  usePageMeta({
+    title: page ? `${page.title} | Liikux` : "Liikux",
+    description: page?.paragraphs[0] ?? "Liikux",
+    path: pathname,
+  });
 
-  if (!key) {
+  if (!key || !page) {
     return <Navigate to={pathHome(lang)} replace />;
   }
-
-  const page = COPY[lang][key];
 
   return (
     <main className="legal-page load-reveal">

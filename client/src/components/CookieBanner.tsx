@@ -34,10 +34,36 @@ function CookieBanner() {
     setAnalyticsOn(current.analytics);
     setFunctionalOn(current.functional);
     const undecided = !current.decided;
-    setBannerOpen(undecided);
     setFirstChoice(undecided);
     if (undecided) setPickLang(lang);
     syncAnalyticsFromConsent();
+
+    let cancelled = false;
+    let idleId = 0;
+    let timer = 0;
+    function showBanner() {
+      if (cancelled || !undecided) return;
+      setBannerOpen(true);
+    }
+    if (undecided) {
+      const afterPaint = () => {
+        if (cancelled) return;
+        const ric = (
+          window as Window & {
+            requestIdleCallback?: (
+              cb: () => void,
+              opts?: { timeout: number },
+            ) => number;
+          }
+        ).requestIdleCallback;
+        if (typeof ric === "function") {
+          idleId = ric(showBanner, { timeout: 1200 });
+        } else {
+          timer = window.setTimeout(showBanner, 400);
+        }
+      };
+      requestAnimationFrame(() => requestAnimationFrame(afterPaint));
+    }
 
     function onOpenSettings() {
       const latest = readCookieConsent();
@@ -54,6 +80,14 @@ function CookieBanner() {
 
     window.addEventListener(COOKIE_SETTINGS_EVENT, onOpenSettings);
     return () => {
+      cancelled = true;
+      const cic = (
+        window as Window & {
+          cancelIdleCallback?: (id: number) => void;
+        }
+      ).cancelIdleCallback;
+      if (idleId && typeof cic === "function") cic(idleId);
+      if (timer) window.clearTimeout(timer);
       window.removeEventListener(COOKIE_SETTINGS_EVENT, onOpenSettings);
     };
   }, [lang]);

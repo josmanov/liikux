@@ -60,6 +60,7 @@ import {
 import { toggleFavoriteSlug, readFavoriteSlugs } from "../data/favorites";
 import { pathGym } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
+import { usePageMeta } from "../seo/usePageMeta";
 import UxSwitch from "../components/UxSwitch";
 import LoadSpin from "../components/LoadSpin";
 
@@ -573,6 +574,17 @@ function GymsPage() {
     allChainFilterIds,
   );
   const { lang, t } = useLang();
+  usePageMeta({
+    title:
+      lang === "fi"
+        ? "Kuntosalit Suomessa | Liikux"
+        : "Gyms in Finland | Liikux",
+    description:
+      lang === "fi"
+        ? "Selaa kuntosaleja kartalla ja listalla. Suodata ketjun, hinnan ja etäisyyden mukaan."
+        : "Browse gyms on the map and in a list. Filter by chain, price and distance.",
+    path: lang === "fi" ? "/fi/kuntosalit" : "/en/gyms",
+  });
   const sortOptions = [
     { id: "nearest", label: t("sortNearest") },
     { id: "price-asc", label: t("sortCheap") },
