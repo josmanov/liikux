@@ -9,7 +9,8 @@ import { fetchGymsAndChains } from "../data/api";
 import {
   cleanGymDisplayName,
   formatDistanceKm,
-  formatPriceFrom,
+  formatGymStreetLine,
+  formatPriceCard,
 } from "../data/format";
 import { readFavoriteSlugs, writeFavoriteSlugs } from "../data/favorites";
 import { useAppLocation } from "../context/LocationContext";
@@ -17,17 +18,6 @@ import { pathGym } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import LoadSpin from "./LoadSpin";
 import { useLockPageScroll } from "../hooks/useLockPageScroll";
-
-function streetLine(gym: Gym) {
-  let street = gym.address || "";
-  if (gym.city) {
-    street = street
-      .replace(new RegExp(`,?\\s*\\d{5}\\s+${gym.city}\\s*$`, "i"), "")
-      .replace(new RegExp(`,\\s*${gym.city}\\s*$`, "i"), "")
-      .trim();
-  }
-  return street;
-}
 
 function distanceKm(
   lat1: number,
@@ -189,7 +179,7 @@ function FavoritesPopup({ open, onClose }: Props) {
                     : "/pins/gym-pin.png";
                 const isPin = img.includes("/pins/");
                 const offer = resolveGymOffer(gym, chain ?? null);
-                const priceLabel = formatPriceFrom(offer.priceFrom, lang);
+                const priceLabel = formatPriceCard(offer.priceFrom, lang);
                 const distKm =
                   originLat != null &&
                   originLng != null &&
@@ -197,6 +187,14 @@ function FavoritesPopup({ open, onClose }: Props) {
                   gym.lng != null
                     ? distanceKm(originLat, originLng, gym.lat, gym.lng)
                     : null;
+                const isBrandChain = Boolean(chain && chain.slug !== "muut");
+                const siteName = isBrandChain
+                  ? cleanGymDisplayName(gym.name, {
+                      chainName: chain?.name,
+                      city: gym.city,
+                    })
+                  : cleanGymDisplayName(gym.name);
+                const street = formatGymStreetLine(gym);
                 return (
                   <li
                     key={gym.id}
@@ -248,15 +246,36 @@ function FavoritesPopup({ open, onClose }: Props) {
                         className="chain-popup-text"
                         onClick={handleClose}
                       >
-                        <strong>{cleanGymDisplayName(gym.name)}</strong>
-                        <p className="chain-popup-blurb">{streetLine(gym)}</p>
-                        {gym.city ? (
-                          <p className="chain-popup-cities">{gym.city}</p>
-                        ) : null}
+                        <span className="chain-popup-text-top">
+                          {isBrandChain ? (
+                            <>
+                              <span className="chain-popup-chain">
+                                {chain!.name}
+                              </span>
+                              <strong className="chain-popup-site">
+                                {siteName}
+                              </strong>
+                            </>
+                          ) : (
+                            <strong className="chain-popup-site">
+                              {siteName}
+                            </strong>
+                          )}
+                          {street ? (
+                            <p className="chain-popup-blurb">{street}</p>
+                          ) : null}
+                          {gym.city ? (
+                            <p className="chain-popup-cities">{gym.city}</p>
+                          ) : null}
+                        </span>
                         <p className="chain-popup-meta">
-                          <span>{priceLabel ?? t("priceUnknown")}</span>
+                          <span className="chain-popup-price">
+                            {priceLabel ?? t("priceUnknown")}
+                          </span>
                           {distKm != null ? (
-                            <span>{formatDistanceKm(distKm)}</span>
+                            <span className="chain-popup-sep">
+                              · {formatDistanceKm(distKm)}
+                            </span>
                           ) : null}
                         </p>
                       </Link>

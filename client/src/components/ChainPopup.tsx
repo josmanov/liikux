@@ -5,7 +5,12 @@ import { ArrowLeft, X } from "lucide-react";
 import "./ChainPopup.css";
 import { type Chain, type Gym, resolveGymOffer } from "../data/types";
 import { fetchChains, fetchChainGyms, fetchGyms } from "../data/api";
-import { cleanGymDisplayName, formatPriceFrom } from "../data/format";
+import {
+  cleanGymDisplayName,
+  formatDistanceKm,
+  formatGymStreetLine,
+  formatPriceCard,
+} from "../data/format";
 import { useAppLocation } from "../context/LocationContext";
 import { useChainPopup } from "../context/ChainPopupContext";
 import { pathGym } from "../i18n/lang";
@@ -27,11 +32,6 @@ function distanceKm(
     Math.sin(dLat / 2) ** 2 +
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function formatKm(km: number) {
-  if (km < 10) return `${km.toFixed(1).replace(".", ",")} km`;
-  return `${Math.round(km)} km`;
 }
 
 function statsByChain(rows: Gym[]) {
@@ -161,10 +161,14 @@ function ChainPopup() {
     list.sort((a, b) => {
       if (a.slug === "muut") return 1;
       if (b.slug === "muut") return -1;
+      const aCount = a.gymCount ?? chainStats[a.id]?.gyms ?? 0;
+      const bCount = b.gymCount ?? chainStats[b.id]?.gyms ?? 0;
+      const diff = bCount - aCount;
+      if (diff !== 0) return diff;
       return a.name.localeCompare(b.name, "fi");
     });
     return list;
-  }, [chains, q]);
+  }, [chains, q, chainStats]);
 
   const gymList = useMemo(() => {
     if (!selectedChain) return [];
@@ -277,7 +281,17 @@ function ChainPopup() {
           }}
         >
           {!showingGyms
-            ? chainList.map((chain, i) => (
+            ? chainList.map((chain, i) => {
+                const gymN = chain.gymCount ?? chainStats[chain.id]?.gyms ?? 0;
+                const cityN = chainStats[chain.id]?.cities ?? 0;
+                const offer = resolveGymOffer(null, chain);
+                const priceFact = formatPriceCard(offer.priceFrom, lang);
+                const hoursFact =
+                  offer.is247 === true
+                    ? "24/7"
+                    : offer.hoursWeekday?.trim() || null;
+                const fact = priceFact ?? hoursFact;
+                return (
                 <li
                   key={chain.id}
                   style={{ animationDelay: `${Math.min(i, 18) * 28}ms` }}
@@ -309,36 +323,46 @@ function ChainPopup() {
                       <img src={chain.image || "/pins/gym-pin.png"} alt="" />
                     </span>
                     <div className="chain-popup-text">
-                      <strong>
-                        {chain.slug === "muut"
-                          ? t("otherGyms")
-                          : chain.name}
-                      </strong>
-                      <p className="chain-popup-blurb">
-                        {(chainStats[chain.id]?.gyms ?? 0) === 1
-                          ? t("chainGymCountOne")
-                          : t("chainGymCount", {
-                              count: chainStats[chain.id]?.gyms ?? 0,
-                            })}
-                      </p>
-                      <p className="chain-popup-cities">
-                        {(chainStats[chain.id]?.cities ?? 0) === 1
-                          ? t("chainCityCountOne")
-                          : t("chainCityCount", {
-                              count: chainStats[chain.id]?.cities ?? 0,
-                            })}
-                      </p>
+                      <span className="chain-popup-text-top">
+                        <strong>
+                          {chain.slug === "muut"
+                            ? t("otherGyms")
+                            : chain.name}
+                        </strong>
+                        <p className="chain-popup-blurb">
+                          {gymN === 1
+                            ? t("chainGymCountOne")
+                            : t("chainGymCount", { count: gymN })}
+                        </p>
+                        <p className="chain-popup-cities">
+                          {cityN === 1
+                            ? t("chainCityCountOne")
+                            : t("chainCityCount", { count: cityN })}
+                        </p>
+                      </span>
+                      {fact ? (
+                        <p className="chain-popup-meta">
+                          <span className="chain-popup-price">{fact}</span>
+                        </p>
+                      ) : null}
                     </div>
                   </button>
                 </li>
-              ))
+                );
+              })
             : gymList.map(({ gym, km }, i) => {
                 const offer = resolveGymOffer(gym, selectedChain);
-                const priceLabel = formatPriceFrom(offer.priceFrom, lang);
-                const hours =
-                  offer.is247 === true
-                    ? "24/7"
-                    : offer.hoursWeekday || null;
+                const priceLabel = formatPriceCard(offer.priceFrom, lang);
+                const isBrandChain = Boolean(
+                  selectedChain && selectedChain.slug !== "muut",
+                );
+                const siteName = isBrandChain
+                  ? cleanGymDisplayName(gym.name, {
+                      chainName: selectedChain?.name,
+                      city: gym.city,
+                    })
+                  : cleanGymDisplayName(gym.name);
+                const street = formatGymStreetLine(gym);
                 return (
                   <li
                     key={gym.id}
@@ -375,15 +399,37 @@ function ChainPopup() {
                         />
                       </span>
                       <div className="chain-popup-text">
-                        <strong>{cleanGymDisplayName(gym.name)}</strong>
-                        <p className="chain-popup-blurb">
-                          {gym.address}
-                          {gym.city ? ` · ${gym.city}` : ""}
-                        </p>
+                        <span className="chain-popup-text-top">
+                          {isBrandChain ? (
+                            <>
+                              <span className="chain-popup-chain">
+                                {selectedChain!.name}
+                              </span>
+                              <strong className="chain-popup-site">
+                                {siteName}
+                              </strong>
+                            </>
+                          ) : (
+                            <strong className="chain-popup-site">
+                              {siteName}
+                            </strong>
+                          )}
+                          {street ? (
+                            <p className="chain-popup-blurb">{street}</p>
+                          ) : null}
+                          {gym.city ? (
+                            <p className="chain-popup-cities">{gym.city}</p>
+                          ) : null}
+                        </span>
                         <p className="chain-popup-meta">
-                          {km != null ? <span>{formatKm(km)}</span> : null}
-                          <span>{priceLabel ?? t("priceUnknown")}</span>
-                          {hours ? <span>{hours}</span> : null}
+                          <span className="chain-popup-price">
+                            {priceLabel ?? t("priceUnknown")}
+                          </span>
+                          {km != null ? (
+                            <span className="chain-popup-sep">
+                              · {formatDistanceKm(km)}
+                            </span>
+                          ) : null}
                         </p>
                       </div>
                     </Link>
