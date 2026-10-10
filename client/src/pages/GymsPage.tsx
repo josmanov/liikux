@@ -332,6 +332,40 @@ function centerFinlandIfMaxOut(map: Map) {
   map.easeTo({ center: FINLAND_CENTER, duration: 280 });
 }
 
+const REGION_COLORS: Record<string, string> = {
+  Uusimaa: "#e53935",
+  "Varsinais-Suomi": "#1e88e5",
+  Satakunta: "#43a047",
+  "Kanta-Häme": "#fb8c00",
+  Pirkanmaa: "#8e24aa",
+  "Päijät-Häme": "#00acc1",
+  Kymenlaakso: "#c0ca33",
+  "Etelä-Karjala": "#d81b60",
+  "Etelä-Savo": "#5e35b1",
+  "Pohjois-Savo": "#00897b",
+  "Pohjois-Karjala": "#6d4c41",
+  "Keski-Suomi": "#3949ab",
+  "Etelä-Pohjanmaa": "#f4511e",
+  Pohjanmaa: "#039be5",
+  "Keski-Pohjanmaa": "#7cb342",
+  "Pohjois-Pohjanmaa": "#fdd835",
+  Kainuu: "#ad1457",
+  Lappi: "#1565c0",
+  Ahvenanmaa: "#00838f",
+};
+
+const REGION_FILL_MATCH: unknown[] = [
+  "match",
+  ["get", "nimi"],
+  ...Object.entries(REGION_COLORS).flatMap(([name, color]) => [name, color]),
+  "#64748b",
+];
+
+function regionColor(name: string | null | undefined) {
+  if (!name) return "#64748b";
+  return REGION_COLORS[name] ?? "#64748b";
+}
+
 const OTHER_CHAIN_FILTER_ID = "yksityiset";
 
 const chainFilterOptionIds = [
@@ -704,6 +738,13 @@ function GymsPage() {
     if (!chrome) return;
 
     function onScroll() {
+      if (window.matchMedia("(min-width: 901px)").matches) {
+        chrome?.classList.remove("is-scrolled");
+        if (window.scrollY > 0) {
+          window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+        }
+        return;
+      }
       chrome?.classList.toggle("is-scrolled", window.scrollY > 6);
     }
 
@@ -1089,11 +1130,22 @@ function GymsPage() {
     }
 
     const id = window.requestAnimationFrame(() => {
-      el.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest",
-        inline: "nearest",
-      });
+      const scroller = listScrollRef.current;
+      if (scroller && scroller.scrollHeight > scroller.clientHeight + 4) {
+        const scRect = scroller.getBoundingClientRect();
+        const elRect = el.getBoundingClientRect();
+        if (elRect.top < scRect.top || elRect.bottom > scRect.bottom) {
+          const nextTop =
+            el.offsetTop - scroller.clientHeight / 2 + el.clientHeight / 2;
+          scroller.scrollTo({
+            top: Math.max(0, nextTop),
+            behavior: "smooth",
+          });
+        }
+      }
+      if (window.scrollY > 0) {
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+      }
       selectFromMapRef.current = false;
       setMapSelectPending(false);
     });
@@ -1335,54 +1387,15 @@ function GymsPage() {
               type: "fill",
               source: "maakunnat",
               paint: {
-                "fill-color": [
+                "fill-color": REGION_FILL_MATCH as [
                   "match",
-                  ["get", "maakunta"],
-                  "01",
-                  "#1e3a5f",
-                  "02",
-                  "#4a7fa8",
-                  "04",
-                  "#9ec5e0",
-                  "05",
-                  "#2c5282",
-                  "06",
-                  "#6b9fc4",
-                  "07",
-                  "#c5dceb",
-                  "08",
-                  "#254a73",
-                  "09",
-                  "#5a8fb5",
-                  "10",
-                  "#a8cfe3",
-                  "11",
-                  "#1b3554",
-                  "12",
-                  "#7eb0cc",
-                  "13",
-                  "#d6e8f2",
-                  "14",
-                  "#345f8a",
-                  "15",
-                  "#8ebfd6",
-                  "16",
-                  "#b8d7e8",
-                  "17",
-                  "#e8f2f8",
-                  "18",
-                  "#f0f6fa",
-                  "19",
-                  "#163049",
-                  "21",
-                  "#3d6f9c",
-                  "#3b6e9e",
+                  ...unknown[],
                 ],
                 "fill-opacity": [
                   "case",
                   ["boolean", ["feature-state", "hover"], false],
-                  0.72,
-                  0.42,
+                  0.55,
+                  0.34,
                 ],
               },
             });
@@ -1633,12 +1646,11 @@ function GymsPage() {
       el.addEventListener("click", (e) => {
         e.stopPropagation();
         const zoom = zoomWhereClusterSplits(map, group);
-        const delta = Math.max(0, zoom - map.getZoom());
         map.easeTo({
           center: [lng, lat],
           zoom,
-          duration: Math.min(520, Math.max(280, 240 + delta * 80)),
-          easing: (t) => 1 - (1 - t) ** 3,
+          duration: 1000,
+          easing: (t) => 1 - (1 - t) ** 2.4,
         });
       });
 
@@ -2792,6 +2804,13 @@ function GymsPage() {
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => setRegionMenuOpen((v) => !v)}
                     >
+                      {selectedMaakunta ? (
+                        <span
+                          className="browse-region-dot"
+                          style={{ background: regionColor(selectedMaakunta) }}
+                          aria-hidden="true"
+                        />
+                      ) : null}
                       <span>{selectedMaakunta ?? t("regions")}</span>
                       <ChevronDown size={16} strokeWidth={2.2} />
                     </button>
@@ -2804,6 +2823,11 @@ function GymsPage() {
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={() => focusRegion(name)}
                           >
+                            <span
+                              className="browse-region-dot"
+                              style={{ background: regionColor(name) }}
+                              aria-hidden="true"
+                            />
                             {name}
                           </button>
                         </li>
@@ -2883,7 +2907,14 @@ function GymsPage() {
             </div>
             <div className="browse-map" aria-label={t("map")} ref={mapRef} />
             <p className="browse-region-hint">
-              {selectedMaakunta ?? t("pickRegion")}
+              {selectedMaakunta ? (
+                <span
+                  className="browse-region-dot"
+                  style={{ background: regionColor(selectedMaakunta) }}
+                  aria-hidden="true"
+                />
+              ) : null}
+              <span>{selectedMaakunta ?? t("pickRegion")}</span>
             </p>
           </div>
         </section>
@@ -2999,6 +3030,11 @@ function GymsPage() {
                           className={name === selectedMaakunta ? "is-on" : ""}
                           onClick={() => focusRegion(name)}
                         >
+                          <span
+                            className="browse-region-dot"
+                            style={{ background: regionColor(name) }}
+                            aria-hidden="true"
+                          />
                           {name}
                         </button>
                       </li>
@@ -3148,7 +3184,7 @@ function GymsPage() {
             </div>
 
             <div className="browse-extras-options">
-              <label className="browse-extras-row">
+              <label className="browse-extras-row browse-extras-women">
                 <span>
                   <strong>{t("audienceWomen")}</strong>
                   <span className="browse-extras-desc">

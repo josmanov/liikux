@@ -396,18 +396,12 @@
   .header-menu-area {
     display: flex;
     flex-direction: column;
-    gap: 0.45rem;
-    margin-bottom: 0.85rem;
+    margin-bottom: 0.15rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.22);
   }
 
   .header-menu-area-label {
-    margin: 0;
-    padding: 0 0.15rem;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--color-muted);
+    display: none;
   }
 
   .header-menu-area .area-select {
@@ -416,9 +410,45 @@
   }
 
   .header-menu-area .area-select-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
     width: 100%;
     max-width: none;
+    min-height: 0;
+    padding: 0.95rem 0.25rem;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     box-sizing: border-box;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 650;
+  }
+
+  .header-menu-area .area-select-btn:hover {
+    border-color: transparent;
+    color: var(--color-brand);
+  }
+
+  .header-menu-area .area-select-pin {
+    width: 18px;
+    height: 18px;
+    color: inherit;
+    opacity: 0.92;
+  }
+
+  .header-menu-area .area-select-label {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+  }
+
+  .header-menu-area .area-select-chevron {
+    margin-left: auto;
+    width: 18px;
+    height: 18px;
+    opacity: 0.85;
   }
 
   .header-menu-area .area-select-panel {

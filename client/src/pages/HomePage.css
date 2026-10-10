@@ -410,13 +410,6 @@
   outline: none;
 }
 
-.hero-search-divider {
-  flex-shrink: 0;
-  width: 1px;
-  height: 1.45rem;
-  margin: 0 0.35rem;
-  background: var(--color-border);
-}
 
 .hero-locate {
   flex-shrink: 0;
@@ -1034,21 +1027,27 @@
 
 @media (max-width: 640px) {
   .hero {
-    --hero-pad: 2rem;
+    --hero-pad: 1.25rem;
+    justify-content: flex-start;
     padding: var(--hero-pad) 1rem;
-    padding-top: calc(var(--hero-pad) + 3rem);
+    padding-top: 0.5rem;
+    padding-bottom: 1.1rem;
   }
 
   .hero-top {
-    gap: 1.55rem;
+    flex: 1 1 auto;
+    justify-content: center;
+    gap: 1.45rem;
     margin-top: 0;
     margin-bottom: 0;
+    min-height: 0;
   }
 
   .hero-bottom {
-    gap: 0.8rem;
-    margin-top: auto;
-    padding-top: var(--hero-pad);
+    gap: 0.75rem;
+    margin-top: 0;
+    padding-top: 0.35rem;
+    flex-shrink: 0;
   }
 
   .hero-search {
@@ -1062,11 +1061,12 @@
       "cards"
       "action";
     padding: 0;
-    row-gap: 0.7rem;
+    row-gap: 0.65rem;
   }
 
   .rail-title {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
+    text-align: center;
   }
 
   .rail-viewport {
@@ -1077,11 +1077,11 @@
 
   .rail-track {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.75rem 0.65rem;
+    gap: 0.65rem 0.5rem;
   }
 
-  .rail-track .place-card:nth-child(n + 7) {
-    display: flex;
+  .rail-track .place-card:nth-child(n + 5) {
+    display: none;
   }
 
   .place-card {

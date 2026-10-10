@@ -310,7 +310,6 @@ function HomePage() {
                   setSuggestOpen(false);
                 }}
               />
-              <span className="hero-search-divider" aria-hidden="true" />
               <LocateButton />
               {suggestOpen && addressDraft.trim().length >= 3 ? (
                 <div className="hero-suggest" role="listbox">

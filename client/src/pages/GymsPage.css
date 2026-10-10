@@ -135,8 +135,29 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   box-sizing: border-box;
+}
+
+.browse-extras-women {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .browse-extras-women {
+    display: flex;
+  }
+}
+
+.browse-region-dot {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.35);
 }
 
 .browse-list-tools {
@@ -1607,7 +1628,9 @@
 }
 
 .browse-map-sheet-hits button {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
   width: 100%;
   padding: 0.7rem 0.75rem;
   border: 0;
@@ -1679,7 +1702,7 @@
 .browse-region-drop-btn {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 0.45rem;
   width: auto;
   min-height: 2.15rem;
@@ -1695,6 +1718,7 @@
 
 .browse-region-drop-btn svg {
   flex-shrink: 0;
+  margin-left: auto;
   transition: transform 0.28s ease;
 }
 
@@ -1749,7 +1773,9 @@
 }
 
 .browse-region-drop-list button {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   width: 100%;
   padding: 0.45rem 0.45rem 0.45rem 0.7rem;
   border: 0;
@@ -1986,6 +2012,9 @@
   bottom: 0.55rem;
   left: 0.55rem;
   z-index: 15;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   margin: 0;
   padding: 0.4rem 0.7rem;
   transform: none;

@@ -1,17 +1,35 @@
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, X } from "lucide-react";
 import { type Chain, type Gym } from "../data/types";
 import { fetchGymsAndChains } from "../data/api";
+import { useAppLocation } from "../context/LocationContext";
 import { useChainPopup } from "../context/ChainPopupContext";
 import { pathGym } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import "./HeaderSearch.css";
 import LoadSpin from "./LoadSpin";
 
+function distanceKm(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number,
+) {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 function HeaderSearch() {
   const navigate = useNavigate();
+  const location = useAppLocation();
   const { openChain } = useChainPopup();
   const { lang, t } = useLang();
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -84,25 +102,77 @@ function HeaderSearch() {
     }
   }, [expanded, isMobile]);
 
+  const origin =
+    location.lat != null && location.lng != null
+      ? { lat: location.lat, lng: location.lng }
+      : null;
+
+  const nearby = useMemo(() => {
+    if (!origin) {
+      return gyms
+        .filter((g) => g.lat != null && g.lng != null)
+        .slice(0, 40)
+        .map((g) => ({ gym: g, km: null as number | null }));
+    }
+    return gyms
+      .filter((g) => g.lat != null && g.lng != null)
+      .map((g) => ({
+        gym: g,
+        km: distanceKm(origin.lat, origin.lng, g.lat, g.lng),
+      }))
+      .sort((a, b) => (a.km ?? 9999) - (b.km ?? 9999));
+  }, [gyms, origin]);
+
+  const suggestedGyms = useMemo(
+    () => nearby.slice(0, 4).map((row) => row.gym),
+    [nearby],
+  );
+
+  const suggestedChains = useMemo(() => {
+    const byId = new Map(chains.map((c) => [c.id, c]));
+    const out: Chain[] = [];
+    const seen = new Set<string>();
+    for (const row of nearby) {
+      const chain = byId.get(row.gym.chainId);
+      if (!chain || chain.slug === "muut" || seen.has(chain.id)) continue;
+      seen.add(chain.id);
+      out.push(chain);
+      if (out.length >= 4) break;
+    }
+    if (out.length < 4) {
+      const ranked = [...chains]
+        .filter((c) => c.slug !== "muut" && !seen.has(c.id))
+        .sort(
+          (a, b) =>
+            (b.gymCount ?? 0) - (a.gymCount ?? 0) ||
+            a.name.localeCompare(b.name, "fi"),
+        );
+      for (const chain of ranked) {
+        out.push(chain);
+        if (out.length >= 4) break;
+      }
+    }
+    return out;
+  }, [nearby, chains]);
+
   const q = query.trim().toLowerCase();
-  const chainHits =
-    q.length < 1
-      ? []
-      : chains
-          .filter((c) => c.name.toLowerCase().includes(q) && c.slug !== "muut")
-          .slice(0, 5);
-  const gymHits =
-    q.length < 1
-      ? []
-      : gyms
-          .filter(
-            (g) =>
-              g.name.toLowerCase().includes(q) ||
-              g.city.toLowerCase().includes(q) ||
-              g.address.toLowerCase().includes(q),
-          )
-          .slice(0, 8);
-  const showPanel = expanded && open && q.length >= 1;
+  const searching = q.length >= 1;
+  const chainHits = searching
+    ? chains
+        .filter((c) => c.name.toLowerCase().includes(q) && c.slug !== "muut")
+        .slice(0, 5)
+    : suggestedChains;
+  const gymHits = searching
+    ? gyms
+        .filter(
+          (g) =>
+            g.name.toLowerCase().includes(q) ||
+            g.city.toLowerCase().includes(q) ||
+            g.address.toLowerCase().includes(q),
+        )
+        .slice(0, 8)
+    : suggestedGyms;
+  const showPanel = expanded && open;
   const hasHits = chainHits.length > 0 || gymHits.length > 0;
 
   function goFirst() {
@@ -125,11 +195,7 @@ function HeaderSearch() {
   }
 
   function renderHits() {
-    if (!showPanel) {
-      return (
-        <p className="header-search-empty">{t("searchNameOrAddress")}</p>
-      );
-    }
+    if (!showPanel) return null;
     if (!searchLoaded) {
       return (
         <div className="load-box">
@@ -207,7 +273,7 @@ function HeaderSearch() {
       ref={inputRef}
       className="header-search-input"
       type="text"
-      placeholder={t("searchShort")}
+      placeholder={t("searchGymPlaceholder")}
       aria-label={t("search")}
       value={query}
       tabIndex={expanded ? 0 : -1}
