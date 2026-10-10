@@ -256,6 +256,7 @@ type GeocodeHit = {
   label: string;
   lat: number;
   lng: number;
+  kind?: string;
 };
 
 type NominatimRow = {
@@ -350,20 +351,32 @@ function hitFitsQuery(
   return head.includes(n) || l.includes(n);
 }
 
+function looksLikeCityQuery(q: string) {
+  const t = q.trim();
+  if (t.length < 2) return false;
+  if (/\d/.test(t)) return false;
+  if (t.includes(",")) return false;
+  return true;
+}
+
 async function photonSearch(
   q: string,
   bias?: { lat: number; lng: number },
 ) {
+  const cityLike = looksLikeCityQuery(q);
   const params = new URLSearchParams({
     q,
     lang: "default",
     limit: "12",
     bbox: "19.5,59.5,31.6,70.1",
   });
-  if (bias) {
+  if (cityLike) {
+    params.set("layer", "city");
+  }
+  if (bias && !cityLike) {
     params.set("lat", String(bias.lat));
     params.set("lon", String(bias.lng));
-    params.set("location_bias_scale", "0.55");
+    params.set("location_bias_scale", "0.4");
   }
 
   const url = "https://photon.komoot.io/api/?" + params;
@@ -399,6 +412,7 @@ async function photonSearch(
       label,
       lat: coords[1],
       lng: coords[0],
+      kind,
     });
   }
   return hits;
@@ -418,21 +432,35 @@ function dedupeHits(hits: GeocodeHit[]) {
 
 function rankHits(hits: GeocodeHit[], q: string, number: string) {
   const ql = q.toLowerCase();
+  const cityLike = looksLikeCityQuery(q);
   return hits
     .map((h, i) => ({ h, i }))
     .sort((a, b) => {
-      const aNum =
-        number && a.h.label.toLowerCase().includes(number.toLowerCase())
-          ? 0
-          : 1;
-      const bNum =
-        number && b.h.label.toLowerCase().includes(number.toLowerCase())
-          ? 0
-          : 1;
-      if (aNum !== bNum) return aNum - bNum;
-      const aExact = a.h.label.toLowerCase().startsWith(ql) ? 0 : 1;
-      const bExact = b.h.label.toLowerCase().startsWith(ql) ? 0 : 1;
+      const aLabel = a.h.label.toLowerCase();
+      const bLabel = b.h.label.toLowerCase();
+      const aExact = aLabel === ql ? 0 : 1;
+      const bExact = bLabel === ql ? 0 : 1;
       if (aExact !== bExact) return aExact - bExact;
+      const aNum =
+        number && aLabel.includes(number.toLowerCase()) ? 0 : 1;
+      const bNum =
+        number && bLabel.includes(number.toLowerCase()) ? 0 : 1;
+      if (aNum !== bNum) return aNum - bNum;
+      if (cityLike) {
+        const aCity =
+          a.h.kind === "city" || a.h.kind === "locality" || !aLabel.includes(",")
+            ? 0
+            : 1;
+        const bCity =
+          b.h.kind === "city" || b.h.kind === "locality" || !bLabel.includes(",")
+            ? 0
+            : 1;
+        if (aCity !== bCity) return aCity - bCity;
+      }
+      const aStart = aLabel.startsWith(ql) ? 0 : 1;
+      const bStart = bLabel.startsWith(ql) ? 0 : 1;
+      if (aStart !== bStart) return aStart - bStart;
+      if (aLabel.length !== bLabel.length) return aLabel.length - bLabel.length;
       return a.i - b.i;
     })
     .map((x) => x.h);

@@ -238,6 +238,7 @@ const FINLAND_CENTER: [number, number] = [
   (HANGO[1] + NUORGAM[1]) / 2,
 ];
 const ORIGIN_ZOOM = 12;
+const ADDRESS_ZOOM = 10.9;
 const FRAME_ZOOM = 12.6;
 const MAP_MAX_BOUNDS: [[number, number], [number, number]] = [
   [4.0, 53.5],
@@ -1329,7 +1330,7 @@ function GymsPage() {
       const o = originRef.current;
       map.jumpTo({
         center: [o.lng, o.lat],
-        zoom: ORIGIN_ZOOM,
+        zoom: ADDRESS_ZOOM,
       });
       applyFinlandMinZoom(map);
       if (map.getZoom() < map.getMinZoom()) {
@@ -1382,7 +1383,7 @@ function GymsPage() {
       const o = originRef.current;
       map.jumpTo({
         center: [o.lng, o.lat],
-        zoom: ORIGIN_ZOOM,
+        zoom: ADDRESS_ZOOM,
       });
 
       void (async () => {
@@ -2187,33 +2188,11 @@ function GymsPage() {
     fitKeyRef.current = key;
     focusOriginRef.current = false;
 
-    if (nimi) {
-      const full = maakuntaFeaturesRef.current.find((x) => x.nimi === nimi);
-      if (full) {
-        const bbox = geomBBox(full.geometry);
-        const mobile = window.matchMedia(BROWSE_MOBILE_MQ).matches;
-        const pad = mobile
-          ? { top: 24, bottom: 28, left: 24, right: 24 }
-          : { top: 72, bottom: 72, left: 72, right: 72 };
-        map.fitBounds(bbox, {
-          padding: pad,
-          duration: 700,
-          maxZoom: 10.5,
-        });
-      } else {
-        map.easeTo({
-          center: [origin.lng, origin.lat],
-          zoom: ORIGIN_ZOOM,
-          duration: 650,
-        });
-      }
-    } else {
-      map.easeTo({
-        center: [origin.lng, origin.lat],
-        zoom: ORIGIN_ZOOM,
-        duration: 650,
-      });
-    }
+    map.easeTo({
+      center: [origin.lng, origin.lat],
+      zoom: ADDRESS_ZOOM,
+      duration: 700,
+    });
 
     if (wantFocus) {
       navigate(
@@ -3107,7 +3086,7 @@ function GymsPage() {
                 if (!map || origin.lat == null || origin.lng == null) return;
                 map.easeTo({
                   center: [origin.lng, origin.lat],
-                  zoom: Math.max(map.getZoom(), 12),
+                  zoom: ADDRESS_ZOOM,
                   duration: 550,
                 });
               }}
