@@ -6,7 +6,7 @@
   --gd-sticky-top: calc(55px + 2.2rem + 1px);
   --gd-top: 1.25rem;
   --gd-acc-icon: #facc15;
-  padding: 0 3rem 5.5rem;
+  padding: 0 3rem 1.5rem;
   box-sizing: border-box;
 }
 
@@ -60,16 +60,25 @@
   display: none;
 }
 
-.gym-detail-hero {
-  position: relative;
+.gym-detail-brand-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
   width: 100%;
-  height: 200px;
-  border-radius: 16px;
-  overflow: hidden;
-  background: var(--color-surface);
+  align-items: stretch;
 }
 
-.gym-detail-hero img {
+.gym-detail-logo-sq {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--color-surface);
+  box-sizing: border-box;
+}
+
+.gym-detail-logo-sq img {
   position: absolute;
   inset: 0;
   display: block;
@@ -80,46 +89,94 @@
   transform-origin: center center;
 }
 
-.gym-detail-hero.is-pin {
+.gym-detail-logo-sq.is-pin {
   display: grid;
   place-items: center;
   background: #fff;
-  padding: 1rem;
-  box-sizing: border-box;
+  padding: 0.55rem;
 }
 
-.gym-detail-hero.is-pin img {
+.gym-detail-logo-sq.is-pin img {
   position: relative;
   inset: auto;
-  width: 72px;
-  height: 72px;
+  width: 44px;
+  height: 44px;
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
 }
 
-.gym-detail-fav {
-  position: absolute;
-  top: 0.65rem;
-  right: 0.65rem;
-  z-index: 2;
+.gym-detail-brand-side {
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 0.4rem;
 }
 
-.gym-detail-fav.browse-row-fav {
-  width: 2.35rem;
-  height: 2.35rem;
-  background: #121c30;
-  color: #e8e8ef;
-  border-radius: 10px;
-  border: 0;
+.gym-detail-brand-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  width: 100%;
+}
+
+.gym-detail-maps-btn {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: #121c30;
+  text-decoration: none;
+}
+
+.gym-detail-maps-btn img {
+  display: block;
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  transition: opacity 0.16s ease;
+}
+
+.gym-detail-maps-btn .is-fill {
+  position: absolute;
+  opacity: 0;
+}
+
+.gym-detail-maps-btn:hover .is-fill {
+  opacity: 1;
+}
+
+.gym-detail-maps-btn:hover .is-line {
+  opacity: 0;
+}
+
+.gym-detail-fav-btn {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: #121c30;
+  color: #e8e8ef;
   cursor: pointer;
 }
 
-.gym-detail-fav.browse-row-fav svg {
+.gym-detail-fav-btn svg {
   fill: transparent;
   transition:
     transform 0.16s ease,
@@ -127,137 +184,152 @@
     fill 0.16s ease;
 }
 
-.gym-detail-fav.browse-row-fav:hover {
+.gym-detail-fav-btn:hover {
   color: #e53935;
 }
 
-.gym-detail-fav.browse-row-fav:hover svg {
+.gym-detail-fav-btn:hover svg {
   transform: scale(1.14);
 }
 
-.gym-detail-fav.browse-row-fav.is-on {
+.gym-detail-fav-btn.is-on {
   color: #e53935;
 }
 
-.gym-detail-fav.browse-row-fav.is-on svg {
+.gym-detail-fav-btn.is-on svg {
   fill: #e53935;
   color: #e53935;
 }
 
-.gym-detail-hero.logo-easyfit {
+.gym-detail-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: auto;
+  padding: 0.55rem 0.85rem;
+  border: none;
+  border-radius: 10px;
+  background: var(--color-brand);
+  color: #111;
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.gym-detail-cta:hover {
+  color: #111;
+  opacity: 0.94;
+}
+
+.gym-detail-logo-sq.logo-easyfit {
   background: #fef164;
 }
 
-.gym-detail-hero.logo-easyfit img {
+.gym-detail-logo-sq.logo-easyfit img {
   transform: scale(1.15);
 }
 
-.gym-detail-hero.logo-elixia {
+.gym-detail-logo-sq.logo-elixia {
   background: #fff;
-  padding: 0.8rem 1rem;
-  box-sizing: border-box;
+  padding: 0.45rem;
 }
 
-.gym-detail-hero.logo-elixia img {
-  transform: scale(1.35);
+.gym-detail-logo-sq.logo-elixia img {
+  transform: scale(1.25);
 }
 
-.gym-detail-hero.logo-fressi {
+.gym-detail-logo-sq.logo-fressi {
   background: #2a2a2a;
 }
 
-.gym-detail-hero.logo-fressi img {
-  transform: scale(1.7);
+.gym-detail-logo-sq.logo-fressi img {
+  transform: scale(1.55);
 }
 
-.gym-detail-hero.logo-fitness24 {
+.gym-detail-logo-sq.logo-fitness24 {
   background: #002d54;
 }
 
-.gym-detail-hero.logo-fitness24 img {
-  transform: scale(1.25);
+.gym-detail-logo-sq.logo-fitness24 img {
+  transform: scale(1.2);
 }
 
-.gym-detail-hero.logo-gofitness {
+.gym-detail-logo-sq.logo-gofitness {
   background: #fff;
-  padding: 0.8rem 1rem;
-  box-sizing: border-box;
+  padding: 0.45rem;
 }
 
-.gym-detail-hero.logo-gofitness img {
-  transform: scale(1.25);
+.gym-detail-logo-sq.logo-gofitness img {
+  transform: scale(1.2);
 }
 
-.gym-detail-hero.logo-olefit {
+.gym-detail-logo-sq.logo-olefit {
   background: #fff;
-  padding: 0.9rem 1.1rem;
-  box-sizing: border-box;
+  padding: 0.5rem;
 }
 
-.gym-detail-hero.logo-olefit img {
-  transform: scale(1.25);
+.gym-detail-logo-sq.logo-olefit img {
+  transform: scale(1.2);
 }
 
-.gym-detail-hero.logo-ladyline {
+.gym-detail-logo-sq.logo-ladyline {
   background: #fff;
-  padding: 0.8rem 1rem;
-  box-sizing: border-box;
+  padding: 0.45rem;
 }
 
-.gym-detail-hero.logo-ladyline img {
+.gym-detail-logo-sq.logo-ladyline img {
   transform: scale(1.15);
 }
 
-.gym-detail-hero.logo-forever {
+.gym-detail-logo-sq.logo-forever {
   background: #fff;
-  padding: 0.8rem 1rem;
-  box-sizing: border-box;
+  padding: 0.45rem;
 }
 
-.gym-detail-hero.logo-forever img {
+.gym-detail-logo-sq.logo-forever img {
   transform: scale(1.15);
 }
 
-.gym-detail-hero.logo-unisport {
+.gym-detail-logo-sq.logo-unisport {
   background: #fff;
-  padding: 0.8rem 1rem;
-  box-sizing: border-box;
+  padding: 0.45rem;
 }
 
-.gym-detail-hero.logo-unisport img {
+.gym-detail-logo-sq.logo-unisport img {
   transform: scale(1.15);
 }
 
-.gym-detail-hero.logo-mm {
+.gym-detail-logo-sq.logo-mm {
   background: #000;
-  padding: 0.8rem 1rem;
-  box-sizing: border-box;
+  padding: 0.45rem;
 }
 
-.gym-detail-hero.logo-mm img {
+.gym-detail-logo-sq.logo-mm img {
   transform: scale(1.15);
 }
 
-.gym-detail-hero.logo-esport {
+.gym-detail-logo-sq.logo-esport {
   background: #000;
-  padding: 0.8rem 1rem;
-  box-sizing: border-box;
+  padding: 0.45rem;
 }
 
-.gym-detail-hero.logo-esport img {
+.gym-detail-logo-sq.logo-esport img {
   transform: scale(1.15);
 }
 
-.gym-detail-hero.logo-liikku {
+.gym-detail-logo-sq.logo-liikku {
   background: #4da10f;
 }
 
-.gym-detail-hero.logo-liikku img {
-  transform: scale(1.6);
+.gym-detail-logo-sq.logo-liikku img {
+  transform: scale(1.45);
 }
 
 .gym-detail-meta {
-  margin-top: 1rem;
+  margin-top: 0.95rem;
 }
 
 .gym-detail-chain-name {
@@ -865,46 +937,6 @@
   border-radius: 10px;
 }
 
-.gym-detail-sticky {
-  position: sticky;
-  bottom: 0;
-  z-index: 40;
-  display: flex;
-  justify-content: flex-end;
-  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
-  pointer-events: none;
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
-}
-
-.gym-detail-sticky.is-at-end {
-  opacity: 0;
-  transform: translateY(110%);
-  pointer-events: none;
-}
-
-.gym-detail-sticky-cta {
-  pointer-events: auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 12rem;
-  padding: 0.85rem 1.25rem;
-  border-radius: 12px;
-  background: var(--color-brand);
-  color: #111;
-  font-size: 0.95rem;
-  font-weight: 700;
-  text-decoration: none;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
-}
-
-.gym-detail-sticky-cta:hover {
-  color: #111;
-  opacity: 0.94;
-}
-
 .gym-detail-sheet-root {
   position: fixed;
   inset: 0;
@@ -1045,7 +1077,7 @@
     height: auto;
     min-height: 0;
     overflow: visible;
-    padding: 0.85rem 0.85rem 5.5rem;
+    padding: 0.85rem 0.85rem 1.5rem;
   }
 
   .gym-detail-shell {
@@ -1072,7 +1104,7 @@
     gap: 0.65rem;
     flex-shrink: 0;
     min-width: 0;
-    margin: 0.1rem 0 0.15rem;
+    margin: 0.2rem 0 1.35rem;
   }
 
   .gym-detail-back-mobile {
@@ -1115,8 +1147,16 @@
     max-width: 100%;
   }
 
-  .gym-detail-hero {
-    height: 200px;
+  .gym-detail-logo-sq {
+    border-radius: 12px;
+  }
+
+  .gym-detail-maps-btn .is-fill {
+    opacity: 1;
+  }
+
+  .gym-detail-maps-btn .is-line {
+    opacity: 0;
   }
 
   .gym-detail-map-col {
@@ -1165,12 +1205,5 @@
   .gym-detail-map-float,
   .gym-detail-route-meta {
     display: none;
-  }
-
-  .gym-detail-sticky {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
   }
 }

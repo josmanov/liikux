@@ -198,7 +198,6 @@ function GymDetailPage() {
   );
   const [openAcc, setOpenAcc] = useState<AccordionId | null>("hours");
   const [chainGyms, setChainGyms] = useState<Gym[]>([]);
-  const [stickyHidden, setStickyHidden] = useState(false);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<Map | null>(null);
   const gymMarkerRef = useRef<Marker | null>(null);
@@ -213,19 +212,6 @@ function GymDetailPage() {
     window.addEventListener("favorites-changed", syncFavs);
     return () => window.removeEventListener("favorites-changed", syncFavs);
   }, []);
-
-  useEffect(() => {
-    const footer = document.querySelector(".footer");
-    if (!footer) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        setStickyHidden(Boolean(entry?.isIntersecting));
-      },
-      { root: null, threshold: 0.05 },
-    );
-    io.observe(footer);
-    return () => io.disconnect();
-  }, [status]);
 
   useEffect(() => {
     if (locationLabel === "Lähellä minua" || !locationLabel.trim()) {
@@ -622,32 +608,79 @@ function GymDetailPage() {
               </Link>
             </div>
 
-            <div
-              className={[
-                "gym-detail-hero",
-                heroIsLogo ? "is-logo" : "",
-                heroIsPin ? "is-pin" : "",
-                heroIsPin ? "" : chain?.logoClass || "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-            >
-              <img src={heroSrc} alt="" />
-              <button
-                type="button"
-                className={
-                  isFav
-                    ? "gym-detail-fav browse-row-fav is-on"
-                    : "gym-detail-fav browse-row-fav"
-                }
-                aria-label={isFav ? t("removeFavorite") : t("addFavorite")}
-                aria-pressed={isFav}
-                onClick={() => {
-                  setFavoriteSlugs(toggleFavoriteSlug(gym.slug));
-                }}
+            <div className="gym-detail-brand-row">
+              <div
+                className={[
+                  "gym-detail-logo-sq",
+                  heroIsLogo ? "is-logo" : "",
+                  heroIsPin ? "is-pin" : "",
+                  heroIsPin ? "" : chain?.logoClass || "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
               >
-                <Heart size={18} strokeWidth={2.2} />
-              </button>
+                <img src={heroSrc} alt="" />
+              </div>
+              <div className="gym-detail-brand-side">
+                <div className="gym-detail-brand-actions">
+                  {gym.lat != null && gym.lng != null ? (
+                    <a
+                      className="gym-detail-maps-btn"
+                      href={
+                        "https://www.google.com/maps/dir/?api=1&origin=" +
+                        (fromPoint?.lat ?? originLat ?? gym.lat) +
+                        "," +
+                        (fromPoint?.lng ?? originLng ?? gym.lng) +
+                        "&destination=" +
+                        gym.lat +
+                        "," +
+                        gym.lng
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={t("mapsRoute")}
+                    >
+                      <img
+                        className="is-line"
+                        src="/pins/google-maps-outline.png"
+                        alt=""
+                      />
+                      <img
+                        className="is-fill"
+                        src="/pins/google-maps-pin.png"
+                        alt=""
+                      />
+                    </a>
+                  ) : null}
+                  <button
+                    type="button"
+                    className={
+                      isFav
+                        ? "gym-detail-fav-btn is-on"
+                        : "gym-detail-fav-btn"
+                    }
+                    aria-label={
+                      isFav ? t("removeFavorite") : t("addFavorite")
+                    }
+                    aria-pressed={isFav}
+                    onClick={() => {
+                      setFavoriteSlugs(toggleFavoriteSlug(gym.slug));
+                    }}
+                  >
+                    <Heart size={22} strokeWidth={2.2} />
+                  </button>
+                </div>
+                {siteUrl ? (
+                  <a
+                    className="gym-detail-cta"
+                    href={siteUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {t("visitGymSite")}
+                  </a>
+                ) : null}
+              </div>
             </div>
 
             <div className="gym-detail-meta">
@@ -1007,25 +1040,6 @@ function GymDetailPage() {
           </aside>
         </div>
       </div>
-
-      {siteUrl ? (
-        <div
-          className={
-            stickyHidden
-              ? "gym-detail-sticky is-at-end"
-              : "gym-detail-sticky"
-          }
-        >
-          <a
-            className="gym-detail-sticky-cta"
-            href={siteUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {t("visitGymSite")}
-          </a>
-        </div>
-      ) : null}
 
       {addressSheetOpen
         ? createPortal(
