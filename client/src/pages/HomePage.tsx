@@ -1,5 +1,5 @@
 import "./HomePage.css";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -202,12 +202,8 @@ function PickLink({
 }
 
 function HomePage() {
-  const [step, setStep] = useState(0);
-  const viewportRef = useRef<HTMLDivElement>(null);
   const railReveal = useInView<HTMLDivElement>();
   const lajitReveal = useInView<HTMLDivElement>();
-  const gymsAllHover = usePickHover();
-  const start = 0;
   const { openChains, openChain } = useChainPopup();
   const [chains, setChains] = useState<Chain[]>([]);
   const [gymCount, setGymCount] = useState(0);
@@ -241,21 +237,6 @@ function HomePage() {
     }
   }, [label]);
 
-  useEffect(() => {
-    function measure() {
-      const viewport = viewportRef.current;
-      if (!viewport) return;
-      const card = viewport.querySelector(".place-card");
-      if (!(card instanceof HTMLElement)) return;
-      const styles = getComputedStyle(viewport.querySelector(".rail-track")!);
-      const gap = parseFloat(styles.columnGap || styles.gap || "16") || 16;
-      setStep(card.offsetWidth + gap);
-    }
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, []);
-
   const [homeReady, setHomeReady] = useState(false);
 
   useEffect(() => {
@@ -275,10 +256,9 @@ function HomePage() {
     };
   }, []);
 
-  const suositutKetjut = chains
-    .filter((c) => c.slug !== "muut")
-    .slice(0, 6);
-  const chainCount = chains.filter((c) => c.slug !== "muut").length;
+  const listedChains = chains.filter((c) => c.slug !== "muut");
+  const suositutKetjut = listedChains.slice(0, 10);
+  const chainCount = listedChains.length;
 
   return (
     <>
@@ -397,31 +377,10 @@ function HomePage() {
         >
           <div className="rail-head">
             <h2 className="rail-title">{t("popularInFinland")}</h2>
-            <div className="rail-arrows">
-              <button
-                type="button"
-                className="lajit-all"
-                onClick={() => openChains()}
-                onMouseEnter={gymsAllHover.onMouseEnter}
-                onMouseLeave={gymsAllHover.onMouseLeave}
-              >
-                <HoverIcon
-                  src="/picks/kuntosalit.gif"
-                  stillSrc="/picks/kuntosalit-still.png"
-                  animated
-                  playing={gymsAllHover.playing}
-                  playKey={gymsAllHover.playKey}
-                />
-                <span>{t("allGymChains")}</span>
-              </button>
-            </div>
           </div>
-          <div className="rail-viewport" ref={viewportRef}>
+          <div className="rail-viewport">
             <div
               className={homeReady ? "rail-track list-pop" : "rail-track"}
-              style={{
-                transform: `translateX(-${start * step}px)`,
-              }}
             >
               {suositutKetjut.map((chain, i) => (
                 <button
@@ -447,6 +406,16 @@ function HomePage() {
                 </button>
               ))}
             </div>
+            {chainCount > 0 ? (
+              <button
+                type="button"
+                className="rail-show-all"
+                onClick={() => openChains()}
+              >
+                {t("showAllChains", { count: chainCount })}
+                <span aria-hidden="true">›</span>
+              </button>
+            ) : null}
           </div>
         </div>
       </section>
