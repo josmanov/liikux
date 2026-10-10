@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
 import {
   COOKIE_SETTINGS_EVENT,
@@ -86,7 +87,7 @@ function CookieBanner() {
 
   const flagLang: Lang = pickLang === "fi" ? "en" : "fi";
 
-  return (
+  return createPortal(
     <>
       {bannerOpen ? (
         <div className="cookie-banner-root" role="presentation">
@@ -215,7 +216,8 @@ function CookieBanner() {
           </div>
         </div>
       ) : null}
-    </>
+    </>,
+    document.body,
   );
 }
 

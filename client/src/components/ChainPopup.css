@@ -2,9 +2,9 @@
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: var(--popup-overlay);
-  backdrop-filter: var(--popup-overlay-blur);
-  -webkit-backdrop-filter: var(--popup-overlay-blur);
+  background: rgba(0, 0, 0, 0.34);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   display: flex;
   align-items: center;
   justify-content: center;

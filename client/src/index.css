@@ -31,16 +31,15 @@
   --logo-scale-mm: 1;
   --logo-scale-esport: 1;
   --logo-scale-liikku: 1.5;
-  --popup-glass: rgba(10, 10, 14, 0.88);
-  --popup-glass-blur: blur(24px) saturate(1.25);
-  --popup-overlay: rgba(0, 0, 0, 0.42);
-  --popup-overlay-blur: blur(12px) saturate(1.1);
+  --popup-glass: rgba(10, 10, 14, 0.82);
+  --popup-glass-blur: blur(22px);
+  --popup-overlay: rgba(0, 0, 0, 0.34);
+  --popup-overlay-blur: blur(16px);
   --popup-shadow: 0 22px 55px rgba(0, 0, 0, 0.62), 0 0 28px rgba(0, 0, 0, 0.4);
 }
 
 html {
   font-size: 90%;
-  overflow-x: clip;
 }
 
 * {
