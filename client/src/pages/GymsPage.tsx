@@ -2621,11 +2621,14 @@ function GymsPage() {
             !regionPickMode &&
             inViewGyms.length === 0 &&
             gyms.length > 0 ? (
-              <p className="browse-region-empty">
-                {visibleGyms.length === 0
-                  ? t("noGymsFilters")
-                  : t("noGymsInView")}
-              </p>
+              <div className="browse-missing-slot">
+                <p className="browse-missing">
+                  {visibleGyms.length === 0
+                    ? t("noGymsFilters")
+                    : t("noGymsInView")}
+                  <span>{t("missingGymHint")}</span>
+                </p>
+              </div>
             ) : null}
             <ul className={browseReady ? "browse-rows list-pop" : "browse-rows"}>
               {pageGyms.map((gym, i) => {
