@@ -20,6 +20,7 @@ import {
   SlidersHorizontal,
   X,
 } from "lucide-react";
+import "../map/maplibreSetup";
 import { LngLatBounds, Map, Marker, type MapLayerMouseEvent } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type Chain, type Gym, resolveGymOffer } from "../data/types";
@@ -1300,6 +1301,11 @@ function GymsPage() {
 
     let dead = false;
     let revealed = false;
+    const bootFailSafe = window.setTimeout(() => {
+      if (dead || revealed) return;
+      revealed = true;
+      setMapReady(true);
+    }, 2500);
 
     function settleStartView() {
       if (dead || revealed) return;
@@ -1341,6 +1347,7 @@ function GymsPage() {
         if (dead || revealed) return;
         revealed = true;
         window.clearTimeout(failSafe);
+        window.clearTimeout(bootFailSafe);
         map.resize();
         setMapReady(true);
       }
@@ -1519,6 +1526,7 @@ function GymsPage() {
 
     return () => {
       dead = true;
+      window.clearTimeout(bootFailSafe);
       window.removeEventListener("resize", onResize);
       map.off("zoomend", onMaxOutView);
       map.off("moveend", onMaxOutView);
