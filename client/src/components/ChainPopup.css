@@ -265,7 +265,7 @@
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
-  scrollbar-color: #1a1a22 #0a0a0e;
+  scrollbar-color: #6b7280 #1e293b;
 }
 
 .chain-popup-list::-webkit-scrollbar {
@@ -273,16 +273,16 @@
 }
 
 .chain-popup-list::-webkit-scrollbar-thumb {
-  background: #1a1a22;
+  background: #6b7280;
   border-radius: 999px;
 }
 
 .chain-popup-list::-webkit-scrollbar-thumb:hover {
-  background: #252530;
+  background: #9ca3af;
 }
 
 .chain-popup-list::-webkit-scrollbar-track {
-  background: #0a0a0e;
+  background: #1e293b;
   border-radius: 999px;
 }
 

@@ -542,7 +542,7 @@ function filterChainVisual(id: string, list: Chain[]) {
 }
 
 const PAGE_SIZE_START = 8;
-const PAGE_SIZE_MOBILE = 10;
+const PAGE_SIZE_MOBILE = 3;
 const BROWSE_MOBILE_MQ = "(max-width: 900px)";
 
 function pageNums(current: number, count: number): Array<number | "gap"> {
@@ -655,6 +655,8 @@ function GymsPage() {
   const freezeListBoundsRef = useRef(false);
   const [mapSelectPending, setMapSelectPending] = useState(false);
   const [listRevealKey, setListRevealKey] = useState(0);
+  const [listBusy, setListBusy] = useState(false);
+  const listBusyTimerRef = useRef(0);
   const skipBoundsResetRef = useRef(false);
   const hoveredIdRef = useRef<string | null>(null);
   const selectedIdRef = useRef<string | null>(null);
@@ -1062,6 +1064,7 @@ function GymsPage() {
     mapSelectPending &&
     !!selectedId &&
     !pageGyms.some((g) => g.id === selectedId);
+  const listRefreshing = listBusy && !listLoading && !pageJumpLoading;
   const showMissing =
     !listLoading &&
     !pageJumpLoading &&
@@ -1093,17 +1096,40 @@ function GymsPage() {
     window.scrollTo({ top: 0, behavior: "auto" });
   }, [filterKey]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (skipBoundsResetRef.current) {
       skipBoundsResetRef.current = false;
+      if (listBusyTimerRef.current) {
+        window.clearTimeout(listBusyTimerRef.current);
+        listBusyTimerRef.current = 0;
+      }
+      setListBusy(false);
       return;
     }
     setPage(1);
+    setListBusy(true);
+    if (listBusyTimerRef.current) {
+      window.clearTimeout(listBusyTimerRef.current);
+    }
+    listBusyTimerRef.current = window.setTimeout(() => {
+      setListBusy(false);
+      listBusyTimerRef.current = 0;
+    }, 320);
     const id = window.requestAnimationFrame(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     });
-    return () => window.cancelAnimationFrame(id);
+    return () => {
+      window.cancelAnimationFrame(id);
+    };
   }, [mapBounds]);
+
+  useEffect(() => {
+    return () => {
+      if (listBusyTimerRef.current) {
+        window.clearTimeout(listBusyTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (inViewGyms.length > 0) return;
@@ -1113,7 +1139,11 @@ function GymsPage() {
   useEffect(() => {
     if (!selectedId || !selectFromMapRef.current) return;
     const idx = inViewGyms.findIndex((g) => g.id === selectedId);
-    if (idx < 0) return;
+    if (idx < 0) {
+      selectFromMapRef.current = false;
+      setMapSelectPending(false);
+      return;
+    }
     const needPage = Math.floor(idx / pageSize) + 1;
     if (safePage !== needPage) {
       setPage(needPage);
@@ -1129,18 +1159,23 @@ function GymsPage() {
       return;
     }
 
-    const id = window.requestAnimationFrame(() => {
+    let cancelled = false;
+    const mobile = window.matchMedia(BROWSE_MOBILE_MQ).matches;
+    const run = () => {
+      if (cancelled) return;
       const scroller = listScrollRef.current;
-      if (scroller && scroller.scrollHeight > scroller.clientHeight + 4) {
+      if (scroller) {
         const scRect = scroller.getBoundingClientRect();
         const elRect = el.getBoundingClientRect();
-        if (elRect.top < scRect.top || elRect.bottom > scRect.bottom) {
-          const nextTop =
-            el.offsetTop - scroller.clientHeight / 2 + el.clientHeight / 2;
-          scroller.scrollTo({
-            top: Math.max(0, nextTop),
-            behavior: "smooth",
-          });
+        const pad = mobile ? 14 : 10;
+        let delta = 0;
+        if (elRect.bottom > scRect.bottom - pad) {
+          delta = elRect.bottom - scRect.bottom + pad;
+        } else if (elRect.top < scRect.top + pad) {
+          delta = elRect.top - scRect.top - pad;
+        }
+        if (delta !== 0) {
+          scroller.scrollBy({ top: delta, behavior: "smooth" });
         }
       }
       if (window.scrollY > 0) {
@@ -1148,8 +1183,12 @@ function GymsPage() {
       }
       selectFromMapRef.current = false;
       setMapSelectPending(false);
-    });
-    return () => window.cancelAnimationFrame(id);
+    };
+    const id = window.setTimeout(run, mobile ? 120 : 32);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(id);
+    };
   }, [selectedId, pageGyms, inViewGyms, pageSize, safePage, listRevealKey]);
 
   useEffect(() => {
@@ -1217,6 +1256,7 @@ function GymsPage() {
       maxPitch: 0,
       pitchWithRotate: false,
       touchPitch: false,
+      attributionControl: false,
     });
 
     map.touchPitch.disable();
@@ -1775,6 +1815,12 @@ function GymsPage() {
         if (e.originalEvent) {
           freezeListBoundsRef.current = false;
           pushBounds();
+        } else {
+          if (listBusyTimerRef.current) {
+            window.clearTimeout(listBusyTimerRef.current);
+            listBusyTimerRef.current = 0;
+          }
+          setListBusy(false);
         }
       } else {
         pushBounds();
@@ -1794,8 +1840,24 @@ function GymsPage() {
     }
 
     let dragged = false;
+    function bumpListBusy() {
+      if (regionPickModeRef.current) return;
+      setListBusy(true);
+      if (listBusyTimerRef.current) {
+        window.clearTimeout(listBusyTimerRef.current);
+      }
+      listBusyTimerRef.current = window.setTimeout(() => {
+        setListBusy(false);
+        listBusyTimerRef.current = 0;
+      }, 900);
+    }
     function onDragStart() {
       dragged = true;
+      bumpListBusy();
+    }
+    function onZoomStart(e: { originalEvent?: Event }) {
+      if (!e.originalEvent) return;
+      bumpListBusy();
     }
     function onDragEnd() {
       window.setTimeout(() => {
@@ -1823,6 +1885,7 @@ function GymsPage() {
     map.on("move", onMapMove);
     map.on("moveend", onMoveEnd);
     map.on("dragstart", onDragStart);
+    map.on("zoomstart", onZoomStart);
     map.on("dragend", onDragEnd);
     map.on("click", onMapClick);
 
@@ -1831,6 +1894,7 @@ function GymsPage() {
       map.off("move", onMapMove);
       map.off("moveend", onMoveEnd);
       map.off("dragstart", onDragStart);
+      map.off("zoomstart", onZoomStart);
       map.off("dragend", onDragEnd);
       map.off("click", onMapClick);
       clearMarkers();
@@ -2510,7 +2574,11 @@ function GymsPage() {
               ) : null}
             </div>
           </header>
-          <div className="browse-list-scroll" ref={listScrollRef}>
+          <div
+            className="browse-list-scroll"
+            ref={listScrollRef}
+            data-count={pageGyms.length}
+          >
             {regionPickMode ? (
               <p className="browse-region-empty">{t("pickRegion")}</p>
             ) : null}
@@ -2726,7 +2794,7 @@ function GymsPage() {
                 </p>
               </div>
             ) : null}
-            {listLoading || pageJumpLoading ? (
+            {listLoading || pageJumpLoading || listRefreshing ? (
               <div className="browse-list-loading">
                 <LoadSpin />
               </div>
@@ -2947,24 +3015,24 @@ function GymsPage() {
               >
                 <Minus size={18} strokeWidth={2.4} />
               </button>
-              <button
-                type="button"
-                className="browse-map-ctrl browse-glass"
-                aria-label={t("mapGoToLocation")}
-                disabled={origin.lat == null || origin.lng == null}
-                onClick={() => {
-                  const map = mapInstanceRef.current;
-                  if (!map || origin.lat == null || origin.lng == null) return;
-                  map.easeTo({
-                    center: [origin.lng, origin.lat],
-                    zoom: Math.max(map.getZoom(), 12),
-                    duration: 550,
-                  });
-                }}
-              >
-                <LocateFixed size={17} strokeWidth={2.4} />
-              </button>
             </div>
+            <button
+              type="button"
+              className="browse-map-ctrl browse-map-locate-fab browse-glass"
+              aria-label={t("mapGoToLocation")}
+              disabled={origin.lat == null || origin.lng == null}
+              onClick={() => {
+                const map = mapInstanceRef.current;
+                if (!map || origin.lat == null || origin.lng == null) return;
+                map.easeTo({
+                  center: [origin.lng, origin.lat],
+                  zoom: Math.max(map.getZoom(), 12),
+                  duration: 550,
+                });
+              }}
+            >
+              <LocateFixed size={17} strokeWidth={2.4} />
+            </button>
             <div className="browse-map" aria-label={t("map")} ref={mapRef} />
             <p className="browse-region-hint">
               {selectedMaakunta ? (
