@@ -1998,6 +1998,14 @@ function GymsPage() {
   }, [mapReady, maakunnatReady]);
 
   useEffect(() => {
+    const wantFocus =
+      (routeLocation.state as { focusOrigin?: boolean } | null)?.focusOrigin ===
+      true;
+    if (wantFocus) {
+      focusOriginRef.current = true;
+      fitKeyRef.current = "";
+    }
+
     const map = mapInstanceRef.current;
     if (!map || !mapReady) return;
     if (origin.lat == null || origin.lng == null) return;
@@ -2020,17 +2028,69 @@ function GymsPage() {
 
     const shouldZoom =
       focusOriginRef.current || key !== fitKeyRef.current;
-    if (!shouldZoom) return;
+    if (!shouldZoom) {
+      if (wantFocus) {
+        navigate(
+          {
+            pathname: routeLocation.pathname,
+            search: routeLocation.search,
+          },
+          { replace: true, state: null },
+        );
+      }
+      return;
+    }
 
     fitKeyRef.current = key;
     focusOriginRef.current = false;
 
-    map.easeTo({
-      center: [origin.lng, origin.lat],
-      zoom: ORIGIN_ZOOM,
-      duration: 650,
-    });
-  }, [mapReady, maakunnatReady, origin.lat, origin.lng]);
+    if (nimi) {
+      const full = maakuntaFeaturesRef.current.find((x) => x.nimi === nimi);
+      if (full) {
+        const bbox = geomBBox(full.geometry);
+        const mobile = window.matchMedia(BROWSE_MOBILE_MQ).matches;
+        const pad = mobile
+          ? { top: 24, bottom: 28, left: 24, right: 24 }
+          : { top: 72, bottom: 72, left: 72, right: 72 };
+        map.fitBounds(bbox, {
+          padding: pad,
+          duration: 700,
+          maxZoom: 10.5,
+        });
+      } else {
+        map.easeTo({
+          center: [origin.lng, origin.lat],
+          zoom: ORIGIN_ZOOM,
+          duration: 650,
+        });
+      }
+    } else {
+      map.easeTo({
+        center: [origin.lng, origin.lat],
+        zoom: ORIGIN_ZOOM,
+        duration: 650,
+      });
+    }
+
+    if (wantFocus) {
+      navigate(
+        {
+          pathname: routeLocation.pathname,
+          search: routeLocation.search,
+        },
+        { replace: true, state: null },
+      );
+    }
+  }, [
+    mapReady,
+    maakunnatReady,
+    origin.lat,
+    origin.lng,
+    routeLocation.state,
+    routeLocation.pathname,
+    routeLocation.search,
+    navigate,
+  ]);
   useEffect(() => {
     markersRef.current.forEach((marker, id) => {
       const el = marker.getElement();
@@ -2657,15 +2717,15 @@ function GymsPage() {
                   </li>
                 );
               })}
-              {showMissing ? (
-                <li className="browse-missing-slot">
-                  <p className="browse-missing">
-                    {t("missingGym")}
-                    <span>{t("missingGymHint")}</span>
-                  </p>
-                </li>
-              ) : null}
             </ul>
+            {showMissing ? (
+              <div className="browse-missing-slot">
+                <p className="browse-missing">
+                  {t("missingGym")}
+                  <span>{t("missingGymHint")}</span>
+                </p>
+              </div>
+            ) : null}
             {listLoading || pageJumpLoading ? (
               <div className="browse-list-loading">
                 <LoadSpin />

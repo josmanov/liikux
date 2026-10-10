@@ -299,7 +299,7 @@ function ChainPopup() {
                   });
                   return;
                 }
-                navigate(pathGyms(lang));
+                navigate(pathGyms(lang), { state: { focusOrigin: true } });
               }}
             >
               <MapIcon size={17} strokeWidth={2.3} aria-hidden="true" />

@@ -102,8 +102,9 @@
   margin-bottom: 0;
   position: relative;
   z-index: 2;
-  max-width: calc(100% - 0.15rem);
-  padding-right: 0.15rem;
+  width: 100%;
+  max-width: 100%;
+  padding: 0 0.25rem;
   box-sizing: border-box;
 }
 
@@ -177,9 +178,9 @@
   line-height: 28px;
   align-items: center;
   position: relative;
-  max-width: 260px;
+  max-width: none;
   width: 100%;
-  flex: 1;
+  flex: 1 1 auto;
   flex-shrink: 1;
   min-width: 0;
 }
@@ -263,19 +264,25 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #1a1a22 #0a0a0e;
 }
 
 .chain-popup-list::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .chain-popup-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.28);
+  background: #1a1a22;
   border-radius: 999px;
 }
 
+.chain-popup-list::-webkit-scrollbar-thumb:hover {
+  background: #252530;
+}
+
 .chain-popup-list::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.06);
+  background: #0a0a0e;
   border-radius: 999px;
 }
 

@@ -19,6 +19,18 @@
   --max-width: 1100px;
   --page-side: 3rem;
   --page-side-mobile: 1rem;
+  --logo-scale-easyfit: 2;
+  --logo-scale-elixia: 1.2;
+  --logo-scale-fressi: 1.5;
+  --logo-scale-fitness24: 2.8;
+  --logo-scale-gofitness: 1;
+  --logo-scale-olefit: 0.9;
+  --logo-scale-ladyline: 1;
+  --logo-scale-forever: 1;
+  --logo-scale-unisport: 1.56;
+  --logo-scale-mm: 1;
+  --logo-scale-esport: 1;
+  --logo-scale-liikku: 1.5;
   --popup-glass: rgba(10, 10, 14, 0.88);
   --popup-glass-blur: blur(24px) saturate(1.25);
   --popup-overlay: rgba(0, 0, 0, 0.42);

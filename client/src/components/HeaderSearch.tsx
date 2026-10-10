@@ -11,6 +11,26 @@ import { useLang } from "../i18n/useLang";
 import "./HeaderSearch.css";
 import LoadSpin from "./LoadSpin";
 
+function chainMediaClass(chain: Chain | null | undefined) {
+  if (!chain?.image) return "header-search-media is-pin";
+  if (chain.image.includes("/pins/")) return "header-search-media is-pin";
+  return [
+    "header-search-media",
+    chain.logoFit === "contain" ? "is-logo" : "",
+    chain.logoClass || "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+function chainForGymHit(gym: Gym, chains: Chain[]) {
+  return (
+    chains.find((c) => c.id === gym.chainId) ??
+    (gym.chain as Chain | null | undefined) ??
+    null
+  );
+}
+
 function distanceKm(
   lat1: number,
   lng1: number,
@@ -225,11 +245,12 @@ function HeaderSearch() {
                       collapse();
                     }}
                   >
-                    {chain.image ? (
-                      <img src={chain.image} alt="" />
-                    ) : (
-                      <span className="header-search-hit-fallback" />
-                    )}
+                    <span className={chainMediaClass(chain)}>
+                      <img
+                        src={chain.image || "/pins/gym-pin.png"}
+                        alt=""
+                      />
+                    </span>
                     <span>{chain.name}</span>
                   </button>
                 </li>
@@ -241,7 +262,9 @@ function HeaderSearch() {
           <div className="header-search-section">
             <p className="header-search-section-label">{t("gymsShort")}</p>
             <ul className="list-pop">
-              {gymHits.map((gym, i) => (
+              {gymHits.map((gym, i) => {
+                const chain = chainForGymHit(gym, chains);
+                return (
                 <li
                   key={gym.id}
                   style={{ animationDelay: `${Math.min(i, 18) * 28}ms` }}
@@ -253,14 +276,24 @@ function HeaderSearch() {
                       collapse();
                     }}
                   >
-                    <span className="header-search-hit-fallback" />
+                    <span className={chainMediaClass(chain)}>
+                      <img
+                        src={
+                          chain?.image && !chain.image.includes("/pins/")
+                            ? chain.image
+                            : "/pins/gym-pin.png"
+                        }
+                        alt=""
+                      />
+                    </span>
                     <span>
                       {gym.name}
                       {gym.city ? ` · ${gym.city}` : ""}
                     </span>
                   </Link>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           </div>
         ) : null}

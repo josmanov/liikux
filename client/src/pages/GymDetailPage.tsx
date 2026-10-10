@@ -194,6 +194,10 @@ function GymDetailPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { lang, t } = useLang();
+
+  function goBackToBrowse() {
+    navigate(pathGyms(lang));
+  }
   const {
     label: locationLabel,
     lat: originLat,

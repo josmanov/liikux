@@ -52,6 +52,7 @@ const fi = {
   cookieAnalyticsDesc:
     "Käyttötilastot (esim. Google Analytics). Ladataan vain jos sallit.",
   cookieSave: "Tallenna",
+  home: "Etusivu",
   gymsTitle: "Kuntosalit",
   gymsShort: "Salit",
   searchNameOrAddress: "Hae nimellä tai osoitteella...",
@@ -217,6 +218,7 @@ const en: typeof fi = {
   cookieAnalyticsDesc:
     "Usage stats (e.g. Google Analytics). Loaded only if you allow it.",
   cookieSave: "Save",
+  home: "Home",
   gymsTitle: "Gyms",
   gymsShort: "Gyms",
   searchNameOrAddress: "Search by name or address...",

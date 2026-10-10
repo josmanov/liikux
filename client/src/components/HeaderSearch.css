@@ -164,21 +164,108 @@
   background: rgba(255, 255, 255, 0.06);
 }
 
-.header-search-hit img {
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-  border-radius: 6px;
-  background: #fff;
+.header-search-media {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
 }
 
-.header-search-hit-fallback {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  background: #2b2c37;
-  flex-shrink: 0;
+.header-search-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: inherit;
+}
+
+.header-search-media.is-logo {
+  background: var(--color-surface);
+}
+
+.header-search-media.is-pin {
+  background: #fff;
+  padding: 0.35rem;
+}
+
+.header-search-media.is-pin img {
+  object-fit: contain;
+}
+
+.header-search-media.logo-easyfit {
+  background: #fef164;
+}
+
+.header-search-media.logo-easyfit img {
+  transform: scale(var(--logo-scale-easyfit, 2));
+}
+
+.header-search-media.logo-elixia {
+  background: #fff;
+}
+
+.header-search-media.logo-elixia img {
+  transform: scale(var(--logo-scale-elixia, 1.2));
+}
+
+.header-search-media.logo-fressi {
+  background: #2a2a2a;
+}
+
+.header-search-media.logo-fressi img {
+  transform: scale(var(--logo-scale-fressi, 1.5));
+}
+
+.header-search-media.logo-fitness24 {
+  background: #002d54;
+}
+
+.header-search-media.logo-fitness24 img {
+  transform: scale(var(--logo-scale-fitness24, 2.8));
+}
+
+.header-search-media.logo-gofitness {
+  background: #fff;
+}
+
+.header-search-media.logo-olefit {
+  background: #fff;
+}
+
+.header-search-media.logo-ladyline {
+  background: #fff;
+}
+
+.header-search-media.logo-forever {
+  background: #fff;
+}
+
+.header-search-media.logo-unisport {
+  background: #fff;
+}
+
+.header-search-media.logo-mm {
+  background: #000;
+}
+
+.header-search-media.logo-esport {
+  background: #000;
+}
+
+.header-search-media.logo-liikku {
+  background: #4da10f;
+}
+
+.header-search-media.logo-liikku img {
+  transform: scale(var(--logo-scale-liikku, 1.5));
 }
 
 .header-search-empty {

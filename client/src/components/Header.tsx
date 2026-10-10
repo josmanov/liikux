@@ -1,11 +1,11 @@
-﻿import { useEffect, useState } from "react";
+﻿import { useEffect, useState, type MouseEvent } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Dumbbell, Heart, Menu, Store, X } from "lucide-react";
+import { Dumbbell, Heart, Home, Menu, Store, X } from "lucide-react";
 import AreaSelect from "./AreaSelect";
 import FavoritesPopup from "./FavoritesPopup";
 import HeaderSearch from "./HeaderSearch";
 import { readFavoriteSlugs } from "../data/favorites";
-import { pathGyms, switchLangPath } from "../i18n/lang";
+import { pathGyms, pathHome, switchLangPath } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import { useChainPopup } from "../context/ChainPopupContext";
 import "flag-icons/css/flag-icons.min.css";
@@ -19,10 +19,16 @@ function Header() {
   const location = useLocation();
   const { openChains } = useChainPopup();
   const nextLang = lang === "fi" ? "en" : "fi";
+  const homePath = pathHome(lang);
   const gymsPath = pathGyms(lang);
+  const homeOn = location.pathname === homePath;
   const gymsOn =
     location.pathname === gymsPath ||
     location.pathname.startsWith(lang === "en" ? "/en/chain/" : "/fi/ketju/");
+
+  function stayIfSame(e: MouseEvent, path: string) {
+    if (location.pathname === path) e.preventDefault();
+  }
   const favWord = t("favorites");
   const [favHover, setFavHover] = useState(false);
   const [favKept, setFavKept] = useState(false);
@@ -93,17 +99,29 @@ function Header() {
   return (
     <header className={menuOpen ? "header is-menu-open" : "header"}>
       <div className="header-left">
-        <Link to={lang === "en" ? "/en" : "/"} className="header-logo">
+        <Link
+          to={homePath}
+          className="header-logo"
+          onClick={(e) => stayIfSame(e, homePath)}
+        >
           <img src="/liikux-logo-light.png?v=white" alt="Liikux" />
         </Link>
         <div className="header-area-desktop">
           <AreaSelect />
         </div>
         <span className="header-sep" aria-hidden="true" />
-        <nav className="header-nav" aria-label={t("gymsTitle")}>
+        <nav className="header-nav" aria-label={t("menu")}>
+          <Link
+            to={homePath}
+            className={homeOn ? "header-nav-link is-on" : "header-nav-link"}
+            onClick={(e) => stayIfSame(e, homePath)}
+          >
+            {t("home")}
+          </Link>
           <Link
             to={gymsPath}
             className={gymsOn ? "header-nav-link is-on" : "header-nav-link"}
+            onClick={(e) => stayIfSame(e, gymsPath)}
           >
             {t("gymsTitle")}
           </Link>
@@ -202,11 +220,27 @@ function Header() {
         </div>
         <nav className="header-menu-nav" aria-label={t("menu")}>
           <Link
+            to={homePath}
+            className={
+              homeOn ? "header-menu-link is-on" : "header-menu-link"
+            }
+            onClick={(e) => {
+              stayIfSame(e, homePath);
+              setMenuOpen(false);
+            }}
+          >
+            <Home size={18} strokeWidth={2.2} />
+            <span>{t("home")}</span>
+          </Link>
+          <Link
             to={gymsPath}
             className={
               gymsOn ? "header-menu-link is-on" : "header-menu-link"
             }
-            onClick={() => setMenuOpen(false)}
+            onClick={(e) => {
+              stayIfSame(e, gymsPath);
+              setMenuOpen(false);
+            }}
           >
             <Dumbbell size={18} strokeWidth={2.2} />
             <span>{t("gymsTitle")}</span>
