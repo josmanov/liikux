@@ -1029,6 +1029,11 @@ function GymsPage() {
   }, [visibleGyms, selectedId]);
 
   useEffect(() => {
+    if (!selectedId) return;
+    setRegionMenuOpen(false);
+  }, [selectedId]);
+
+  useEffect(() => {
     if (!openFilter) return;
     function close() {
       setOpenFilter(null);
@@ -1603,12 +1608,22 @@ function GymsPage() {
       if (origin.lat == null || origin.lng == null) return;
       const el = document.createElement("div");
       el.className = "gym-origin-pin";
-      el.style.zIndex = "1000";
       el.setAttribute("aria-label", t("fromAddressAria"));
-      el.innerHTML =
-        '<span class="gym-origin-pin-ring"></span>' +
-        '<span class="gym-origin-pin-ring is-late"></span>' +
-        '<span class="gym-origin-pin-core"></span>';
+      if (locationLabel.trim()) {
+        const label = document.createElement("span");
+        label.className = "gym-origin-pin-label";
+        label.textContent = locationLabel;
+        el.appendChild(label);
+      }
+      const ring = document.createElement("span");
+      ring.className = "gym-origin-pin-ring";
+      const ringLate = document.createElement("span");
+      ringLate.className = "gym-origin-pin-ring is-late";
+      const core = document.createElement("span");
+      core.className = "gym-origin-pin-core";
+      el.appendChild(ring);
+      el.appendChild(ringLate);
+      el.appendChild(core);
       originMarkerRef.current = new Marker({ element: el })
         .setLngLat([origin.lng, origin.lat])
         .addTo(map);
@@ -1709,6 +1724,7 @@ function GymsPage() {
     mapReady,
     origin.lat,
     origin.lng,
+    locationLabel,
     selectedMaakunta,
     chains,
     lang,
@@ -1864,8 +1880,6 @@ function GymsPage() {
       else if (id === hoveredId) el.style.zIndex = "5";
       else el.style.zIndex = "";
     });
-    const originEl = originMarkerRef.current?.getElement();
-    if (originEl) originEl.style.zIndex = "1000";
     hoveredIdRef.current = hoveredId;
     selectedIdRef.current = selectedId;
   }, [hoveredId, selectedId]);
@@ -2487,11 +2501,14 @@ function GymsPage() {
                 </label>
                 <div
                   ref={regionDropRef}
-                  className={
-                    regionMenuOpen
-                      ? "browse-region-drop is-open"
-                      : "browse-region-drop"
-                  }
+                  className={[
+                    "browse-region-drop",
+                    regionMenuOpen ? "is-open" : "",
+                    selectedId ? "is-away" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  aria-hidden={selectedId ? true : undefined}
                 >
                   <button
                     type="button"

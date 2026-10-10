@@ -1375,7 +1375,7 @@
   position: absolute;
   top: 0.55rem;
   left: 0.55rem;
-  z-index: 6;
+  z-index: 20;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -1395,6 +1395,24 @@
   width: 11.5rem;
   max-width: 100%;
   margin-top: 0.4rem;
+  max-height: 20rem;
+  opacity: 1;
+  transform: translateY(0);
+  overflow: hidden;
+  pointer-events: auto;
+  transition:
+    max-height 0.32s ease,
+    opacity 0.28s ease,
+    margin 0.28s ease,
+    transform 0.28s ease;
+}
+
+.browse-region-drop.is-away {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+  transform: translateY(-6px);
+  pointer-events: none;
 }
 
 .browse-region-drop-btn {
@@ -1649,7 +1667,7 @@
   position: absolute;
   top: 0.55rem;
   right: 0.55rem;
-  z-index: 6;
+  z-index: 20;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -1677,6 +1695,7 @@
 
 .browse-map {
   position: relative;
+  z-index: 1;
   width: 100%;
   height: 100%;
   min-height: 0;
@@ -1697,14 +1716,14 @@
 
 .browse.is-pin-selected .gym-origin-pin {
   filter: none;
-  z-index: 1000;
+  z-index: 4;
 }
 
 .browse-region-hint {
   position: absolute;
   top: 0.75rem;
   left: 50%;
-  z-index: 4;
+  z-index: 15;
   margin: 0;
   padding: 0.45rem 0.85rem;
   transform: translateX(-50%);
@@ -1727,7 +1746,7 @@
   position: absolute;
   left: 50%;
   bottom: 0.85rem;
-  z-index: 5;
+  z-index: 20;
   display: flex;
   align-items: center;
   width: min(440px, calc(100% - 1.5rem));
@@ -2338,8 +2357,42 @@
   height: 40px;
   overflow: visible;
   transform: translate(-50%, -50%);
-  z-index: 1000;
+  z-index: 4;
   pointer-events: none;
+}
+
+.gym-origin-pin-label {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  z-index: 3;
+  max-width: 11rem;
+  padding: 0.22rem 0.5rem;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border-radius: 8px;
+  background: rgba(8, 12, 22, 0.88);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.gym-origin-pin-label::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(8, 12, 22, 0.88);
 }
 
 .gym-origin-pin-core {
