@@ -3461,24 +3461,46 @@
   }
 
   .browse-rows {
+    --browse-mobile-row-h: 4.55rem;
     display: flex;
     flex-direction: column;
-    flex: 1 1 0;
-    min-height: 0;
+    flex: 1 1 auto;
+    min-height: calc(var(--browse-mobile-row-h) * 3);
     height: auto;
     max-height: none;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
     gap: 0;
     grid-template-columns: unset;
     grid-template-rows: unset;
+    align-content: flex-start;
   }
 
   .browse-rows li {
-    flex: 1 1 0;
-    min-height: 0;
+    flex: 0 0 auto;
+    min-height: var(--browse-mobile-row-h);
     height: auto;
     max-height: none;
     overflow: hidden;
+  }
+
+  .browse-list-scroll:has(.browse-missing-slot) .browse-rows {
+    flex: 0 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .browse-list-scroll:has(.browse-missing-slot) .browse-rows li {
+    flex: 1 1 0;
+    min-height: 0;
+  }
+
+  .browse-list-scroll:has(.browse-missing-slot) .browse-row {
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
   }
 
   .browse-rows li:nth-child(odd) .browse-row {
@@ -3488,9 +3510,9 @@
   .browse-row {
     align-items: center;
     gap: 0.55rem;
-    height: 100%;
-    min-height: 0;
-    max-height: 100%;
+    height: auto;
+    min-height: var(--browse-mobile-row-h);
+    max-height: none;
     overflow: hidden;
     padding: 0.4rem 0.55rem 0.4rem 0.65rem;
     scroll-margin-top: 0;

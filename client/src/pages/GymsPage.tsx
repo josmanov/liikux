@@ -541,7 +541,8 @@ function filterChainVisual(id: string, list: Chain[]) {
 }
 
 const PAGE_SIZE_START = 8;
-const PAGE_SIZE_MOBILE = 3;
+const PAGE_SIZE_MOBILE_MIN = 3;
+const PAGE_SIZE_MOBILE_MAX = 10;
 const BROWSE_MOBILE_MQ = "(max-width: 900px)";
 
 function pageNums(current: number, count: number): Array<number | "gap"> {
@@ -663,6 +664,11 @@ function GymsPage() {
   const listChromeRef = useRef<HTMLDivElement>(null);
   const listScrollRef = useRef<HTMLDivElement>(null);
   const [pageSize, setPageSize] = useState(PAGE_SIZE_START);
+  const [mobileList, setMobileList] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia(BROWSE_MOBILE_MQ).matches,
+  );
   const pageSizeRef = useRef(PAGE_SIZE_START);
   const mapInstanceRef = useRef<Map | null>(null);
   const markersRef = useRef(new globalThis.Map<string, Marker>());
@@ -686,6 +692,8 @@ function GymsPage() {
     { nimi: string; maakunta: string; geometry: MaakuntaGeom }[]
   >([]);
   const fitKeyRef = useRef("");
+  const lastOriginKeyRef = useRef("");
+  const regionUserPickedRef = useRef(false);
   const regionDropRef = useRef<HTMLDivElement>(null);
   const prevFilterKeyRef = useRef<string | null>(null);
   const originRef = useRef({ lat: 60.1699, lng: 24.9384 });
@@ -726,11 +734,13 @@ function GymsPage() {
       if (mq.matches) {
         list.style.removeProperty("--browse-row-count");
         box.style.removeProperty("--browse-row-count");
+        setMobileList(true);
         setPageSize((cur) =>
-          cur === PAGE_SIZE_MOBILE ? cur : PAGE_SIZE_MOBILE,
+          cur === PAGE_SIZE_MOBILE_MAX ? cur : PAGE_SIZE_MOBILE_MAX,
         );
         return;
       }
+      setMobileList(false);
       const raw = getComputedStyle(list).getPropertyValue("--row-min").trim();
       const rowMin = Number.parseFloat(raw) || 96;
       const rows = Math.max(4, Math.floor(box.clientHeight / rowMin));
@@ -1093,11 +1103,12 @@ function GymsPage() {
     !!selectedId &&
     !pageGyms.some((g) => g.id === selectedId);
   const listRefreshing = listBusy && !listLoading && !pageJumpLoading;
+  const listFillTarget = mobileList ? PAGE_SIZE_MOBILE_MIN : pageSize;
   const showMissing =
     !listLoading &&
     !pageJumpLoading &&
     !regionPickMode &&
-    pageGyms.length < pageSize &&
+    pageGyms.length < listFillTarget &&
     (inViewGyms.length > 0 || gyms.length === 0);
 
   const filterKey = [
@@ -1123,6 +1134,12 @@ function GymsPage() {
     setPage(1);
     window.scrollTo({ top: 0, behavior: "auto" });
   }, [filterKey]);
+
+  useEffect(() => {
+    if (!mobileList) return;
+    const rows = listScrollRef.current?.querySelector<HTMLElement>(".browse-rows");
+    if (rows) rows.scrollTop = 0;
+  }, [safePage, mobileList, listRevealKey]);
 
   useLayoutEffect(() => {
     if (skipBoundsResetRef.current) {
@@ -1969,6 +1986,7 @@ function GymsPage() {
     setSelectedMaakunta(null);
     selectedMaakuntaRef.current = null;
     regionPickModeRef.current = false;
+    regionUserPickedRef.current = true;
 
     const bounds = new LngLatBounds();
     for (const g of pins) {
@@ -2075,6 +2093,7 @@ function GymsPage() {
       if (nimi === selectedMaakuntaRef.current) return;
       selectedMaakuntaRef.current = nimi;
       regionPickModeRef.current = false;
+      regionUserPickedRef.current = true;
       setBrowseAllAreas(false);
       setSelectedMaakunta(nimi);
       const full = maakuntaFeaturesRef.current.find((x) => x.nimi === nimi);
@@ -2111,6 +2130,7 @@ function GymsPage() {
     if (wantFocus) {
       focusOriginRef.current = true;
       fitKeyRef.current = "";
+      regionUserPickedRef.current = false;
     }
 
     const map = mapInstanceRef.current;
@@ -2119,6 +2139,11 @@ function GymsPage() {
     if (!maakunnatReady || maakuntaFeaturesRef.current.length === 0) return;
 
     const key = `origin:${origin.lat}:${origin.lng}`;
+    const originChanged = key !== lastOriginKeyRef.current;
+    if (originChanged) {
+      lastOriginKeyRef.current = key;
+      regionUserPickedRef.current = false;
+    }
 
     let nimi: string | null = null;
     for (const f of maakuntaFeaturesRef.current) {
@@ -2128,13 +2153,24 @@ function GymsPage() {
       }
     }
 
-    selectedMaakuntaRef.current = nimi;
-    regionPickModeRef.current = nimi == null;
-    setBrowseAllAreas(false);
-    setSelectedMaakunta(nimi);
+    const followOriginRegion =
+      wantFocus ||
+      focusOriginRef.current ||
+      originChanged ||
+      !regionUserPickedRef.current;
+
+    if (followOriginRegion) {
+      selectedMaakuntaRef.current = nimi;
+      regionPickModeRef.current = nimi == null;
+      setBrowseAllAreas(false);
+      setSelectedMaakunta(nimi);
+    }
 
     const shouldZoom =
-      focusOriginRef.current || key !== fitKeyRef.current;
+      focusOriginRef.current ||
+      wantFocus ||
+      (originChanged && followOriginRegion) ||
+      (followOriginRegion && key !== fitKeyRef.current);
     if (!shouldZoom) {
       if (wantFocus) {
         navigate(
@@ -2231,12 +2267,10 @@ function GymsPage() {
     if (!map || gym.lat == null || gym.lng == null) return;
     selectFromMapRef.current = false;
     skipBoundsResetRef.current = true;
+    freezeListBoundsRef.current = true;
     setSelectedId(gym.id);
-    map.easeTo({
-      center: [gym.lng, gym.lat],
-      zoom: Math.max(map.getZoom(), 15.2),
-      duration: 700,
-    });
+    const here = originRef.current;
+    frameOriginAndGym(map, here.lng, here.lat, gym.lng, gym.lat);
   }
 
   function focusRegion(nimi: string) {
@@ -2247,6 +2281,7 @@ function GymsPage() {
     if (!map || !full) return;
     selectedMaakuntaRef.current = nimi;
     regionPickModeRef.current = false;
+    regionUserPickedRef.current = true;
     setBrowseAllAreas(false);
     setSelectedMaakunta(nimi);
     const bbox = geomBBox(full.geometry);
