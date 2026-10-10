@@ -16,26 +16,26 @@ function UxSwitch({
   dim = false,
 }: Props) {
   return (
-    <span
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled || !onChange}
       className={[
         "ux-switch",
+        checked ? "is-on" : "",
         size === "sm" ? "is-sm" : "",
         dim ? "is-dim" : "",
       ]
         .filter(Boolean)
         .join(" ")}
+      onClick={() => {
+        if (disabled || !onChange) return;
+        onChange(!checked);
+      }}
     >
-      <input
-        type="checkbox"
-        checked={checked}
-        disabled={disabled}
-        readOnly={disabled || !onChange}
-        onChange={
-          onChange ? (e) => onChange(e.target.checked) : undefined
-        }
-      />
-      <span className="ux-slider"></span>
-    </span>
+      <span className="ux-slider" aria-hidden="true" />
+    </button>
   );
 }
 

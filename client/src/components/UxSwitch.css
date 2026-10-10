@@ -5,6 +5,11 @@
   width: 3.5em;
   height: 2em;
   flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .ux-switch.is-sm {
@@ -15,19 +20,21 @@
   opacity: 0.45;
 }
 
-.ux-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
+.ux-switch:disabled {
+  cursor: not-allowed;
+}
+
+.ux-switch:not(:disabled) {
+  cursor: pointer;
 }
 
 .ux-slider {
   position: absolute;
-  cursor: pointer;
   inset: 0;
   border: 2px solid #414141;
   border-radius: 50px;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  pointer-events: none;
 }
 
 .ux-slider:before {
@@ -42,16 +49,12 @@
   transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-.ux-switch input:checked + .ux-slider {
+.ux-switch.is-on .ux-slider {
   border: 2px solid var(--color-brand);
   background: color-mix(in srgb, var(--color-brand) 28%, transparent);
 }
 
-.ux-switch input:checked + .ux-slider:before {
+.ux-switch.is-on .ux-slider:before {
   transform: translateX(1.5em);
   background-color: var(--color-brand);
-}
-
-.ux-switch input:disabled + .ux-slider {
-  cursor: not-allowed;
 }
