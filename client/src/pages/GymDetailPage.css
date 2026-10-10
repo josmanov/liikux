@@ -788,20 +788,6 @@
   width: 36px;
   height: 36px;
   overflow: visible;
-  transform: translate(-50%, -100%);
-}
-
-.gym-detail-pin-stack {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 4px);
-  transform: translateX(-50%);
-  z-index: 5;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  pointer-events: none;
 }
 
 .gym-detail-pin-hit {
@@ -820,50 +806,11 @@
   object-fit: contain;
 }
 
-.gym-detail-pin-price {
-  position: relative;
-  z-index: 4;
-  padding: 0.16rem 0.4rem 0.19rem;
-  border: 1.5px solid #111;
-  border-radius: 999px;
-  background: #fff;
-  color: #111;
-  font-family: var(--font-body);
-  font-size: 0.59rem;
-  font-weight: 700;
-  line-height: 1.1;
-  white-space: nowrap;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
-}
-
-.gym-detail-pin-price::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 100%;
-  transform: translateX(-50%);
-  border: 4px solid transparent;
-  border-top-color: #111;
-}
-
-.gym-detail-pin-price::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 100%;
-  transform: translateX(-50%);
-  margin-top: -1.5px;
-  border: 3px solid transparent;
-  border-top-color: #fff;
-  z-index: 1;
-}
-
-.gym-detail-pin-stack:has(.gym-detail-pin-address) .gym-detail-pin-price::after,
-.gym-detail-pin-stack:has(.gym-detail-pin-address) .gym-detail-pin-price::before {
-  display: none;
-}
-
 .gym-detail-pin-address {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 2px);
+  transform: translateX(-50%);
   z-index: 5;
   max-width: 10.5rem;
   padding: 0.2rem 0.45rem;
@@ -879,7 +826,18 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  pointer-events: none;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.gym-detail-pin-address::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(8, 12, 22, 0.9);
 }
 
 .gym-detail-origin-pin {
@@ -887,15 +845,14 @@
   width: 40px;
   height: 40px;
   overflow: visible;
-  transform: translate(-50%, -50%);
-  z-index: 1000;
+  z-index: 4;
   pointer-events: none;
 }
 
 .gym-detail-origin-label {
   position: absolute;
   left: 50%;
-  bottom: calc(100% + 8px);
+  bottom: calc(100% + 2px);
   transform: translateX(-50%);
   z-index: 3;
   max-width: 11rem;
@@ -914,6 +871,16 @@
   overflow: hidden;
   text-overflow: ellipsis;
   pointer-events: none;
+}
+
+.gym-detail-origin-label::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: rgba(8, 12, 22, 0.88);
 }
 
 .gym-detail-origin-pin .gym-origin-pin-core {

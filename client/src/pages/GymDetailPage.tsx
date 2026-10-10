@@ -29,7 +29,6 @@ import {
   cleanGymDisplayName,
   formatDistanceKm,
   formatGymStreetLine,
-  formatPricePill,
 } from "../data/format";
 import { offerPhrase } from "../data/offerText";
 import { getChainWebsite } from "../data/chainWebsites";
@@ -81,29 +80,15 @@ function distanceKm(
   return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
 }
 
-function makeGymPin(opts: {
-  priceText?: string | null;
-  addressText?: string | null;
-}) {
+function makeGymPin(opts: { addressText?: string | null }) {
   const el = document.createElement("div");
   el.className = "gym-detail-pin";
 
-  if (opts.priceText || opts.addressText) {
-    const stack = document.createElement("div");
-    stack.className = "gym-detail-pin-stack";
-    if (opts.priceText) {
-      const pill = document.createElement("span");
-      pill.className = "gym-detail-pin-price";
-      pill.textContent = opts.priceText;
-      stack.appendChild(pill);
-    }
-    if (opts.addressText) {
-      const addr = document.createElement("span");
-      addr.className = "gym-detail-pin-address";
-      addr.textContent = opts.addressText;
-      stack.appendChild(addr);
-    }
-    el.appendChild(stack);
+  if (opts.addressText) {
+    const addr = document.createElement("span");
+    addr.className = "gym-detail-pin-address";
+    addr.textContent = opts.addressText;
+    el.appendChild(addr);
   }
 
   const hit = document.createElement("div");
@@ -116,28 +101,9 @@ function makeGymPin(opts: {
   return el;
 }
 
-function keepGymPinInView(map: Map, lng: number, lat: number) {
-  const bounds = map.getBounds();
-  if (bounds.contains([lng, lat])) return;
-
-  const ne = bounds.getNorthEast();
-  const sw = bounds.getSouthWest();
-  const center = map.getCenter();
-  let nextLng = center.lng;
-  let nextLat = center.lat;
-
-  if (lng < sw.lng) nextLng -= sw.lng - lng;
-  if (lng > ne.lng) nextLng += lng - ne.lng;
-  if (lat < sw.lat) nextLat -= sw.lat - lat;
-  if (lat > ne.lat) nextLat += lat - ne.lat;
-
-  map.easeTo({ center: [nextLng, nextLat], duration: 180 });
-}
-
 function makeOriginPin(ariaLabel: string, addressLabel?: string | null) {
   const el = document.createElement("div");
   el.className = "gym-detail-origin-pin";
-  el.style.zIndex = "1000";
   el.setAttribute("aria-label", ariaLabel);
   if (addressLabel?.trim()) {
     const label = document.createElement("span");
@@ -361,18 +327,13 @@ function GymDetailPage() {
       map.resize();
     }
 
-    function onMoveEnd() {
-      keepGymPinInView(map, gymLng, gymLat);
-    }
-
     map.on("load", () => {
       settleSize();
-      const offer = resolveGymOffer(gym, gym.chain);
-      const priceText = formatPricePill(offer.priceFrom, lang);
       const addressText =
         formatGymStreetLine(gym) || gym.address?.trim() || null;
       gymMarkerRef.current = new Marker({
-        element: makeGymPin({ priceText, addressText }),
+        element: makeGymPin({ addressText }),
+        anchor: "bottom",
       })
         .setLngLat([gymLng, gymLat])
         .addTo(map);
@@ -382,12 +343,10 @@ function GymDetailPage() {
       });
     });
 
-    map.on("moveend", onMoveEnd);
     window.addEventListener("resize", settleSize);
 
     return () => {
       window.removeEventListener("resize", settleSize);
-      map.off("moveend", onMoveEnd);
       gymMarkerRef.current?.remove();
       originMarkerRef.current?.remove();
       gymMarkerRef.current = null;
@@ -414,6 +373,7 @@ function GymDetailPage() {
         t("fromAddressAria"),
         fromPoint.label || fromDraft || locationLabel,
       ),
+      anchor: "center",
     })
       .setLngLat([fromPoint.lng, fromPoint.lat])
       .addTo(map);
