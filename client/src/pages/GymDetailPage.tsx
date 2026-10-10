@@ -42,6 +42,7 @@ import {
 } from "../data/favorites";
 import { useLockPageScroll } from "../hooks/useLockPageScroll";
 import { useLang } from "../i18n/useLang";
+import { API } from "../data/apiBase";
 import "./GymDetailPage.css";
 
 type GymDetail = Gym & { chain: Chain | null };
@@ -233,7 +234,7 @@ function GymDetailPage() {
     setOpenAcc("hours");
     setChainGyms([]);
 
-    fetch(`/api/gyms/${encodeURIComponent(slug)}`)
+    fetch(`${API}/api/gyms/${encodeURIComponent(slug)}`)
       .then(async (r) => {
         if (r.status === 404) return null;
         if (!r.ok) throw new Error("fail");
@@ -276,7 +277,7 @@ function GymDetailPage() {
     }
 
     let cancelled = false;
-    fetch(`/api/chains/${encodeURIComponent(chainSlug)}/gyms`)
+    fetch(`${API}/api/chains/${encodeURIComponent(chainSlug)}/gyms`)
       .then(async (r) => {
         if (!r.ok) throw new Error("fail");
         return r.json() as Promise<{ gyms: Gym[] }>;
