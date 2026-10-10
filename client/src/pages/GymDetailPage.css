@@ -3,36 +3,50 @@
   --gd-price: #c4a574;
   --gd-promo-bg: color-mix(in srgb, #854f0b 22%, transparent);
   --gd-promo-fg: #e8c48a;
-  --gd-sticky-top: calc(55px + 2.2rem + 1px);
-  --gd-top: 1.25rem;
+  --gd-side: var(--page-side, 3rem);
+  --gd-sticky-top: var(--header-h, 5.75rem);
+  --gd-top: 1rem;
   --gd-acc-icon: #facc15;
-  padding: 0 3rem 1.5rem;
+  padding: 16px var(--gd-side) 1.5rem;
   box-sizing: border-box;
 }
 
 .gym-detail-shell {
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
 }
 
 .gym-detail-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 2.5rem;
+  gap: 1.25rem;
   align-items: start;
 }
 
 .gym-detail-content {
   min-width: 0;
-  padding-top: var(--gd-top);
+  padding-top: 0;
 }
 
 .gym-detail-left-sticky {
   position: sticky;
   top: var(--gd-sticky-top);
-  z-index: 3;
-  margin-bottom: 1rem;
+  z-index: 5;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 0 1rem;
+  padding: 0.7rem 0 0.55rem;
+  background: var(--color-bg);
+}
+
+.gym-detail-left-sticky::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: calc(var(--gd-sticky-top) + 0.5rem);
   background: var(--color-bg);
 }
 
@@ -50,6 +64,8 @@
   text-decoration: none;
   font-size: 15px;
   font-weight: 600;
+  position: relative;
+  z-index: 1;
 }
 
 .gym-detail-back:hover {
@@ -61,16 +77,17 @@
 }
 
 .gym-detail-brand-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  align-items: stretch;
   gap: 0.75rem;
   width: 100%;
-  align-items: stretch;
 }
 
 .gym-detail-logo-sq {
   position: relative;
-  width: 100%;
+  flex: 1 1 0;
+  width: 0;
+  min-width: 0;
   aspect-ratio: 2 / 1;
   border-radius: 14px;
   overflow: hidden;
@@ -107,43 +124,48 @@
 }
 
 .gym-detail-brand-side {
+  flex: 1 1 0;
+  width: 0;
   min-width: 0;
-  width: 100%;
-  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   justify-content: space-between;
-  gap: 0.4rem;
+  gap: 0.55rem;
 }
 
 .gym-detail-brand-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.45rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+  gap: 0.55rem;
   width: 100%;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .gym-detail-maps-btn {
   position: relative;
-  flex-shrink: 0;
-  width: 44px;
-  height: 44px;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   border: 0;
-  border-radius: 12px;
+  border-radius: 14px;
   background: #121c30;
   text-decoration: none;
+  box-sizing: border-box;
 }
 
 .gym-detail-maps-btn img {
   display: block;
-  width: 26px;
-  height: 26px;
+  width: 55%;
+  height: 55%;
   object-fit: contain;
   transition: opacity 0.16s ease;
 }
@@ -162,21 +184,24 @@
 }
 
 .gym-detail-fav-btn {
-  flex-shrink: 0;
-  width: 44px;
-  height: 44px;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   border: 0;
-  border-radius: 12px;
+  border-radius: 14px;
   background: #121c30;
   color: #e8e8ef;
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 .gym-detail-fav-btn svg {
+  width: 48%;
+  height: 48%;
   fill: transparent;
   transition:
     transform 0.16s ease,
@@ -205,8 +230,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
   width: 100%;
-  margin-top: auto;
+  margin-top: 0;
   padding: 0.55rem 0.85rem;
   border: none;
   border-radius: 10px;
@@ -217,6 +243,14 @@
   text-decoration: none;
   box-sizing: border-box;
   white-space: nowrap;
+}
+
+@media (min-width: 901px) {
+  .gym-detail-cta {
+    padding: 0.7rem 1rem;
+    font-size: 0.95rem;
+    border-radius: 12px;
+  }
 }
 
 .gym-detail-cta:hover {
@@ -628,14 +662,14 @@
 
 .gym-detail-map-col {
   position: sticky;
-  top: var(--gd-sticky-top);
+  top: calc(var(--gd-sticky-top) + 0.15rem);
   align-self: start;
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - (55px + 2.2rem + 1px) - 1.25rem);
-  max-height: calc(100dvh - (55px + 2.2rem + 1px) - 1.25rem);
+  height: calc(100dvh - var(--gd-sticky-top) - 32px);
+  max-height: calc(100dvh - var(--gd-sticky-top) - 32px);
   min-width: 0;
-  padding-top: var(--gd-top);
+  padding-top: 0;
   box-sizing: border-box;
 }
 
@@ -657,18 +691,22 @@
 
 .gym-detail-map-float {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  right: 12px;
-  z-index: 2;
+  top: 0.55rem;
+  left: 0.55rem;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.45rem 0.55rem;
+  width: min(22rem, calc(100% - 4.4rem));
+  padding: 0.28rem 0.55rem;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(8, 12, 22, 0.84);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-sizing: border-box;
+  color: #fff;
 }
 
 .gym-detail-map-float svg {
@@ -679,29 +717,40 @@
 .gym-detail-from {
   flex: 1;
   min-width: 0;
+  height: 1.65rem;
   border: 0;
   background: transparent;
+  color: #fff;
   font: inherit;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 600;
   outline: none;
+}
+
+.gym-detail-from::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 500;
 }
 
 .gym-detail-locate {
   display: grid;
   place-items: center;
-  width: 1.8rem;
-  height: 1.8rem;
+  width: 1.7rem;
+  height: 1.7rem;
   padding: 0;
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: var(--color-text);
+  color: #fff;
   cursor: pointer;
 }
 
+.gym-detail-locate:hover {
+  color: var(--color-brand);
+}
+
 .gym-detail-crumb-sep {
-  color: var(--color-muted);
+  color: rgba(255, 255, 255, 0.45);
   font-weight: 700;
 }
 
@@ -710,20 +759,23 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 650;
-  color: var(--color-text);
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .gym-detail-route-meta {
   position: absolute;
-  top: 68px;
-  left: 14px;
-  right: 14px;
-  z-index: 2;
+  top: 3.35rem;
+  left: 0.7rem;
+  z-index: 18;
   margin: 0;
-  font-size: 12px;
-  color: var(--color-muted);
+  padding: 0.28rem 0.55rem;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.78);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #fff;
   pointer-events: none;
 }
 
@@ -905,20 +957,29 @@
 }
 
 .gym-detail-map-side,
-.gym-detail-map-chips,
-.gym-detail-map-controls {
+.gym-detail-map-chips {
   display: none;
+}
+
+.gym-detail-map-controls {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
 .gym-detail-map-chip,
 .gym-detail-map-ctrl {
   display: grid;
   place-items: center;
-  width: 2.45rem;
-  height: 2.45rem;
+  width: 2.25rem;
+  height: 2.25rem;
   padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 12px;
+  border-radius: 10px;
   background: rgba(8, 12, 22, 0.84);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
   backdrop-filter: blur(16px);
@@ -931,10 +992,9 @@
   color: var(--color-brand);
 }
 
-.gym-detail-map-ctrl {
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 10px;
+.gym-detail-map-ctrl:hover {
+  border-color: var(--color-brand);
+  background: rgba(8, 12, 22, 0.92);
 }
 
 .gym-detail-sheet-root {
@@ -1074,10 +1134,11 @@
 
 @media (max-width: 900px) {
   .gym-detail {
+    --gd-side: var(--page-side-mobile, 1rem);
     height: auto;
     min-height: 0;
     overflow: visible;
-    padding: 0.85rem 0.85rem 1.5rem;
+    padding: 0.85rem var(--gd-side) 1.5rem;
   }
 
   .gym-detail-shell {
@@ -1149,6 +1210,32 @@
 
   .gym-detail-logo-sq {
     border-radius: 12px;
+  }
+
+  .gym-detail-brand-actions {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: flex-end;
+    grid-template-columns: none;
+  }
+
+  .gym-detail-maps-btn,
+  .gym-detail-fav-btn {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 auto;
+    border-radius: 12px;
+  }
+
+  .gym-detail-maps-btn img {
+    width: 26px;
+    height: 26px;
+  }
+
+  .gym-detail-fav-btn svg {
+    width: 22px;
+    height: 22px;
   }
 
   .gym-detail-maps-btn .is-fill {

@@ -116,6 +116,24 @@ function makeGymPin(opts: {
   return el;
 }
 
+function keepGymPinInView(map: Map, lng: number, lat: number) {
+  const bounds = map.getBounds();
+  if (bounds.contains([lng, lat])) return;
+
+  const ne = bounds.getNorthEast();
+  const sw = bounds.getSouthWest();
+  const center = map.getCenter();
+  let nextLng = center.lng;
+  let nextLat = center.lat;
+
+  if (lng < sw.lng) nextLng -= sw.lng - lng;
+  if (lng > ne.lng) nextLng += lng - ne.lng;
+  if (lat < sw.lat) nextLat -= sw.lat - lat;
+  if (lat > ne.lat) nextLat += lat - ne.lat;
+
+  map.easeTo({ center: [nextLng, nextLat], duration: 180 });
+}
+
 function makeOriginPin(ariaLabel: string, addressLabel?: string | null) {
   const el = document.createElement("div");
   el.className = "gym-detail-origin-pin";
@@ -331,8 +349,15 @@ function GymDetailPage() {
     map.setMaxPitch(0);
     mapInstanceRef.current = map;
 
+    const gymLng = gym.lng;
+    const gymLat = gym.lat;
+
     function settleSize() {
       map.resize();
+    }
+
+    function onMoveEnd() {
+      keepGymPinInView(map, gymLng, gymLat);
     }
 
     map.on("load", () => {
@@ -344,7 +369,7 @@ function GymDetailPage() {
       gymMarkerRef.current = new Marker({
         element: makeGymPin({ priceText, addressText }),
       })
-        .setLngLat([gym.lng, gym.lat])
+        .setLngLat([gymLng, gymLat])
         .addTo(map);
       requestAnimationFrame(() => {
         settleSize();
@@ -352,10 +377,12 @@ function GymDetailPage() {
       });
     });
 
+    map.on("moveend", onMoveEnd);
     window.addEventListener("resize", settleSize);
 
     return () => {
       window.removeEventListener("resize", settleSize);
+      map.off("moveend", onMoveEnd);
       gymMarkerRef.current?.remove();
       originMarkerRef.current?.remove();
       gymMarkerRef.current = null;
@@ -667,7 +694,7 @@ function GymDetailPage() {
                       setFavoriteSlugs(toggleFavoriteSlug(gym.slug));
                     }}
                   >
-                    <Heart size={22} strokeWidth={2.2} />
+                    <Heart size={28} strokeWidth={2.2} />
                   </button>
                 </div>
                 {siteUrl ? (

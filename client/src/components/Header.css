@@ -3,7 +3,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    padding: 1.1rem 3rem;
+    padding: 1.1rem var(--page-side, 3rem);
     position: sticky;
     top: 0;
     z-index: 20;
@@ -244,7 +244,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.45rem;
-    padding: 0.8rem 1rem;
+    padding: 0.8rem var(--page-side-mobile, 1rem);
     min-height: 3.9rem;
   }
 

@@ -14,7 +14,7 @@
 }
 
 .browse {
-  --browse-side: 32px;
+  --browse-side: var(--page-side, 3rem);
   display: flex;
   flex-direction: column;
   height: calc(100dvh - var(--header-h, 3.5rem));
@@ -3050,7 +3050,7 @@
   }
 
   .browse {
-    --browse-side: 0.85rem;
+    --browse-side: var(--page-side-mobile, 1rem);
     height: calc(100dvh - var(--header-h, 3.9rem));
     min-height: 0;
     padding: 0.65rem var(--browse-side) 0.75rem;
