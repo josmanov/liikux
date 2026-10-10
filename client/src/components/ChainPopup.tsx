@@ -1,19 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link } from "react-router-dom";
-import { ArrowLeft, X } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, Map as MapIcon, X } from "lucide-react";
 import "./ChainPopup.css";
 import { type Chain, type Gym, resolveGymOffer } from "../data/types";
-import { fetchChains, fetchChainGyms, fetchGyms } from "../data/api";
+import {
+  clearChainsCache,
+  fetchChains,
+  fetchChainGyms,
+  fetchGyms,
+} from "../data/api";
 import {
   cleanGymDisplayName,
   formatDistanceKm,
   formatGymStreetLine,
   formatPriceCard,
+  formatPriceRange,
 } from "../data/format";
 import { useAppLocation } from "../context/LocationContext";
 import { useChainPopup } from "../context/ChainPopupContext";
-import { pathGym } from "../i18n/lang";
+import { pathChain, pathGym, pathGyms } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import LoadSpin from "./LoadSpin";
 import { useLockPageScroll } from "../hooks/useLockPageScroll";
@@ -34,34 +40,54 @@ function distanceKm(
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function statsByChain(rows: Gym[]) {
-  const map = new Map<string, { gyms: number; cities: Set<string> }>();
+function statsByChain(rows: Gym[], chainById: Map<string, Chain>) {
+  const map = new Map<
+    string,
+    { gyms: number; cities: Set<string>; priceMin: number | null; priceMax: number | null }
+  >();
   for (const g of rows) {
     let row = map.get(g.chainId);
     if (!row) {
-      row = { gyms: 0, cities: new Set() };
+      row = { gyms: 0, cities: new Set(), priceMin: null, priceMax: null };
       map.set(g.chainId, row);
     }
     row.gyms += 1;
-    const city = g.city.trim().toLowerCase();
+    const city = (g.city || "").trim().toLowerCase();
     if (city) row.cities.add(city);
+    const price = resolveGymOffer(g, chainById.get(g.chainId) ?? g.chain).priceFrom;
+    if (price != null && Number.isFinite(price) && price > 0) {
+      row.priceMin = row.priceMin == null ? price : Math.min(row.priceMin, price);
+      row.priceMax = row.priceMax == null ? price : Math.max(row.priceMax, price);
+    }
   }
-  const out: Record<string, { gyms: number; cities: number }> = {};
+  const out: Record<
+    string,
+    { gyms: number; cities: number; priceMin: number | null; priceMax: number | null }
+  > = {};
   for (const [id, row] of map) {
-    out[id] = { gyms: row.gyms, cities: row.cities.size };
+    out[id] = {
+      gyms: row.gyms,
+      cities: row.cities.size,
+      priceMin: row.priceMin,
+      priceMax: row.priceMax,
+    };
   }
   return out;
 }
 
 function ChainPopup() {
   const { open, chainSlug, close, openChain } = useChainPopup();
+  const navigate = useNavigate();
   const location = useAppLocation();
   const { lang, t } = useLang();
   const [query, setQuery] = useState("");
   const [chains, setChains] = useState<Chain[]>([]);
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [chainStats, setChainStats] = useState<
-    Record<string, { gyms: number; cities: number }>
+    Record<
+      string,
+      { gyms: number; cities: number; priceMin: number | null; priceMax: number | null }
+    >
   >({});
   const [chainsReady, setChainsReady] = useState(false);
   const [gymsReady, setGymsReady] = useState(true);
@@ -81,11 +107,19 @@ function ChainPopup() {
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
+    setChainsReady(false);
+    clearChainsCache();
     Promise.all([fetchChains(), fetchGyms()])
       .then(([chainData, gymData]) => {
         if (cancelled) return;
-        setChains(chainData);
-        setChainStats(statsByChain(gymData));
+        const chainRows = Array.isArray(chainData) ? chainData : [];
+        setChains(chainRows);
+        try {
+          const byId = new Map(chainRows.map((c) => [c.id, c]));
+          setChainStats(statsByChain(Array.isArray(gymData) ? gymData : [], byId));
+        } catch {
+          setChainStats({});
+        }
       })
       .catch(() => {
         if (cancelled) return;
@@ -154,9 +188,9 @@ function ChainPopup() {
   const chainList = useMemo(() => {
     const list = chains.filter((chain) => {
       if (!q) return true;
-      const name =
-        chain.slug === "muut" ? "muut kuntosalit" : chain.name.toLowerCase();
-      return name.includes(q) || chain.name.toLowerCase().includes(q);
+      const rawName = (chain.name || "").toLowerCase();
+      const name = chain.slug === "muut" ? "muut kuntosalit" : rawName;
+      return name.includes(q) || rawName.includes(q);
     });
     list.sort((a, b) => {
       if (a.slug === "muut") return 1;
@@ -165,7 +199,7 @@ function ChainPopup() {
       const bCount = b.gymCount ?? chainStats[b.id]?.gyms ?? 0;
       const diff = bCount - aCount;
       if (diff !== 0) return diff;
-      return a.name.localeCompare(b.name, "fi");
+      return (a.name || "").localeCompare(b.name || "", "fi");
     });
     return list;
   }, [chains, q, chainStats]);
@@ -254,6 +288,23 @@ function ChainPopup() {
                 onChange={(e) => setQuery(e.target.value)}
               />
             </div>
+            <button
+              type="button"
+              className="chain-popup-map-btn"
+              onClick={() => {
+                close();
+                if (selectedChain) {
+                  navigate(pathChain(lang, selectedChain.slug), {
+                    state: { fitChainGyms: true },
+                  });
+                  return;
+                }
+                navigate(pathGyms(lang));
+              }}
+            >
+              <MapIcon size={17} strokeWidth={2.3} aria-hidden="true" />
+              <span>{t("browseOnMap")}</span>
+            </button>
           </div>
           {showingGyms && selectedChain ? (
             <p className="chain-popup-sub">
@@ -283,9 +334,21 @@ function ChainPopup() {
           {!showingGyms
             ? chainList.map((chain, i) => {
                 const gymN = chain.gymCount ?? chainStats[chain.id]?.gyms ?? 0;
-                const cityN = chainStats[chain.id]?.cities ?? 0;
+                const cityN =
+                  chain.cityCount ?? chainStats[chain.id]?.cities ?? 0;
+                const stats = chainStats[chain.id];
                 const offer = resolveGymOffer(null, chain);
-                const priceFact = formatPriceCard(offer.priceFrom, lang);
+                const priceMin =
+                  stats?.priceMin ??
+                  (offer.priceFrom != null && offer.priceFrom > 0
+                    ? offer.priceFrom
+                    : null);
+                const priceMax =
+                  stats?.priceMax ??
+                  (offer.priceFrom != null && offer.priceFrom > 0
+                    ? offer.priceFrom
+                    : null);
+                const priceFact = formatPriceRange(priceMin, priceMax, lang);
                 const hoursFact =
                   offer.is247 === true
                     ? "24/7"

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { LngLatBounds, Map, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
@@ -192,6 +192,7 @@ function DetailAccordion(props: {
 
 function GymDetailPage() {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const { lang, t } = useLang();
   const {
     label: locationLabel,
@@ -547,9 +548,13 @@ function GymDetailPage() {
       <main className="gym-detail">
         <h1>{t("gymNotFound")}</h1>
         <p className="gym-detail-muted">{t("gymNotFoundHint")}</p>
-        <Link className="gym-detail-back" to={pathGyms(lang)}>
+        <button
+          type="button"
+          className="gym-detail-back"
+          onClick={goBackToBrowse}
+        >
           {t("backToBrowse")}
-        </Link>
+        </button>
       </main>
     );
   }
@@ -609,13 +614,14 @@ function GymDetailPage() {
     <main className="gym-detail load-reveal">
       <div className="gym-detail-shell">
         <div className="gym-detail-top-mobile">
-          <Link
+          <button
+            type="button"
             className="gym-detail-back gym-detail-back-mobile"
-            to={pathGyms(lang)}
+            onClick={goBackToBrowse}
           >
             <ArrowLeft size={18} strokeWidth={2.4} aria-hidden="true" />
             {t("backToBrowse")}
-          </Link>
+          </button>
           <button
             type="button"
             className="gym-detail-top-address"
@@ -629,10 +635,14 @@ function GymDetailPage() {
         <div className="gym-detail-layout">
           <div className="gym-detail-content">
             <div className="gym-detail-left-sticky">
-              <Link className="gym-detail-back" to={pathGyms(lang)}>
+              <button
+                type="button"
+                className="gym-detail-back"
+                onClick={goBackToBrowse}
+              >
                 <ArrowLeft size={18} strokeWidth={2.4} aria-hidden="true" />
                 {t("backToBrowse")}
-              </Link>
+              </button>
             </div>
 
             <div className="gym-detail-brand-row">

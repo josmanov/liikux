@@ -60,10 +60,14 @@
   min-height: 0;
   line-height: 1.2;
   box-sizing: border-box;
+  border: 0;
+  background: transparent;
   color: var(--color-text);
   text-decoration: none;
+  font: inherit;
   font-size: 15px;
   font-weight: 600;
+  cursor: pointer;
   position: relative;
   z-index: 1;
 }

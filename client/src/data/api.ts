@@ -9,6 +9,10 @@ type CacheEntry<T> = {
 
 let gymsCache: CacheEntry<Gym[]> | null = null;
 let chainsCache: CacheEntry<Chain[]> | null = null;
+
+export function clearChainsCache() {
+  chainsCache = null;
+}
 let statsCache: CacheEntry<HomeStats> | null = null;
 
 export type HomeStats = {
@@ -39,7 +43,7 @@ export function fetchGyms(): Promise<Gym[]> {
 export function fetchChains(): Promise<Chain[]> {
   if (chainsCache && stillFresh(chainsCache.at)) return chainsCache.promise;
 
-  const promise = fetch(`${API}/api/chains`)
+  const promise = fetch(`${API}/api/chains`, { cache: "no-store" })
     .then((r) => r.json())
     .then((data) => (Array.isArray(data) ? (data as Chain[]) : []))
     .catch(() => {

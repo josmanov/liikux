@@ -42,6 +42,27 @@ export function formatPriceCard(
   return lang === "en" ? `From ${text} €/mo` : `Alk. ${text} €/kk`;
 }
 
+function priceNumberText(eur: number) {
+  return Number.isInteger(eur)
+    ? String(eur)
+    : String(Number(eur.toFixed(1))).replace(".", ",");
+}
+
+export function formatPriceRange(
+  min: number | null | undefined,
+  max: number | null | undefined,
+  lang: Lang = "fi",
+) {
+  if (min == null || !Number.isFinite(min)) return null;
+  const lo = min;
+  const hi = max != null && Number.isFinite(max) ? max : min;
+  const unit = lang === "en" ? "€/mo" : "€/kk";
+  if (Math.abs(hi - lo) < 0.05) {
+    return `${priceNumberText(lo)} ${unit}`;
+  }
+  return `${priceNumberText(lo)} – ${priceNumberText(hi)} ${unit}`;
+}
+
 export function formatGymStreetLine(gym: {
   address?: string | null;
   city?: string | null;

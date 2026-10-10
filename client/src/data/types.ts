@@ -25,6 +25,7 @@ export type Chain = {
   sourceUrl?: string | null;
   checkedAt?: string | null;
   gymCount?: number;
+  cityCount?: number;
 };
 
 export type ChainSummary = Pick<

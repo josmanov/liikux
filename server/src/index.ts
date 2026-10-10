@@ -26,21 +26,31 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.get("/api/chains", async (_req, res) => {
-  const { data, hit } = await cached("chains-gymcount-v1", LIST_CACHE_MS, async () => {
+  const { data, hit } = await cached("chains-gymcount-v2", LIST_CACHE_MS, async () => {
     const chainRows = await db.select().from(chains);
     const countRows = await db
       .select({
         chainId: gyms.chainId,
         n: sql<number>`count(*)::int`,
+        cities: sql<number>`count(distinct nullif(lower(trim(${gyms.city})), ''))::int`,
       })
       .from(gyms)
       .where(eq(gyms.listed, true))
       .groupBy(gyms.chainId);
-    const byId = new Map(countRows.map((r) => [r.chainId, Number(r.n) || 0]));
-    return chainRows.map((c) => ({
-      ...c,
-      gymCount: byId.get(c.id) ?? 0,
-    }));
+    const byId = new Map(
+      countRows.map((r) => [
+        r.chainId,
+        { gyms: Number(r.n) || 0, cities: Number(r.cities) || 0 },
+      ]),
+    );
+    return chainRows.map((c) => {
+      const stats = byId.get(c.id);
+      return {
+        ...c,
+        gymCount: stats?.gyms ?? 0,
+        cityCount: stats?.cities ?? 0,
+      };
+    });
   });
   res.setHeader("Cache-Control", "public, max-age=120");
   res.setHeader("X-Cache", hit ? "HIT" : "MISS");
