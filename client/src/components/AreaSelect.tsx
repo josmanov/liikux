@@ -12,7 +12,11 @@ import LoadSpin from "./LoadSpin";
 
 const cities = ["Helsinki", "Espoo", "Vantaa", "Tampere", "Turku", "Oulu"];
 
-function AreaSelect() {
+function AreaSelect({
+  variant = "default",
+}: {
+  variant?: "default" | "combo";
+}) {
   const { lang, t } = useLang();
   const navigate = useNavigate();
   const routeLocation = useLocation();
@@ -27,6 +31,9 @@ function AreaSelect() {
     lat,
     lng,
   });
+  const shortLabel = label.includes(",")
+    ? label.split(",")[0].trim()
+    : label;
 
   useEffect(() => {
     fetchGyms().then((gyms) => {
@@ -86,16 +93,26 @@ function AreaSelect() {
   const showSuggestions = draft.trim().length >= 3;
 
   return (
-    <div ref={rootRef} className="area-select" onClick={(e) => e.stopPropagation()}>
+    <div
+      ref={rootRef}
+      className={
+        variant === "combo" ? "area-select is-combo" : "area-select"
+      }
+      onClick={(e) => e.stopPropagation()}
+    >
       <button
         type="button"
-        className="area-select-btn"
+        className={
+          variant === "combo" ? "area-select-btn is-combo" : "area-select-btn"
+        }
         aria-expanded={open}
         aria-haspopup="dialog"
         onClick={() => setOpen((v) => !v)}
       >
         <MapPin className="area-select-pin" size={16} strokeWidth={2.2} />
-        <span className="area-select-label">{label}</span>
+        <span className="area-select-label">
+          {variant === "combo" ? shortLabel : label}
+        </span>
         <ChevronDown className="area-select-chevron" size={16} strokeWidth={2.2} />
       </button>
 

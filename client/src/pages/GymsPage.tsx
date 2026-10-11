@@ -73,6 +73,7 @@ import {
   regionFromName,
   regionFromSlug,
 } from "../data/regionSlug";
+import AreaSelect from "../components/AreaSelect";
 import UxSwitch from "../components/UxSwitch";
 import LoadSpin from "../components/LoadSpin";
 
@@ -558,7 +559,12 @@ function filterChainVisual(id: string, list: Chain[]) {
 const PAGE_SIZE_START = 8;
 const PAGE_SIZE_MOBILE = 18;
 const BROWSE_MOBILE_MQ = "(max-width: 900px)";
-const BROWSE_SEARCH_PLACEHOLDER = "Fressi...  ·  Helsinki...  ·  Kamppi...";
+const BROWSE_SEARCH_QUICK = [
+  "Fressi",
+  "Elixia",
+  "EasyFit",
+  "Fitness24Seven",
+] as const;
 
 function pageNums(current: number, count: number): Array<number | "gap"> {
   if (count <= 6) {
@@ -1316,17 +1322,19 @@ function GymsPage() {
 
   const inViewGyms = useMemo(() => {
     if (regionPickMode) return [];
-    const inBounds = !mapBounds
-      ? visibleGyms
-      : visibleGyms.filter((g) => {
-          if (g.lat == null || g.lng == null) return false;
-          return (
-            g.lng >= mapBounds.west &&
-            g.lng <= mapBounds.east &&
-            g.lat >= mapBounds.south &&
-            g.lat <= mapBounds.north
-          );
-        });
+    const listIgnoresMapBounds = mobileList && !mobileMapOpen;
+    const inBounds =
+      listIgnoresMapBounds || !mapBounds
+        ? visibleGyms
+        : visibleGyms.filter((g) => {
+            if (g.lat == null || g.lng == null) return false;
+            return (
+              g.lng >= mapBounds.west &&
+              g.lng <= mapBounds.east &&
+              g.lat >= mapBounds.south &&
+              g.lat <= mapBounds.north
+            );
+          });
     if (!selectedId || inBounds.some((g) => g.id === selectedId)) {
       return inBounds;
     }
@@ -1338,7 +1346,14 @@ function GymsPage() {
     return [...inBounds, picked].sort(
       (a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0),
     );
-  }, [visibleGyms, mapBounds, regionPickMode, selectedId]);
+  }, [
+    visibleGyms,
+    mapBounds,
+    regionPickMode,
+    selectedId,
+    mobileList,
+    mobileMapOpen,
+  ]);
 
   inViewGymsRef.current = inViewGyms;
 
@@ -2626,21 +2641,25 @@ function GymsPage() {
         ref={listChromeRef}
         onClick={(e) => e.stopPropagation()}
       >
-            <div className="browse-search">
-              <svg
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-                className="browse-search-icon"
-              >
-                <path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
-              </svg>
-              <input
-                className="browse-search-input"
-                type="search"
-                placeholder={BROWSE_SEARCH_PLACEHOLDER}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
+            <div className="browse-combo">
+              <AreaSelect variant="combo" />
+              <span className="browse-combo-sep" aria-hidden="true" />
+              <div className="browse-search">
+                <svg
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  className="browse-search-icon"
+                >
+                  <path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
+                </svg>
+                <input
+                  className="browse-search-input"
+                  type="search"
+                  placeholder={t("searchGymPlaceholder")}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </div>
             </div>
             <span className="browse-toolbar-sep" aria-hidden="true" />
             <div className="browse-filter">
@@ -2877,6 +2896,27 @@ function GymsPage() {
                 {t("clearFiltersBtn")}
               </button>
             </div>
+      </div>
+      <div className="browse-search-suggest">
+        <div className="browse-search-suggest-chips">
+          {BROWSE_SEARCH_QUICK.map((item) => (
+            <button
+              key={item}
+              type="button"
+              className={
+                query.trim().toLowerCase() === item.toLowerCase()
+                  ? "browse-search-suggest-chip is-on"
+                  : "browse-search-suggest-chip"
+              }
+              onClick={() => {
+                setQuery(item);
+                setPage(1);
+              }}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="browse-body">
         <section className="browse-list-frame">
