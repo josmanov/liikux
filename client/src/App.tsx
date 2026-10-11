@@ -4,8 +4,13 @@ import AppLayout from "./components/AppLayout";
 import HomePage from "./pages/HomePage";
 import LegalPage from "./pages/LegalPage";
 import ComingSoonPage from "./pages/ComingSoonPage";
+import MaintenancePage from "./pages/MaintenancePage";
 import NotFoundPage from "./pages/NotFoundPage";
-import { getReleaseAtMs, shouldShowComingSoon } from "./releaseGate";
+import {
+  getReleaseAtMs,
+  shouldShowComingSoon,
+  shouldShowMaintenance,
+} from "./releaseGate";
 
 const GymsPage = lazy(() => import("./pages/GymsPage"));
 const GymDetailPage = lazy(() => import("./pages/GymDetailPage"));
@@ -16,6 +21,7 @@ function RouteFallback() {
 }
 
 function App() {
+  const [maintenance] = useState(() => shouldShowMaintenance());
   const [locked] = useState(() => shouldShowComingSoon());
   const releaseAt = getReleaseAtMs();
   const unlocking = useRef(false);
@@ -25,6 +31,10 @@ function App() {
     unlocking.current = true;
     window.location.reload();
   }, []);
+
+  if (maintenance) {
+    return <MaintenancePage />;
+  }
 
   if (locked && releaseAt != null) {
     return <ComingSoonPage releaseAt={releaseAt} onUnlock={unlock} />;
