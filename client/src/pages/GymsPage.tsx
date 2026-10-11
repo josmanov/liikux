@@ -556,8 +556,7 @@ function filterChainVisual(id: string, list: Chain[]) {
 }
 
 const PAGE_SIZE_START = 8;
-const PAGE_SIZE_MOBILE_MIN = 3;
-const PAGE_SIZE_MOBILE_MAX = 10;
+const PAGE_SIZE_MOBILE = 5;
 const BROWSE_MOBILE_MQ = "(max-width: 900px)";
 
 function pageNums(current: number, count: number): Array<number | "gap"> {
@@ -772,6 +771,7 @@ function GymsPage() {
       typeof window !== "undefined" &&
       window.matchMedia(BROWSE_MOBILE_MQ).matches,
   );
+  const [mobileMapOpen, setMobileMapOpen] = useState(false);
   const pageSizeRef = useRef(PAGE_SIZE_START);
   const mapInstanceRef = useRef<Map | null>(null);
   const markersRef = useRef(new globalThis.Map<string, Marker>());
@@ -842,11 +842,12 @@ function GymsPage() {
         box.style.removeProperty("--browse-row-count");
         setMobileList(true);
         setPageSize((cur) =>
-          cur === PAGE_SIZE_MOBILE_MAX ? cur : PAGE_SIZE_MOBILE_MAX,
+          cur === PAGE_SIZE_MOBILE ? cur : PAGE_SIZE_MOBILE,
         );
         return;
       }
       setMobileList(false);
+      setMobileMapOpen(false);
       const raw = getComputedStyle(list).getPropertyValue("--row-min").trim();
       const rowMin = Number.parseFloat(raw) || 96;
       const rows = Math.max(4, Math.floor(box.clientHeight / rowMin));
@@ -1359,7 +1360,7 @@ function GymsPage() {
     mapSelectPending &&
     !!selectedId &&
     !pageGyms.some((g) => g.id === selectedId);
-  const listFillTarget = mobileList ? PAGE_SIZE_MOBILE_MIN : pageSize;
+  const listFillTarget = mobileList ? PAGE_SIZE_MOBILE : pageSize;
   const showMissing =
     !listLoading &&
     !pageJumpLoading &&
@@ -2557,6 +2558,16 @@ function GymsPage() {
 
   const browseReady = dataReady && mapReady;
 
+  useEffect(() => {
+    if (!mobileMapOpen) return;
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    const id = window.requestAnimationFrame(() => {
+      map.resize();
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [mobileMapOpen]);
+
   function focusGymFromList(gym: Gym) {
     const map = mapInstanceRef.current;
     if (!map || gym.lat == null || gym.lng == null) return;
@@ -2605,7 +2616,8 @@ function GymsPage() {
       className={
         "browse" +
         (browseReady ? " load-reveal" : "") +
-        (selectedId ? " is-pin-selected" : "")
+        (selectedId ? " is-pin-selected" : "") +
+        (mobileMapOpen ? " is-mobile-map" : "")
       }
     >
       <div
@@ -3231,6 +3243,14 @@ function GymsPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="browse-map-chips">
+                <button
+                  type="button"
+                  className="browse-map-chip browse-map-back-list browse-glass"
+                  aria-label={t("close")}
+                  onClick={() => setMobileMapOpen(false)}
+                >
+                  <X size={18} strokeWidth={2.3} />
+                </button>
                 <button
                   type="button"
                   className="browse-map-chip browse-glass"
@@ -3922,6 +3942,17 @@ function GymsPage() {
             document.body,
           )
         : null}
+
+      {mobileList && !mobileMapOpen ? (
+        <button
+          type="button"
+          className="browse-map-open-btn"
+          onClick={() => setMobileMapOpen(true)}
+        >
+          <MapIcon size={18} strokeWidth={2.3} />
+          {t("map")}
+        </button>
+      ) : null}
 
     </main>
     </>
