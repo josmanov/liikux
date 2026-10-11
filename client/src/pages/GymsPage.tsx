@@ -558,11 +558,7 @@ function filterChainVisual(id: string, list: Chain[]) {
 const PAGE_SIZE_START = 8;
 const PAGE_SIZE_MOBILE = 18;
 const BROWSE_MOBILE_MQ = "(max-width: 900px)";
-const BROWSE_SEARCH_PLACEHOLDERS = [
-  "Fressi...",
-  "Helsinki...",
-  "Kamppi...",
-] as const;
+const BROWSE_SEARCH_PLACEHOLDER = "Fressi...  ·  Helsinki...  ·  Kamppi...";
 
 function pageNums(current: number, count: number): Array<number | "gap"> {
   if (count <= 6) {
@@ -723,7 +719,6 @@ function GymsPage() {
     readFavoriteSlugs(),
   );
   const [query, setQuery] = useState(browseStart.q);
-  const [searchPlaceholderIndex, setSearchPlaceholderIndex] = useState(0);
   const [sortId, setSortId] = useState(browseStart.sort);
   const [page, setPage] = useState(browseStart.page);
   const [openFilter, setOpenFilter] = useState<FilterKey | null>(null);
@@ -833,15 +828,6 @@ function GymsPage() {
     return () => {
       document.documentElement.classList.remove("browse-no-scrollbar");
     };
-  }, []);
-
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      setSearchPlaceholderIndex(
-        (i) => (i + 1) % BROWSE_SEARCH_PLACEHOLDERS.length,
-      );
-    }, 2800);
-    return () => window.clearInterval(id);
   }, []);
 
   useEffect(() => {
@@ -2651,7 +2637,7 @@ function GymsPage() {
               <input
                 className="browse-search-input"
                 type="search"
-                placeholder={BROWSE_SEARCH_PLACEHOLDERS[searchPlaceholderIndex]}
+                placeholder={BROWSE_SEARCH_PLACEHOLDER}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
