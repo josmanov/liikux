@@ -12,6 +12,8 @@ import { createPortal } from "react-dom";
 import { flushSync } from "react-dom";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
+  ArrowDown,
+  ArrowUp,
   ArrowUpDown,
   ChevronDown,
   ChevronLeft,
@@ -19,6 +21,7 @@ import {
   Euro,
   Heart,
   Link2,
+  List,
   LocateFixed,
   Map as MapIcon,
   MapPin,
@@ -673,11 +676,9 @@ function GymsPage() {
     path: pathGymsBrowse(lang, routeRegionSlug || null, routeCitySlug || null),
   });
   const sortOptions = [
-    { id: "nearest", label: t("sortNearest") },
-    { id: "price-asc", label: t("sortCheap") },
-    { id: "price-desc", label: t("sortExpensive") },
-    { id: "name-asc", label: t("sortNameAsc") },
-    { id: "name-desc", label: t("sortNameDesc") },
+    { id: "nearest", label: t("sortNearest"), icon: "map" as const },
+    { id: "price-asc", label: t("sortCheap"), icon: "down" as const },
+    { id: "price-desc", label: t("sortExpensive"), icon: "up" as const },
   ];
   const distancePresets = distancePresetMeta.map((opt) => ({
     ...opt,
@@ -779,6 +780,7 @@ function GymsPage() {
       window.matchMedia(BROWSE_MOBILE_MQ).matches,
   );
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
+  const [listAtEnd, setListAtEnd] = useState(false);
   const pageSizeRef = useRef(PAGE_SIZE_START);
   const mapInstanceRef = useRef<Map | null>(null);
   const markersRef = useRef(new globalThis.Map<string, Marker>());
@@ -975,6 +977,10 @@ function GymsPage() {
 
   const sortLabel =
     sortOptions.find((o) => o.id === sortId)?.label ?? t("sortNearest");
+  useEffect(() => {
+    if (sortOptions.some((o) => o.id === sortId)) return;
+    setSortId("nearest");
+  }, [sortId, sortOptions]);
   useEffect(() => {
     if (visibleChainFilterIds.length === 0) return;
     setSelectedChains((cur) => {
@@ -1413,6 +1419,39 @@ function GymsPage() {
     const rows = listScrollRef.current?.querySelector<HTMLElement>(".browse-rows");
     if (rows) rows.scrollTop = 0;
   }, [safePage, mobileList, listRevealKey]);
+
+  useEffect(() => {
+    if (!mobileList || mobileMapOpen) {
+      setListAtEnd(true);
+      return;
+    }
+    const box = listScrollRef.current;
+    if (!box) return;
+    function check() {
+      const el = listScrollRef.current;
+      if (!el) return;
+      const canScroll = el.scrollHeight > el.clientHeight + 2;
+      const atEnd =
+        !canScroll ||
+        el.scrollTop + el.clientHeight >= el.scrollHeight - 3;
+      setListAtEnd(atEnd);
+    }
+    check();
+    box.addEventListener("scroll", check, { passive: true });
+    const ro = new ResizeObserver(check);
+    ro.observe(box);
+    return () => {
+      box.removeEventListener("scroll", check);
+      ro.disconnect();
+    };
+  }, [
+    mobileList,
+    mobileMapOpen,
+    pageGyms.length,
+    safePage,
+    listRevealKey,
+    showMissing,
+  ]);
 
   useLayoutEffect(() => {
     if (skipBoundsResetRef.current) {
@@ -2575,24 +2614,31 @@ function GymsPage() {
   const browseReady = dataReady && mapReady;
 
   useEffect(() => {
-    if (!mobileMapOpen) return;
+    if (!mobileList) return;
     const map = mapInstanceRef.current;
     if (!map) return;
     const id = window.requestAnimationFrame(() => {
       map.resize();
     });
     return () => window.cancelAnimationFrame(id);
-  }, [mobileMapOpen]);
+  }, [mobileList, mobileMapOpen]);
 
   function focusGymFromList(gym: Gym) {
-    const map = mapInstanceRef.current;
-    if (!map || gym.lat == null || gym.lng == null) return;
+    if (gym.lat == null || gym.lng == null) return;
     selectFromMapRef.current = false;
     skipBoundsResetRef.current = true;
     freezeListBoundsRef.current = true;
-    setSelectedId(gym.id);
+    flushSync(() => {
+      setSelectedId(gym.id);
+    });
+    const map = mapInstanceRef.current;
+    if (!map) return;
     const here = originRef.current;
-    frameOriginAndGym(map, here.lng, here.lat, gym.lng, gym.lat);
+    const lat = gym.lat;
+    const lng = gym.lng;
+    window.requestAnimationFrame(() => {
+      frameOriginAndGym(map, here.lng, here.lat, lng, lat);
+    });
   }
 
   function focusRegion(nimi: string) {
@@ -2919,7 +2965,11 @@ function GymsPage() {
         </div>
       </div>
       <div className="browse-body">
-        <section className="browse-list-frame">
+        <section
+          className={
+            listAtEnd ? "browse-list-frame is-list-end" : "browse-list-frame"
+          }
+        >
           <header className="browse-list-head">
             <div className="browse-list-head-side">
               <h1 className="browse-list-title-desk">{pageTitle}</h1>
@@ -2992,7 +3042,28 @@ function GymsPage() {
                           setOpenFilter(null);
                         }}
                       >
-                        {opt.label}
+                        {opt.icon === "map" ? (
+                          <MapPin
+                            className="browse-sort-opt-icon"
+                            size={16}
+                            strokeWidth={2.2}
+                          />
+                        ) : null}
+                        {opt.icon === "down" ? (
+                          <ArrowDown
+                            className="browse-sort-opt-icon"
+                            size={16}
+                            strokeWidth={2.2}
+                          />
+                        ) : null}
+                        {opt.icon === "up" ? (
+                          <ArrowUp
+                            className="browse-sort-opt-icon"
+                            size={16}
+                            strokeWidth={2.2}
+                          />
+                        ) : null}
+                        <span>{opt.label}</span>
                       </button>
                     </li>
                   ))}
@@ -3036,7 +3107,9 @@ function GymsPage() {
                       .replace("€/mo", " €/mo")
                   : null;
                 const priceCard = formatPriceCard(offer.priceFrom, lang);
-                const isBrandChain = Boolean(chain && chain.slug !== "muut");
+                const isBrandChain = Boolean(
+                  chain && isListedBrandChain(chain),
+                );
                 const siteName = isBrandChain
                   ? cleanGymDisplayName(gym.name, {
                       chainName: chain?.name,
@@ -3097,20 +3170,12 @@ function GymsPage() {
                           />
                         </span>
                         <div className="browse-row-text">
-                          {isBrandChain ? (
-                            <>
-                              <span className="browse-row-chain">
-                                {chain!.name}
-                              </span>
-                              <strong className="browse-row-site">
-                                {siteName}
-                              </strong>
-                            </>
-                          ) : (
-                            <strong className="browse-row-site">
-                              {siteName}
-                            </strong>
-                          )}
+                          <span className="browse-row-chain">
+                            {isBrandChain ? chain!.name : t("otherLabel")}
+                          </span>
+                          <strong className="browse-row-site">
+                            {siteName}
+                          </strong>
                           <span className="browse-row-address">
                             {street}
                           </span>
@@ -3157,7 +3222,9 @@ function GymsPage() {
                           <button
                             type="button"
                             className={
-                              isFav ? "browse-row-fav is-on" : "browse-row-fav"
+                              (isFav
+                                ? "browse-row-fav is-on"
+                                : "browse-row-fav") + " browse-row-fav-solo"
                             }
                             aria-label={
                               isFav ? t("removeFavorite") : t("addFavorite")
@@ -3169,45 +3236,67 @@ function GymsPage() {
                               setFavoriteSlugs(toggleFavoriteSlug(gym.slug));
                             }}
                           >
-                            <Heart size={18} strokeWidth={2.2} />
+                            <Heart size={20} strokeWidth={2.2} />
                           </button>
-                          {gym.lat != null && gym.lng != null ? (
-                            <a
-                              className="browse-map-preview-maps"
-                              href={
-                                "https://www.google.com/maps/dir/?api=1&origin=" +
-                                origin.lat +
-                                "," +
-                                origin.lng +
-                                "&destination=" +
-                                gym.lat +
-                                "," +
-                                gym.lng
+                          <div className="browse-row-more">
+                            <button
+                              type="button"
+                              className={
+                                (isFav
+                                  ? "browse-row-fav is-on"
+                                  : "browse-row-fav") + " browse-row-fav-more"
                               }
-                              target="_blank"
-                              rel="noreferrer"
-                              aria-label={t("mapsRoute")}
+                              aria-label={
+                                isFav ? t("removeFavorite") : t("addFavorite")
+                              }
+                              aria-pressed={isFav}
+                              tabIndex={-1}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setFavoriteSlugs(toggleFavoriteSlug(gym.slug));
+                              }}
+                            >
+                              <Heart size={20} strokeWidth={2.2} />
+                            </button>
+                            {gym.lat != null && gym.lng != null ? (
+                              <a
+                                className="browse-map-preview-maps"
+                                href={
+                                  "https://www.google.com/maps/dir/?api=1&origin=" +
+                                  origin.lat +
+                                  "," +
+                                  origin.lng +
+                                  "&destination=" +
+                                  gym.lat +
+                                  "," +
+                                  gym.lng
+                                }
+                                target="_blank"
+                                rel="noreferrer"
+                                aria-label={t("mapsRoute")}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <img
+                                  className="is-line"
+                                  src="/pins/google-maps-outline.png"
+                                  alt=""
+                                />
+                                <img
+                                  className="is-fill"
+                                  src="/pins/google-maps-pin.png"
+                                  alt=""
+                                />
+                              </a>
+                            ) : null}
+                            <Link
+                              className="browse-map-preview-open"
+                              to={pathGym(lang, gym.slug)}
                               onClick={(e) => e.stopPropagation()}
                             >
-                              <img
-                                className="is-line"
-                                src="/pins/google-maps-outline.png"
-                                alt=""
-                              />
-                              <img
-                                className="is-fill"
-                                src="/pins/google-maps-pin.png"
-                                alt=""
-                              />
-                            </a>
-                          ) : null}
-                          <Link
-                            className="browse-map-preview-open"
-                            to={pathGym(lang, gym.slug)}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {t("open")}
-                          </Link>
+                              {t("open")}
+                            </Link>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -3335,14 +3424,6 @@ function GymsPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="browse-map-chips">
-                <button
-                  type="button"
-                  className="browse-map-chip browse-map-back-list browse-glass"
-                  aria-label={t("close")}
-                  onClick={() => setMobileMapOpen(false)}
-                >
-                  <X size={18} strokeWidth={2.3} />
-                </button>
                 <button
                   type="button"
                   className="browse-map-chip browse-glass"
@@ -4035,14 +4116,23 @@ function GymsPage() {
           )
         : null}
 
-      {mobileList && !mobileMapOpen ? (
+      {mobileList ? (
         <button
           type="button"
           className="browse-map-open-btn"
-          onClick={() => setMobileMapOpen(true)}
+          onClick={() => setMobileMapOpen((v) => !v)}
         >
-          <MapIcon size={18} strokeWidth={2.3} />
-          {t("map")}
+          {mobileMapOpen ? (
+            <>
+              <List size={18} strokeWidth={2.3} />
+              {t("list")}
+            </>
+          ) : (
+            <>
+              <MapIcon size={18} strokeWidth={2.3} />
+              {t("map")}
+            </>
+          )}
         </button>
       ) : null}
 
