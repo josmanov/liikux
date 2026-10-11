@@ -4,7 +4,10 @@ type PageMeta = {
   title: string;
   description: string;
   path?: string;
+  image?: string;
 };
+
+const DEFAULT_OG = "https://liikux.fi/og-liikux.png?v=2";
 
 function ensureMeta(name: string, attr: "name" | "property" = "name") {
   let el = document.head.querySelector(`meta[${attr}="${name}"]`);
@@ -26,7 +29,7 @@ function ensureLink(rel: string) {
   return el as HTMLLinkElement;
 }
 
-export function usePageMeta({ title, description, path }: PageMeta) {
+export function usePageMeta({ title, description, path, image }: PageMeta) {
   useEffect(() => {
     document.title = title;
     ensureMeta("description").setAttribute("content", description);
@@ -35,10 +38,19 @@ export function usePageMeta({ title, description, path }: PageMeta) {
       "content",
       description,
     );
-    const canonical = ensureLink("canonical");
+    ensureMeta("og:type", "property").setAttribute("content", "website");
+    ensureMeta("og:site_name", "property").setAttribute("content", "Liikux");
     const href = path
       ? `https://liikux.fi${path}`
       : `https://liikux.fi${window.location.pathname}`;
+    ensureMeta("og:url", "property").setAttribute("content", href);
+    const ogImage = image || DEFAULT_OG;
+    ensureMeta("og:image", "property").setAttribute("content", ogImage);
+    ensureMeta("twitter:card").setAttribute("content", "summary_large_image");
+    ensureMeta("twitter:title").setAttribute("content", title);
+    ensureMeta("twitter:description").setAttribute("content", description);
+    ensureMeta("twitter:image").setAttribute("content", ogImage);
+    const canonical = ensureLink("canonical");
     canonical.href = href;
-  }, [title, description, path]);
+  }, [title, description, path, image]);
 }
