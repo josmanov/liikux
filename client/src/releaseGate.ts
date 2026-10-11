@@ -1,4 +1,5 @@
 const FORCE_KEY = "liikux-force-app";
+const MAINTENANCE_BYPASS_KEY = "liikux-maintenance-bypass";
 
 function parseReleaseAt(raw: string | undefined): number | null {
   if (!raw?.trim()) return null;
@@ -28,6 +29,34 @@ function envFlagOn(raw: string | undefined): boolean {
   return v === "1" || v === "true" || v === "yes" || v === "on";
 }
 
+function maintenanceBypassOk(): boolean {
+  const secret = String(
+    import.meta.env.VITE_MAINTENANCE_BYPASS ?? "",
+  ).trim();
+  if (!secret) return false;
+
+  if (typeof window !== "undefined") {
+    const q = new URLSearchParams(window.location.search);
+    const app = q.get("app") ?? "";
+    if (app === secret) {
+      try {
+        localStorage.setItem(MAINTENANCE_BYPASS_KEY, secret);
+      } catch {
+        /* ignore */
+      }
+      return true;
+    }
+  }
+
+  try {
+    if (localStorage.getItem(MAINTENANCE_BYPASS_KEY) === secret) return true;
+  } catch {
+    /* ignore */
+  }
+
+  return false;
+}
+
 export function getReleaseAtMs(): number | null {
   return parseReleaseAt(import.meta.env.VITE_RELEASE_AT as string | undefined);
 }
@@ -36,7 +65,7 @@ export function shouldShowMaintenance(): boolean {
   if (!envFlagOn(import.meta.env.VITE_MAINTENANCE as string | undefined)) {
     return false;
   }
-  if (forceAppOpen()) return false;
+  if (maintenanceBypassOk()) return false;
   return true;
 }
 
