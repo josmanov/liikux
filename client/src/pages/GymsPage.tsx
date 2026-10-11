@@ -556,8 +556,13 @@ function filterChainVisual(id: string, list: Chain[]) {
 }
 
 const PAGE_SIZE_START = 8;
-const PAGE_SIZE_MOBILE = 5;
+const PAGE_SIZE_MOBILE = 18;
 const BROWSE_MOBILE_MQ = "(max-width: 900px)";
+const BROWSE_SEARCH_PLACEHOLDERS = [
+  "Fressi...",
+  "Helsinki...",
+  "Kamppi...",
+] as const;
 
 function pageNums(current: number, count: number): Array<number | "gap"> {
   if (count <= 6) {
@@ -718,6 +723,7 @@ function GymsPage() {
     readFavoriteSlugs(),
   );
   const [query, setQuery] = useState(browseStart.q);
+  const [searchPlaceholderIndex, setSearchPlaceholderIndex] = useState(0);
   const [sortId, setSortId] = useState(browseStart.sort);
   const [page, setPage] = useState(browseStart.page);
   const [openFilter, setOpenFilter] = useState<FilterKey | null>(null);
@@ -827,6 +833,15 @@ function GymsPage() {
     return () => {
       document.documentElement.classList.remove("browse-no-scrollbar");
     };
+  }, []);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      setSearchPlaceholderIndex(
+        (i) => (i + 1) % BROWSE_SEARCH_PLACEHOLDERS.length,
+      );
+    }, 2800);
+    return () => window.clearInterval(id);
   }, []);
 
   useEffect(() => {
@@ -2636,7 +2651,7 @@ function GymsPage() {
               <input
                 className="browse-search-input"
                 type="search"
-                placeholder={t("searchNameOrAddress")}
+                placeholder={BROWSE_SEARCH_PLACEHOLDERS[searchPlaceholderIndex]}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
@@ -3186,7 +3201,11 @@ function GymsPage() {
               <div className="browse-list-loading">
                 <LoadSpin />
               </div>
-            ) : regionPickMode ? null : (
+            ) : null}
+            {!mobileList &&
+            !listLoading &&
+            !pageJumpLoading &&
+            !regionPickMode ? (
               <div className="browse-pagebar">
                 <button
                   type="button"
@@ -3229,8 +3248,55 @@ function GymsPage() {
                   <ChevronRight size={16} strokeWidth={2.2} />
                 </button>
               </div>
-            )}
+            ) : null}
           </div>
+          {mobileList &&
+          !listLoading &&
+          !pageJumpLoading &&
+          !regionPickMode ? (
+            <div className="browse-pagebar">
+              <button
+                type="button"
+                className="browse-pager-btn"
+                aria-label={t("previous")}
+                disabled={safePage <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                <ChevronLeft size={16} strokeWidth={2.2} />
+              </button>
+              <div className="browse-pages">
+                {pageNums(safePage, pageCount).map((item, i) =>
+                  item === "gap" ? (
+                    <span className="browse-page-gap" key={`gap-${i}`}>
+                      …
+                    </span>
+                  ) : (
+                    <button
+                      key={item}
+                      type="button"
+                      className={
+                        item === safePage
+                          ? "browse-page-num is-on"
+                          : "browse-page-num"
+                      }
+                      onClick={() => setPage(item)}
+                    >
+                      {item}
+                    </button>
+                  ),
+                )}
+              </div>
+              <button
+                type="button"
+                className="browse-pager-btn"
+                aria-label={t("next")}
+                disabled={safePage >= pageCount}
+                onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+              >
+                <ChevronRight size={16} strokeWidth={2.2} />
+              </button>
+            </div>
+          ) : null}
         </section>
         <section
           className={
