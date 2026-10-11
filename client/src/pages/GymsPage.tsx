@@ -641,26 +641,26 @@ function GymsPage() {
   const routeCityName = routeBrowse.cityName;
   const metaTitle = routeCityName
     ? lang === "fi"
-      ? `Kuntosalit ${routeCityName} | Liikux`
-      : `Gyms in ${routeCityName} | Liikux`
+      ? `Kuntosalit ${routeCityName} – etsi sali lähelläsi | Liikux`
+      : `Gyms in ${routeCityName} – find a gym near you | Liikux`
     : routeRegionName
       ? lang === "fi"
-        ? `Kuntosalit – ${routeRegionName} | Liikux`
-        : `Gyms – ${routeRegionName} | Liikux`
+        ? `Kuntosalit ${routeRegionName} – selaa kartalla ja listalla | Liikux`
+        : `Gyms in ${routeRegionName} – browse map and list | Liikux`
       : lang === "fi"
-        ? "Kuntosalit Suomessa – selaa kartalla ja listalla | Liikux"
-        : "Gyms in Finland – browse map and list | Liikux";
+        ? "Yli 1000 kuntosalia Suomessa – selaa kartalla ja listalla | Liikux"
+        : "Over 1000 gyms in Finland – browse map and list | Liikux";
   const metaDescription = routeCityName
     ? lang === "fi"
-      ? `Kuntosalit ${routeCityName}${routeRegionName ? ` (${routeRegionName})` : ""} – selaa saleja kartalla ja listalla. Vertaa hintoja ja ketjuja Liikuxissa.`
-      : `Gyms in ${routeCityName}${routeRegionName ? ` (${routeRegionName})` : ""} – browse map and list on Liikux.`
+      ? `Löydä kuntosali kaupungissa ${routeCityName}${routeRegionName ? ` (${routeRegionName})` : ""}. Selaa saleja kartalla ja listalla, vertaa hintoja ja ketjuja – Liikux.`
+      : `Find a gym in ${routeCityName}${routeRegionName ? ` (${routeRegionName})` : ""}. Browse map and list, compare prices and chains – Liikux.`
     : routeRegionName
       ? lang === "fi"
         ? `Selaa kuntosaleja alueella ${routeRegionName}. Kartta, lista, hinnat ja ketjut – Liikux.`
         : `Browse gyms in ${routeRegionName}. Map, list, prices and chains – Liikux.`
       : lang === "fi"
-        ? "Selaa kuntosaleja Suomessa kartalla ja listalla. Suodata alueen, ketjun, hinnan ja etäisyyden mukaan."
-        : "Browse gyms in Finland on the map and list. Filter by region, chain, price and distance.";
+        ? "Yli 1000 kuntosalia Suomessa. Selaa saleja kartalla ja listalla, suodata alueen, ketjun, hinnan ja etäisyyden mukaan – Liikux."
+        : "Over 1000 gyms in Finland. Browse map and list, filter by region, chain, price and distance – Liikux.";
   usePageMeta({
     title: metaTitle,
     description: metaDescription,

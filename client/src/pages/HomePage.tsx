@@ -25,6 +25,7 @@ import { type Chain } from "../data/types";
 import { fetchChains, fetchHomeStats } from "../data/api";
 import { useAddressSuggest } from "../data/geocode";
 import { lajiGifUrl } from "../data/lajiGifs";
+import { preloadImages } from "../data/preloadImages";
 import { useInView } from "../hooks/useInView";
 import { useAppLocation } from "../context/LocationContext";
 import { useChainPopup } from "../context/ChainPopupContext";
@@ -213,15 +214,27 @@ function HomePage() {
   const { label, lat, lng, setLocation } = useAppLocation();
   const navigate = useNavigate();
   const { lang, t } = useLang();
+  const cityWordFi =
+    cityCount === 1 ? "kaupungissa" : "kaupungeissa";
+  const homeTitle =
+    lang === "fi"
+      ? gymCount > 0 && cityCount > 0
+        ? `Liikux – ${gymCount} kuntosalia ${cityCount} ${cityWordFi} | etsi sali`
+        : "Liikux – yli 1000 kuntosalia Suomessa | etsi sali lähelläsi"
+      : gymCount > 0 && cityCount > 0
+        ? `Liikux – ${gymCount} gyms in ${cityCount} cities | find a gym`
+        : "Liikux – over 1000 gyms in Finland | find a gym near you";
+  const homeDescription =
+    lang === "fi"
+      ? gymCount > 0 && cityCount > 0
+        ? `${gymCount} kuntosalia ${cityCount} ${cityWordFi}. Löydä sali lähelläsi, selaa ketjuja ja hintoja kartalla sekä listalla – Liikux, Suomen kuntosalihakemisto.`
+        : "Yli 1000 kuntosalia kymmenissä kaupungeissa. Löydä sali lähelläsi, selaa ketjuja ja hintoja kartalla sekä listalla – Liikux, Suomen kuntosalihakemisto."
+      : gymCount > 0 && cityCount > 0
+        ? `${gymCount} gyms in ${cityCount} cities. Find a gym near you, browse chains and prices on the map and list – Liikux.`
+        : "Over 1000 gyms across Finland. Find a gym near you, browse chains and prices on the map and list – Liikux.";
   usePageMeta({
-    title:
-      lang === "fi"
-        ? "Liikux – etsi kuntosali Suomesta"
-        : "Liikux – find a gym in Finland",
-    description:
-      lang === "fi"
-        ? "Löydä kuntosali Suomesta. Selaa kuntosaleja kaupungeittain, vertaa hintoja ja ketjuja – kartta ja lista samassa."
-        : "Find a gym in Finland. Browse gyms by city, compare prices and chains – map and list together.",
+    title: homeTitle,
+    description: homeDescription,
     path: lang === "fi" ? "/" : "/en",
   });
   const [addressDraft, setAddressDraft] = useState("");
@@ -259,16 +272,31 @@ function HomePage() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
-      fetchChains().catch(() => [] as Chain[]),
-      fetchHomeStats().catch(() => ({ gymCount: 0, cityCount: 0 })),
-    ]).then(([chainData, stats]) => {
+    (async () => {
+      const [chainData, stats] = await Promise.all([
+        fetchChains().catch(() => [] as Chain[]),
+        fetchHomeStats().catch(() => ({ gymCount: 0, cityCount: 0 })),
+      ]);
       if (cancelled) return;
       setChains(chainData);
       setGymCount(stats.gymCount);
       setCityCount(stats.cityCount);
+
+      const topImages = chainData
+        .filter((c) => c.slug !== "muut" && (c.gymCount ?? 0) > 0)
+        .slice()
+        .sort((a, b) => {
+          const diff = (b.gymCount ?? 0) - (a.gymCount ?? 0);
+          if (diff !== 0) return diff;
+          return a.name.localeCompare(b.name, "fi");
+        })
+        .slice(0, 8)
+        .map((c) => c.image);
+
+      await preloadImages(topImages);
+      if (cancelled) return;
       setHomeReady(true);
-    });
+    })();
     return () => {
       cancelled = true;
     };
@@ -285,8 +313,16 @@ function HomePage() {
   const suositutKetjut = listedChains.slice(0, 8);
   const chainCount = listedChains.length;
 
+  if (!homeReady) {
+    return (
+      <div className="load-cover">
+        <LoadSpin />
+      </div>
+    );
+  }
+
   return (
-    <main className="shell">
+    <main className="shell load-reveal">
       <section className="hero">
         <HeroIconPattern />
         <div className="hero-top">
@@ -382,26 +418,20 @@ function HomePage() {
               {t("browseGyms")}
               <ArrowRight size={16} strokeWidth={2.4} />
             </Link>
-            {homeReady ? (
-              <p className="hero-stats">
-                {t("heroStats", {
-                  gyms: gymCount,
-                  chains: chainCount,
-                  cities: cityCount,
-                })}
-              </p>
-            ) : (
-              <p className="hero-stats hero-stats-pending" aria-hidden="true">
-                &nbsp;
-              </p>
-            )}
+            <p className="hero-stats">
+              {t("heroStats", {
+                gyms: gymCount,
+                chains: chainCount,
+                cities: cityCount,
+              })}
+            </p>
           </div>
         </div>
 
         <div className="hero-bottom">
           <div
             id="suositut"
-            className={`rail reveal ${railReveal.inView || homeReady ? "is-in" : ""}`}
+            className="rail reveal is-in"
             ref={railReveal.ref}
           >
             <h2 className="rail-title">{t("popularInFinland")}</h2>
@@ -416,52 +446,43 @@ function HomePage() {
               </button>
             ) : null}
             <div className="rail-viewport">
-              <div
-                className={homeReady ? "rail-track list-pop" : "rail-track"}
-              >
-                {homeReady
-                  ? suositutKetjut.map((chain, i) => (
-                      <button
-                        key={chain.id}
-                        type="button"
-                        className="place-card"
-                        style={{
-                          animationDelay: `${Math.min(i, 18) * 28}ms`,
-                        }}
-                        onClick={() => openChain(chain.slug)}
-                      >
-                        <span
-                          className={[
-                            "place-card-media",
-                            chain.logoFit === "contain" ? "is-logo" : "",
-                            chain.logoClass || "",
-                          ]
-                            .filter(Boolean)
-                            .join(" ")}
-                        >
-                          <span
-                            className="place-card-shine"
-                            aria-hidden="true"
-                          />
-                          <img
-                            src={chain.image}
-                            alt=""
-                            width={160}
-                            height={90}
-                            loading="lazy"
-                            decoding="async"
-                          />
-                        </span>
-                        <span className="place-card-name">{chain.name}</span>
-                      </button>
-                    ))
-                  : Array.from({ length: 6 }, (_, i) => (
-                      <div
-                        key={`chain-skel-${i}`}
-                        className="place-card is-skel"
+              <div className="rail-track list-pop">
+                {suositutKetjut.map((chain, i) => (
+                  <button
+                    key={chain.id}
+                    type="button"
+                    className="place-card"
+                    style={{
+                      animationDelay: `${Math.min(i, 18) * 28}ms`,
+                    }}
+                    onClick={() => openChain(chain.slug)}
+                  >
+                    <span
+                      className={[
+                        "place-card-media",
+                        chain.logoFit === "contain" ? "is-logo" : "",
+                        chain.logoClass || "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                    >
+                      <span
+                        className="place-card-shine"
                         aria-hidden="true"
                       />
-                    ))}
+                      <img
+                        src={chain.image}
+                        alt=""
+                        width={160}
+                        height={90}
+                        loading="eager"
+                        decoding="async"
+                        fetchPriority={i < 4 ? "high" : "auto"}
+                      />
+                    </span>
+                    <span className="place-card-name">{chain.name}</span>
+                  </button>
+                ))}
               </div>
             </div>
           </div>
