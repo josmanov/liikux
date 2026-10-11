@@ -45,7 +45,39 @@ function App() {
             }
           />
           <Route
+            path="/fi/kuntosalit/:regionSlug"
+            element={
+              <Suspense fallback={<RouteFallback />}>
+                <GymsPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/fi/kuntosalit/:regionSlug/:citySlug"
+            element={
+              <Suspense fallback={<RouteFallback />}>
+                <GymsPage />
+              </Suspense>
+            }
+          />
+          <Route
             path="/en/gyms"
+            element={
+              <Suspense fallback={<RouteFallback />}>
+                <GymsPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/en/gyms/:regionSlug"
+            element={
+              <Suspense fallback={<RouteFallback />}>
+                <GymsPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/en/gyms/:regionSlug/:citySlug"
             element={
               <Suspense fallback={<RouteFallback />}>
                 <GymsPage />

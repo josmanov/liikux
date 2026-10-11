@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from "react";
 import { fetchReverseLabel } from "../data/geocode";
+import { cityCenterForName } from "../data/citySlug";
 
 type LocationCoords = {
   lat: number;
@@ -31,20 +32,9 @@ const LocationContext = createContext<LocationContextValue | null>(null);
 const STORAGE_KEY = "liikux-location";
 const DEFAULT_LABEL = "Helsinki";
 
-const cityCenters: Record<string, LocationCoords> = {
-  Helsinki: { lat: 60.1699, lng: 24.9384 },
-  Espoo: { lat: 60.2055, lng: 24.6559 },
-  Vantaa: { lat: 60.2934, lng: 25.0378 },
-  Tampere: { lat: 61.4978, lng: 23.761 },
-  Turku: { lat: 60.4518, lng: 22.2666 },
-  Oulu: { lat: 65.0121, lng: 25.4651 },
-};
-
 function coordsForLabel(label: string): LocationCoords | null {
-  const key = Object.keys(cityCenters).find(
-    (city) => city.toLowerCase() === label.trim().toLowerCase(),
-  );
-  return key ? cityCenters[key] : null;
+  const hit = cityCenterForName(label);
+  return hit ? { lat: hit.lat, lng: hit.lng } : null;
 }
 
 function readStoredLocation(): {
@@ -55,10 +45,11 @@ function readStoredLocation(): {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
+      const hel = cityCenterForName("Helsinki")!;
       return {
         label: DEFAULT_LABEL,
-        lat: cityCenters.Helsinki.lat,
-        lng: cityCenters.Helsinki.lng,
+        lat: hel.lat,
+        lng: hel.lng,
       };
     }
     const parsed = JSON.parse(raw) as {
@@ -76,16 +67,18 @@ function readStoredLocation(): {
       return { label, lat, lng };
     }
     const fromCity = coordsForLabel(label);
+    const hel = cityCenterForName("Helsinki")!;
     return {
       label,
-      lat: fromCity?.lat ?? cityCenters.Helsinki.lat,
-      lng: fromCity?.lng ?? cityCenters.Helsinki.lng,
+      lat: fromCity?.lat ?? hel.lat,
+      lng: fromCity?.lng ?? hel.lng,
     };
   } catch {
+    const hel = cityCenterForName("Helsinki")!;
     return {
       label: DEFAULT_LABEL,
-      lat: cityCenters.Helsinki.lat,
-      lng: cityCenters.Helsinki.lng,
+      lat: hel.lat,
+      lng: hel.lng,
     };
   }
 }

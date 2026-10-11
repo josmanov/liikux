@@ -1,5 +1,6 @@
 import "./HomePage.css";
 import { useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -27,7 +28,7 @@ import { lajiGifUrl } from "../data/lajiGifs";
 import { useInView } from "../hooks/useInView";
 import { useAppLocation } from "../context/LocationContext";
 import { useChainPopup } from "../context/ChainPopupContext";
-import { pathGyms } from "../i18n/lang";
+import { pathGyms, pathGymsFromLocation } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import { usePageMeta } from "../seo/usePageMeta";
 
@@ -219,8 +220,8 @@ function HomePage() {
         : "Liikux – find a gym in Finland",
     description:
       lang === "fi"
-        ? "Löydä kuntosali lähelläsi. Selaa saleja, ketjuja ja hintoja Suomessa."
-        : "Find a gym near you. Browse gyms, chains and prices in Finland.",
+        ? "Löydä kuntosali Suomesta. Selaa kuntosaleja kaupungeittain, vertaa hintoja ja ketjuja – kartta ja lista samassa."
+        : "Find a gym in Finland. Browse gyms by city, compare prices and chains – map and list together.",
     path: lang === "fi" ? "/" : "/en",
   });
   const [addressDraft, setAddressDraft] = useState("");
@@ -236,9 +237,14 @@ function HomePage() {
     lat: number;
     lng: number;
   }) {
-    setLocation({ label: item.label, lat: item.lat, lng: item.lng });
+    flushSync(() => {
+      setLocation({ label: item.label, lat: item.lat, lng: item.lng });
+    });
     setSuggestOpen(false);
-    navigate(pathGyms(lang), { state: { focusOrigin: true } });
+    navigate(pathGymsFromLocation(lang, item.label), {
+      replace: true,
+      state: { focusOrigin: true },
+    });
   }
 
   useEffect(() => {
@@ -368,7 +374,11 @@ function HomePage() {
               ) : null}
             </div>
             <p className="hero-or">{t("heroOr")}</p>
-            <Link to={pathGyms(lang)} className="hero-browse">
+            <Link
+              to={pathGymsFromLocation(lang, label)}
+              state={{ focusOrigin: true }}
+              className="hero-browse"
+            >
               {t("browseGyms")}
               <ArrowRight size={16} strokeWidth={2.4} />
             </Link>

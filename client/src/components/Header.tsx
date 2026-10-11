@@ -5,7 +5,8 @@ import AreaSelect from "./AreaSelect";
 import FavoritesPopup from "./FavoritesPopup";
 import HeaderSearch from "./HeaderSearch";
 import { readFavoriteSlugs } from "../data/favorites";
-import { pathGyms, pathHome, switchLangPath } from "../i18n/lang";
+import { useAppLocation } from "../context/LocationContext";
+import { pathGyms, pathGymsFromLocation, pathHome, switchLangPath } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import { useChainPopup } from "../context/ChainPopupContext";
 import "flag-icons/css/flag-icons.min.css";
@@ -17,13 +18,16 @@ function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { lang, t } = useLang();
   const location = useLocation();
+  const { label: locationLabel } = useAppLocation();
   const { openChains } = useChainPopup();
   const nextLang = lang === "fi" ? "en" : "fi";
   const homePath = pathHome(lang);
-  const gymsPath = pathGyms(lang);
+  const gymsPath = pathGymsFromLocation(lang, locationLabel);
+  const gymsBase = pathGyms(lang);
   const homeOn = location.pathname === homePath;
   const gymsOn =
-    location.pathname === gymsPath ||
+    location.pathname === gymsBase ||
+    location.pathname.startsWith(gymsBase + "/") ||
     location.pathname.startsWith(lang === "en" ? "/en/chain/" : "/fi/ketju/");
 
   function stayIfSame(e: MouseEvent, path: string) {

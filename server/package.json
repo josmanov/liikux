@@ -14,6 +14,7 @@
     "db:check-www": "tsx src/check-www.ts",
     "db:seed-chain-info": "tsx src/seed-chain-info.ts",
     "db:sync-gym-audience": "tsx src/sync-gym-audience.ts",
+    "db:sync-women-gyms": "tsx src/sync-women-gyms.ts",
     "db:scrape-gym-prices": "tsx src/scrape-gym-prices.ts",
     "db:clean-gym-names": "tsx src/clean-gym-names.ts",
     "db:data-review": "tsx src/export-data-review.ts",

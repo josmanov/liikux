@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { flushSync } from "react-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ChevronDown, LocateFixed, MapPin, Search } from "lucide-react";
 import { useAppLocation } from "../context/LocationContext";
 import { fetchGyms } from "../data/api";
 import { useAddressSuggest, type GeoHit } from "../data/geocode";
-import { pathGyms } from "../i18n/lang";
+import { pathGyms, pathGymsFromLocation } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import "./AreaSelect.css";
 import LoadSpin from "./LoadSpin";
@@ -14,6 +15,7 @@ const cities = ["Helsinki", "Espoo", "Vantaa", "Tampere", "Turku", "Oulu"];
 function AreaSelect() {
   const { lang, t } = useLang();
   const navigate = useNavigate();
+  const routeLocation = useLocation();
   const { label, lat, lng, setLocation, useMyLocation } = useAppLocation();
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -50,19 +52,35 @@ function AreaSelect() {
     return () => window.removeEventListener("click", close, true);
   }, [open]);
 
-  function goBrowse() {
+  function goBrowse(placeLabel: string) {
     setOpen(false);
-    navigate(pathGyms(lang), { state: { focusOrigin: true } });
+    const onGyms = /^\/(fi|en)\/(kuntosalit|gyms)/.test(
+      routeLocation.pathname,
+    );
+    navigate(
+      {
+        pathname: pathGymsFromLocation(lang, placeLabel),
+        search: onGyms ? routeLocation.search : "",
+      },
+      {
+        replace: true,
+        state: { focusOrigin: true },
+      },
+    );
   }
 
   function pickSuggestion(item: GeoHit) {
-    setLocation({ label: item.label, lat: item.lat, lng: item.lng });
-    goBrowse();
+    flushSync(() => {
+      setLocation({ label: item.label, lat: item.lat, lng: item.lng });
+    });
+    goBrowse(item.label);
   }
 
   function pickCity(name: string) {
-    setLocation({ label: name });
-    goBrowse();
+    flushSync(() => {
+      setLocation({ label: name });
+    });
+    goBrowse(name);
   }
 
   const showSuggestions = draft.trim().length >= 3;
@@ -105,7 +123,10 @@ function AreaSelect() {
               className="area-select-locate"
               aria-label={t("useMyLocation")}
               onClick={() => {
-                void useMyLocation().then(() => goBrowse());
+                void useMyLocation().then(() => {
+                  setOpen(false);
+                  navigate(pathGyms(lang), { state: { focusOrigin: true } });
+                });
               }}
             >
               <LocateFixed size={16} strokeWidth={2.2} />

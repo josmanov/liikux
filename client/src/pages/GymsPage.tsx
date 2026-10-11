@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
+import { flushSync } from "react-dom";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowUpDown,
@@ -58,9 +59,20 @@ import {
   sameIds,
 } from "../data/browseSearch";
 import { toggleFavoriteSlug, readFavoriteSlugs } from "../data/favorites";
-import { pathGym } from "../i18n/lang";
+import { pathGym, pathGyms, pathGymsBrowse } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import { usePageMeta } from "../seo/usePageMeta";
+import {
+  cityCenterForName,
+  cityCenterForSlug,
+  cityFromLabel,
+  displayCityName,
+} from "../data/citySlug";
+import {
+  regionForCitySlug,
+  regionFromName,
+  regionFromSlug,
+} from "../data/regionSlug";
 import UxSwitch from "../components/UxSwitch";
 import LoadSpin from "../components/LoadSpin";
 
@@ -508,12 +520,6 @@ function DualRange({
   );
 }
 
-const cityCenters: Record<string, { lat: number; lng: number }> = {
-  Helsinki: { lat: 60.1699, lng: 24.9384 },
-  Espoo: { lat: 60.2055, lng: 24.6559 },
-  Vantaa: { lat: 60.2934, lng: 25.0378 },
-};
-
 function distanceKm(
   aLat: number,
   aLng: number,
@@ -566,7 +572,11 @@ function pageNums(current: number, count: number): Array<number | "gap"> {
 }
 
 function GymsPage() {
-  const { slug: chainSlug } = useParams();
+  const {
+    slug: chainSlug,
+    regionSlug: regionSlugParam,
+    citySlug: citySlugParam,
+  } = useParams();
   const routeLocation = useLocation();
   const navigate = useNavigate();
   const browseStart = parseBrowseSearch(
@@ -574,16 +584,87 @@ function GymsPage() {
     allChainFilterIds,
   );
   const { lang, t } = useLang();
+  const routeSegA = (regionSlugParam || "").trim().toLowerCase();
+  const routeSegB = (citySlugParam || "").trim().toLowerCase();
+  const routeBrowse = useMemo(() => {
+    if (!routeSegA) {
+      return {
+        regionSlug: "",
+        citySlug: "",
+        regionName: "",
+        cityName: "",
+        legacyCityOnly: false,
+      };
+    }
+    if (routeSegB) {
+      const region = regionFromSlug(routeSegA);
+      return {
+        regionSlug: region?.slug || routeSegA,
+        citySlug: routeSegB,
+        regionName: region?.name || routeSegA,
+        cityName: displayCityName(routeSegB),
+        legacyCityOnly: false,
+      };
+    }
+    const asRegion = regionFromSlug(routeSegA);
+    if (asRegion) {
+      return {
+        regionSlug: asRegion.slug,
+        citySlug: "",
+        regionName: asRegion.name,
+        cityName: "",
+        legacyCityOnly: false,
+      };
+    }
+    const asCity = cityCenterForSlug(routeSegA);
+    if (asCity) {
+      const region = regionForCitySlug(asCity.slug);
+      return {
+        regionSlug: region?.slug || "",
+        citySlug: asCity.slug,
+        regionName: region?.name || "",
+        cityName: asCity.name,
+        legacyCityOnly: true,
+      };
+    }
+    return {
+      regionSlug: routeSegA,
+      citySlug: "",
+      regionName: routeSegA,
+      cityName: "",
+      legacyCityOnly: false,
+    };
+  }, [routeSegA, routeSegB]);
+  const routeRegionSlug = routeBrowse.regionSlug;
+  const routeCitySlug = routeBrowse.citySlug;
+  const routeRegionName = routeBrowse.regionName;
+  const routeCityName = routeBrowse.cityName;
+  const metaTitle = routeCityName
+    ? lang === "fi"
+      ? `Kuntosalit ${routeCityName} | Liikux`
+      : `Gyms in ${routeCityName} | Liikux`
+    : routeRegionName
+      ? lang === "fi"
+        ? `Kuntosalit – ${routeRegionName} | Liikux`
+        : `Gyms – ${routeRegionName} | Liikux`
+      : lang === "fi"
+        ? "Kuntosalit Suomessa – selaa kartalla ja listalla | Liikux"
+        : "Gyms in Finland – browse map and list | Liikux";
+  const metaDescription = routeCityName
+    ? lang === "fi"
+      ? `Kuntosalit ${routeCityName}${routeRegionName ? ` (${routeRegionName})` : ""} – selaa saleja kartalla ja listalla. Vertaa hintoja ja ketjuja Liikuxissa.`
+      : `Gyms in ${routeCityName}${routeRegionName ? ` (${routeRegionName})` : ""} – browse map and list on Liikux.`
+    : routeRegionName
+      ? lang === "fi"
+        ? `Selaa kuntosaleja alueella ${routeRegionName}. Kartta, lista, hinnat ja ketjut – Liikux.`
+        : `Browse gyms in ${routeRegionName}. Map, list, prices and chains – Liikux.`
+      : lang === "fi"
+        ? "Selaa kuntosaleja Suomessa kartalla ja listalla. Suodata alueen, ketjun, hinnan ja etäisyyden mukaan."
+        : "Browse gyms in Finland on the map and list. Filter by region, chain, price and distance.";
   usePageMeta({
-    title:
-      lang === "fi"
-        ? "Kuntosalit Suomessa | Liikux"
-        : "Gyms in Finland | Liikux",
-    description:
-      lang === "fi"
-        ? "Selaa kuntosaleja kartalla ja listalla. Suodata ketjun, hinnan ja etäisyyden mukaan."
-        : "Browse gyms on the map and in a list. Filter by chain, price and distance.",
-    path: lang === "fi" ? "/fi/kuntosalit" : "/en/gyms",
+    title: metaTitle,
+    description: metaDescription,
+    path: pathGymsBrowse(lang, routeRegionSlug || null, routeCitySlug || null),
   });
   const sortOptions = [
     { id: "nearest", label: t("sortNearest") },
@@ -914,12 +995,163 @@ function GymsPage() {
     if (locationLat != null && locationLng != null) {
       return { lat: locationLat, lng: locationLng };
     }
-    const key = Object.keys(cityCenters).find(
-      (city) => locationLabel.toLowerCase() === city.toLowerCase(),
-    );
-    return cityCenters[key ?? "Helsinki"];
+    const fromLabel = cityCenterForName(locationLabel);
+    if (fromLabel) return { lat: fromLabel.lat, lng: fromLabel.lng };
+    const cityBit = cityFromLabel(locationLabel);
+    const fromBit = cityBit ? cityCenterForName(cityBit) : null;
+    if (fromBit) return { lat: fromBit.lat, lng: fromBit.lng };
+    return { lat: 60.1699, lng: 24.9384 };
   }, [locationLabel, locationLat, locationLng]);
   originRef.current = origin;
+
+  const applyingBrowseUrlRef = useRef(false);
+
+  useEffect(() => {
+    if (chainSlug || !routeBrowse.legacyCityOnly) return;
+    if (!routeRegionSlug || !routeCitySlug) return;
+    if (selectedMaakunta && selectedMaakunta !== routeRegionName) return;
+    const currentPath = routeLocation.pathname.replace(/\/$/, "") || "/";
+    const shortPath = `${pathGyms(lang)}/${routeSegA}`;
+    if (currentPath !== shortPath) return;
+    navigate(
+      {
+        pathname: pathGymsBrowse(lang, routeRegionSlug, routeCitySlug),
+        search: routeLocation.search,
+      },
+      { replace: true },
+    );
+  }, [
+    chainSlug,
+    lang,
+    navigate,
+    routeBrowse.legacyCityOnly,
+    routeCitySlug,
+    routeLocation.pathname,
+    routeLocation.search,
+    routeRegionName,
+    routeRegionSlug,
+    routeSegA,
+    selectedMaakunta,
+  ]);
+
+  useEffect(() => {
+    if (chainSlug || !routeCitySlug) return;
+    const locCity = cityFromLabel(locationLabel);
+    if (locCity && cityCenterForName(locCity)) return;
+    if (locationLabel.trim() && locationLat != null && locationLng != null) {
+      return;
+    }
+    const known = cityCenterForSlug(routeCitySlug);
+    const name = known?.name || displayCityName(routeCitySlug);
+    setLocation({
+      label: name,
+      lat: known?.lat ?? null,
+      lng: known?.lng ?? null,
+    });
+  }, [chainSlug, routeCitySlug]);
+
+  useEffect(() => {
+    if (chainSlug || !routeRegionName) return;
+    if (selectedMaakunta === routeRegionName) return;
+    applyingBrowseUrlRef.current = true;
+    setBrowseAllAreas(false);
+    setSelectedMaakunta(routeRegionName);
+    selectedMaakuntaRef.current = routeRegionName;
+    regionPickModeRef.current = false;
+    regionUserPickedRef.current = true;
+  }, [chainSlug, routeRegionName]);
+
+  useEffect(() => {
+    if (chainSlug) return;
+    const currentPath = routeLocation.pathname.replace(/\/$/, "") || "/";
+    const onGymsBrowse = /^\/(fi|en)\/(kuntosalit|gyms)/.test(currentPath);
+    if (!onGymsBrowse) return;
+
+    const region =
+      selectedMaakunta != null ? regionFromName(selectedMaakunta) : null;
+    const locCity = cityFromLabel(locationLabel);
+    const locCenter = locCity ? cityCenterForName(locCity) : null;
+    const locCityInRegion =
+      !!region &&
+      !!locCenter &&
+      regionForCitySlug(locCenter.slug)?.slug === region.slug;
+    const locationCityDiffers =
+      locCityInRegion && locCenter!.slug !== routeCitySlug;
+
+    if (applyingBrowseUrlRef.current && !locationCityDiffers) {
+      applyingBrowseUrlRef.current = false;
+      return;
+    }
+    applyingBrowseUrlRef.current = false;
+
+    if (selectedMaakunta == null) {
+      if (!browseAllAreas && routeRegionName) return;
+      const base = pathGyms(lang);
+      if (currentPath !== base && (routeRegionSlug || routeCitySlug)) {
+        navigate(
+          { pathname: base, search: routeLocation.search },
+          { replace: true },
+        );
+      }
+      return;
+    }
+
+    if (!region) return;
+    let citySlug = "";
+    if (locCityInRegion && locCenter) citySlug = locCenter.slug;
+    else if (routeCitySlug) {
+      const cityRegion = regionForCitySlug(routeCitySlug);
+      if (cityRegion && cityRegion.slug === region.slug) {
+        citySlug = routeCitySlug;
+      }
+    }
+    const next = pathGymsBrowse(lang, region.slug, citySlug || null);
+    if (currentPath === next) return;
+    navigate(
+      { pathname: next, search: routeLocation.search },
+      { replace: true },
+    );
+  }, [
+    browseAllAreas,
+    chainSlug,
+    lang,
+    locationLabel,
+    locationLat,
+    locationLng,
+    navigate,
+    routeCitySlug,
+    routeLocation.pathname,
+    routeLocation.search,
+    routeRegionName,
+    routeRegionSlug,
+    selectedMaakunta,
+  ]);
+
+  useEffect(() => {
+    if (chainSlug || !routeRegionName || !mapReady || !maakunnatReady) return;
+    if (selectedMaakunta !== routeRegionName) return;
+    const map = mapInstanceRef.current;
+    const full = maakuntaFeaturesRef.current.find(
+      (x) => x.nimi === routeRegionName,
+    );
+    if (!map || !full) return;
+    const bbox = geomBBox(full.geometry);
+    const mobile = window.matchMedia(BROWSE_MOBILE_MQ).matches;
+    const pad = mobile
+      ? { top: 24, bottom: 28, left: 24, right: 24 }
+      : { top: 72, bottom: 72, left: 72, right: 72 };
+    map.fitBounds(bbox, {
+      padding: pad,
+      duration: 650,
+      maxZoom: mobile ? 10.5 : 9.5,
+    });
+  }, [
+    chainSlug,
+    mapReady,
+    maakunnatReady,
+    routeRegionName,
+    selectedMaakunta,
+  ]);
 
   const extrasActive = extraOnly247 || extraFreeTrial || extraDayPass;
   const extrasLabel = t("filtersAll");
@@ -3107,10 +3339,12 @@ function GymsPage() {
                             onMouseDown={(e) => e.preventDefault()}
                             onClick={() => {
                               setAddressSuggest(false);
-                              setLocation({
-                                label: item.label,
-                                lat: item.lat,
-                                lng: item.lng,
+                              flushSync(() => {
+                                setLocation({
+                                  label: item.label,
+                                  lat: item.lat,
+                                  lng: item.lng,
+                                });
                               });
                             }}
                           >
@@ -3256,10 +3490,12 @@ function GymsPage() {
                                 type="button"
                                 onClick={() => {
                                   setAddressSuggest(false);
-                                  setLocation({
-                                    label: item.label,
-                                    lat: item.lat,
-                                    lng: item.lng,
+                                  flushSync(() => {
+                                    setLocation({
+                                      label: item.label,
+                                      lat: item.lat,
+                                      lng: item.lng,
+                                    });
                                   });
                                   setMapSheet(null);
                                 }}
