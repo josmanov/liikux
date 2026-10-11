@@ -70,6 +70,7 @@ import {
   cityCenterForSlug,
   cityFromLabel,
   displayCityName,
+  toCitySlug,
 } from "../data/citySlug";
 import {
   regionForCitySlug,
@@ -803,6 +804,7 @@ function GymsPage() {
   >([]);
   const fitKeyRef = useRef("");
   const lastOriginKeyRef = useRef("");
+  const mobileMapFitKeyRef = useRef("");
   const regionUserPickedRef = useRef(!!routeRegionName);
   const routeRegionNameRef = useRef(routeRegionName);
   routeRegionNameRef.current = routeRegionName;
@@ -1203,6 +1205,16 @@ function GymsPage() {
     return { mode: "some" as const, ids, includeOther };
   }, [chains, selectedChains, chainFilterActive]);
 
+  const activeCitySlug = useMemo(() => {
+    const fromLabel = cityFromLabel(locationLabel);
+    if (fromLabel) {
+      const known = cityCenterForName(fromLabel);
+      return toCitySlug(known?.name || fromLabel);
+    }
+    if (routeCitySlug) return routeCitySlug.trim().toLowerCase();
+    return null;
+  }, [locationLabel, routeCitySlug]);
+
   const visibleGyms = useMemo(() => {
     const q = query.trim().toLowerCase();
 
@@ -1250,6 +1262,9 @@ function GymsPage() {
       }
       if (selectedMaakunta) {
         if (gymMaakuntaMap[gym.id] !== selectedMaakunta) return false;
+      }
+      if (activeCitySlug) {
+        if (toCitySlug(gym.city) !== activeCitySlug) return false;
       }
       if (!q) return true;
       return (
@@ -1308,6 +1323,7 @@ function GymsPage() {
     origin,
     selectedMaakunta,
     gymMaakuntaMap,
+    activeCitySlug,
   ]);
 
   visibleGymsRef.current = visibleGyms;
@@ -1328,9 +1344,8 @@ function GymsPage() {
 
   const inViewGyms = useMemo(() => {
     if (regionPickMode) return [];
-    const listIgnoresMapBounds = mobileList && !mobileMapOpen;
     const inBounds =
-      listIgnoresMapBounds || !mapBounds
+      mobileList || !mapBounds
         ? visibleGyms
         : visibleGyms.filter((g) => {
             if (g.lat == null || g.lng == null) return false;
@@ -1352,14 +1367,7 @@ function GymsPage() {
     return [...inBounds, picked].sort(
       (a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0),
     );
-  }, [
-    visibleGyms,
-    mapBounds,
-    regionPickMode,
-    selectedId,
-    mobileList,
-    mobileMapOpen,
-  ]);
+  }, [visibleGyms, mapBounds, regionPickMode, selectedId, mobileList]);
 
   inViewGymsRef.current = inViewGyms;
 
@@ -2614,14 +2622,29 @@ function GymsPage() {
   const browseReady = dataReady && mapReady;
 
   useEffect(() => {
-    if (!mobileList) return;
+    if (!mobileList || !mobileMapOpen || !mapReady) return;
     const map = mapInstanceRef.current;
     if (!map) return;
     const id = window.requestAnimationFrame(() => {
       map.resize();
+      if (origin.lat == null || origin.lng == null) return;
+      const key = `${origin.lat}:${origin.lng}:${activeCitySlug || ""}`;
+      if (mobileMapFitKeyRef.current === key) return;
+      mobileMapFitKeyRef.current = key;
+      map.jumpTo({
+        center: [origin.lng, origin.lat],
+        zoom: ADDRESS_ZOOM,
+      });
     });
     return () => window.cancelAnimationFrame(id);
-  }, [mobileList, mobileMapOpen]);
+  }, [
+    mobileList,
+    mobileMapOpen,
+    mapReady,
+    origin.lat,
+    origin.lng,
+    activeCitySlug,
+  ]);
 
   function focusGymFromList(gym: Gym) {
     if (gym.lat == null || gym.lng == null) return;
@@ -3618,6 +3641,25 @@ function GymsPage() {
           </div>
         </section>
 
+        {mobileList ? (
+          <button
+            type="button"
+            className="browse-map-open-btn"
+            onClick={() => setMobileMapOpen((v) => !v)}
+          >
+            {mobileMapOpen ? (
+              <>
+                <List size={18} strokeWidth={2.3} />
+                {t("list")}
+              </>
+            ) : (
+              <>
+                <MapIcon size={18} strokeWidth={2.3} />
+                {t("map")}
+              </>
+            )}
+          </button>
+        ) : null}
       </div>
 
       {mapSheet
@@ -4115,26 +4157,6 @@ function GymsPage() {
             document.body,
           )
         : null}
-
-      {mobileList ? (
-        <button
-          type="button"
-          className="browse-map-open-btn"
-          onClick={() => setMobileMapOpen((v) => !v)}
-        >
-          {mobileMapOpen ? (
-            <>
-              <List size={18} strokeWidth={2.3} />
-              {t("list")}
-            </>
-          ) : (
-            <>
-              <MapIcon size={18} strokeWidth={2.3} />
-              {t("map")}
-            </>
-          )}
-        </button>
-      ) : null}
 
     </main>
     </>
