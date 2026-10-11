@@ -747,7 +747,9 @@ function GymsPage() {
   const [mapReady, setMapReady] = useState(false);
   const [dataReady, setDataReady] = useState(false);
   const [maakunnatReady, setMaakunnatReady] = useState(false);
-  const [selectedMaakunta, setSelectedMaakunta] = useState<string | null>(null);
+  const [selectedMaakunta, setSelectedMaakunta] = useState<string | null>(
+    () => routeRegionName || null,
+  );
   const [browseAllAreas, setBrowseAllAreas] = useState(false);
   const [regionNames, setRegionNames] = useState<string[]>([]);
   const [regionMenuOpen, setRegionMenuOpen] = useState(false);
@@ -792,7 +794,9 @@ function GymsPage() {
   >([]);
   const fitKeyRef = useRef("");
   const lastOriginKeyRef = useRef("");
-  const regionUserPickedRef = useRef(false);
+  const regionUserPickedRef = useRef(!!routeRegionName);
+  const routeRegionNameRef = useRef(routeRegionName);
+  routeRegionNameRef.current = routeRegionName;
   const mapPinchRef = useRef(false);
   const mapTouchCountRef = useRef(0);
   const afterPinchSyncRef = useRef<(() => void) | null>(null);
@@ -1592,17 +1596,27 @@ function GymsPage() {
       }
 
       let nimi: string | null = null;
-      for (const f of maakuntaFeaturesRef.current) {
-        if (pointInPolygon(o.lng, o.lat, f.geometry)) {
-          nimi = f.nimi;
-          break;
+      const fromUrl = routeRegionNameRef.current;
+      if (fromUrl) {
+        nimi = fromUrl;
+        regionUserPickedRef.current = true;
+      } else if (regionUserPickedRef.current && selectedMaakuntaRef.current) {
+        nimi = selectedMaakuntaRef.current;
+      } else {
+        for (const f of maakuntaFeaturesRef.current) {
+          if (pointInPolygon(o.lng, o.lat, f.geometry)) {
+            nimi = f.nimi;
+            break;
+          }
         }
       }
       selectedMaakuntaRef.current = nimi;
       regionPickModeRef.current = nimi == null;
       setBrowseAllAreas(false);
       setSelectedMaakunta(nimi);
-      fitKeyRef.current = `origin:${o.lat}:${o.lng}`;
+      fitKeyRef.current = fromUrl
+        ? `route:${fromUrl}`
+        : `origin:${o.lat}:${o.lng}`;
 
       if (nimi) {
         const hideOpen = ["!=", ["get", "nimi"], nimi] as [
@@ -2442,7 +2456,9 @@ function GymsPage() {
     const originChanged = key !== lastOriginKeyRef.current;
     if (originChanged) {
       lastOriginKeyRef.current = key;
-      regionUserPickedRef.current = false;
+      if (wantFocus || focusOriginRef.current) {
+        regionUserPickedRef.current = false;
+      }
     }
 
     let nimi: string | null = null;
@@ -2453,11 +2469,11 @@ function GymsPage() {
       }
     }
 
+    const browseFromUrl = !!routeRegionName;
     const followOriginRegion =
       wantFocus ||
       focusOriginRef.current ||
-      originChanged ||
-      !regionUserPickedRef.current;
+      (!browseFromUrl && !regionUserPickedRef.current);
 
     if (followOriginRegion) {
       selectedMaakuntaRef.current = nimi;
@@ -2510,6 +2526,7 @@ function GymsPage() {
     routeLocation.state,
     routeLocation.pathname,
     routeLocation.search,
+    routeRegionName,
     navigate,
   ]);
   useEffect(() => {
