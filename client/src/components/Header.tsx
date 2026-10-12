@@ -127,6 +127,7 @@ function Header() {
             className={homeOn ? "header-nav-link is-on" : "header-nav-link"}
             onClick={(e) => stayIfSame(e, homePath)}
           >
+            <Home size={16} strokeWidth={2.2} />
             {t("home")}
           </Link>
           <Link
@@ -134,13 +135,15 @@ function Header() {
             className={gymsOn ? "header-nav-link is-on" : "header-nav-link"}
             onClick={(e) => stayIfSame(e, gymsPath)}
           >
-            {t("gymsTitle")}
+            <Dumbbell size={16} strokeWidth={2.2} />
+            {t("navBrowse")}
           </Link>
           <button
             type="button"
             className="header-nav-link"
             onClick={() => openChains()}
           >
+            <Store size={16} strokeWidth={2.2} />
             {t("chains")}
           </button>
         </nav>
@@ -151,13 +154,20 @@ function Header() {
         className={
           "header-nav-link header-fav" +
           (favShown > 0 ? " is-typing" : "") +
-          (favHover ? " is-full" : "")
+          (favHover ? " is-full" : "") +
+          (favCount > 0 ? " has-count" : "")
         }
         aria-label={favCount > 0 ? `${favWord}, ${favCount}` : favWord}
         onMouseEnter={() => setFavHover(true)}
         onMouseLeave={() => setFavHover(false)}
         onClick={() => setFavoritesOpen(true)}
       >
+        <span className="header-fav-icon">
+          <Heart size={20} strokeWidth={2.4} />
+          {favCount > 0 ? (
+            <span className="header-fav-count">{favCount}</span>
+          ) : null}
+        </span>
         <span className="header-fav-label" aria-hidden="true">
           {favWord.split("").map((ch, i) => (
             <span
@@ -167,12 +177,6 @@ function Header() {
               <span>{ch}</span>
             </span>
           ))}
-        </span>
-        <span className="header-fav-icon">
-          <Heart size={20} strokeWidth={2.4} />
-          {favCount > 0 ? (
-            <span className="header-fav-count">{favCount}</span>
-          ) : null}
         </span>
       </button>
 
@@ -254,7 +258,7 @@ function Header() {
             }}
           >
             <Dumbbell size={18} strokeWidth={2.2} />
-            <span>{t("gymsTitle")}</span>
+            <span>{t("navBrowse")}</span>
           </Link>
           <button
             type="button"

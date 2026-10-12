@@ -24,7 +24,11 @@ type LocationContextValue = {
     lat?: number | null;
     lng?: number | null;
   }) => void;
-  useMyLocation: () => Promise<void>;
+  useMyLocation: () => Promise<{
+    label: string;
+    lat: number;
+    lng: number;
+  } | null>;
 };
 
 const LocationContext = createContext<LocationContextValue | null>(null);
@@ -139,8 +143,8 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         setLng(fromCity?.lng ?? null);
       },
       useMyLocation: () => {
-        if (!navigator.geolocation) return Promise.resolve();
-        return new Promise<void>((resolve) => {
+        if (!navigator.geolocation) return Promise.resolve(null);
+        return new Promise((resolve) => {
           navigator.geolocation.getCurrentPosition(
             (pos) => {
               const nextLat = pos.coords.latitude;
@@ -148,11 +152,16 @@ export function LocationProvider({ children }: { children: ReactNode }) {
               setLat(nextLat);
               setLng(nextLng);
               fetchReverseLabel(nextLat, nextLng).then((place) => {
-                if (place) setLabelState(place);
-                resolve();
+                const nextLabel = (place || "").trim() || DEFAULT_LABEL;
+                if (place) setLabelState(nextLabel);
+                resolve({
+                  label: nextLabel,
+                  lat: nextLat,
+                  lng: nextLng,
+                });
               });
             },
-            () => resolve(),
+            () => resolve(null),
             { enableHighAccuracy: false, timeout: 8000 },
           );
         });

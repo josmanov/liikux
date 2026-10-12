@@ -4,6 +4,18 @@
   max-width: 18rem;
 }
 
+.area-select.is-combo {
+  display: flex;
+  align-items: stretch;
+  flex: 0 1 48%;
+  width: auto;
+  min-width: 7.5rem;
+  max-width: 50%;
+  height: 100%;
+  overflow: visible;
+  border-radius: 999px 0 0 999px;
+}
+
 .area-select-btn {
   display: inline-flex;
   align-items: center;
@@ -20,6 +32,30 @@
   font-size: 0.92rem;
   font-weight: 600;
   cursor: pointer;
+  box-sizing: border-box;
+}
+
+.area-select-btn.is-combo {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0 0.45rem 0 0.75rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.area-select-btn.is-combo:hover {
+  border-color: transparent;
+}
+
+.area-select.is-combo .area-select-panel {
+  left: 0;
+  right: auto;
+  width: min(22rem, calc(100vw - 2rem));
+  min-width: min(22rem, calc(100vw - 2rem));
 }
 
 .area-select-btn:hover {
@@ -32,15 +68,34 @@
 }
 
 .area-select-label {
+  flex: 1 1 auto;
   line-height: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+  text-align: left;
+}
+
+.area-select-label-short {
+  display: none;
+}
+
+.area-select-label-full {
+  display: inline;
+}
+
+.area-select.is-combo .area-select-label-full {
+  display: none;
+}
+
+.area-select.is-combo .area-select-label-short {
+  display: inline;
 }
 
 .area-select-chevron {
   flex-shrink: 0;
+  margin-left: auto;
   opacity: 0.85;
 }
 
@@ -57,6 +112,78 @@
   border-radius: 16px;
   background: var(--color-surface);
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4);
+}
+
+.area-select-sheet-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.4);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+
+.area-select-sheet {
+  width: min(420px, 100%);
+  max-height: min(78vh, 560px);
+  display: flex;
+  flex-direction: column;
+  border-radius: 20px;
+  background: rgba(22, 23, 30, 0.96);
+  border: 0;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.area-select-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1rem 0.65rem;
+  flex-shrink: 0;
+}
+
+.area-select-sheet-title {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.area-select-sheet-close {
+  display: grid;
+  place-items: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.area-select-sheet-close:hover {
+  color: var(--color-brand);
+}
+
+.area-select-sheet-body {
+  padding: 0 1rem 1rem;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.area-select-sheet-body .area-select-suggestions,
+.area-select-sheet-body .area-select-cities {
+  max-height: none;
 }
 
 .area-select-field {

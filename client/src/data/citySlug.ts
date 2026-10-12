@@ -57,15 +57,45 @@ export function cityFromLabel(label: string): string | null {
   const raw = label.trim();
   if (!raw) return null;
   const parts = raw.split(",").map((p) => p.trim()).filter(Boolean);
-  if (parts.length >= 2) return parts[parts.length - 1];
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const cleaned = parts[i].replace(/^\d{5}\s+/, "").trim();
+    if (!cleaned) continue;
+    if (byName.has(cleaned.toLowerCase())) return cleaned;
+    const fromSlug = bySlug.get(toCitySlug(cleaned));
+    if (fromSlug) return fromSlug.name;
+  }
   if (parts.length === 1) {
     const only = parts[0];
     if (byName.has(only.toLowerCase())) return only;
-    if (/^[A-Za-zÀ-ÿÄÖÅäöå\s-]+$/.test(only) && only.length >= 3 && !/\d/.test(only)) {
+    if (
+      /^[A-Za-zÀ-ÿÄÖÅäöå\s-]+$/.test(only) &&
+      only.length >= 3 &&
+      !/\d/.test(only)
+    ) {
       return only;
     }
   }
   return null;
+}
+
+export function nearestCityCenter(
+  lat: number,
+  lng: number,
+  maxKm = 100,
+): CityCenter | null {
+  let best: CityCenter | null = null;
+  let bestKm = Infinity;
+  const cos = Math.cos((lat * Math.PI) / 180);
+  for (const c of CITY_CENTERS) {
+    const dLat = (c.lat - lat) * 111.32;
+    const dLng = (c.lng - lng) * 111.32 * cos;
+    const km = Math.hypot(dLat, dLng);
+    if (km < bestKm) {
+      bestKm = km;
+      best = c;
+    }
+  }
+  return best && bestKm <= maxKm ? best : null;
 }
 
 export function cityCenterForName(name: string): CityCenter | null {
