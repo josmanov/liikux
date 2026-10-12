@@ -22,3 +22,4 @@ dist-ssr
 *.sw?
 
 public/salilinkit.html
+public/maplibre/

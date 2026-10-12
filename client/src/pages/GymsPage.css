@@ -3139,6 +3139,14 @@
   color: var(--color-brand);
 }
 
+.browse-map-col .maplibregl-marker.gym-pin,
+.browse-map-col .maplibregl-marker.gym-cluster,
+.browse-map-col .maplibregl-marker.gym-origin-pin {
+  filter: none;
+  animation: none;
+  transition: none;
+}
+
 .gym-origin-pin {
   position: relative;
   width: 40px;

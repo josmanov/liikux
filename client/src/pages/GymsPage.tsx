@@ -2544,6 +2544,7 @@ function GymsPage() {
         pinRaf = 0;
       }
       syncPins();
+      refreshMarkerPixels();
       scheduleIdleListSync(e);
     }
 
@@ -2604,6 +2605,15 @@ function GymsPage() {
     map.resize();
     refreshMarkerPixels();
 
+    const mapEl = map.getContainer();
+    const mapCol = mapEl.closest(".browse-map-col");
+    const mapRo = new ResizeObserver(() => {
+      map.resize();
+      refreshMarkerPixels();
+    });
+    mapRo.observe(mapEl);
+    if (mapCol) mapRo.observe(mapCol);
+
     map.on("move", onMapMove);
     map.on("resize", refreshMarkerPixels);
     map.on("moveend", onMoveEnd);
@@ -2615,6 +2625,7 @@ function GymsPage() {
       if (pinRaf !== 0) cancelAnimationFrame(pinRaf);
       window.clearTimeout(idleListTimer);
       afterPinchSyncRef.current = null;
+      mapRo.disconnect();
       map.off("move", onMapMove);
       map.off("moveend", onMoveEnd);
       map.off("dragstart", onDragStart);

@@ -11,6 +11,7 @@ import ChainPopup from "./ChainPopup";
 function AppLayout() {
   const { pathname } = useLocation();
   const home = pathname === "/" || pathname === "/en";
+  const browse = /\/(fi|en)\/(kuntosalit|gyms)(\/|$)/.test(pathname);
 
   return (
     <LocationProvider>
@@ -21,7 +22,7 @@ function AppLayout() {
           <div className="layout-content">
             <Outlet />
           </div>
-          <Footer />
+          {browse ? null : <Footer />}
         </div>
         <ChainPopup />
         <CookieBanner />
