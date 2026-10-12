@@ -1811,6 +1811,8 @@
   overflow: hidden;
   box-sizing: border-box;
   background: var(--color-bg);
+  transform: none;
+  filter: none;
 }
 
 .browse-map-col::before {
@@ -2443,10 +2445,13 @@
   min-height: 0;
 }
 
-.browse-map-col .maplibregl-canvas,
-.gym-pin,
-.gym-cluster,
-.gym-origin-pin {
+.browse-map-col .maplibregl-canvas {
+  transition: filter 0.35s ease;
+}
+
+.gym-pin-hit,
+.gym-cluster-visual,
+.gym-origin-pin-core {
   transition: filter 0.35s ease;
 }
 
@@ -2456,14 +2461,17 @@
 }
 
 .browse.is-pin-selected .maplibregl-canvas,
-.browse.is-pin-selected .gym-pin:not(:has(.is-selected)),
-.browse.is-pin-selected .gym-cluster {
+.browse.is-pin-selected .gym-pin:not(:has(.is-selected)) .gym-pin-hit,
+.browse.is-pin-selected .gym-cluster .gym-cluster-visual {
   filter: brightness(0.58);
 }
 
 .browse.is-pin-selected .gym-origin-pin {
-  filter: none;
   z-index: 15000;
+}
+
+.browse.is-pin-selected .gym-origin-pin .gym-origin-pin-core {
+  filter: none;
 }
 
 .browse-region-hint {
@@ -3756,24 +3764,20 @@
     border-radius: 16px;
     border: 1px solid #25324f;
     background: #121c33;
-    transition:
-      opacity 0.16s ease-out,
-      transform 0.16s ease-out;
-    will-change: opacity, transform;
+    transition: opacity 0.16s ease-out;
   }
 
   .browse-list-frame {
     z-index: 2;
     opacity: 1;
-    transform: scale(1);
     pointer-events: auto;
   }
 
   .browse-map-col {
     z-index: 1;
     opacity: 0;
-    transform: scale(0.985);
     pointer-events: none;
+    transform: none;
   }
 
   .browse-map-col::before {
@@ -3792,7 +3796,6 @@
   .browse.is-mobile-map .browse-list-frame {
     z-index: 3;
     opacity: 1;
-    transform: none;
     pointer-events: none;
     background: transparent;
     border-color: transparent;
@@ -3840,7 +3843,7 @@
   .browse.is-mobile-map .browse-map-col {
     z-index: 2;
     opacity: 1;
-    transform: scale(1);
+    transform: none;
     pointer-events: auto;
   }
 

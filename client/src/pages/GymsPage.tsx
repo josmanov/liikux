@@ -1912,7 +1912,10 @@ function GymsPage() {
         window.clearTimeout(failSafe);
         window.clearTimeout(bootFailSafe);
         map.resize();
-        setMapReady(true);
+        window.requestAnimationFrame(() => {
+          map.resize();
+          setMapReady(true);
+        });
       }
 
       const failSafe = window.setTimeout(reveal, 700);
@@ -2279,7 +2282,7 @@ function GymsPage() {
         }
       });
 
-      const marker = new Marker({ element: el })
+      const marker = new Marker({ element: el, anchor: "center" })
         .setLngLat([g.lng, g.lat])
         .addTo(map);
       markersRef.current.set(g.id, marker);
@@ -2359,11 +2362,23 @@ function GymsPage() {
         }, 780);
       });
 
-      const marker = new Marker({ element: el })
+      const marker = new Marker({ element: el, anchor: "center" })
         .setLngLat([lng, lat])
         .addTo(map);
       markersRef.current.set(key, marker);
       return key;
+    }
+
+    function refreshMarkerPixels() {
+      markersRef.current.forEach((m) => {
+        const ll = m.getLngLat();
+        m.setLngLat([ll.lng, ll.lat]);
+      });
+      const originMark = originMarkerRef.current;
+      if (originMark) {
+        const ll = originMark.getLngLat();
+        originMark.setLngLat([ll.lng, ll.lat]);
+      }
     }
 
     function syncPins() {
@@ -2441,7 +2456,10 @@ function GymsPage() {
       el.appendChild(ring);
       el.appendChild(ringLate);
       el.appendChild(core);
-      originMarkerRef.current = new Marker({ element: el })
+      originMarkerRef.current = new Marker({
+        element: el,
+        anchor: "center",
+      })
         .setLngLat([origin.lng, origin.lat])
         .addTo(map);
     }
@@ -2584,8 +2602,10 @@ function GymsPage() {
     syncOriginPin();
     setMapBounds(readBounds());
     map.resize();
+    refreshMarkerPixels();
 
     map.on("move", onMapMove);
+    map.on("resize", refreshMarkerPixels);
     map.on("moveend", onMoveEnd);
     map.on("dragstart", onDragStart);
     map.on("dragend", onDragEnd);
@@ -2600,6 +2620,7 @@ function GymsPage() {
       map.off("dragstart", onDragStart);
       map.off("dragend", onDragEnd);
       map.off("click", onMapClick);
+      map.off("resize", refreshMarkerPixels);
       clearMarkers();
       originMarkerRef.current?.remove();
       originMarkerRef.current = null;
@@ -3343,7 +3364,6 @@ function GymsPage() {
     <main
       className={
         "browse" +
-        (browseReady ? " load-reveal" : "") +
         (selectedId ? " is-pin-selected" : "") +
         (mobileMapOpen ? " is-mobile-map" : "")
       }
