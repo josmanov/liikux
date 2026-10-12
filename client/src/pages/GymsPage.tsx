@@ -946,6 +946,12 @@ function GymsPage() {
     (routeLocation.state as { focusOrigin?: boolean } | null)?.focusOrigin ===
       true,
   );
+  const pendingMyLocationRef = useRef<{
+    lat: number;
+    lng: number;
+    citySlug: string | null;
+  } | null>(null);
+  const [myLocationTick, setMyLocationTick] = useState(0);
 
   const regionPickMode =
     MAAKUNTA_MAP_ACTIVE && selectedMaakunta == null && !browseAllAreas;
@@ -2921,7 +2927,6 @@ function GymsPage() {
         ...row.querySelectorAll<HTMLElement>(".browse-search-suggest-chip"),
       ];
       for (const chip of chips) chip.classList.remove("is-overflow");
-      if (!window.matchMedia(BROWSE_MOBILE_MQ).matches) return;
       const limit = row.getBoundingClientRect().right - 1;
       let hideRest = false;
       for (const chip of chips) {
@@ -2986,6 +2991,29 @@ function GymsPage() {
   ]);
 
   useEffect(() => {
+    const pending = pendingMyLocationRef.current;
+    if (!pending || !mapReady || !browseReady) return;
+    if (pending.citySlug && browseCitySlug !== pending.citySlug) return;
+    if (pending.citySlug && routeCitySlug && routeCitySlug !== pending.citySlug) {
+      return;
+    }
+    const id = window.setTimeout(() => {
+      if (!pendingMyLocationRef.current) return;
+      const next = pendingMyLocationRef.current;
+      pendingMyLocationRef.current = null;
+      easeToMyLocation(next.lat, next.lng);
+    }, 320);
+    return () => window.clearTimeout(id);
+  }, [
+    browseCitySlug,
+    mapReady,
+    browseReady,
+    gyms,
+    routeCitySlug,
+    myLocationTick,
+  ]);
+
+  useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !mapReady) return;
     if (!browseCitySlug) {
@@ -2993,6 +3021,11 @@ function GymsPage() {
       applyFinlandMinZoom(map);
       return;
     }
+    if (pendingMyLocationRef.current) {
+      cityFitDoneRef.current = browseCitySlug;
+      return;
+    }
+    if (cityBounceLockRef.current) return;
     const pins = gyms.filter(
       (g) =>
         g.lat != null &&
@@ -3199,19 +3232,44 @@ function GymsPage() {
     });
   }
 
-  function syncCityFromMyLocation(next: {
+  function easeToMyLocation(lat: number, lng: number) {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    selectedIdRef.current = null;
+    preCompareCameraRef.current = null;
+    prevSelectedIdRef.current = null;
+    setSelectedId(null);
+    cityBounceLockRef.current = true;
+    if (browseCitySlugRef.current) {
+      cityFitDoneRef.current = browseCitySlugRef.current;
+    }
+    mobileMapFitKeyRef.current = `origin:${lat}:${lng}`;
+    map.stop();
+    map.easeTo({
+      center: [lng, lat],
+      zoom: ORIGIN_ZOOM,
+      duration: 550,
+    });
+    window.setTimeout(() => {
+      cityBounceLockRef.current = false;
+    }, 850);
+  }
+
+  function resolveCityFromPlace(next: {
     label: string;
     lat: number;
     lng: number;
   }) {
     const fromLabel = cityFromLabel(next.label);
-    const city =
+    return (
       (fromLabel ? cityCenterForName(fromLabel) : null) ||
-      nearestCityCenter(next.lat, next.lng);
-    if (!city) return;
-    if (browseCitySlugRef.current === city.slug) return;
+      nearestCityCenter(next.lat, next.lng)
+    );
+  }
+
+  function applyCityForMyLocation(city: CityCenter) {
     setBrowseCitySlug(city.slug);
-    cityFitDoneRef.current = null;
+    cityFitDoneRef.current = city.slug;
     setCityQuery("");
     setRegionMenuOpen(false);
     setMapSheet(null);
@@ -3227,16 +3285,25 @@ function GymsPage() {
     if (cur !== nextPath) {
       navigate(
         { pathname: nextPath, search: routeLocation.search },
-        { replace: true, state: { focusOrigin: true } },
+        { replace: true },
       );
     }
   }
 
   function goMyLocation() {
-    focusOriginRef.current = true;
     void useMyLocation().then((place) => {
       if (!place) return;
-      syncCityFromMyLocation(place);
+      const city = resolveCityFromPlace(place);
+      pendingMyLocationRef.current = {
+        lat: place.lat,
+        lng: place.lng,
+        citySlug: city?.slug ?? browseCitySlugRef.current,
+      };
+      cityBounceLockRef.current = true;
+      if (city && browseCitySlugRef.current !== city.slug) {
+        applyCityForMyLocation(city);
+      }
+      setMyLocationTick((n) => n + 1);
     });
   }
 
@@ -3331,61 +3398,6 @@ function GymsPage() {
                 </span>
               ) : null}
             </button>
-      </div>
-      </div>
-      <div className="browse-tools">
-      <div className="browse-search-suggest">
-        <p className="browse-search-suggest-label">{t("popularShort")}</p>
-        <div className="browse-search-suggest-chips" ref={suggestChipsRef}>
-          {BROWSE_SEARCH_QUICK.map((item) => {
-            const label =
-              "filter" in item
-                ? item.filter === "freeTrial"
-                  ? t("freeTrial")
-                  : item.filter === "only247"
-                    ? t("open247")
-                    : t("priceDayPass")
-                : item.q;
-            const chipOn =
-              "filter" in item
-                ? item.filter === "freeTrial"
-                  ? extraFreeTrial
-                  : item.filter === "only247"
-                    ? extraOnly247
-                    : extraDayPass
-                : query.trim().toLowerCase() === item.q.toLowerCase();
-            return (
-              <button
-                key={item.id}
-                type="button"
-                className={
-                  chipOn
-                    ? "browse-search-suggest-chip is-on"
-                    : "browse-search-suggest-chip"
-                }
-                aria-pressed={chipOn}
-                onClick={(e) => {
-                  (e.currentTarget as HTMLButtonElement).blur();
-                  if ("filter" in item) {
-                    if (item.filter === "freeTrial") {
-                      setExtraFreeTrial((v) => !v);
-                    } else if (item.filter === "only247") {
-                      setExtraOnly247((v) => !v);
-                    } else {
-                      setExtraDayPass((v) => !v);
-                    }
-                    setPage(1);
-                    return;
-                  }
-                  setQuery(chipOn ? "" : item.q);
-                  setPage(1);
-                }}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
       </div>
       <div className="browse-chrome-filters">
             <div className="browse-filter">
@@ -3604,6 +3616,61 @@ function GymsPage() {
                 {t("clearFiltersBtn")}
               </button>
             </div>
+      </div>
+      </div>
+      <div className="browse-tools">
+      <div className="browse-search-suggest">
+        <p className="browse-search-suggest-label">{t("popularShort")}</p>
+        <div className="browse-search-suggest-chips" ref={suggestChipsRef}>
+          {BROWSE_SEARCH_QUICK.map((item) => {
+            const label =
+              "filter" in item
+                ? item.filter === "freeTrial"
+                  ? t("freeTrial")
+                  : item.filter === "only247"
+                    ? t("open247")
+                    : t("priceDayPass")
+                : item.q;
+            const chipOn =
+              "filter" in item
+                ? item.filter === "freeTrial"
+                  ? extraFreeTrial
+                  : item.filter === "only247"
+                    ? extraOnly247
+                    : extraDayPass
+                : query.trim().toLowerCase() === item.q.toLowerCase();
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={
+                  chipOn
+                    ? "browse-search-suggest-chip is-on"
+                    : "browse-search-suggest-chip"
+                }
+                aria-pressed={chipOn}
+                onClick={(e) => {
+                  (e.currentTarget as HTMLButtonElement).blur();
+                  if ("filter" in item) {
+                    if (item.filter === "freeTrial") {
+                      setExtraFreeTrial((v) => !v);
+                    } else if (item.filter === "only247") {
+                      setExtraOnly247((v) => !v);
+                    } else {
+                      setExtraDayPass((v) => !v);
+                    }
+                    setPage(1);
+                    return;
+                  }
+                  setQuery(chipOn ? "" : item.q);
+                  setPage(1);
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
       </div>
       </div>
       <div className="browse-body">
@@ -4251,23 +4318,22 @@ function GymsPage() {
                 disabled={origin.lat == null || origin.lng == null}
                 onClick={() => {
                   if (origin.lat == null || origin.lng == null) return;
-                  selectedIdRef.current = null;
-                  preCompareCameraRef.current = null;
-                  prevSelectedIdRef.current = null;
-                  setSelectedId(null);
-                  syncCityFromMyLocation({
+                  const place = {
                     label: locationLabel,
                     lat: origin.lat,
                     lng: origin.lng,
-                  });
-                  const map = mapInstanceRef.current;
-                  if (!map) return;
-                  mobileMapFitKeyRef.current = `origin:${origin.lat}:${origin.lng}`;
-                  map.easeTo({
-                    center: [origin.lng, origin.lat],
-                    zoom: ORIGIN_ZOOM,
-                    duration: 550,
-                  });
+                  };
+                  const city = resolveCityFromPlace(place);
+                  pendingMyLocationRef.current = {
+                    lat: place.lat,
+                    lng: place.lng,
+                    citySlug: city?.slug ?? browseCitySlugRef.current,
+                  };
+                  cityBounceLockRef.current = true;
+                  if (city && browseCitySlugRef.current !== city.slug) {
+                    applyCityForMyLocation(city);
+                  }
+                  setMyLocationTick((n) => n + 1);
                 }}
               >
                 <LocateFixed size={19} strokeWidth={2.4} />
