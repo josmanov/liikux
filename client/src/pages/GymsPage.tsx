@@ -3399,6 +3399,61 @@ function GymsPage() {
               ) : null}
             </button>
       </div>
+      </div>
+      <div className="browse-tools">
+      <div className="browse-search-suggest">
+        <p className="browse-search-suggest-label">{t("popularShort")}</p>
+        <div className="browse-search-suggest-chips" ref={suggestChipsRef}>
+          {BROWSE_SEARCH_QUICK.map((item) => {
+            const label =
+              "filter" in item
+                ? item.filter === "freeTrial"
+                  ? t("freeTrial")
+                  : item.filter === "only247"
+                    ? t("open247")
+                    : t("priceDayPass")
+                : item.q;
+            const chipOn =
+              "filter" in item
+                ? item.filter === "freeTrial"
+                  ? extraFreeTrial
+                  : item.filter === "only247"
+                    ? extraOnly247
+                    : extraDayPass
+                : query.trim().toLowerCase() === item.q.toLowerCase();
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={
+                  chipOn
+                    ? "browse-search-suggest-chip is-on"
+                    : "browse-search-suggest-chip"
+                }
+                aria-pressed={chipOn}
+                onClick={(e) => {
+                  (e.currentTarget as HTMLButtonElement).blur();
+                  if ("filter" in item) {
+                    if (item.filter === "freeTrial") {
+                      setExtraFreeTrial((v) => !v);
+                    } else if (item.filter === "only247") {
+                      setExtraOnly247((v) => !v);
+                    } else {
+                      setExtraDayPass((v) => !v);
+                    }
+                    setPage(1);
+                    return;
+                  }
+                  setQuery(chipOn ? "" : item.q);
+                  setPage(1);
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
       <div className="browse-chrome-filters">
             <div className="browse-filter">
               <button
@@ -3616,61 +3671,6 @@ function GymsPage() {
                 {t("clearFiltersBtn")}
               </button>
             </div>
-      </div>
-      </div>
-      <div className="browse-tools">
-      <div className="browse-search-suggest">
-        <p className="browse-search-suggest-label">{t("popularShort")}</p>
-        <div className="browse-search-suggest-chips" ref={suggestChipsRef}>
-          {BROWSE_SEARCH_QUICK.map((item) => {
-            const label =
-              "filter" in item
-                ? item.filter === "freeTrial"
-                  ? t("freeTrial")
-                  : item.filter === "only247"
-                    ? t("open247")
-                    : t("priceDayPass")
-                : item.q;
-            const chipOn =
-              "filter" in item
-                ? item.filter === "freeTrial"
-                  ? extraFreeTrial
-                  : item.filter === "only247"
-                    ? extraOnly247
-                    : extraDayPass
-                : query.trim().toLowerCase() === item.q.toLowerCase();
-            return (
-              <button
-                key={item.id}
-                type="button"
-                className={
-                  chipOn
-                    ? "browse-search-suggest-chip is-on"
-                    : "browse-search-suggest-chip"
-                }
-                aria-pressed={chipOn}
-                onClick={(e) => {
-                  (e.currentTarget as HTMLButtonElement).blur();
-                  if ("filter" in item) {
-                    if (item.filter === "freeTrial") {
-                      setExtraFreeTrial((v) => !v);
-                    } else if (item.filter === "only247") {
-                      setExtraOnly247((v) => !v);
-                    } else {
-                      setExtraDayPass((v) => !v);
-                    }
-                    setPage(1);
-                    return;
-                  }
-                  setQuery(chipOn ? "" : item.q);
-                  setPage(1);
-                }}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
       </div>
       </div>
       <div className="browse-body">
