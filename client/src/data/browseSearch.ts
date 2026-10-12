@@ -15,7 +15,7 @@ const SORT_IDS = [
   "name-desc",
 ];
 
-const KM_IDS = ["1", "3", "5", "10", "20", "50", "all"];
+const KM_IDS = ["1", "3", "5", "10", "20", "30", "all"];
 
 export type BrowseQuery = {
   chains: string[];

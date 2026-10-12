@@ -127,6 +127,7 @@ function Header() {
             className={homeOn ? "header-nav-link is-on" : "header-nav-link"}
             onClick={(e) => stayIfSame(e, homePath)}
           >
+            <Home size={16} strokeWidth={2.2} />
             {t("home")}
           </Link>
           <Link
@@ -134,13 +135,15 @@ function Header() {
             className={gymsOn ? "header-nav-link is-on" : "header-nav-link"}
             onClick={(e) => stayIfSame(e, gymsPath)}
           >
-            {t("gymsTitle")}
+            <Dumbbell size={16} strokeWidth={2.2} />
+            {t("navBrowse")}
           </Link>
           <button
             type="button"
             className="header-nav-link"
             onClick={() => openChains()}
           >
+            <Store size={16} strokeWidth={2.2} />
             {t("chains")}
           </button>
         </nav>
@@ -254,7 +257,7 @@ function Header() {
             }}
           >
             <Dumbbell size={18} strokeWidth={2.2} />
-            <span>{t("gymsTitle")}</span>
+            <span>{t("navBrowse")}</span>
           </Link>
           <button
             type="button"

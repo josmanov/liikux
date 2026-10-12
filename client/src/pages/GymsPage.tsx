@@ -15,10 +15,13 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
+  Building2,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Clock,
   Euro,
+  Gift,
   Heart,
   Link2,
   List,
@@ -29,6 +32,7 @@ import {
   Plus,
   Route,
   SlidersHorizontal,
+  Ticket,
   X,
 } from "lucide-react";
 import "../map/maplibreSetup";
@@ -66,11 +70,13 @@ import { pathGym, pathGyms, pathGymsBrowse } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import { usePageMeta } from "../seo/usePageMeta";
 import {
+  CITY_CENTERS,
   cityCenterForName,
   cityCenterForSlug,
   cityFromLabel,
   displayCityName,
   toCitySlug,
+  type CityCenter,
 } from "../data/citySlug";
 import {
   regionForCitySlug,
@@ -87,12 +93,12 @@ function markerScaleForZoom(zoom: number) {
 }
 
 function pinTouchPx(scale: number) {
-  return 36 * scale;
+  return 26 * scale;
 }
 
 function zoomWhereClusterSplits(map: Map, group: Gym[]) {
   const z0 = map.getZoom();
-  const maxZoom = Math.min(map.getMaxZoom(), z0 + 5.5);
+  const maxZoom = Math.min(map.getMaxZoom(), z0 + 7);
   const pts = group.map((g) => map.project([g.lng, g.lat]));
   let minD = Infinity;
   for (let i = 0; i < pts.length; i++) {
@@ -104,68 +110,89 @@ function zoomWhereClusterSplits(map: Map, group: Gym[]) {
     }
   }
   if (!Number.isFinite(minD) || minD < 0.5) {
-    return Math.min(z0 + 2.4, maxZoom);
+    return Math.min(z0 + 2.8, maxZoom);
   }
 
   let lo = z0;
   let hi = maxZoom;
-  for (let n = 0; n < 16; n++) {
+  for (let n = 0; n < 18; n++) {
     const mid = (lo + hi) / 2;
     const spread = minD * 2 ** (mid - z0);
-    const need = pinTouchPx(markerScaleForZoom(mid)) + 16;
+    const need = pinTouchPx(markerScaleForZoom(mid)) + 28;
     if (spread > need) hi = mid;
     else lo = mid;
   }
-  return Math.min(hi + 0.2, maxZoom);
+  return Math.min(hi + 0.35, maxZoom);
 }
 
-function framePadForOverlays(map: Map) {
+function framePadForOverlays(
+  map: Map,
+  opts?: { labelTop?: number; labelBottom?: number },
+) {
   const mapEl = map.getContainer();
   const col = mapEl.closest(".browse-map-col") ?? mapEl.parentElement;
   const mapRect = mapEl.getBoundingClientRect();
   const w = mapRect.width;
   const h = mapRect.height;
+  const gap = 18;
+  const labelTop = opts?.labelTop ?? 36;
+  const labelBottom = opts?.labelBottom ?? 20;
   let left = 28;
   let right = 28;
-  let top = 28;
-  let bottom = 36;
+  let top = 28 + labelTop;
+  let bottom = 36 + labelBottom;
 
-  const chips = col?.querySelector(".browse-map-chips");
-  const side =
-    chips instanceof HTMLElement && getComputedStyle(chips).display !== "none"
-      ? chips
-      : col?.querySelector(".browse-map-side");
-  if (side instanceof HTMLElement && side.offsetParent != null) {
-    const r = side.getBoundingClientRect();
-    left = Math.max(left, Math.ceil(r.right - mapRect.left + 24));
-    top = Math.max(top, Math.ceil(r.top - mapRect.top + 56));
-  }
+  const selectors = [
+    ".browse-map-side",
+    ".browse-map-chips",
+    ".browse-map-desk-city",
+    ".browse-map-desk-tools",
+    ".browse-map-controls",
+    ".browse-map-locate-fab",
+    ".browse-map-preview",
+    ".browse-map-open-btn",
+  ];
 
-  const ctrls = col?.querySelector(".browse-map-controls");
-  if (ctrls instanceof HTMLElement && ctrls.offsetParent != null) {
-    const r = ctrls.getBoundingClientRect();
-    right = Math.max(right, Math.ceil(mapRect.right - r.left + 24));
-    top = Math.max(top, Math.ceil(r.top - mapRect.top + 56));
-  }
+  for (const sel of selectors) {
+    const el = col?.querySelector(sel);
+    if (!(el instanceof HTMLElement)) continue;
+    const style = getComputedStyle(el);
+    if (style.display === "none" || style.visibility === "hidden") continue;
+    if (style.opacity === "0") continue;
+    const r = el.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) continue;
 
-  const hint = col?.querySelector(".browse-region-hint");
-  if (hint instanceof HTMLElement) {
-    const style = getComputedStyle(hint);
-    if (style.display !== "none" && style.visibility !== "hidden") {
-      const r = hint.getBoundingClientRect();
-      bottom = Math.max(bottom, Math.ceil(mapRect.bottom - r.top + 16));
+    const nearTop = r.top - mapRect.top < h * 0.45;
+    const nearBottom = mapRect.bottom - r.bottom < h * 0.45;
+    const nearLeft = r.left - mapRect.left < w * 0.45;
+    const nearRight = mapRect.right - r.right < w * 0.45;
+
+    if (nearTop) {
+      top = Math.max(top, Math.ceil(r.bottom - mapRect.top + gap + labelTop));
+    }
+    if (nearBottom) {
+      bottom = Math.max(
+        bottom,
+        Math.ceil(mapRect.bottom - r.top + gap + labelBottom),
+      );
+    }
+    if (nearLeft) {
+      left = Math.max(left, Math.ceil(r.right - mapRect.left + gap));
+    }
+    if (nearRight) {
+      right = Math.max(right, Math.ceil(mapRect.right - r.left + gap));
     }
   }
 
-  const maxL = Math.floor(w * 0.42);
-  const maxR = Math.floor(w * 0.42);
-  const maxT = Math.floor(h * 0.36);
-  const maxB = Math.floor(h * 0.36);
+  const maxL = Math.floor(w * 0.4);
+  const maxR = Math.floor(w * 0.4);
+  const maxT = Math.floor(h * 0.4);
+  const maxB = Math.floor(h * 0.4);
   return {
-    top: Math.min(top, maxT),
-    bottom: Math.min(bottom, maxB),
-    left: Math.min(left, maxL),
-    right: Math.min(right, maxR),
+    top: Math.min(Math.max(top, 40), maxT),
+    bottom: Math.min(Math.max(bottom, 40), maxB),
+    left: Math.min(Math.max(left, 28), maxL),
+    right: Math.min(Math.max(right, 28), maxR),
   };
 }
 
@@ -175,16 +202,47 @@ function frameOriginAndGym(
   originLat: number,
   gymLng: number,
   gymLat: number,
+  bounceLockRef?: { current: boolean },
+  cameraSaveRef?: {
+    current: {
+      lng: number;
+      lat: number;
+      zoom: number;
+      minZoom: number;
+    } | null;
+  },
 ) {
+  if (cameraSaveRef && !cameraSaveRef.current) {
+    const c = map.getCenter();
+    cameraSaveRef.current = {
+      lng: c.lng,
+      lat: c.lat,
+      zoom: map.getZoom(),
+      minZoom: map.getMinZoom(),
+    };
+  }
+  map.stop();
+  map.resize();
+  map.setMinZoom(1);
+  if (bounceLockRef) bounceLockRef.current = true;
   const bounds = new LngLatBounds();
   bounds.extend([originLng, originLat]);
   bounds.extend([gymLng, gymLat]);
   map.fitBounds(bounds, {
-    padding: framePadForOverlays(map),
+    padding: framePadForOverlays(map, {
+      labelTop: 110,
+      labelBottom: 28,
+    }),
     maxZoom: FRAME_ZOOM,
     duration: 700,
     easing: (t) => 1 - (1 - t) ** 3,
   });
+  window.setTimeout(() => {
+    const savedMin = cameraSaveRef?.current?.minZoom;
+    const floor = Math.min(map.getZoom(), savedMin ?? map.getZoom());
+    map.setMinZoom(Math.max(1, floor));
+    if (bounceLockRef) bounceLockRef.current = false;
+  }, 850);
 }
 
 function gymsNearViewport(gyms: Gym[], map: Map) {
@@ -265,6 +323,7 @@ const FINLAND_CENTER: [number, number] = [
 const ORIGIN_ZOOM = 12;
 const ADDRESS_ZOOM = 10.9;
 const FRAME_ZOOM = 12.6;
+const MAAKUNTA_MAP_ACTIVE = false;
 const MAP_MAX_BOUNDS: [[number, number], [number, number]] = [
   [4.0, 53.5],
   [44.0, 73.0],
@@ -341,10 +400,47 @@ function geomCentroid(geom: MaakuntaGeom): [number, number] {
   return [(minX + maxX) / 2, (minY + maxY) / 2];
 }
 
+const PIN_ZOOM_OUT_PAD_KM = 10;
+
+function expandBoundsByKm(bounds: LngLatBounds, km: number) {
+  const sw = bounds.getSouthWest();
+  const ne = bounds.getNorthEast();
+  const midLat = (sw.lat + ne.lat) / 2;
+  const dLat = km / 111;
+  const cos = Math.cos((midLat * Math.PI) / 180);
+  const dLng = km / (111 * Math.max(0.2, cos));
+  return new LngLatBounds(
+    [sw.lng - dLng, sw.lat - dLat],
+    [ne.lng + dLng, ne.lat + dLat],
+  );
+}
+
+function boundsFromPins(pins: { lat: number; lng: number }[]) {
+  const bounds = new LngLatBounds();
+  for (const p of pins) bounds.extend([p.lng, p.lat]);
+  return bounds;
+}
+
 function applyFinlandMinZoom(map: Map) {
   const cam = map.cameraForBounds(FINLAND_VIEW, { padding: 36 });
   if (cam?.zoom == null) return;
   map.setMinZoom(Math.max(1, cam.zoom - 0.65));
+}
+
+function applyPinsMinZoom(
+  map: Map,
+  pins: { lat: number; lng: number }[],
+  pad?: { top: number; bottom: number; left: number; right: number },
+) {
+  if (pins.length === 0) {
+    applyFinlandMinZoom(map);
+    return;
+  }
+  const padding = pad ?? framePadForOverlays(map, { labelTop: 36 });
+  const padded = expandBoundsByKm(boundsFromPins(pins), PIN_ZOOM_OUT_PAD_KM);
+  const cam = map.cameraForBounds(padded, { padding });
+  if (cam?.zoom == null) return;
+  map.setMinZoom(Math.max(1, cam.zoom));
 }
 
 function centerFinlandIfMaxOut(map: Map) {
@@ -471,7 +567,7 @@ const distancePresetMeta = [
   { id: "5", km: 5 },
   { id: "10", km: 10 },
   { id: "20", km: 20 },
-  { id: "50", km: 50 },
+  { id: "30", km: 30 },
   { id: "all", km: null as number | null },
 ];
 
@@ -761,7 +857,25 @@ function GymsPage() {
   const [browseAllAreas, setBrowseAllAreas] = useState(false);
   const [regionNames, setRegionNames] = useState<string[]>([]);
   const [regionMenuOpen, setRegionMenuOpen] = useState(false);
+  const [cityQuery, setCityQuery] = useState("");
+  const [browseCitySlug, setBrowseCitySlug] = useState<string | null>(
+    () => routeCitySlug || null,
+  );
   const [mapSheet, setMapSheet] = useState<null | "address" | "region">(null);
+  const cityBounceLockRef = useRef(false);
+  const cityFitDoneRef = useRef<string | null>(null);
+  const prevSelectedIdRef = useRef<string | null>(null);
+  const explodeClusterIdsRef = useRef<Set<string> | null>(null);
+  const preCompareCameraRef = useRef<{
+    lng: number;
+    lat: number;
+    zoom: number;
+    minZoom: number;
+  } | null>(null);
+  const browseCitySlugRef = useRef(browseCitySlug);
+  browseCitySlugRef.current = browseCitySlug;
+  const gymsRef = useRef(gyms);
+  gymsRef.current = gyms;
   const [gymMaakuntaMap, setGymMaakuntaMap] = useState<Record<string, string>>(
     {},
   );
@@ -819,7 +933,8 @@ function GymsPage() {
       true,
   );
 
-  const regionPickMode = selectedMaakunta == null && !browseAllAreas;
+  const regionPickMode =
+    MAAKUNTA_MAP_ACTIVE && selectedMaakunta == null && !browseAllAreas;
 
   useEffect(() => {
     setAddressDraft(locationLabel);
@@ -1148,8 +1263,10 @@ function GymsPage() {
   ]);
 
   useEffect(() => {
+    if (!MAAKUNTA_MAP_ACTIVE) return;
     if (chainSlug || !routeRegionName || !mapReady || !maakunnatReady) return;
     if (selectedMaakunta !== routeRegionName) return;
+    if (browseCitySlugRef.current) return;
     const map = mapInstanceRef.current;
     const full = maakuntaFeaturesRef.current.find(
       (x) => x.nimi === routeRegionName,
@@ -1174,15 +1291,21 @@ function GymsPage() {
   ]);
 
   const extrasActive = extraOnly247 || extraFreeTrial || extraDayPass;
-  const extrasLabel = t("filtersAll");
-  const filterBadgeCount =
-    (chainFilterActive ? 1 : 0) +
-    (priceFilterOn ? 1 : 0) +
-    (maxDistanceKm != null ? 1 : 0) +
-    (womenOnly ? 1 : 0) +
+  const filtersMoreActive =
+    extrasActive ||
+    chainFilterActive ||
+    womenOnly ||
+    priceFilterOn ||
+    distanceFilter !== "all";
+  const filtersMoreBadge =
     (extraOnly247 ? 1 : 0) +
     (extraFreeTrial ? 1 : 0) +
-    (extraDayPass ? 1 : 0);
+    (extraDayPass ? 1 : 0) +
+    (womenOnly ? 1 : 0) +
+    (chainFilterActive ? 1 : 0) +
+    (priceFilterOn ? 1 : 0) +
+    (distanceFilter !== "all" ? 1 : 0);
+  const extrasLabel = t("filtersAll");
 
   const selectedChainFilter = useMemo(() => {
     if (selectedChains.length === 0) {
@@ -1205,15 +1328,49 @@ function GymsPage() {
     return { mode: "some" as const, ids, includeOther };
   }, [chains, selectedChains, chainFilterActive]);
 
-  const activeCitySlug = useMemo(() => {
-    const fromLabel = cityFromLabel(locationLabel);
-    if (fromLabel) {
-      const known = cityCenterForName(fromLabel);
-      return toCitySlug(known?.name || fromLabel);
+  const activeCitySlug = browseCitySlug;
+
+  const cityOptions = useMemo(() => {
+    const bySlug = new globalThis.Map<string, CityCenter>();
+    for (const c of CITY_CENTERS) bySlug.set(c.slug, c);
+    for (const g of gyms) {
+      const name = g.city?.trim();
+      if (!name) continue;
+      const known = cityCenterForName(name);
+      if (known) {
+        bySlug.set(known.slug, known);
+        continue;
+      }
+      const slug = toCitySlug(name);
+      if (bySlug.has(slug)) continue;
+      if (g.lat == null || g.lng == null) continue;
+      bySlug.set(slug, { name, slug, lat: g.lat, lng: g.lng });
     }
-    if (routeCitySlug) return routeCitySlug.trim().toLowerCase();
-    return null;
-  }, [locationLabel, routeCitySlug]);
+    return [...bySlug.values()].sort((a, b) =>
+      a.name.localeCompare(b.name, "fi"),
+    );
+  }, [gyms]);
+
+  const filteredCityOptions = useMemo(() => {
+    const q = cityQuery.trim().toLowerCase();
+    if (!q) return cityOptions;
+    return cityOptions.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.slug.includes(toCitySlug(q)),
+    );
+  }, [cityOptions, cityQuery]);
+
+  useEffect(() => {
+    if (routeCitySlug) setBrowseCitySlug(routeCitySlug.trim().toLowerCase());
+  }, [routeCitySlug]);
+
+  useEffect(() => {
+    const fromLabel = cityFromLabel(locationLabel);
+    if (!fromLabel) return;
+    const known = cityCenterForName(fromLabel);
+    if (known) setBrowseCitySlug(known.slug);
+  }, [locationLabel, locationLat, locationLng]);
 
   const visibleGyms = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -1260,7 +1417,7 @@ function GymsPage() {
         const km = distanceKm(origin.lat, origin.lng, gym.lat, gym.lng);
         if (km > maxDistanceKm) return false;
       }
-      if (selectedMaakunta) {
+      if (MAAKUNTA_MAP_ACTIVE && selectedMaakunta) {
         if (gymMaakuntaMap[gym.id] !== selectedMaakunta) return false;
       }
       if (activeCitySlug) {
@@ -1344,30 +1501,8 @@ function GymsPage() {
 
   const inViewGyms = useMemo(() => {
     if (regionPickMode) return [];
-    const inBounds =
-      mobileList || !mapBounds
-        ? visibleGyms
-        : visibleGyms.filter((g) => {
-            if (g.lat == null || g.lng == null) return false;
-            return (
-              g.lng >= mapBounds.west &&
-              g.lng <= mapBounds.east &&
-              g.lat >= mapBounds.south &&
-              g.lat <= mapBounds.north
-            );
-          });
-    if (!selectedId || inBounds.some((g) => g.id === selectedId)) {
-      return inBounds;
-    }
-    const picked = visibleGyms.find((g) => g.id === selectedId);
-    if (!picked) return inBounds;
-    const order = new globalThis.Map(
-      visibleGyms.map((g, i) => [g.id, i] as const),
-    );
-    return [...inBounds, picked].sort(
-      (a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0),
-    );
-  }, [visibleGyms, mapBounds, regionPickMode, selectedId, mobileList]);
+    return visibleGyms;
+  }, [visibleGyms, regionPickMode]);
 
   inViewGymsRef.current = inViewGyms;
 
@@ -1382,6 +1517,33 @@ function GymsPage() {
   }, [inViewGyms, safePage, pageSize]);
   const pageGymsRef = useRef(pageGyms);
   pageGymsRef.current = pageGyms;
+
+  const selectedMapGym = useMemo(() => {
+    if (!selectedId) return null;
+    const gym =
+      gyms.find((g) => g.id === selectedId) ||
+      inViewGyms.find((g) => g.id === selectedId);
+    if (!gym) return null;
+    const chain = chainForGym(gym, chains);
+    const offer = resolveGymOffer(gym, chain as Chain | null);
+    const isBrandChain = Boolean(chain && isListedBrandChain(chain));
+    const siteName = isBrandChain
+      ? cleanGymDisplayName(gym.name, {
+          chainName: chain?.name,
+          city: gym.city,
+        })
+      : cleanGymDisplayName(gym.name);
+    const street = formatGymStreetLine(gym);
+    const pricePill = formatPricePill(offer.priceFrom, lang);
+    const priceLabel = pricePill
+      ? pricePill.replace("€/kk", " €/kk").replace("€/mo", " €/mo")
+      : null;
+    const distKm =
+      gym.lat != null && gym.lng != null
+        ? distanceKm(origin.lat, origin.lng, gym.lat, gym.lng)
+        : null;
+    return { gym, chain, siteName, street, priceLabel, distKm };
+  }, [selectedId, gyms, inViewGyms, chains, lang, origin.lat, origin.lng]);
   const listLoading =
     !dataReady ||
     !mapReady ||
@@ -1630,12 +1792,33 @@ function GymsPage() {
     window.addEventListener("touchend", onTouchEnd, { passive: true });
     window.addEventListener("touchcancel", onTouchEnd, { passive: true });
 
+    function syncMinZoom() {
+      if (selectedIdRef.current) return;
+      const slug = browseCitySlugRef.current;
+      if (!slug) {
+        applyFinlandMinZoom(map);
+        return;
+      }
+      const pins = gymsRef.current.filter(
+        (g) =>
+          g.lat != null &&
+          g.lng != null &&
+          toCitySlug(g.city) === slug,
+      );
+      applyPinsMinZoom(
+        map,
+        pins.map((g) => ({ lat: g.lat!, lng: g.lng! })),
+        framePadForOverlays(map, { labelTop: 36 }),
+      );
+    }
+
     function onResize() {
-      applyFinlandMinZoom(map);
+      syncMinZoom();
     }
 
     function onMaxOutView() {
       if (mapPinchRef.current) return;
+      if (browseCitySlugRef.current) return;
       centerFinlandIfMaxOut(map);
     }
 
@@ -1654,7 +1837,7 @@ function GymsPage() {
         center: [o.lng, o.lat],
         zoom: ADDRESS_ZOOM,
       });
-      applyFinlandMinZoom(map);
+      syncMinZoom();
       if (map.getZoom() < map.getMinZoom()) {
         map.setZoom(map.getMinZoom());
       }
@@ -1675,14 +1858,15 @@ function GymsPage() {
         }
       }
       selectedMaakuntaRef.current = nimi;
-      regionPickModeRef.current = nimi == null;
-      setBrowseAllAreas(false);
+      regionPickModeRef.current =
+        MAAKUNTA_MAP_ACTIVE && nimi == null;
+      setBrowseAllAreas(!MAAKUNTA_MAP_ACTIVE);
       setSelectedMaakunta(nimi);
       fitKeyRef.current = fromUrl
         ? `route:${fromUrl}`
         : `origin:${o.lat}:${o.lng}`;
 
-      if (nimi) {
+      if (MAAKUNTA_MAP_ACTIVE && nimi) {
         const hideOpen = ["!=", ["get", "nimi"], nimi] as [
           "!=",
           ["get", string],
@@ -1690,6 +1874,13 @@ function GymsPage() {
         ];
         for (const id of ["maakunnat-fill", "maakunnat-line", "maakunnat-label"]) {
           if (map.getLayer(id)) map.setFilter(id, hideOpen);
+        }
+      }
+      if (!MAAKUNTA_MAP_ACTIVE) {
+        for (const id of ["maakunnat-fill", "maakunnat-line", "maakunnat-label"]) {
+          if (map.getLayer(id)) {
+            map.setLayoutProperty(id, "visibility", "none");
+          }
         }
       }
 
@@ -1999,12 +2190,14 @@ function GymsPage() {
         '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-9.2C5 8 6.8 6.2 9.1 6.2c1.3 0 2.3.6 2.9 1.6.6-1 1.6-1.6 2.9-1.6 2.3 0 4.1 1.8 4.1 4.6C19 15.6 12 20 12 20z"/></svg>';
       hit.appendChild(fav);
 
+      el.appendChild(hit);
+
       const street = formatGymStreetLine(g);
       if (street) {
         const address = document.createElement("span");
         address.className = "gym-pin-address";
         address.textContent = street;
-        hit.appendChild(address);
+        el.appendChild(address);
       }
 
       if (g.priceFrom != null) {
@@ -2013,11 +2206,9 @@ function GymsPage() {
           const pill = document.createElement("span");
           pill.className = "gym-pin-price";
           pill.textContent = priceText;
-          hit.appendChild(pill);
+          el.appendChild(pill);
         }
       }
-
-      el.appendChild(hit);
 
       hit.addEventListener("mouseenter", () => setHoveredId(g.id));
       hit.addEventListener("mouseleave", () => setHoveredId(null));
@@ -2041,11 +2232,20 @@ function GymsPage() {
         setMapSelectPending(!onPage);
         selectFromMapRef.current = true;
         freezeListBoundsRef.current = true;
+        selectedIdRef.current = g.id;
         setSelectedId(g.id);
         setListRevealKey((n) => n + 1);
         const here = originRef.current;
         if (g.lat != null && g.lng != null) {
-          frameOriginAndGym(map, here.lng, here.lat, g.lng, g.lat);
+          frameOriginAndGym(
+            map,
+            here.lng,
+            here.lat,
+            g.lng,
+            g.lat,
+            cityBounceLockRef,
+            preCompareCameraRef,
+          );
         }
       });
 
@@ -2093,13 +2293,37 @@ function GymsPage() {
       );
       el.addEventListener("click", (e) => {
         e.stopPropagation();
-        const zoom = zoomWhereClusterSplits(map, group);
+        explodeClusterIdsRef.current = null;
+        const bounds = new LngLatBounds([lng, lat], [lng, lat]);
+        for (const g of group) {
+          if (g.lng != null && g.lat != null) bounds.extend([g.lng, g.lat]);
+        }
+        const pad = framePadForOverlays(map, {
+          labelTop: 44,
+          labelBottom: 80,
+        });
+        const cam = map.cameraForBounds(bounds, { padding: pad });
+        const zoom = Math.min(
+          map.getMaxZoom(),
+          cam?.zoom != null
+            ? cam.zoom
+            : Math.max(map.getZoom() + 0.35, zoomWhereClusterSplits(map, group)),
+        );
+        const center: [number, number] = cam?.center
+          ? [cam.center.lng, cam.center.lat]
+          : [lng, lat];
+        cityBounceLockRef.current = true;
+        map.stop();
         map.easeTo({
-          center: [lng, lat],
+          center,
           zoom,
-          duration: 1000,
+          duration: 700,
           easing: (t) => 1 - (1 - t) ** 2.4,
         });
+        window.setTimeout(() => {
+          cityBounceLockRef.current = false;
+          syncPins();
+        }, 780);
       });
 
       const marker = new Marker({ element: el })
@@ -2128,8 +2352,6 @@ function GymsPage() {
       const picked = pickedId
         ? gyms.find((g) => g.id === pickedId)
         : undefined;
-      const pool = picked ? gyms.filter((g) => g.id !== picked.id) : gyms;
-      const groups = clusterGymsByScreenTouch(pool, map, touchPx);
       const keep = new Set<string>();
 
       if (picked) {
@@ -2137,6 +2359,13 @@ function GymsPage() {
         keep.add(picked.id);
       }
 
+      const pool: Gym[] = [];
+      for (const g of gyms) {
+        if (picked && g.id === picked.id) continue;
+        pool.push(g);
+      }
+
+      const groups = clusterGymsByScreenTouch(pool, map, touchPx);
       groups.forEach((group) => {
         if (group.length === 1) {
           putPin(group[0], scale);
@@ -2237,6 +2466,7 @@ function GymsPage() {
         g.lat >= b.getSouth() &&
         g.lat <= b.getNorth();
       if (!onScreen) {
+        selectedIdRef.current = null;
         startTransition(() => setSelectedId(null));
       }
     }
@@ -2312,6 +2542,7 @@ function GymsPage() {
         }
       }
       freezeListBoundsRef.current = false;
+      selectedIdRef.current = null;
       setSelectedId(null);
     }
 
@@ -2415,6 +2646,14 @@ function GymsPage() {
     const map = mapInstanceRef.current;
     if (!map || !mapReady || !maakunnatReady) return;
 
+    const vis = MAAKUNTA_MAP_ACTIVE ? "visible" : "none";
+    for (const id of ["maakunnat-fill", "maakunnat-line", "maakunnat-label"]) {
+      if (!map.getLayer(id)) continue;
+      map.setLayoutProperty(id, "visibility", vis);
+    }
+
+    if (!MAAKUNTA_MAP_ACTIVE) return;
+
     const hideOpen =
       selectedMaakunta != null
         ? (["!=", ["get", "nimi"], selectedMaakunta] as [
@@ -2433,6 +2672,7 @@ function GymsPage() {
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !mapReady || !maakunnatReady) return;
+    if (!MAAKUNTA_MAP_ACTIVE) return;
 
     let hoveredFeatureId: string | number | null = null;
 
@@ -2541,8 +2781,9 @@ function GymsPage() {
 
     if (followOriginRegion) {
       selectedMaakuntaRef.current = nimi;
-      regionPickModeRef.current = nimi == null;
-      setBrowseAllAreas(false);
+      regionPickModeRef.current =
+        MAAKUNTA_MAP_ACTIVE && nimi == null;
+      setBrowseAllAreas(!MAAKUNTA_MAP_ACTIVE);
       setSelectedMaakunta(nimi);
     }
 
@@ -2567,11 +2808,28 @@ function GymsPage() {
     fitKeyRef.current = key;
     focusOriginRef.current = false;
 
-    map.easeTo({
-      center: [origin.lng, origin.lat],
-      zoom: ADDRESS_ZOOM,
-      duration: 700,
-    });
+    const citySlug = browseCitySlugRef.current;
+    if (citySlug) {
+      cityFitDoneRef.current = null;
+      const city =
+        cityCenterForSlug(citySlug) ||
+        cityOptions.find((c) => c.slug === citySlug);
+      if (city) {
+        fitToCityGyms(city);
+      } else {
+        map.easeTo({
+          center: [origin.lng, origin.lat],
+          zoom: ADDRESS_ZOOM,
+          duration: 700,
+        });
+      }
+    } else {
+      map.easeTo({
+        center: [origin.lng, origin.lat],
+        zoom: ADDRESS_ZOOM,
+        duration: 700,
+      });
+    }
 
     if (wantFocus) {
       navigate(
@@ -2592,6 +2850,7 @@ function GymsPage() {
     routeLocation.search,
     routeRegionName,
     navigate,
+    cityOptions,
   ]);
   useEffect(() => {
     markersRef.current.forEach((marker, id) => {
@@ -2627,8 +2886,18 @@ function GymsPage() {
     if (!map) return;
     const id = window.requestAnimationFrame(() => {
       map.resize();
+      if (activeCitySlug) {
+        const key = `city:${activeCitySlug}`;
+        if (mobileMapFitKeyRef.current === key) return;
+        mobileMapFitKeyRef.current = key;
+        const city =
+          cityCenterForSlug(activeCitySlug) ||
+          cityOptions.find((c) => c.slug === activeCitySlug);
+        if (city) fitToCityGyms(city);
+        return;
+      }
       if (origin.lat == null || origin.lng == null) return;
-      const key = `${origin.lat}:${origin.lng}:${activeCitySlug || ""}`;
+      const key = `origin:${origin.lat}:${origin.lng}`;
       if (mobileMapFitKeyRef.current === key) return;
       mobileMapFitKeyRef.current = key;
       map.jumpTo({
@@ -2644,13 +2913,132 @@ function GymsPage() {
     origin.lat,
     origin.lng,
     activeCitySlug,
+    cityOptions,
   ]);
+
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !mapReady) return;
+    if (!browseCitySlug) {
+      cityFitDoneRef.current = null;
+      applyFinlandMinZoom(map);
+      return;
+    }
+    const pins = gyms.filter(
+      (g) =>
+        g.lat != null &&
+        g.lng != null &&
+        toCitySlug(g.city) === browseCitySlug,
+    );
+    if (pins.length === 0) return;
+    if (cityFitDoneRef.current === browseCitySlug) {
+      if (selectedIdRef.current) return;
+      applyPinsMinZoom(
+        map,
+        pins.map((g) => ({ lat: g.lat!, lng: g.lng! })),
+        framePadForOverlays(map, { labelTop: 36 }),
+      );
+      return;
+    }
+    const city =
+      cityCenterForSlug(browseCitySlug) ||
+      cityOptions.find((c) => c.slug === browseCitySlug);
+    if (!city) return;
+    fitToCityGyms(city);
+  }, [mapReady, browseCitySlug, gyms, cityOptions]);
+
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !mapReady || !browseCitySlug) return;
+
+    function bounceIfLost() {
+      if (cityBounceLockRef.current) return;
+      if (selectedIdRef.current) return;
+      const pins = gyms.filter(
+        (g) =>
+          g.lat != null &&
+          g.lng != null &&
+          toCitySlug(g.city) === browseCitySlug,
+      );
+      if (pins.length === 0) return;
+      const bounds = map.getBounds();
+      const anyInView = pins.some(
+        (g) => g.lng != null && g.lat != null && bounds.contains([g.lng, g.lat]),
+      );
+      if (anyInView) return;
+      const city =
+        cityCenterForSlug(browseCitySlug) ||
+        cityOptions.find((c) => c.slug === browseCitySlug);
+      if (!city) return;
+      map.stop();
+      fitToCityGyms(city);
+    }
+
+    function onDrag() {
+      bounceIfLost();
+    }
+
+    function onMoveEnd() {
+      bounceIfLost();
+    }
+
+    map.on("drag", onDrag);
+    map.on("moveend", onMoveEnd);
+    return () => {
+      map.off("drag", onDrag);
+      map.off("moveend", onMoveEnd);
+    };
+  }, [mapReady, browseCitySlug, gyms, cityOptions]);
+
+  useEffect(() => {
+    const prev = prevSelectedIdRef.current;
+    prevSelectedIdRef.current = selectedId;
+    const map = mapInstanceRef.current;
+    if (!map || !mapReady) return;
+
+    if (selectedId) return;
+    if (!prev) return;
+
+    const saved = preCompareCameraRef.current;
+    preCompareCameraRef.current = null;
+    cityBounceLockRef.current = true;
+
+    if (saved) {
+      map.stop();
+      map.easeTo({
+        center: [saved.lng, saved.lat],
+        zoom: saved.zoom,
+        duration: 700,
+        easing: (t) => 1 - (1 - t) ** 3,
+      });
+      window.setTimeout(() => {
+        map.setMinZoom(saved.minZoom);
+        if (map.getZoom() < saved.minZoom) {
+          map.setZoom(saved.minZoom);
+        }
+        cityBounceLockRef.current = false;
+      }, 750);
+      return;
+    }
+
+    if (!browseCitySlug) {
+      applyFinlandMinZoom(map);
+      cityBounceLockRef.current = false;
+      return;
+    }
+    const city =
+      cityCenterForSlug(browseCitySlug) ||
+      cityOptions.find((c) => c.slug === browseCitySlug);
+    if (city) fitToCityGyms(city);
+    else cityBounceLockRef.current = false;
+  }, [selectedId, mapReady, browseCitySlug, cityOptions]);
 
   function focusGymFromList(gym: Gym) {
     if (gym.lat == null || gym.lng == null) return;
     selectFromMapRef.current = false;
     skipBoundsResetRef.current = true;
     freezeListBoundsRef.current = true;
+    selectedIdRef.current = gym.id;
     flushSync(() => {
       setSelectedId(gym.id);
     });
@@ -2660,7 +3048,85 @@ function GymsPage() {
     const lat = gym.lat;
     const lng = gym.lng;
     window.requestAnimationFrame(() => {
-      frameOriginAndGym(map, here.lng, here.lat, lng, lat);
+      frameOriginAndGym(
+        map,
+        here.lng,
+        here.lat,
+        lng,
+        lat,
+        cityBounceLockRef,
+        preCompareCameraRef,
+      );
+    });
+  }
+
+  function fitToCityGyms(city: CityCenter) {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    const pinList = gyms
+      .filter(
+        (g) =>
+          g.lat != null &&
+          g.lng != null &&
+          toCitySlug(g.city) === city.slug,
+      )
+      .map((g) => ({ lat: g.lat!, lng: g.lng! }));
+    cityFitDoneRef.current = city.slug;
+    mobileMapFitKeyRef.current = `city:${city.slug}`;
+    explodeClusterIdsRef.current = null;
+    preCompareCameraRef.current = null;
+    cityBounceLockRef.current = true;
+    requestAnimationFrame(() => {
+      map.stop();
+      map.resize();
+      const pad = framePadForOverlays(map, {
+        labelTop: 44,
+        labelBottom: 24,
+      });
+      map.setMinZoom(1);
+      if (pinList.length === 0) {
+        map.easeTo({
+          center: [city.lng, city.lat],
+          zoom: ADDRESS_ZOOM,
+          duration: 650,
+        });
+        applyFinlandMinZoom(map);
+      } else {
+        const bounds =
+          pinList.length === 1
+            ? expandBoundsByKm(boundsFromPins(pinList), 2.5)
+            : boundsFromPins(pinList);
+        map.fitBounds(bounds, {
+          padding: pad,
+          duration: 700,
+          maxZoom: 14,
+        });
+        applyPinsMinZoom(map, pinList, pad);
+      }
+      window.setTimeout(() => {
+        cityBounceLockRef.current = false;
+      }, 850);
+    });
+  }
+
+  function focusCity(city: CityCenter) {
+    setBrowseCitySlug(city.slug);
+    cityFitDoneRef.current = null;
+    setCityQuery("");
+    setRegionMenuOpen(false);
+    setMapSheet(null);
+    const region = regionForCitySlug(city.slug);
+    if (region) {
+      selectedMaakuntaRef.current = region.name;
+      regionPickModeRef.current = false;
+      regionUserPickedRef.current = true;
+      setBrowseAllAreas(false);
+      setSelectedMaakunta(region.name);
+    }
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        fitToCityGyms(city);
+      });
     });
   }
 
@@ -2928,7 +3394,7 @@ function GymsPage() {
                 type="button"
                 className={[
                   "browse-filters-more",
-                  filterBadgeCount > 0 || extrasActive ? "is-active" : "",
+                  filtersMoreActive ? "is-active" : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
@@ -2942,8 +3408,10 @@ function GymsPage() {
               >
                 <SlidersHorizontal size={16} strokeWidth={2.2} />
                 <span className="browse-filters-more-label">{extrasLabel}</span>
-                {filterBadgeCount > 0 ? (
-                  <span className="browse-filters-badge">{filterBadgeCount}</span>
+                {filtersMoreActive ? (
+                  <span className="browse-filters-badge">
+                    {filtersMoreBadge}
+                  </span>
                 ) : null}
               </button>
               <button
@@ -2967,6 +3435,7 @@ function GymsPage() {
             </div>
       </div>
       <div className="browse-search-suggest">
+        <p className="browse-search-suggest-label">{t("popularShort")}</p>
         <div className="browse-search-suggest-chips">
           {BROWSE_SEARCH_QUICK.map((item) => (
             <button
@@ -2978,7 +3447,11 @@ function GymsPage() {
                   : "browse-search-suggest-chip"
               }
               onClick={() => {
-                setQuery(item);
+                if (query.trim().toLowerCase() === item.toLowerCase()) {
+                  setQuery("");
+                } else {
+                  setQuery(item);
+                }
                 setPage(1);
               }}
             >
@@ -2999,12 +3472,17 @@ function GymsPage() {
               <p className="browse-list-count browse-list-count-desk">
                 {regionPickMode
                   ? t("pickRegion")
-                  : selectedMaakunta
+                  : browseCitySlug
                     ? t("placesInRegion", {
-                        region: selectedMaakunta,
+                        region: displayCityName(browseCitySlug),
                         count: inViewGyms.length,
                       })
-                    : t("placesCount", { count: inViewGyms.length })}
+                    : selectedMaakunta
+                      ? t("placesInRegion", {
+                          region: selectedMaakunta,
+                          count: inViewGyms.length,
+                        })
+                      : t("placesCount", { count: inViewGyms.length })}
               </p>
               <p className="browse-list-count browse-list-count-mobile">
                 {regionPickMode
@@ -3449,144 +3927,214 @@ function GymsPage() {
               <div className="browse-map-chips">
                 <button
                   type="button"
-                  className="browse-map-chip browse-glass"
-                  aria-label={t("fromAddressAria")}
-                  aria-expanded={mapSheet === "address"}
-                  onClick={() => setMapSheet("address")}
-                >
-                  <MapPin size={18} strokeWidth={2.3} />
-                </button>
-                <button
-                  type="button"
-                  className="browse-map-chip browse-glass"
+                  className={[
+                    "browse-region-drop-btn",
+                    "browse-map-city-trigger",
+                    "browse-glass",
+                    mapSheet === "region" ? "is-open" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
                   aria-label={t("regions")}
                   aria-expanded={mapSheet === "region"}
-                  onClick={() => setMapSheet("region")}
+                  onClick={() => {
+                    setCityQuery("");
+                    setMapSheet((cur) =>
+                      cur === "region" ? null : "region",
+                    );
+                  }}
                 >
-                  <MapIcon size={18} strokeWidth={2.3} />
+                  <Building2
+                    className="browse-region-drop-ico"
+                    size={15}
+                    strokeWidth={2.3}
+                    aria-hidden="true"
+                  />
+                  <span>
+                    {browseCitySlug
+                      ? displayCityName(browseCitySlug)
+                      : t("regions")}
+                  </span>
+                  <ChevronDown
+                    className="browse-region-drop-chevron"
+                    size={16}
+                    strokeWidth={2.2}
+                  />
                 </button>
               </div>
-              <div className="browse-map-desk-tools">
-                <div className="browse-map-address-wrap">
-                  <label className="browse-map-address browse-glass">
-                    <MapPin size={15} strokeWidth={2.3} />
+              <div
+                ref={regionDropRef}
+                className={[
+                  "browse-region-drop",
+                  "browse-map-desk-city",
+                  regionMenuOpen ? "is-open" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                <button
+                  type="button"
+                  className="browse-region-drop-btn browse-glass"
+                  aria-expanded={regionMenuOpen}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    setRegionMenuOpen((v) => !v);
+                    setCityQuery("");
+                  }}
+                >
+                  <Building2
+                    className="browse-region-drop-ico"
+                    size={15}
+                    strokeWidth={2.3}
+                    aria-hidden="true"
+                  />
+                  <span>
+                    {browseCitySlug
+                      ? displayCityName(browseCitySlug)
+                      : t("regions")}
+                  </span>
+                  <ChevronDown
+                    className="browse-region-drop-chevron"
+                    size={16}
+                    strokeWidth={2.2}
+                  />
+                </button>
+                <div className="browse-region-drop-menu browse-glass">
+                  <label className="browse-region-drop-search">
                     <input
-                      type="text"
-                      placeholder={t("addressPlaceholder")}
-                      aria-label={t("addressAria")}
-                      value={addressDraft}
-                      autoComplete="off"
-                      onChange={(e) => {
-                        setAddressDraft(e.target.value);
-                        setAddressSuggest(true);
-                      }}
-                      onFocus={() => {
-                        if (
-                          addressDraft.trim().length >= 3 &&
-                          addressDraft.trim() !== locationLabel
-                        ) {
-                          setAddressSuggest(true);
-                        }
-                      }}
-                      onBlur={() => {
-                        setAddressSuggest(false);
-                        setAddressDraft(locationLabel);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Escape") setAddressSuggest(false);
-                      }}
+                      type="search"
+                      value={cityQuery}
+                      placeholder={t("searchCity")}
+                      aria-label={t("searchCity")}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onChange={(e) => setCityQuery(e.target.value)}
                     />
-                    <button
-                      type="button"
-                      className="browse-map-locate"
-                      aria-label={t("useMyLocation")}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => {
-                        void useMyLocation();
-                      }}
-                    >
-                      <LocateFixed size={15} strokeWidth={2.4} />
-                    </button>
                   </label>
-                  <div
-                    ref={regionDropRef}
-                    className={[
-                      "browse-region-drop",
-                      regionMenuOpen ? "is-open" : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                  >
-                    <button
-                      type="button"
-                      className="browse-region-drop-btn browse-glass"
-                      aria-expanded={regionMenuOpen}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => setRegionMenuOpen((v) => !v)}
-                    >
-                      {selectedMaakunta ? (
-                        <span
-                          className="browse-region-dot"
-                          style={{ background: regionColor(selectedMaakunta) }}
-                          aria-hidden="true"
-                        />
-                      ) : null}
-                      <span>{selectedMaakunta ?? t("regions")}</span>
-                      <ChevronDown size={16} strokeWidth={2.2} />
-                    </button>
-                    <ul className="browse-region-drop-list">
-                      {regionNames.map((name) => (
-                        <li key={name}>
-                          <button
-                            type="button"
-                            className={name === selectedMaakunta ? "is-on" : ""}
-                            onMouseDown={(e) => e.preventDefault()}
-                            onClick={() => focusRegion(name)}
-                          >
-                            <span
-                              className="browse-region-dot"
-                              style={{ background: regionColor(name) }}
-                              aria-hidden="true"
-                            />
-                            {name}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  {addressSuggest && addressDraft.trim().length >= 3 &&
-                  addressDraft.trim() !== locationLabel ? (
-                    <ul className="browse-address-hits">
-                      {addressLoading && addressHits.length === 0 ? (
-                        <li className="browse-address-hint">
-                          <LoadSpin size="sm" />
-                        </li>
-                      ) : null}
-                      {!addressLoading && addressHits.length === 0 ? (
-                        <li className="browse-address-hint">{t("noResults")}</li>
-                      ) : null}
-                      {addressHits.map((item) => (
-                        <li key={item.id}>
-                          <button
-                            type="button"
-                            onMouseDown={(e) => e.preventDefault()}
-                            onClick={() => {
-                              setAddressSuggest(false);
-                              flushSync(() => {
-                                setLocation({
-                                  label: item.label,
-                                  lat: item.lat,
-                                  lng: item.lng,
+                  <ul className="browse-region-drop-list">
+                    {filteredCityOptions.map((city) => (
+                      <li key={city.slug}>
+                        <button
+                          type="button"
+                          className={
+                            city.slug === browseCitySlug ? "is-on" : ""
+                          }
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => focusCity(city)}
+                        >
+                          {city.name}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+              <div className="browse-map-side-row">
+                <button
+                  type="button"
+                  className="browse-map-ctrl browse-map-locate-fab browse-glass"
+                  aria-label={t("mapGoToLocation")}
+                  disabled={origin.lat == null || origin.lng == null}
+                  onClick={() => {
+                    if (origin.lat == null || origin.lng == null) return;
+                    selectedIdRef.current = null;
+                    preCompareCameraRef.current = null;
+                    prevSelectedIdRef.current = null;
+                    setSelectedId(null);
+                    const fromLabel = cityFromLabel(locationLabel);
+                    const city =
+                      (fromLabel ? cityCenterForName(fromLabel) : null) ||
+                      cityCenterForName(locationLabel);
+                    if (city) {
+                      focusCity(city);
+                      return;
+                    }
+                    const map = mapInstanceRef.current;
+                    if (!map) return;
+                    map.easeTo({
+                      center: [origin.lng, origin.lat],
+                      zoom: ORIGIN_ZOOM,
+                      duration: 550,
+                    });
+                  }}
+                >
+                  <LocateFixed size={19} strokeWidth={2.4} />
+                </button>
+                <div className="browse-map-desk-tools">
+                  <div className="browse-map-address-wrap">
+                    <label className="browse-map-address browse-glass">
+                      <MapPin size={15} strokeWidth={2.3} />
+                      <input
+                        type="text"
+                        placeholder={t("addressPlaceholder")}
+                        aria-label={t("addressAria")}
+                        value={addressDraft}
+                        autoComplete="off"
+                        onChange={(e) => {
+                          setAddressDraft(e.target.value);
+                          setAddressSuggest(true);
+                        }}
+                        onFocus={() => {
+                          if (
+                            addressDraft.trim().length >= 3 &&
+                            addressDraft.trim() !== locationLabel
+                          ) {
+                            setAddressSuggest(true);
+                          }
+                        }}
+                        onBlur={() => {
+                          setAddressSuggest(false);
+                          setAddressDraft(locationLabel);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape") setAddressSuggest(false);
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="browse-map-locate"
+                        aria-label={t("useMyLocation")}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          void useMyLocation();
+                        }}
+                      >
+                        <LocateFixed size={15} strokeWidth={2.4} />
+                      </button>
+                    </label>
+                    {addressSuggest && addressDraft.trim().length >= 3 &&
+                    addressDraft.trim() !== locationLabel ? (
+                      <ul className="browse-address-hits">
+                        {addressLoading && addressHits.length === 0 ? (
+                          <li className="browse-address-hint">
+                            <LoadSpin size="sm" />
+                          </li>
+                        ) : null}
+                        {!addressLoading && addressHits.length === 0 ? (
+                          <li className="browse-address-hint">{t("noResults")}</li>
+                        ) : null}
+                        {addressHits.map((item) => (
+                          <li key={item.id}>
+                            <button
+                              type="button"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => {
+                                setAddressSuggest(false);
+                                flushSync(() => {
+                                  setLocation({
+                                    label: item.label,
+                                    lat: item.lat,
+                                    lng: item.lng,
+                                  });
                                 });
-                              });
-                            }}
-                          >
-                            {item.label}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
+                              }}
+                            >
+                              {item.label}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
                 </div>
               </div>
             </div>
@@ -3597,47 +4145,134 @@ function GymsPage() {
                 aria-label={t("mapZoomIn")}
                 onClick={() => mapInstanceRef.current?.zoomIn({ duration: 280 })}
               >
-                <Plus size={18} strokeWidth={2.4} />
+                <Plus size={20} strokeWidth={2.4} />
               </button>
               <button
                 type="button"
                 className="browse-map-ctrl browse-glass"
                 aria-label={t("mapZoomOut")}
-                onClick={() =>
-                  mapInstanceRef.current?.zoomOut({ duration: 280 })
-                }
+                onClick={() => {
+                  const map = mapInstanceRef.current;
+                  if (!map) return;
+                  if (map.getZoom() <= map.getMinZoom() + 0.01) return;
+                  map.zoomOut({ duration: 280 });
+                }}
               >
-                <Minus size={18} strokeWidth={2.4} />
+                <Minus size={20} strokeWidth={2.4} />
               </button>
             </div>
-            <button
-              type="button"
-              className="browse-map-ctrl browse-map-locate-fab browse-glass"
-              aria-label={t("mapGoToLocation")}
-              disabled={origin.lat == null || origin.lng == null}
-              onClick={() => {
-                const map = mapInstanceRef.current;
-                if (!map || origin.lat == null || origin.lng == null) return;
-                map.easeTo({
-                  center: [origin.lng, origin.lat],
-                  zoom: ADDRESS_ZOOM,
-                  duration: 550,
-                });
-              }}
-            >
-              <LocateFixed size={17} strokeWidth={2.4} />
-            </button>
             <div className="browse-map" aria-label={t("map")} ref={mapRef} />
-            <p className="browse-region-hint">
-              {selectedMaakunta ? (
-                <span
-                  className="browse-region-dot"
-                  style={{ background: regionColor(selectedMaakunta) }}
-                  aria-hidden="true"
-                />
-              ) : null}
-              <span>{selectedMaakunta ?? t("pickRegion")}</span>
-            </p>
+            {selectedMapGym ? (
+              <div className="browse-map-preview">
+                <Link
+                  to={pathGym(lang, selectedMapGym.gym.slug)}
+                  className="browse-map-preview-link"
+                >
+                  <span
+                    className={[
+                      "browse-map-preview-media",
+                      selectedMapGym.chain?.image &&
+                      !selectedMapGym.chain.image.includes("/pins/")
+                        ? selectedMapGym.chain.logoFit === "contain"
+                          ? "is-logo"
+                          : ""
+                        : "is-pin",
+                      selectedMapGym.chain?.image &&
+                      !selectedMapGym.chain.image.includes("/pins/")
+                        ? selectedMapGym.chain.logoClass || ""
+                        : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
+                    <img
+                      src={
+                        selectedMapGym.chain?.image &&
+                        !selectedMapGym.chain.image.includes("/pins/")
+                          ? selectedMapGym.chain.image
+                          : "/pins/gym-pin.png"
+                      }
+                      alt=""
+                    />
+                  </span>
+                  <span className="browse-map-preview-meta">
+                    <strong className="browse-map-preview-name">
+                      {selectedMapGym.siteName}
+                    </strong>
+                    {selectedMapGym.street ? (
+                      <span className="browse-map-preview-distance">
+                        {selectedMapGym.street}
+                      </span>
+                    ) : null}
+                    <span className="browse-map-preview-price">
+                      {selectedMapGym.priceLabel ?? t("priceUnknown")}
+                      {selectedMapGym.distKm != null
+                        ? ` · ${formatDistanceKm(selectedMapGym.distKm)}`
+                        : ""}
+                    </span>
+                  </span>
+                </Link>
+                <button
+                  type="button"
+                  className={
+                    favoriteSlugs.includes(selectedMapGym.gym.slug)
+                      ? "browse-row-fav browse-map-preview-fav is-on"
+                      : "browse-row-fav browse-map-preview-fav"
+                  }
+                  aria-label={
+                    favoriteSlugs.includes(selectedMapGym.gym.slug)
+                      ? t("removeFavorite")
+                      : t("addFavorite")
+                  }
+                  aria-pressed={favoriteSlugs.includes(selectedMapGym.gym.slug)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setFavoriteSlugs(
+                      toggleFavoriteSlug(selectedMapGym.gym.slug),
+                    );
+                  }}
+                >
+                  <Heart size={18} strokeWidth={2.2} />
+                </button>
+                {selectedMapGym.gym.lat != null &&
+                selectedMapGym.gym.lng != null ? (
+                  <a
+                    className="browse-map-preview-maps"
+                    href={
+                      "https://www.google.com/maps/dir/?api=1&origin=" +
+                      origin.lat +
+                      "," +
+                      origin.lng +
+                      "&destination=" +
+                      selectedMapGym.gym.lat +
+                      "," +
+                      selectedMapGym.gym.lng
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={t("mapsRoute")}
+                  >
+                    <img
+                      className="is-line"
+                      src="/pins/google-maps-outline.png"
+                      alt=""
+                    />
+                    <img
+                      className="is-fill"
+                      src="/pins/google-maps-pin.png"
+                      alt=""
+                    />
+                  </a>
+                ) : null}
+                <Link
+                  className="browse-map-preview-open"
+                  to={pathGym(lang, selectedMapGym.gym.slug)}
+                >
+                  {t("open")}
+                </Link>
+              </div>
+            ) : null}
           </div>
         </section>
 
@@ -3765,24 +4400,33 @@ function GymsPage() {
                     </ul>
                   </div>
                 ) : (
-                  <ul className="browse-map-sheet-hits is-regions">
-                    {regionNames.map((name) => (
-                      <li key={name}>
-                        <button
-                          type="button"
-                          className={name === selectedMaakunta ? "is-on" : ""}
-                          onClick={() => focusRegion(name)}
-                        >
-                          <span
-                            className="browse-region-dot"
-                            style={{ background: regionColor(name) }}
-                            aria-hidden="true"
-                          />
-                          {name}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="browse-map-sheet-body">
+                    <label className="browse-map-sheet-field">
+                      <input
+                        type="search"
+                        autoFocus
+                        placeholder={t("searchCity")}
+                        aria-label={t("searchCity")}
+                        value={cityQuery}
+                        onChange={(e) => setCityQuery(e.target.value)}
+                      />
+                    </label>
+                    <ul className="browse-map-sheet-hits is-regions">
+                      {filteredCityOptions.map((city) => (
+                        <li key={city.slug}>
+                          <button
+                            type="button"
+                            className={
+                              city.slug === browseCitySlug ? "is-on" : ""
+                            }
+                            onClick={() => focusCity(city)}
+                          >
+                            {city.name}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
               </div>
             </div>,
@@ -3928,10 +4572,17 @@ function GymsPage() {
 
             <div className="browse-extras-options">
               <label className="browse-extras-row browse-extras-women">
-                <span>
-                  <strong>{t("audienceWomen")}</strong>
-                  <span className="browse-extras-desc">
-                    {t("audienceWomenDesc")}
+                <span className="browse-extras-row-copy">
+                  <img
+                    className="browse-extras-row-icon"
+                    src="/icons/kenelle-women.png"
+                    alt=""
+                  />
+                  <span>
+                    <strong>{t("audienceWomen")}</strong>
+                    <span className="browse-extras-desc">
+                      {t("audienceWomenDesc")}
+                    </span>
                   </span>
                 </span>
                 <UxSwitch
@@ -3940,10 +4591,17 @@ function GymsPage() {
                 />
               </label>
               <label className="browse-extras-row">
-                <span>
-                  <strong>{t("open247")}</strong>
-                  <span className="browse-extras-desc">
-                    {t("open247Desc")}
+                <span className="browse-extras-row-copy">
+                  <Clock
+                    className="browse-extras-row-icon is-lucide"
+                    size={18}
+                    strokeWidth={2.2}
+                  />
+                  <span>
+                    <strong>{t("open247")}</strong>
+                    <span className="browse-extras-desc">
+                      {t("open247Desc")}
+                    </span>
                   </span>
                 </span>
                 <UxSwitch
@@ -3952,10 +4610,17 @@ function GymsPage() {
                 />
               </label>
               <label className="browse-extras-row">
-                <span>
-                  <strong>{t("freeTrial")}</strong>
-                  <span className="browse-extras-desc">
-                    {t("freeTrialDesc")}
+                <span className="browse-extras-row-copy">
+                  <Gift
+                    className="browse-extras-row-icon is-lucide"
+                    size={18}
+                    strokeWidth={2.2}
+                  />
+                  <span>
+                    <strong>{t("freeTrial")}</strong>
+                    <span className="browse-extras-desc">
+                      {t("freeTrialDesc")}
+                    </span>
                   </span>
                 </span>
                 <UxSwitch
@@ -3964,10 +4629,17 @@ function GymsPage() {
                 />
               </label>
               <label className="browse-extras-row">
-                <span>
-                  <strong>{t("priceDayPass")}</strong>
-                  <span className="browse-extras-desc">
-                    {t("dayPassDesc")}
+                <span className="browse-extras-row-copy">
+                  <Ticket
+                    className="browse-extras-row-icon is-lucide"
+                    size={18}
+                    strokeWidth={2.2}
+                  />
+                  <span>
+                    <strong>{t("priceDayPass")}</strong>
+                    <span className="browse-extras-desc">
+                      {t("dayPassDesc")}
+                    </span>
                   </span>
                 </span>
                 <UxSwitch
@@ -3982,6 +4654,7 @@ function GymsPage() {
                 type="button"
                 className="browse-extras-btn browse-extras-btn-ghost browse-extras-clear-desk"
                 onClick={() => {
+                  setSelectedAudiences([]);
                   setExtraOnly247(false);
                   setExtraFreeTrial(false);
                   setExtraDayPass(false);

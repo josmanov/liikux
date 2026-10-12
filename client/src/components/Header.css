@@ -62,6 +62,7 @@
   position: relative;
   display: inline-flex;
   align-items: center;
+  gap: 0.4rem;
   padding: 0.15rem 0 0.4rem;
   border: 0;
   background: transparent;
@@ -72,6 +73,11 @@
   text-decoration: none;
   cursor: pointer;
   transition: color 0.22s ease;
+}
+
+.header-nav-link svg {
+  flex-shrink: 0;
+  color: var(--color-brand);
 }
 
 .header-nav-link:hover:not(.header-fav) {
