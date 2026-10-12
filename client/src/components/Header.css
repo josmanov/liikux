@@ -85,6 +85,10 @@
   background: transparent;
 }
 
+.header-nav-link:hover:not(.header-fav) svg {
+  color: #64748b;
+}
+
 .header-nav-link.is-on::after {
   content: "";
   position: absolute;
@@ -140,8 +144,8 @@
   display: inline-flex;
   overflow: hidden;
   white-space: nowrap;
-  padding-right: 0;
-  transition: padding-right 0.1s ease, color 0.22s ease;
+  padding-left: 0;
+  transition: padding-left 0.1s ease, color 0.22s ease;
 }
 
 .header-fav:hover .header-fav-label {
@@ -149,7 +153,15 @@
 }
 
 .header-fav.is-typing .header-fav-label {
-  padding-right: 0.4rem;
+  padding-left: 0.4rem;
+}
+
+.header-fav.has-count .header-fav-label {
+  padding-left: 0.55rem;
+}
+
+.header-fav.has-count.is-typing .header-fav-label {
+  padding-left: 0.7rem;
 }
 
 .header-fav-ch {
@@ -264,7 +276,6 @@
     height: 2.5rem;
   }
 
-  .header-area-desktop,
   .header-sep,
   .header-nav,
   .header-lang-desktop {
@@ -272,7 +283,59 @@
   }
 
   .header-left {
-    gap: 0;
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 0.55rem;
+  }
+
+  .header-area-desktop {
+    display: block;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: min(11.5rem, 46%);
+  }
+
+  .header-area-desktop .area-select {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .header-area-desktop .area-select-btn {
+    width: 100%;
+    max-width: 100%;
+    min-height: 2.35rem;
+    height: 2.35rem;
+    padding: 0.3rem 0.55rem;
+    font-size: 0.82rem;
+    box-sizing: border-box;
+  }
+
+  .header-area-desktop .area-select-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .header-area-desktop .area-select-chevron {
+    margin-left: auto;
+  }
+
+  .header-area-desktop .area-select-label-full {
+    display: none;
+  }
+
+  .header-area-desktop .area-select-label-short {
+    display: inline;
+  }
+
+  .header-area-desktop .area-select-panel {
+    left: 0;
+    right: auto;
+    width: min(22rem, calc(100vw - 2rem));
+    min-width: min(18rem, calc(100vw - 2rem));
   }
 
   .header-fav {
@@ -292,7 +355,7 @@
   }
 
   .header-fav.is-typing .header-fav-label {
-    padding-right: 0;
+    padding-left: 0;
   }
 
   .header-menu-btn {

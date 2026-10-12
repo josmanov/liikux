@@ -154,13 +154,20 @@ function Header() {
         className={
           "header-nav-link header-fav" +
           (favShown > 0 ? " is-typing" : "") +
-          (favHover ? " is-full" : "")
+          (favHover ? " is-full" : "") +
+          (favCount > 0 ? " has-count" : "")
         }
         aria-label={favCount > 0 ? `${favWord}, ${favCount}` : favWord}
         onMouseEnter={() => setFavHover(true)}
         onMouseLeave={() => setFavHover(false)}
         onClick={() => setFavoritesOpen(true)}
       >
+        <span className="header-fav-icon">
+          <Heart size={20} strokeWidth={2.4} />
+          {favCount > 0 ? (
+            <span className="header-fav-count">{favCount}</span>
+          ) : null}
+        </span>
         <span className="header-fav-label" aria-hidden="true">
           {favWord.split("").map((ch, i) => (
             <span
@@ -170,12 +177,6 @@ function Header() {
               <span>{ch}</span>
             </span>
           ))}
-        </span>
-        <span className="header-fav-icon">
-          <Heart size={20} strokeWidth={2.4} />
-          {favCount > 0 ? (
-            <span className="header-fav-count">{favCount}</span>
-          ) : null}
         </span>
       </button>
 

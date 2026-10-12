@@ -1,9 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import { Heart, X } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronDown,
+  Heart,
+  MapPin,
+  X,
+} from "lucide-react";
 import "./ChainPopup.css";
-import AreaSelect from "./AreaSelect";
 import { type Chain, type Gym, resolveGymOffer } from "../data/types";
 import { fetchGymsAndChains } from "../data/api";
 import {
@@ -35,6 +42,8 @@ function distanceKm(
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+type SortId = "nearest" | "price-asc" | "price-desc";
+
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -44,6 +53,8 @@ function FavoritesPopup({ open, onClose }: Props) {
   const { lang, t } = useLang();
   const { lat: originLat, lng: originLng } = useAppLocation();
   const [query, setQuery] = useState("");
+  const [sortId, setSortId] = useState<SortId>("nearest");
+  const [sortOpen, setSortOpen] = useState(false);
   const [gyms, setGyms] = useState<Gym[]>([]);
   const [chains, setChains] = useState<Chain[]>([]);
   const [sessionSlugs, setSessionSlugs] = useState<string[]>([]);
@@ -51,8 +62,21 @@ function FavoritesPopup({ open, onClose }: Props) {
   const keptRef = useRef(keptSlugs);
   keptRef.current = keptSlugs;
   const [favReady, setFavReady] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
 
   useLockPageScroll(open);
+
+  const sortOptions = [
+    { id: "nearest" as const, label: t("sortNearest"), icon: "map" as const },
+    { id: "price-asc" as const, label: t("sortCheap"), icon: "down" as const },
+    {
+      id: "price-desc" as const,
+      label: t("sortExpensive"),
+      icon: "up" as const,
+    },
+  ];
+  const sortLabel =
+    sortOptions.find((o) => o.id === sortId)?.label ?? t("sortNearest");
 
   useEffect(() => {
     if (!open) return;
@@ -70,8 +94,21 @@ function FavoritesPopup({ open, onClose }: Props) {
   }
 
   useEffect(() => {
-    if (!open) setQuery("");
+    if (!open) {
+      setQuery("");
+      setSortOpen(false);
+      setSortId("nearest");
+    }
   }, [open]);
+
+  useEffect(() => {
+    if (!sortOpen) return;
+    function onDoc(e: MouseEvent) {
+      if (!sortRef.current?.contains(e.target as Node)) setSortOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [sortOpen]);
 
   useEffect(() => {
     if (!open) return;
@@ -106,7 +143,7 @@ function FavoritesPopup({ open, onClose }: Props) {
   const keptCount = keptSlugs.length;
 
   const q = query.trim().toLowerCase();
-  const list = favorites.filter((g) => {
+  let list = favorites.filter((g) => {
     if (!q) return true;
     return (
       g.name.toLowerCase().includes(q) ||
@@ -114,6 +151,35 @@ function FavoritesPopup({ open, onClose }: Props) {
       g.address.toLowerCase().includes(q)
     );
   });
+
+  if (sortId === "price-asc" || sortId === "price-desc") {
+    const dir = sortId === "price-asc" ? 1 : -1;
+    list = [...list].sort((a, b) => {
+      const ap = a.priceFrom ?? Number.POSITIVE_INFINITY;
+      const bp = b.priceFrom ?? Number.POSITIVE_INFINITY;
+      if (ap === bp) return a.name.localeCompare(b.name, "fi");
+      return (ap - bp) * dir;
+    });
+  } else {
+    list = [...list].sort((a, b) => {
+      const aKm =
+        originLat != null &&
+        originLng != null &&
+        a.lat != null &&
+        a.lng != null
+          ? distanceKm(originLat, originLng, a.lat, a.lng)
+          : Number.POSITIVE_INFINITY;
+      const bKm =
+        originLat != null &&
+        originLng != null &&
+        b.lat != null &&
+        b.lng != null
+          ? distanceKm(originLat, originLng, b.lat, b.lng)
+          : Number.POSITIVE_INFINITY;
+      if (aKm === bKm) return a.name.localeCompare(b.name, "fi");
+      return aKm - bKm;
+    });
+  }
 
   return createPortal(
     <div className="chain-popup-overlay is-fav" onClick={handleClose}>
@@ -149,7 +215,64 @@ function FavoritesPopup({ open, onClose }: Props) {
                 onChange={(e) => setQuery(e.target.value)}
               />
             </div>
-            <AreaSelect />
+            <div className="chain-popup-sort" ref={sortRef}>
+              <button
+                type="button"
+                className="chain-popup-sort-btn"
+                aria-expanded={sortOpen}
+                aria-haspopup="listbox"
+                onClick={() => setSortOpen((v) => !v)}
+              >
+                <ArrowUpDown size={16} strokeWidth={2.2} />
+                <span className="chain-popup-sort-label">{sortLabel}</span>
+                <ChevronDown
+                  className="chain-popup-sort-chevron"
+                  size={16}
+                  strokeWidth={2.2}
+                />
+              </button>
+              {sortOpen ? (
+                <ul className="chain-popup-sort-menu" role="listbox">
+                  {sortOptions.map((opt) => (
+                    <li key={opt.id}>
+                      <button
+                        type="button"
+                        className={opt.id === sortId ? "is-on" : ""}
+                        role="option"
+                        aria-selected={opt.id === sortId}
+                        onClick={() => {
+                          setSortId(opt.id);
+                          setSortOpen(false);
+                        }}
+                      >
+                        {opt.icon === "map" ? (
+                          <MapPin
+                            className="chain-popup-sort-opt-icon"
+                            size={16}
+                            strokeWidth={2.2}
+                          />
+                        ) : null}
+                        {opt.icon === "down" ? (
+                          <ArrowDown
+                            className="chain-popup-sort-opt-icon"
+                            size={16}
+                            strokeWidth={2.2}
+                          />
+                        ) : null}
+                        {opt.icon === "up" ? (
+                          <ArrowUp
+                            className="chain-popup-sort-opt-icon"
+                            size={16}
+                            strokeWidth={2.2}
+                          />
+                        ) : null}
+                        <span>{opt.label}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
           </div>
           <p className="chain-popup-sub">
             {t("favoriteCount", { count: keptCount })}
