@@ -1,0 +1,1 @@
+export { getChainWebsite } from "../../data/chainWebsites";

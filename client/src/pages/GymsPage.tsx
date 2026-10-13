@@ -1,7 +1,8 @@
 import "./GymsPage.css";
 import "../components/ChainPopup.css";
+import "./GymsPage.css";
+import "../components/ChainPopup.css";
 import {
-  startTransition,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -36,23 +37,17 @@ import {
   X,
 } from "lucide-react";
 import {
-  fetchGeoJson,
-  observeMapContainerResize,
-  waitForMapContainerSize,
-} from "../map/maplibreSetup";
-import { LngLatBounds, Map, Marker, type MapLayerMouseEvent } from "maplibre-gl";
+  LngLatBounds,
+  Map as MapLibreMap,
+  Marker,
+  type MapLayerMouseEvent,
+} from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type Chain, type Gym, resolveGymOffer } from "../data/types";
 import { fetchGymsAndChains } from "../data/api";
 import { useAddressSuggest } from "../data/geocode";
 import { useLockPageScroll } from "../hooks/useLockPageScroll";
-import {
-  chainForGym,
-  gymHasDayPass,
-  gymHasFreeTrial,
-  gymIs247,
-  gymMatchesAudience,
-} from "../data/audience";
+import { chainForGym } from "../data/audience";
 import {
   cleanGymDisplayName,
   formatDistanceKm,
@@ -64,7 +59,6 @@ import { useAppLocation } from "../context/LocationContext";
 import {
   PRICE_MAX,
   PRICE_MIN,
-  PRICE_STEP,
   buildBrowseSearch,
   parseBrowseSearch,
   sameIds,
@@ -91,609 +85,46 @@ import {
 import UxSwitch from "../components/UxSwitch";
 import LoadSpin from "../components/LoadSpin";
 
-function markerScaleForZoom(zoom: number) {
-  const t = Math.min(1, Math.max(0, (zoom - 4.2) / 8));
-  return 0.78 + t * 0.32;
-}
-
-function pinTouchPx(scale: number) {
-  return 26 * scale;
-}
-
-function pinStackZ(lat: number, kind: "pin" | "price" | "cluster") {
-  const base = Math.max(1, Math.round((72 - lat) * 80));
-  if (kind === "cluster") return base;
-  if (kind === "price") return base + 2500;
-  return base + 400;
-}
-
-function zoomWhereClusterSplits(map: Map, group: Gym[]) {
-  const z0 = map.getZoom();
-  const maxZoom = Math.min(map.getMaxZoom(), z0 + 7);
-  const pts = group.map((g) => map.project([g.lng, g.lat]));
-  let minD = Infinity;
-  for (let i = 0; i < pts.length; i++) {
-    for (let j = i + 1; j < pts.length; j++) {
-      const dx = pts[i].x - pts[j].x;
-      const dy = pts[i].y - pts[j].y;
-      const d = Math.hypot(dx, dy);
-      if (d > 0 && d < minD) minD = d;
-    }
-  }
-  if (!Number.isFinite(minD) || minD < 0.5) {
-    return Math.min(z0 + 2.8, maxZoom);
-  }
-
-  let lo = z0;
-  let hi = maxZoom;
-  for (let n = 0; n < 18; n++) {
-    const mid = (lo + hi) / 2;
-    const spread = minD * 2 ** (mid - z0);
-    const need = pinTouchPx(markerScaleForZoom(mid)) + 28;
-    if (spread > need) hi = mid;
-    else lo = mid;
-  }
-  return Math.min(hi + 0.35, maxZoom);
-}
-
-function framePadForOverlays(
-  map: Map,
-  opts?: { labelTop?: number; labelBottom?: number },
-) {
-  const mapEl = map.getContainer();
-  const col = mapEl.closest(".browse-map-col") ?? mapEl.parentElement;
-  const mapRect = mapEl.getBoundingClientRect();
-  const w = mapRect.width;
-  const h = mapRect.height;
-  const gap = 18;
-  const labelTop = opts?.labelTop ?? 36;
-  const labelBottom = opts?.labelBottom ?? 20;
-  let left = 28;
-  let right = 28;
-  let top = 28 + labelTop;
-  let bottom = 36 + labelBottom;
-
-  const selectors = [
-    ".browse-map-side",
-    ".browse-map-chips",
-    ".browse-map-desk-city",
-    ".browse-map-desk-tools",
-    ".browse-map-controls",
-    ".browse-map-locate-fab",
-    ".browse-map-preview",
-    ".browse-map-open-btn",
-  ];
-
-  for (const sel of selectors) {
-    const el = col?.querySelector(sel);
-    if (!(el instanceof HTMLElement)) continue;
-    const style = getComputedStyle(el);
-    if (style.display === "none" || style.visibility === "hidden") continue;
-    if (style.opacity === "0") continue;
-    const r = el.getBoundingClientRect();
-    if (r.width < 2 || r.height < 2) continue;
-
-    const nearTop = r.top - mapRect.top < h * 0.45;
-    const nearBottom = mapRect.bottom - r.bottom < h * 0.45;
-    const nearLeft = r.left - mapRect.left < w * 0.45;
-    const nearRight = mapRect.right - r.right < w * 0.45;
-
-    if (nearTop) {
-      top = Math.max(top, Math.ceil(r.bottom - mapRect.top + gap + labelTop));
-    }
-    if (nearBottom) {
-      bottom = Math.max(
-        bottom,
-        Math.ceil(mapRect.bottom - r.top + gap + labelBottom),
-      );
-    }
-    if (nearLeft) {
-      left = Math.max(left, Math.ceil(r.right - mapRect.left + gap));
-    }
-    if (nearRight) {
-      right = Math.max(right, Math.ceil(mapRect.right - r.left + gap));
-    }
-  }
-
-  const maxL = Math.floor(w * 0.4);
-  const maxR = Math.floor(w * 0.4);
-  const maxT = Math.floor(h * 0.4);
-  const maxB = Math.floor(h * 0.4);
-  return {
-    top: Math.min(Math.max(top, 40), maxT),
-    bottom: Math.min(Math.max(bottom, 40), maxB),
-    left: Math.min(Math.max(left, 28), maxL),
-    right: Math.min(Math.max(right, 28), maxR),
-  };
-}
-
-function frameOriginAndGym(
-  map: Map,
-  originLng: number,
-  originLat: number,
-  gymLng: number,
-  gymLat: number,
-  bounceLockRef?: { current: boolean },
-  cameraSaveRef?: {
-    current: {
-      lng: number;
-      lat: number;
-      zoom: number;
-      minZoom: number;
-    } | null;
-  },
-) {
-  if (cameraSaveRef && !cameraSaveRef.current) {
-    const c = map.getCenter();
-    cameraSaveRef.current = {
-      lng: c.lng,
-      lat: c.lat,
-      zoom: map.getZoom(),
-      minZoom: map.getMinZoom(),
-    };
-  }
-  map.stop();
-  map.resize();
-  map.setMinZoom(1);
-  if (bounceLockRef) bounceLockRef.current = true;
-  const bounds = new LngLatBounds();
-  bounds.extend([originLng, originLat]);
-  bounds.extend([gymLng, gymLat]);
-  map.fitBounds(bounds, {
-    padding: framePadForOverlays(map, {
-      labelTop: 110,
-      labelBottom: 28,
-    }),
-    maxZoom: FRAME_ZOOM,
-    duration: 700,
-    easing: (t) => 1 - (1 - t) ** 3,
-  });
-  window.setTimeout(() => {
-    const savedMin = cameraSaveRef?.current?.minZoom;
-    const floor = Math.min(map.getZoom(), savedMin ?? map.getZoom());
-    map.setMinZoom(Math.max(1, floor));
-    if (bounceLockRef) bounceLockRef.current = false;
-  }, 850);
-}
-
-function gymsNearViewport(gyms: Gym[], map: Map) {
-  const b = map.getBounds();
-  const padX = (b.getEast() - b.getWest()) * 0.4;
-  const padY = (b.getNorth() - b.getSouth()) * 0.4;
-  const west = b.getWest() - padX;
-  const east = b.getEast() + padX;
-  const south = b.getSouth() - padY;
-  const north = b.getNorth() + padY;
-  return gyms.filter(
-    (g) =>
-      g.lng != null &&
-      g.lat != null &&
-      g.lng >= west &&
-      g.lng <= east &&
-      g.lat >= south &&
-      g.lat <= north,
-  );
-}
-
-function clusterMarkerKey(group: Gym[]) {
-  return "c:" + group.map((g) => g.id).sort().join("|");
-}
-
-function clusterGymsByScreenTouch(gyms: Gym[], map: Map, touchPx: number) {
-  const n = gyms.length;
-  if (n === 0) return [] as Gym[][];
-
-  const pts = [...gyms]
-    .sort((a, b) => a.id.localeCompare(b.id))
-    .map((g) => {
-      const p = map.project([g.lng, g.lat]);
-      return { g, x: p.x, y: p.y };
-    });
-
-  const limit = touchPx * touchPx;
-  const used = new Array(n).fill(false);
-  const groups: Gym[][] = [];
-
-  function dist2(a: number, b: number) {
-    const dx = pts[a].x - pts[b].x;
-    const dy = pts[a].y - pts[b].y;
-    return dx * dx + dy * dy;
-  }
-
-  for (let i = 0; i < n; i++) {
-    if (used[i]) continue;
-    const members = [i];
-    used[i] = true;
-    let grew = true;
-    while (grew) {
-      grew = false;
-      for (let j = 0; j < n; j++) {
-        if (used[j]) continue;
-        const touchesAll = members.every((m) => dist2(m, j) <= limit);
-        if (!touchesAll) continue;
-        members.push(j);
-        used[j] = true;
-        grew = true;
-      }
-    }
-    groups.push(members.map((idx) => pts[idx].g));
-  }
-
-  return groups;
-}
-const HANGO: [number, number] = [22.968, 59.824];
-const NUORGAM: [number, number] = [27.879, 70.086];
-const FINLAND_VIEW: [[number, number], [number, number]] = [
-  [18.8, HANGO[1] - 0.35],
-  [31.8, NUORGAM[1] + 0.25],
-];
-const FINLAND_CENTER: [number, number] = [
-  (HANGO[0] + NUORGAM[0]) / 2,
-  (HANGO[1] + NUORGAM[1]) / 2,
-];
-const ORIGIN_ZOOM = 12;
-const ADDRESS_ZOOM = 10.9;
-const FRAME_ZOOM = 12.6;
-const MAAKUNTA_MAP_ACTIVE = false;
-const MAP_MAX_BOUNDS: [[number, number], [number, number]] = [
-  [4.0, 53.5],
-  [44.0, 73.0],
-];
-
-type MaakuntaGeom = {
-  type: "Polygon" | "MultiPolygon";
-  coordinates: number[][][] | number[][][][];
-};
-
-function pointInRing(lng: number, lat: number, ring: number[][]) {
-  let inside = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const xi = ring[i][0];
-    const yi = ring[i][1];
-    const xj = ring[j][0];
-    const yj = ring[j][1];
-    if (
-      yi > lat !== yj > lat &&
-      lng < ((xj - xi) * (lat - yi)) / (yj - yi + 0.0) + xi
-    ) {
-      inside = !inside;
-    }
-  }
-  return inside;
-}
-
-function pointInPolygon(lng: number, lat: number, geom: MaakuntaGeom) {
-  const polys =
-    geom.type === "Polygon"
-      ? [geom.coordinates as number[][][]]
-      : (geom.coordinates as number[][][][]);
-  for (const poly of polys) {
-    if (!pointInRing(lng, lat, poly[0])) continue;
-    let inHole = false;
-    for (let i = 1; i < poly.length; i++) {
-      if (pointInRing(lng, lat, poly[i])) {
-        inHole = true;
-        break;
-      }
-    }
-    if (!inHole) return true;
-  }
-  return false;
-}
-
-function geomBBox(geom: MaakuntaGeom): [[number, number], [number, number]] {
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  function walk(coords: unknown) {
-    if (!Array.isArray(coords)) return;
-    if (typeof coords[0] === "number") {
-      const lng = coords[0] as number;
-      const lat = coords[1] as number;
-      minX = Math.min(minX, lng);
-      maxX = Math.max(maxX, lng);
-      minY = Math.min(minY, lat);
-      maxY = Math.max(maxY, lat);
-      return;
-    }
-    for (const c of coords) walk(c);
-  }
-  walk(geom.coordinates);
-  return [
-    [minX, minY],
-    [maxX, maxY],
-  ];
-}
-
-function geomCentroid(geom: MaakuntaGeom): [number, number] {
-  const [[minX, minY], [maxX, maxY]] = geomBBox(geom);
-  return [(minX + maxX) / 2, (minY + maxY) / 2];
-}
-
-const PIN_ZOOM_OUT_PAD_KM = 10;
-
-function expandBoundsByKm(bounds: LngLatBounds, km: number) {
-  const sw = bounds.getSouthWest();
-  const ne = bounds.getNorthEast();
-  const midLat = (sw.lat + ne.lat) / 2;
-  const dLat = km / 111;
-  const cos = Math.cos((midLat * Math.PI) / 180);
-  const dLng = km / (111 * Math.max(0.2, cos));
-  return new LngLatBounds(
-    [sw.lng - dLng, sw.lat - dLat],
-    [ne.lng + dLng, ne.lat + dLat],
-  );
-}
-
-function boundsFromPins(pins: { lat: number; lng: number }[]) {
-  const bounds = new LngLatBounds();
-  for (const p of pins) bounds.extend([p.lng, p.lat]);
-  return bounds;
-}
-
-function applyFinlandMinZoom(map: Map) {
-  const cam = map.cameraForBounds(FINLAND_VIEW, { padding: 36 });
-  if (cam?.zoom == null) return;
-  map.setMinZoom(Math.max(1, cam.zoom - 0.65));
-}
-
-function applyPinsMinZoom(
-  map: Map,
-  pins: { lat: number; lng: number }[],
-  pad?: { top: number; bottom: number; left: number; right: number },
-) {
-  if (pins.length === 0) {
-    applyFinlandMinZoom(map);
-    return;
-  }
-  const padding = pad ?? framePadForOverlays(map, { labelTop: 36 });
-  const padded = expandBoundsByKm(boundsFromPins(pins), PIN_ZOOM_OUT_PAD_KM);
-  const cam = map.cameraForBounds(padded, { padding });
-  if (cam?.zoom == null) return;
-  map.setMinZoom(Math.max(1, cam.zoom));
-}
-
-function centerFinlandIfMaxOut(map: Map) {
-  if (map.getZoom() > map.getMinZoom() + 0.12) return;
-  const c = map.getCenter();
-  if (
-    Math.abs(c.lng - FINLAND_CENTER[0]) < 0.08 &&
-    Math.abs(c.lat - FINLAND_CENTER[1]) < 0.08
-  ) {
-    return;
-  }
-  map.easeTo({ center: FINLAND_CENTER, duration: 280 });
-}
-
-const REGION_COLORS: Record<string, string> = {
-  Uusimaa: "#e53935",
-  "Varsinais-Suomi": "#1e88e5",
-  Satakunta: "#43a047",
-  "Kanta-Häme": "#fb8c00",
-  Pirkanmaa: "#8e24aa",
-  "Päijät-Häme": "#00acc1",
-  Kymenlaakso: "#c0ca33",
-  "Etelä-Karjala": "#d81b60",
-  "Etelä-Savo": "#5e35b1",
-  "Pohjois-Savo": "#00897b",
-  "Pohjois-Karjala": "#6d4c41",
-  "Keski-Suomi": "#3949ab",
-  "Etelä-Pohjanmaa": "#f4511e",
-  Pohjanmaa: "#039be5",
-  "Keski-Pohjanmaa": "#7cb342",
-  "Pohjois-Pohjanmaa": "#fdd835",
-  Kainuu: "#ad1457",
-  Lappi: "#1565c0",
-  Ahvenanmaa: "#00838f",
-};
-
-const REGION_FILL_MATCH: unknown[] = [
-  "match",
-  ["get", "nimi"],
-  ...Object.entries(REGION_COLORS).flatMap(([name, color]) => [name, color]),
-  "#64748b",
-];
-
-function regionColor(name: string | null | undefined) {
-  if (!name) return "#64748b";
-  return REGION_COLORS[name] ?? "#64748b";
-}
-
-const OTHER_CHAIN_FILTER_ID = "yksityiset";
-
-const chainFilterOptionIds = [
-  "elixia",
-  "easyfit",
-  "fressi",
-  "fitness24",
-  "olefit",
-  "liikku",
-  "forever",
-  "ladyline",
-  "esport",
-  "unisport",
-  "mm",
+import {
+  filterChainVisual,
+  filterIdFromChainSlug,
+  chainFilterOptionIds,
+  chainFilterBrandLabels,
+  allChainFilterIds,
   OTHER_CHAIN_FILTER_ID,
-] as const;
-
-const chainFilterBrandLabels: Record<string, string> = {
-  elixia: "Elixia",
-  easyfit: "EasyFit",
-  fressi: "Fressi",
-  fitness24: "Fitness24Seven",
-  olefit: "Ole.Fit",
-  liikku: "Liikku",
-  forever: "Forever",
-  ladyline: "LadyLine",
-  esport: "Esport",
-  unisport: "UniSport",
-  mm: "M&M",
-};
-
-const chainFilterOptions = chainFilterOptionIds.map((id) => ({
-  id,
-  label: id === OTHER_CHAIN_FILTER_ID ? "Yksityiset / muut" : chainFilterBrandLabels[id],
-}));
-
-const allChainFilterIds = chainFilterOptions.map((o) => o.id);
-
-function chainMatchesFilterKey(chain: { slug: string }, key: string) {
-  const slug = chain.slug.replace(/-/g, "").toLowerCase();
-  const k = key.replace(/-/g, "").toLowerCase();
-  return slug === k || slug.startsWith(k) || k.startsWith(slug);
-}
-
-function isListedBrandChain(chain: { slug: string }) {
-  return chainFilterOptions.some(
-    (opt) =>
-      opt.id !== OTHER_CHAIN_FILTER_ID && chainMatchesFilterKey(chain, opt.id),
-  );
-}
-
-function filterIdFromChainSlug(slug: string, chains: Chain[]) {
-  const fromOptions = chainFilterOptions.find(
-    (opt) =>
-      opt.id !== OTHER_CHAIN_FILTER_ID &&
-      chainMatchesFilterKey({ slug }, opt.id),
-  );
-  if (fromOptions) return fromOptions.id;
-
-  const chain = chains.find((c) => c.slug === slug);
-  if (!chain) return null;
-  if (!isListedBrandChain(chain)) return OTHER_CHAIN_FILTER_ID;
-
-  return (
-    chainFilterOptions.find(
-      (opt) =>
-        opt.id !== OTHER_CHAIN_FILTER_ID &&
-        chainMatchesFilterKey(chain, opt.id),
-    )?.id ?? null
-  );
-}
-
-const distancePresetMeta = [
-  { id: "1", km: 1 },
-  { id: "3", km: 3 },
-  { id: "5", km: 5 },
-  { id: "10", km: 10 },
-  { id: "20", km: 20 },
-  { id: "30", km: 30 },
-  { id: "all", km: null as number | null },
-];
-
-function DualRange({
-  lo,
-  hi,
-  onLo,
-  onHi,
-  minLabel,
-  maxLabel,
-}: {
-  lo: number;
-  hi: number;
-  onLo: (n: number) => void;
-  onHi: (n: number) => void;
-  minLabel: string;
-  maxLabel: string;
-}) {
-  const span = PRICE_MAX - PRICE_MIN || 1;
-  const left = ((lo - PRICE_MIN) / span) * 100;
-  const right = ((hi - PRICE_MIN) / span) * 100;
-  return (
-    <div className="browse-dual">
-      <div className="browse-dual-rail">
-        <div
-          className="browse-dual-fill"
-          style={{ left: `${left}%`, width: `${Math.max(0, right - left)}%` }}
-        />
-      </div>
-      <input
-        type="range"
-        min={PRICE_MIN}
-        max={PRICE_MAX}
-        step={PRICE_STEP}
-        value={lo}
-        aria-label={minLabel}
-        className="browse-dual-input is-lo"
-        onChange={(e) => onLo(Math.min(Number(e.target.value), hi))}
-      />
-      <input
-        type="range"
-        min={PRICE_MIN}
-        max={PRICE_MAX}
-        step={PRICE_STEP}
-        value={hi}
-        aria-label={maxLabel}
-        className="browse-dual-input is-hi"
-        onChange={(e) => onHi(Math.max(Number(e.target.value), lo))}
-      />
-    </div>
-  );
-}
-
-function distanceKm(
-  aLat: number,
-  aLng: number,
-  bLat: number,
-  bLng: number,
-) {
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const dLat = toRad(bLat - aLat);
-  const dLng = toRad(bLng - aLng);
-  const lat1 = toRad(aLat);
-  const lat2 = toRad(bLat);
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-  return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-}
-
-type FilterKey = "sort" | "price" | "distance";
-
-function filterChainVisual(id: string, list: Chain[]) {
-  if (id === OTHER_CHAIN_FILTER_ID) {
-    return { image: "/pins/gym-pin.png", logo: true, logoClass: "is-other" };
-  }
-  const chain = list.find((c) => chainMatchesFilterKey(c, id));
-  const image =
-    chain?.image && !chain.image.includes("/pins/")
-      ? chain.image
-      : "/pins/gym-pin.png";
-  return {
-    image,
-    logo: chain?.logoFit === "contain" || image.includes("/pins/"),
-    logoClass: chain?.logoClass || "",
-  };
-}
-
-const PAGE_SIZE_START = 8;
-const PAGE_SIZE_MOBILE = 18;
-const BROWSE_MOBILE_MQ = "(max-width: 900px)";
-const BROWSE_SEARCH_QUICK = [
-  { id: "fressi", q: "Fressi" },
-  { id: "elixia", q: "Elixia" },
-  { id: "easyfit", q: "EasyFit" },
-  { id: "f24", q: "Fitness24Seven" },
-  { id: "gofitness", q: "GoFitness" },
-  { id: "liikku", q: "Liikku" },
-  { id: "forever", q: "Forever" },
-  { id: "trial", filter: "freeTrial" as const },
-  { id: "247", filter: "only247" as const },
-  { id: "day", filter: "dayPass" as const },
-] as const;
-
-function pageNums(current: number, count: number): Array<number | "gap"> {
-  if (count <= 6) {
-    return Array.from({ length: count }, (_, i) => i + 1);
-  }
-  if (current <= 4) return [1, 2, 3, 4, "gap", count];
-  if (current >= count - 3) {
-    return [1, "gap", count - 3, count - 2, count - 1, count];
-  }
-  return [1, "gap", current - 1, current, current + 1, "gap", count];
-}
-
+  isListedBrandChain,
+  chainMatchesFilterKey,
+} from "../features/browse/utils/chainFilters";
+import { distanceKm } from "../features/browse/utils/distanceKm";
+import { filterAndSortBrowseGyms } from "../features/browse/utils/filterAndSortBrowseGyms";
+import {
+  applyFinlandMinZoom,
+  applyPinsMinZoom,
+  expandBoundsByKm,
+  frameOriginAndGym,
+  framePadForOverlays,
+  boundsFromPins,
+} from "../features/browse/utils/mapBounds";
+import {
+  ADDRESS_ZOOM,
+  BROWSE_MOBILE_MQ,
+  BROWSE_SEARCH_QUICK,
+  MAAKUNTA_MAP_ACTIVE,
+  ORIGIN_ZOOM,
+  PAGE_SIZE_MOBILE,
+  PAGE_SIZE_START,
+  distancePresetMeta,
+  type FilterKey,
+} from "../features/browse/utils/mapConstants";
+import {
+  geomBBox,
+  pointInPolygon,
+  type MaakuntaGeom,
+} from "../features/browse/utils/maakuntaGeom";
+import { pageNums } from "../features/browse/utils/pageNums";
+import { BrowseDualRange } from "../features/browse/components/BrowseDualRange";
+import { useBrowseMapInit } from "../features/browse/hooks/useBrowseMapInit";
+import { useBrowseMapMarkers } from "../features/browse/hooks/useBrowseMapMarkers";
 function GymsPage() {
   const {
     slug: chainSlug,
@@ -914,7 +345,7 @@ function GymsPage() {
   const [mobileMapOpen, setMobileMapOpen] = useState(false);
   const [listAtEnd, setListAtEnd] = useState(false);
   const pageSizeRef = useRef(PAGE_SIZE_START);
-  const mapInstanceRef = useRef<Map | null>(null);
+  const mapInstanceRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef(new globalThis.Map<string, Marker>());
   const originMarkerRef = useRef<Marker | null>(null);
   const selectFromMapRef = useRef(false);
@@ -980,11 +411,11 @@ function GymsPage() {
   }, []);
 
   useEffect(() => {
-    const box = listScrollRef.current;
-    if (!box) return;
     const mq = window.matchMedia(BROWSE_MOBILE_MQ);
 
     function fitRows() {
+      const box = listScrollRef.current;
+      if (!box) return;
       const list = box.querySelector<HTMLElement>(".browse-rows");
       if (!list) return;
       if (mq.matches) {
@@ -1012,7 +443,8 @@ function GymsPage() {
 
     fitRows();
     const watch = new ResizeObserver(fitRows);
-    watch.observe(box);
+    const box = listScrollRef.current;
+    if (box) watch.observe(box);
     mq.addEventListener("change", fitRows);
     return () => {
       watch.disconnect();
@@ -1127,7 +559,7 @@ function GymsPage() {
   useEffect(() => {
     if (visibleChainFilterIds.length === 0) return;
     setSelectedChains((cur) => {
-      const allowed = new Set(visibleChainFilterIds);
+      const allowed = new Set<string>(visibleChainFilterIds);
       const next = cur.filter((id) => allowed.has(id));
       if (next.length === cur.length) return cur;
       if (next.length === 0) return [...visibleChainFilterIds];
@@ -1394,96 +826,25 @@ function GymsPage() {
   }, [locationLabel, locationLat, locationLng]);
 
   const visibleGyms = useMemo(() => {
-    const q = query.trim().toLowerCase();
-
-    let list = gyms.filter((gym) => {
-      if (selectedChainFilter.mode === "none") return false;
-      if (selectedChainFilter.mode === "some") {
-        const matchesBrand = selectedChainFilter.ids.has(gym.chainId);
-        const chain = chains.find((c) => c.id === gym.chainId);
-        const isOther = !chain || !isListedBrandChain(chain);
-        if (
-          !matchesBrand &&
-          !(selectedChainFilter.includeOther && isOther)
-        ) {
-          return false;
-        }
-      }
-      if (womenOnly) {
-        const chain = chainForGym(gym, chains);
-        if (!gymMatchesAudience(gym, chain, ["women"])) return false;
-      }
-      if (priceFilterOn) {
-        const chain = chainForGym(gym, chains);
-        const priceFrom =
-          gym.priceFrom != null ? gym.priceFrom : (chain?.priceFrom ?? null);
-        if (priceFrom == null) return false;
-        if (priceFrom < priceMin) return false;
-        if (priceMax < PRICE_MAX && priceFrom > priceMax) return false;
-      }
-      if (extraOnly247) {
-        const chain = chainForGym(gym, chains);
-        if (!gymIs247(gym, chain)) return false;
-      }
-      if (extraFreeTrial) {
-        const chain = chainForGym(gym, chains);
-        if (!gymHasFreeTrial(gym, chain)) return false;
-      }
-      if (extraDayPass) {
-        const chain = chainForGym(gym, chains);
-        if (!gymHasDayPass(gym, chain)) return false;
-      }
-      if (maxDistanceKm != null) {
-        if (gym.lat == null || gym.lng == null) return false;
-        const km = distanceKm(origin.lat, origin.lng, gym.lat, gym.lng);
-        if (km > maxDistanceKm) return false;
-      }
-      if (MAAKUNTA_MAP_ACTIVE && selectedMaakunta) {
-        if (gymMaakuntaMap[gym.id] !== selectedMaakunta) return false;
-      }
-      if (activeCitySlug) {
-        if (toCitySlug(gym.city) !== activeCitySlug) return false;
-      }
-      if (!q) return true;
-      return (
-        gym.name.toLowerCase().includes(q) ||
-        gym.city.toLowerCase().includes(q) ||
-        gym.address.toLowerCase().includes(q)
-      );
+    return filterAndSortBrowseGyms({
+      gyms,
+      chains,
+      query,
+      sortId,
+      selectedChainFilter,
+      womenOnly,
+      priceMin,
+      priceMax,
+      priceFilterOn,
+      extraOnly247,
+      extraFreeTrial,
+      extraDayPass,
+      maxDistanceKm,
+      origin,
+      selectedMaakunta,
+      gymMaakuntaMap,
+      activeCitySlug,
     });
-
-    if (sortId === "name-asc") {
-      list = [...list].sort((a, b) => a.name.localeCompare(b.name, "fi"));
-    } else if (sortId === "name-desc") {
-      list = [...list].sort((a, b) => b.name.localeCompare(a.name, "fi"));
-    } else if (sortId === "price-asc" || sortId === "price-desc") {
-      const dir = sortId === "price-asc" ? 1 : -1;
-      list = [...list].sort((a, b) => {
-        const chainA = chainForGym(a, chains);
-        const chainB = chainForGym(b, chains);
-        const pa = resolveGymOffer(a, chainA as Chain | null).priceFrom;
-        const pb = resolveGymOffer(b, chainB as Chain | null).priceFrom;
-        if (pa == null && pb == null) return a.name.localeCompare(b.name, "fi");
-        if (pa == null) return 1;
-        if (pb == null) return -1;
-        if (pa !== pb) return (pa - pb) * dir;
-        return a.name.localeCompare(b.name, "fi");
-      });
-    } else if (sortId === "nearest") {
-      list = [...list].sort((a, b) => {
-        const da =
-          a.lat == null || a.lng == null
-            ? Number.POSITIVE_INFINITY
-            : distanceKm(origin.lat, origin.lng, a.lat, a.lng);
-        const db =
-          b.lat == null || b.lng == null
-            ? Number.POSITIVE_INFINITY
-            : distanceKm(origin.lat, origin.lng, b.lat, b.lng);
-        return da - db;
-      });
-    }
-
-    return list;
   }, [
     gyms,
     chains,
@@ -1775,364 +1136,30 @@ function GymsPage() {
     setOpenFilter((cur) => (cur === key ? null : key));
   }
 
-  useEffect(() => {
-    if (!mapRef.current) return;
-
-    const start = originRef.current;
-    const map = new Map({
-      container: mapRef.current,
-      style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
-      center: [start.lng, start.lat],
-      zoom: ORIGIN_ZOOM,
-      maxBounds: MAP_MAX_BOUNDS,
-      maxPitch: 0,
-      pitchWithRotate: false,
-      touchPitch: false,
-      dragRotate: false,
-      attributionControl: false,
-    });
-
-    map.touchPitch.disable();
-    map.dragRotate.disable();
-    map.touchZoomRotate.disableRotation();
-    map.setMaxPitch(0);
-    mapInstanceRef.current = map;
-
-    const canvas = map.getCanvasContainer();
-    function onTouchStart(e: TouchEvent) {
-      mapTouchCountRef.current = e.touches.length;
-      if (e.touches.length >= 2) {
-        mapPinchRef.current = true;
-      }
-    }
-    function onTouchEnd(e: TouchEvent) {
-      mapTouchCountRef.current = e.touches.length;
-      if (!mapPinchRef.current) return;
-      if (e.touches.length > 0) return;
-      mapPinchRef.current = false;
-      afterPinchSyncRef.current?.();
-    }
-    canvas.addEventListener("touchstart", onTouchStart, { passive: true });
-    canvas.addEventListener("touchend", onTouchEnd, { passive: true });
-    canvas.addEventListener("touchcancel", onTouchEnd, { passive: true });
-    window.addEventListener("touchend", onTouchEnd, { passive: true });
-    window.addEventListener("touchcancel", onTouchEnd, { passive: true });
-
-    function syncMinZoom() {
-      if (selectedIdRef.current) return;
-      const slug = browseCitySlugRef.current;
-      if (!slug) {
-        applyFinlandMinZoom(map);
-        return;
-      }
-      const pins = gymsRef.current.filter(
-        (g) =>
-          g.lat != null &&
-          g.lng != null &&
-          toCitySlug(g.city) === slug,
-      );
-      applyPinsMinZoom(
-        map,
-        pins.map((g) => ({ lat: g.lat!, lng: g.lng! })),
-        framePadForOverlays(map, { labelTop: 36 }),
-      );
-    }
-
-    function onResize() {
-      syncMinZoom();
-    }
-
-    function onMaxOutView() {
-      if (mapPinchRef.current) return;
-      if (browseCitySlugRef.current) return;
-      centerFinlandIfMaxOut(map);
-    }
-
-    let dead = false;
-    let revealed = false;
-    const bootFailSafe = window.setTimeout(() => {
-      if (dead || revealed) return;
-      revealed = true;
-      setMapReady(true);
-    }, 2500);
-
-    async function settleStartView() {
-      if (dead || revealed) return;
-      await waitForMapContainerSize(map.getContainer(), map);
-      if (dead || revealed) return;
-
-      const o = originRef.current;
-      map.jumpTo({
-        center: [o.lng, o.lat],
-        zoom: ADDRESS_ZOOM,
-      });
-      syncMinZoom();
-      if (map.getZoom() < map.getMinZoom()) {
-        map.setZoom(map.getMinZoom());
-      }
-
-      let nimi: string | null = null;
-      const fromUrl = routeRegionNameRef.current;
-      if (fromUrl) {
-        nimi = fromUrl;
-        regionUserPickedRef.current = true;
-      } else if (regionUserPickedRef.current && selectedMaakuntaRef.current) {
-        nimi = selectedMaakuntaRef.current;
-      } else {
-        for (const f of maakuntaFeaturesRef.current) {
-          if (pointInPolygon(o.lng, o.lat, f.geometry)) {
-            nimi = f.nimi;
-            break;
-          }
-        }
-      }
-      selectedMaakuntaRef.current = nimi;
-      regionPickModeRef.current =
-        MAAKUNTA_MAP_ACTIVE && nimi == null;
-      setBrowseAllAreas(!MAAKUNTA_MAP_ACTIVE);
-      setSelectedMaakunta(nimi);
-      fitKeyRef.current = fromUrl
-        ? `route:${fromUrl}`
-        : `origin:${o.lat}:${o.lng}`;
-
-      if (MAAKUNTA_MAP_ACTIVE && nimi) {
-        const hideOpen = ["!=", ["get", "nimi"], nimi] as [
-          "!=",
-          ["get", string],
-          string,
-        ];
-        for (const id of ["maakunnat-fill", "maakunnat-line", "maakunnat-label"]) {
-          if (map.getLayer(id)) map.setFilter(id, hideOpen);
-        }
-      }
-      if (!MAAKUNTA_MAP_ACTIVE) {
-        for (const id of ["maakunnat-fill", "maakunnat-line", "maakunnat-label"]) {
-          if (map.getLayer(id)) {
-            map.setLayoutProperty(id, "visibility", "none");
-          }
-        }
-      }
-
-      function reveal() {
-        if (dead || revealed) return;
-        revealed = true;
-        window.clearTimeout(failSafe);
-        window.clearTimeout(bootFailSafe);
-        map.resize();
-        setMapReady(true);
-      }
-
-      const failSafe = window.setTimeout(reveal, 700);
-      map.once("idle", reveal);
-      if (map.areTilesLoaded()) {
-        window.setTimeout(reveal, 40);
-      }
-    }
-
-    map.on("load", () => {
-      void (async () => {
-        try {
-          await waitForMapContainerSize(map.getContainer(), map);
-          if (dead) return;
-
-          applyFinlandMinZoom(map);
-          const o = originRef.current;
-          map.jumpTo({
-            center: [o.lng, o.lat],
-            zoom: ADDRESS_ZOOM,
-          });
-
-          const [maskData, outlineData, maakuntaData] = await Promise.all([
-            fetchGeoJson("/geo/finland-mask.json"),
-            fetchGeoJson("/geo/finland.json"),
-            fetchGeoJson("/geo/maakunnat.json"),
-          ]);
-          if (dead) return;
-
-          if (maskData && !map.getSource("finland-mask")) {
-            map.addSource("finland-mask", {
-              type: "geojson",
-              data: maskData as object as never,
-            });
-            map.addLayer({
-              id: "finland-mask-fill",
-              type: "fill",
-              source: "finland-mask",
-              paint: {
-                "fill-color": "#0b1220",
-                "fill-opacity": 0.55,
-              },
-            });
-          }
-
-          if (outlineData && !map.getSource("finland-outline")) {
-            map.addSource("finland-outline", {
-              type: "geojson",
-              data: outlineData as object as never,
-            });
-            map.addLayer({
-              id: "finland-outline-line",
-              type: "line",
-              source: "finland-outline",
-              paint: {
-                "line-color": "#94a3b8",
-                "line-width": 1.2,
-                "line-opacity": 0.7,
-              },
-            });
-          }
-
-          if (
-            maakuntaData &&
-            typeof maakuntaData === "object" &&
-            "features" in maakuntaData &&
-            Array.isArray((maakuntaData as { features: unknown }).features) &&
-            !map.getSource("maakunnat")
-          ) {
-            const features = (
-              maakuntaData as {
-                features: {
-                  properties: { nimi: string; maakunta: string };
-                  geometry: MaakuntaGeom;
-                }[];
-              }
-            ).features;
-
-            maakuntaFeaturesRef.current = features.map((f) => ({
-              nimi: f.properties.nimi,
-              maakunta: f.properties.maakunta,
-              geometry: f.geometry,
-            }));
-
-            map.addSource("maakunnat", {
-              type: "geojson",
-              data: maakuntaData as object as never,
-              promoteId: "maakunta",
-            });
-
-            const labelPoints = {
-              type: "FeatureCollection" as const,
-              features: features.map((f) => ({
-                type: "Feature" as const,
-                properties: {
-                  nimi: f.properties.nimi,
-                  maakunta: f.properties.maakunta,
-                },
-                geometry: {
-                  type: "Point" as const,
-                  coordinates: geomCentroid(f.geometry),
-                },
-              })),
-            };
-            map.addSource("maakunnat-labels", {
-              type: "geojson",
-              data: labelPoints,
-              promoteId: "maakunta",
-            });
-            map.addLayer({
-              id: "maakunnat-fill",
-              type: "fill",
-              source: "maakunnat",
-              paint: {
-                "fill-color": REGION_FILL_MATCH as [
-                  "match",
-                  ...unknown[],
-                ],
-                "fill-opacity": [
-                  "case",
-                  ["boolean", ["feature-state", "hover"], false],
-                  0.55,
-                  0.34,
-                ],
-              },
-            });
-            map.addLayer({
-              id: "maakunnat-line",
-              type: "line",
-              source: "maakunnat",
-              paint: {
-                "line-color": "#0f2744",
-                "line-width": 1.4,
-                "line-opacity": 0.85,
-              },
-            });
-            try {
-              map.addLayer({
-                id: "maakunnat-label",
-                type: "symbol",
-                source: "maakunnat-labels",
-                layout: {
-                  "text-field": ["get", "nimi"],
-                  "text-size": 11,
-                  "text-transform": "uppercase",
-                  "text-letter-spacing": 0.03,
-                  "text-max-width": 8,
-                  "text-allow-overlap": false,
-                  "text-ignore-placement": false,
-                },
-                paint: {
-                  "text-color": "#ffffff",
-                  "text-halo-color": "rgba(15, 39, 68, 0.8)",
-                  "text-halo-width": 1.5,
-                },
-              });
-            } catch {
-              /* fontti ei kaada alueita */
-            }
-            setMaakunnatReady(true);
-            setRegionNames(
-              maakuntaFeaturesRef.current
-                .map((f) => f.nimi)
-                .sort((a, b) => a.localeCompare(b, "fi")),
-            );
-          }
-        } catch {
-          /* peite ei kaada karttaa */
-        } finally {
-          if (!dead) {
-            await settleStartView();
-          }
-        }
-      })();
-    });
-
-    map.on("zoomend", onMaxOutView);
-    map.on("moveend", onMaxOutView);
-    window.addEventListener("resize", onResize);
-    const stopContainerResize = observeMapContainerResize(
-      map.getContainer(),
-      map,
-    );
-
-    return () => {
-      dead = true;
-      window.clearTimeout(bootFailSafe);
-      stopContainerResize();
-      mapPinchRef.current = false;
-      mapTouchCountRef.current = 0;
-      canvas.removeEventListener("touchstart", onTouchStart);
-      canvas.removeEventListener("touchend", onTouchEnd);
-      canvas.removeEventListener("touchcancel", onTouchEnd);
-      window.removeEventListener("touchend", onTouchEnd);
-      window.removeEventListener("touchcancel", onTouchEnd);
-      try {
-        map.dragPan.enable();
-      } catch {
-        /* map gone */
-      }
-      window.removeEventListener("resize", onResize);
-      map.off("zoomend", onMaxOutView);
-      map.off("moveend", onMaxOutView);
-      setMapReady(false);
-      setMaakunnatReady(false);
-      markersRef.current.forEach((m) => m.remove());
-      markersRef.current.clear();
-      originMarkerRef.current?.remove();
-      originMarkerRef.current = null;
-      mapInstanceRef.current = null;
-      map.remove();
-    };
-  }, []);
+  useBrowseMapInit({
+    mapRef,
+    mapInstanceRef,
+    originRef,
+    mapPinchRef,
+    mapTouchCountRef,
+    afterPinchSyncRef,
+    browseCitySlugRef,
+    selectedIdRef,
+    gymsRef,
+    routeRegionNameRef,
+    regionUserPickedRef,
+    selectedMaakuntaRef,
+    maakuntaFeaturesRef,
+    fitKeyRef,
+    regionPickModeRef,
+    setMapReady,
+    setMaakunnatReady,
+    setBrowseAllAreas,
+    setSelectedMaakunta,
+    setRegionNames,
+    markersRef,
+    originMarkerRef,
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -2155,484 +1182,43 @@ function GymsPage() {
     };
   }, []);
 
-  useEffect(() => {
-    const mapRefCurrent = mapInstanceRef.current;
-    if (!mapRefCurrent || !mapReady) return;
-    const map = mapRefCurrent;
-
-    function clearMarkers() {
-      markersRef.current.forEach((m) => m.remove());
-      markersRef.current.clear();
-    }
-
-    function readBounds() {
-      const b = map.getBounds();
-      return {
-        west: b.getWest(),
-        south: b.getSouth(),
-        east: b.getEast(),
-        north: b.getNorth(),
-      };
-    }
-
-    function putPin(g: Gym, scale: number) {
-      const old = markersRef.current.get(g.id);
-      if (old) {
-        old.getElement().style.setProperty("--pin-scale", String(scale));
-        return;
-      }
-
-      const chain =
-        g.chain ?? chainsByIdRef.current.get(g.chainId) ?? undefined;
-      const brandImg =
-        chain?.image && !chain.image.includes("/pins/")
-          ? chain.image
-          : null;
-      const el = document.createElement("div");
-      el.className = ["gym-pin", brandImg ? "is-brand-pin" : "is-plain-pin"]
-        .filter(Boolean)
-        .join(" ");
-      el.dataset.gymId = g.id;
-      el.dataset.gymSlug = g.slug;
-      if (favoriteSlugsRef.current.includes(g.slug)) el.classList.add("is-fav");
-      el.style.setProperty("--pin-scale", String(scale));
-      const stackZ = pinStackZ(
-        g.lat,
-        g.priceFrom != null ? "price" : "pin",
-      );
-      el.dataset.stackZ = String(stackZ);
-      if (g.id === selectedIdRef.current) {
-        el.classList.add("is-front");
-        el.style.zIndex = "12000";
-      } else {
-        el.style.zIndex = String(stackZ);
-      }
-
-      const hit = document.createElement("button");
-      hit.type = "button";
-      hit.className = [
-        "gym-pin-hit",
-        brandImg ? "is-brand" : "",
-        brandImg && chain?.logoFit === "contain" ? "is-logo" : "",
-        brandImg && chain?.logoClass ? chain.logoClass : "",
-      ]
-        .filter(Boolean)
-        .join(" ");
-      if (g.id === selectedIdRef.current) hit.classList.add("is-selected");
-      if (g.id === hoveredIdRef.current) hit.classList.add("is-hovered");
-      hit.setAttribute("aria-label", g.name);
-
-      const media = document.createElement("span");
-      media.className = "gym-pin-media";
-      const img = document.createElement("img");
-      img.src = brandImg || "/pins/gym-pin.png";
-      img.alt = "";
-      img.decoding = "async";
-      media.appendChild(img);
-      hit.appendChild(media);
-
-      const fav = document.createElement("span");
-      fav.className = "gym-pin-fav";
-      fav.innerHTML =
-        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-9.2C5 8 6.8 6.2 9.1 6.2c1.3 0 2.3.6 2.9 1.6.6-1 1.6-1.6 2.9-1.6 2.3 0 4.1 1.8 4.1 4.6C19 15.6 12 20 12 20z"/></svg>';
-      hit.appendChild(fav);
-
-      el.appendChild(hit);
-
-      const street = formatGymStreetLine(g);
-      if (street) {
-        const address = document.createElement("span");
-        address.className = "gym-pin-address";
-        address.textContent = street;
-        el.appendChild(address);
-      }
-
-      if (g.priceFrom != null) {
-        const priceText = formatPricePill(g.priceFrom, lang);
-        if (priceText) {
-          const pill = document.createElement("span");
-          pill.className = "gym-pin-price";
-          pill.textContent = priceText;
-          el.appendChild(pill);
-        }
-      }
-
-      hit.addEventListener("mouseenter", () => setHoveredId(g.id));
-      hit.addEventListener("mouseleave", () => setHoveredId(null));
-      hit.addEventListener("click", (e) => {
-        e.stopPropagation();
-        markersRef.current.forEach((m, mid) => {
-          const node = m.getElement();
-          const base = Number(node.dataset.stackZ) || 1;
-          if (mid === g.id) {
-            node.classList.add("is-front");
-            node.style.zIndex = "12000";
-          } else if (mid !== hoveredIdRef.current) {
-            node.classList.remove("is-front");
-            node.style.zIndex = String(base);
-          }
-        });
-        const idx = inViewGymsRef.current.findIndex((x) => x.id === g.id);
-        const onPage = pageGymsRef.current.some((x) => x.id === g.id);
-        if (idx >= 0) {
-          setPage(Math.floor(idx / pageSizeRef.current) + 1);
-        }
-        setMapSelectPending(!onPage);
-        selectFromMapRef.current = true;
-        freezeListBoundsRef.current = true;
-        selectedIdRef.current = g.id;
-        setSelectedId(g.id);
-        setListRevealKey((n) => n + 1);
-        const here = originRef.current;
-        if (g.lat != null && g.lng != null) {
-          frameOriginAndGym(
-            map,
-            here.lng,
-            here.lat,
-            g.lng,
-            g.lat,
-            cityBounceLockRef,
-            preCompareCameraRef,
-          );
-        }
-      });
-
-      const marker = new Marker({ element: el, anchor: "bottom" })
-        .setLngLat([g.lng, g.lat])
-        .addTo(map);
-      markersRef.current.set(g.id, marker);
-    }
-
-    function putCluster(group: Gym[], scale: number) {
-      const key = clusterMarkerKey(group);
-      const old = markersRef.current.get(key);
-      if (old) {
-        old.getElement().style.setProperty("--pin-scale", String(scale));
-        return key;
-      }
-
-      let lng = 0;
-      let lat = 0;
-      group.forEach((g) => {
-        lng += g.lng;
-        lat += g.lat;
-      });
-      lng /= group.length;
-      lat /= group.length;
-
-      const el = document.createElement("button");
-      el.type = "button";
-      el.className = "gym-cluster";
-      el.style.setProperty("--pin-scale", String(scale));
-      const stackZ = pinStackZ(lat, "cluster");
-      el.dataset.stackZ = String(stackZ);
-      el.style.zIndex = String(stackZ);
-      const visual = document.createElement("span");
-      visual.className = "gym-cluster-visual";
-      const img = document.createElement("img");
-      img.src = "/pins/cluster-kettlebell.png";
-      img.alt = "";
-      const count = document.createElement("span");
-      count.className =
-        group.length > 9 ? "gym-cluster-count is-long" : "gym-cluster-count";
-      count.textContent = String(group.length);
-      visual.append(img, count);
-      el.append(visual);
-      el.setAttribute(
-        "aria-label",
-        t("gymsCount", { count: group.length }),
-      );
-      el.addEventListener("click", (e) => {
-        e.stopPropagation();
-        explodeClusterIdsRef.current = null;
-        const bounds = new LngLatBounds([lng, lat], [lng, lat]);
-        for (const g of group) {
-          if (g.lng != null && g.lat != null) bounds.extend([g.lng, g.lat]);
-        }
-        const pad = framePadForOverlays(map, {
-          labelTop: 44,
-          labelBottom: 80,
-        });
-        const cam = map.cameraForBounds(bounds, { padding: pad });
-        const zoom = Math.min(
-          map.getMaxZoom(),
-          cam?.zoom != null
-            ? cam.zoom
-            : Math.max(map.getZoom() + 0.35, zoomWhereClusterSplits(map, group)),
-        );
-        const center: [number, number] = cam?.center
-          ? [cam.center.lng, cam.center.lat]
-          : [lng, lat];
-        cityBounceLockRef.current = true;
-        map.stop();
-        map.easeTo({
-          center,
-          zoom,
-          duration: 700,
-          easing: (t) => 1 - (1 - t) ** 2.4,
-        });
-        window.setTimeout(() => {
-          cityBounceLockRef.current = false;
-          syncPins();
-        }, 780);
-      });
-
-      const marker = new Marker({ element: el, anchor: "center" })
-        .setLngLat([lng, lat])
-        .addTo(map);
-      markersRef.current.set(key, marker);
-      return key;
-    }
-
-    function syncPins() {
-      if (regionPickModeRef.current) {
-        clearMarkers();
-        return;
-      }
-
-      const gyms = gymsNearViewport(visibleGymsRef.current, map);
-      if (gyms.length === 0) {
-        clearMarkers();
-        return;
-      }
-
-      const zoom = map.getZoom();
-      const scale = markerScaleForZoom(zoom);
-      const touchPx = pinTouchPx(scale);
-      const pickedId = selectedIdRef.current;
-      const picked = pickedId
-        ? gyms.find((g) => g.id === pickedId)
-        : undefined;
-      const keep = new Set<string>();
-
-      if (picked) {
-        putPin(picked, scale);
-        keep.add(picked.id);
-      }
-
-      const pool: Gym[] = [];
-      for (const g of gyms) {
-        if (picked && g.id === picked.id) continue;
-        pool.push(g);
-      }
-
-      const groups = clusterGymsByScreenTouch(pool, map, touchPx);
-      groups.forEach((group) => {
-        if (group.length === 1) {
-          putPin(group[0], scale);
-          keep.add(group[0].id);
-          return;
-        }
-        keep.add(putCluster(group, scale));
-      });
-
-      const stale: string[] = [];
-      markersRef.current.forEach((_marker, id) => {
-        if (!keep.has(id)) stale.push(id);
-      });
-      stale.forEach((id) => {
-        markersRef.current.get(id)?.remove();
-        markersRef.current.delete(id);
-      });
-    }
-
-    function syncOriginPin() {
-      originMarkerRef.current?.remove();
-      originMarkerRef.current = null;
-      if (origin.lat == null || origin.lng == null) return;
-      const el = document.createElement("div");
-      el.className = "gym-origin-pin";
-      el.style.zIndex = "15000";
-      el.setAttribute("aria-label", t("fromAddressAria"));
-      if (locationLabel.trim()) {
-        const label = document.createElement("span");
-        label.className = "gym-origin-pin-label";
-        label.textContent = locationLabel;
-        el.appendChild(label);
-      }
-      const ring = document.createElement("span");
-      ring.className = "gym-origin-pin-ring";
-      const ringLate = document.createElement("span");
-      ringLate.className = "gym-origin-pin-ring is-late";
-      const core = document.createElement("span");
-      core.className = "gym-origin-pin-core";
-      el.appendChild(ring);
-      el.appendChild(ringLate);
-      el.appendChild(core);
-      originMarkerRef.current = new Marker({ element: el, anchor: "center" })
-        .setLngLat([origin.lng, origin.lat])
-        .addTo(map);
-    }
-
-    function pushBounds() {
-      const next = readBounds();
-      startTransition(() => {
-        setMapBounds((prev) => {
-          if (
-            prev &&
-            Math.abs(prev.west - next.west) < 1e-7 &&
-            Math.abs(prev.south - next.south) < 1e-7 &&
-            Math.abs(prev.east - next.east) < 1e-7 &&
-            Math.abs(prev.north - next.north) < 1e-7
-          ) {
-            return prev;
-          }
-          return next;
-        });
-      });
-    }
-
-    let pinRaf = 0;
-
-    let idleListTimer = 0;
-    function fingersDown() {
-      return mapPinchRef.current || mapTouchCountRef.current > 0;
-    }
-    function runIdleListSync(e?: { originalEvent?: Event }) {
-      if (regionPickModeRef.current) return;
-      if (fingersDown()) {
-        window.clearTimeout(idleListTimer);
-        idleListTimer = window.setTimeout(() => runIdleListSync(e), 120);
-        return;
-      }
-      syncPins();
-      if (freezeListBoundsRef.current) {
-        if (e?.originalEvent) {
-          freezeListBoundsRef.current = false;
-          pushBounds();
-        } else if (!e) {
-          pushBounds();
-        }
-      } else {
-        pushBounds();
-      }
-      if (!e?.originalEvent) return;
-      const picked = selectedIdRef.current;
-      if (!picked) return;
-      const g = visibleGymsRef.current.find((x) => x.id === picked);
-      if (!g || g.lat == null || g.lng == null) return;
-      const b = map.getBounds();
-      const onScreen =
-        g.lng >= b.getWest() &&
-        g.lng <= b.getEast() &&
-        g.lat >= b.getSouth() &&
-        g.lat <= b.getNorth();
-      if (!onScreen) {
-        selectedIdRef.current = null;
-        startTransition(() => setSelectedId(null));
-      }
-    }
-    function scheduleIdleListSync(e?: { originalEvent?: Event }) {
-      window.clearTimeout(idleListTimer);
-      const wait = window.matchMedia(BROWSE_MOBILE_MQ).matches ? 220 : 80;
-      idleListTimer = window.setTimeout(() => runIdleListSync(e), wait);
-    }
-
-    function onMapMove() {
-      if (regionPickModeRef.current) return;
-      if (pinRaf !== 0) return;
-      pinRaf = requestAnimationFrame(() => {
-        pinRaf = 0;
-        if (regionPickModeRef.current) return;
-        syncPins();
-      });
-    }
-
-    function onMoveEnd(e: { originalEvent?: Event }) {
-      if (pinRaf !== 0) {
-        cancelAnimationFrame(pinRaf);
-        pinRaf = 0;
-      }
-      syncPins();
-      scheduleIdleListSync(e);
-    }
-
-    afterPinchSyncRef.current = () => {
-      scheduleIdleListSync();
-    };
-
-    let dragged = false;
-    function onDragStart() {
-      dragged = true;
-    }
-    function onDragEnd() {
-      window.setTimeout(() => {
-        dragged = false;
-      }, 0);
-    }
-    function onMapClick(e: MapLayerMouseEvent) {
-      if (dragged) return;
-      const target = e.originalEvent.target;
-      if (
-        target instanceof Element &&
-        target.closest(".gym-pin, .gym-cluster")
-      ) {
-        return;
-      }
-      if (window.matchMedia(BROWSE_MOBILE_MQ).matches) {
-        const box = map.getCanvas().getBoundingClientRect();
-        const x = box.left + e.point.x;
-        const y = box.top + e.point.y;
-        let best: HTMLElement | null = null;
-        let bestD = 48;
-        markersRef.current.forEach((marker) => {
-          const el = marker.getElement();
-          const btn = el.matches(".gym-cluster")
-            ? el
-            : el.querySelector<HTMLElement>(".gym-pin-hit");
-          if (!btn) return;
-          const r = btn.getBoundingClientRect();
-          const d = Math.hypot(r.left + r.width / 2 - x, r.top + r.height / 2 - y);
-          if (d < bestD) {
-            bestD = d;
-            best = btn;
-          }
-        });
-        if (best) {
-          best.click();
-          return;
-        }
-      }
-      freezeListBoundsRef.current = false;
-      selectedIdRef.current = null;
-      setSelectedId(null);
-    }
-
-    syncPins();
-    syncOriginPin();
-    setMapBounds(readBounds());
-    map.resize();
-
-    map.on("move", onMapMove);
-    map.on("moveend", onMoveEnd);
-    map.on("dragstart", onDragStart);
-    map.on("dragend", onDragEnd);
-    map.on("click", onMapClick);
-
-    return () => {
-      if (pinRaf !== 0) cancelAnimationFrame(pinRaf);
-      window.clearTimeout(idleListTimer);
-      afterPinchSyncRef.current = null;
-      map.off("move", onMapMove);
-      map.off("moveend", onMoveEnd);
-      map.off("dragstart", onDragStart);
-      map.off("dragend", onDragEnd);
-      map.off("click", onMapClick);
-      clearMarkers();
-      originMarkerRef.current?.remove();
-      originMarkerRef.current = null;
-    };
-  }, [
-    visibleGyms,
+  useBrowseMapMarkers({
+    mapInstanceRef,
     mapReady,
-    origin.lat,
-    origin.lng,
+    visibleGyms,
+    origin,
     locationLabel,
     selectedMaakunta,
     chains,
     lang,
     t,
-  ]);
+    markersRef,
+    originMarkerRef,
+    chainsByIdRef,
+    visibleGymsRef,
+    regionPickModeRef,
+    explodeClusterIdsRef,
+    favoriteSlugsRef,
+    selectedIdRef,
+    hoveredIdRef,
+    inViewGymsRef,
+    pageGymsRef,
+    pageSizeRef,
+    originRef,
+    cityBounceLockRef,
+    preCompareCameraRef,
+    freezeListBoundsRef,
+    selectFromMapRef,
+    mapPinchRef,
+    mapTouchCountRef,
+    afterPinchSyncRef,
+    setHoveredId,
+    setSelectedId,
+    setPage,
+    setMapSelectPending,
+    setListRevealKey,
+    setMapBounds,
+  });
 
   useEffect(() => {
     const state = routeLocation.state as { fitChainGyms?: boolean } | null;
@@ -2722,13 +1308,14 @@ function GymsPage() {
   }, [selectedMaakunta, mapReady, maakunnatReady]);
 
   useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map || !mapReady || !maakunnatReady) return;
+    if (!mapReady || !maakunnatReady) return;
     if (!MAAKUNTA_MAP_ACTIVE) return;
 
     let hoveredFeatureId: string | number | null = null;
 
     function onEnter(e: MapLayerMouseEvent) {
+      const map = mapInstanceRef.current;
+      if (!map) return;
       map.getCanvas().style.cursor = "pointer";
       const f = e.features?.[0];
       if (!f || f.id == null) return;
@@ -2746,6 +1333,8 @@ function GymsPage() {
     }
 
     function onLeave() {
+      const map = mapInstanceRef.current;
+      if (!map) return;
       map.getCanvas().style.cursor = "";
       if (hoveredFeatureId != null) {
         map.setFeatureState(
@@ -2757,6 +1346,8 @@ function GymsPage() {
     }
 
     function onClick(e: MapLayerMouseEvent) {
+      const map = mapInstanceRef.current;
+      if (!map) return;
       const f = e.features?.[0];
       const nimi = f?.properties?.nimi as string | undefined;
       if (!nimi || !f?.geometry) return;
@@ -2780,6 +1371,9 @@ function GymsPage() {
         maxZoom: mobile ? 10.5 : 9.5,
       });
     }
+
+    const map = mapInstanceRef.current;
+    if (!map) return;
 
     map.on("mousemove", "maakunnat-fill", onEnter);
     map.on("mouseleave", "maakunnat-fill", onLeave);
@@ -3068,17 +1662,19 @@ function GymsPage() {
   }, [mapReady, browseCitySlug, gyms, cityOptions]);
 
   useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map || !mapReady || !browseCitySlug) return;
+    if (!mapReady || !browseCitySlug) return;
+    const citySlug = browseCitySlug;
 
     function bounceIfLost() {
+      const map = mapInstanceRef.current;
+      if (!map) return;
       if (cityBounceLockRef.current) return;
       if (selectedIdRef.current) return;
       const pins = gyms.filter(
         (g) =>
           g.lat != null &&
           g.lng != null &&
-          toCitySlug(g.city) === browseCitySlug,
+          toCitySlug(g.city) === citySlug,
       );
       if (pins.length === 0) return;
       const bounds = map.getBounds();
@@ -3087,8 +1683,8 @@ function GymsPage() {
       );
       if (anyInView) return;
       const city =
-        cityCenterForSlug(browseCitySlug) ||
-        cityOptions.find((c) => c.slug === browseCitySlug);
+        cityCenterForSlug(citySlug) ||
+        cityOptions.find((c) => c.slug === citySlug);
       if (!city) return;
       map.stop();
       fitToCityGyms(city);
@@ -3101,6 +1697,9 @@ function GymsPage() {
     function onMoveEnd() {
       bounceIfLost();
     }
+
+    const map = mapInstanceRef.current;
+    if (!map) return;
 
     map.on("drag", onDrag);
     map.on("moveend", onMoveEnd);
@@ -3532,7 +2131,7 @@ function GymsPage() {
                         {priceMin} – {priceMax} €
                       </strong>
                     </div>
-                    <DualRange
+                    <BrowseDualRange
                       lo={priceMin}
                       hi={priceMax}
                       onLo={setPriceMin}
@@ -4690,7 +3289,7 @@ function GymsPage() {
                     {priceMin} – {priceMax} €
                   </strong>
                 </div>
-                <DualRange
+                <BrowseDualRange
                   lo={priceMin}
                   hi={priceMax}
                   onLo={setPriceMin}
