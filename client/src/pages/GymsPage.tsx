@@ -35,7 +35,11 @@ import {
   Ticket,
   X,
 } from "lucide-react";
-import "../map/maplibreSetup";
+import {
+  fetchGeoJson,
+  observeMapContainerResize,
+  waitForMapContainerSize,
+} from "../map/maplibreSetup";
 import { LngLatBounds, Map, Marker, type MapLayerMouseEvent } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type Chain, type Gym, resolveGymOffer } from "../data/types";
@@ -1852,8 +1856,11 @@ function GymsPage() {
       setMapReady(true);
     }, 2500);
 
-    function settleStartView() {
+    async function settleStartView() {
       if (dead || revealed) return;
+      await waitForMapContainerSize(map.getContainer(), map);
+      if (dead || revealed) return;
+
       const o = originRef.current;
       map.jumpTo({
         center: [o.lng, o.lat],
@@ -1923,30 +1930,29 @@ function GymsPage() {
     }
 
     map.on("load", () => {
-      map.resize();
-      applyFinlandMinZoom(map);
-      const o = originRef.current;
-      map.jumpTo({
-        center: [o.lng, o.lat],
-        zoom: ADDRESS_ZOOM,
-      });
-
       void (async () => {
         try {
-          const maskRes = await fetch("/geo/finland-mask.json");
-          const outlineRes = await fetch("/geo/finland.json");
-          const maakuntaRes = await fetch("/geo/maakunnat.json");
-          if (!maskRes.ok || !outlineRes.ok) {
-            settleStartView();
-            return;
-          }
-          const maskData = await maskRes.json();
-          const outlineData = await outlineRes.json();
+          await waitForMapContainerSize(map.getContainer(), map);
+          if (dead) return;
 
-          if (!map.getSource("finland-mask")) {
+          applyFinlandMinZoom(map);
+          const o = originRef.current;
+          map.jumpTo({
+            center: [o.lng, o.lat],
+            zoom: ADDRESS_ZOOM,
+          });
+
+          const [maskData, outlineData, maakuntaData] = await Promise.all([
+            fetchGeoJson("/geo/finland-mask.json"),
+            fetchGeoJson("/geo/finland.json"),
+            fetchGeoJson("/geo/maakunnat.json"),
+          ]);
+          if (dead) return;
+
+          if (maskData && !map.getSource("finland-mask")) {
             map.addSource("finland-mask", {
               type: "geojson",
-              data: maskData,
+              data: maskData as object as never,
             });
             map.addLayer({
               id: "finland-mask-fill",
@@ -1959,10 +1965,10 @@ function GymsPage() {
             });
           }
 
-          if (!map.getSource("finland-outline")) {
+          if (outlineData && !map.getSource("finland-outline")) {
             map.addSource("finland-outline", {
               type: "geojson",
-              data: outlineData,
+              data: outlineData as object as never,
             });
             map.addLayer({
               id: "finland-outline-line",
@@ -1976,14 +1982,23 @@ function GymsPage() {
             });
           }
 
-          if (maakuntaRes.ok && !map.getSource("maakunnat")) {
-            const maakuntaData = await maakuntaRes.json();
-            maakuntaFeaturesRef.current = (
-              maakuntaData.features as {
-                properties: { nimi: string; maakunta: string };
-                geometry: MaakuntaGeom;
-              }[]
-            ).map((f) => ({
+          if (
+            maakuntaData &&
+            typeof maakuntaData === "object" &&
+            "features" in maakuntaData &&
+            Array.isArray((maakuntaData as { features: unknown }).features) &&
+            !map.getSource("maakunnat")
+          ) {
+            const features = (
+              maakuntaData as {
+                features: {
+                  properties: { nimi: string; maakunta: string };
+                  geometry: MaakuntaGeom;
+                }[];
+              }
+            ).features;
+
+            maakuntaFeaturesRef.current = features.map((f) => ({
               nimi: f.properties.nimi,
               maakunta: f.properties.maakunta,
               geometry: f.geometry,
@@ -1991,18 +2006,13 @@ function GymsPage() {
 
             map.addSource("maakunnat", {
               type: "geojson",
-              data: maakuntaData,
+              data: maakuntaData as object as never,
               promoteId: "maakunta",
             });
 
             const labelPoints = {
               type: "FeatureCollection" as const,
-              features: (
-                maakuntaData.features as {
-                  properties: { nimi: string; maakunta: string };
-                  geometry: MaakuntaGeom;
-                }[]
-              ).map((f) => ({
+              features: features.map((f) => ({
                 type: "Feature" as const,
                 properties: {
                   nimi: f.properties.nimi,
@@ -2078,18 +2088,26 @@ function GymsPage() {
           }
         } catch {
           /* peite ei kaada karttaa */
+        } finally {
+          if (!dead) {
+            await settleStartView();
+          }
         }
-        settleStartView();
       })();
     });
 
     map.on("zoomend", onMaxOutView);
     map.on("moveend", onMaxOutView);
     window.addEventListener("resize", onResize);
+    const stopContainerResize = observeMapContainerResize(
+      map.getContainer(),
+      map,
+    );
 
     return () => {
       dead = true;
       window.clearTimeout(bootFailSafe);
+      stopContainerResize();
       mapPinchRef.current = false;
       mapTouchCountRef.current = 0;
       canvas.removeEventListener("touchstart", onTouchStart);
@@ -2279,7 +2297,7 @@ function GymsPage() {
         }
       });
 
-      const marker = new Marker({ element: el })
+      const marker = new Marker({ element: el, anchor: "bottom" })
         .setLngLat([g.lng, g.lat])
         .addTo(map);
       markersRef.current.set(g.id, marker);
@@ -2359,7 +2377,7 @@ function GymsPage() {
         }, 780);
       });
 
-      const marker = new Marker({ element: el })
+      const marker = new Marker({ element: el, anchor: "center" })
         .setLngLat([lng, lat])
         .addTo(map);
       markersRef.current.set(key, marker);
@@ -2441,7 +2459,7 @@ function GymsPage() {
       el.appendChild(ring);
       el.appendChild(ringLate);
       el.appendChild(core);
-      originMarkerRef.current = new Marker({ element: el })
+      originMarkerRef.current = new Marker({ element: el, anchor: "center" })
         .setLngLat([origin.lng, origin.lat])
         .addTo(map);
     }

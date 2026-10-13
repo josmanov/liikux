@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import "../map/maplibreSetup";
+import {
+  observeMapContainerResize,
+  waitForMapContainerSize,
+} from "../map/maplibreSetup";
 import { LngLatBounds, Map, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
@@ -373,35 +376,35 @@ function GymDetailPage() {
 
     const gymLng = gym.lng;
     const gymLat = gym.lat;
-
-    function settleSize() {
-      map.resize();
-    }
+    let dead = false;
+    const stopContainerResize = observeMapContainerResize(
+      map.getContainer(),
+      map,
+    );
 
     map.on("load", () => {
-      settleSize();
-      const addressText =
-        formatGymStreetLine(gym) || gym.address?.trim() || null;
-      gymMarkerRef.current = new Marker({
-        element: makeGymPin({ addressText }),
-        anchor: "bottom",
-      })
-        .setLngLat([gymLng, gymLat])
-        .addTo(map);
-      requestAnimationFrame(() => {
-        settleSize();
-        requestAnimationFrame(settleSize);
-      });
+      void (async () => {
+        await waitForMapContainerSize(map.getContainer(), map);
+        if (dead) return;
+        const addressText =
+          formatGymStreetLine(gym) || gym.address?.trim() || null;
+        gymMarkerRef.current = new Marker({
+          element: makeGymPin({ addressText }),
+          anchor: "bottom",
+        })
+          .setLngLat([gymLng, gymLat])
+          .addTo(map);
+        map.jumpTo({ center: [gymLng, gymLat], zoom: 14 });
+      })();
     });
 
-    window.addEventListener("resize", settleSize);
-
     return () => {
+      dead = true;
       window.clearTimeout(pinchUnlockTimer);
+      stopContainerResize();
       canvas.removeEventListener("touchstart", onTouchStart);
       canvas.removeEventListener("touchend", onTouchEnd);
       canvas.removeEventListener("touchcancel", onTouchEnd);
-      window.removeEventListener("resize", settleSize);
       gymMarkerRef.current?.remove();
       originMarkerRef.current?.remove();
       gymMarkerRef.current = null;
@@ -415,28 +418,38 @@ function GymDetailPage() {
     const map = mapInstanceRef.current;
     if (!map || !gym || gym.lat == null || gym.lng == null) return;
 
-    originMarkerRef.current?.remove();
-    originMarkerRef.current = null;
+    let cancelled = false;
+    void (async () => {
+      await waitForMapContainerSize(map.getContainer(), map);
+      if (cancelled || mapInstanceRef.current !== map) return;
 
-    if (!fromPoint) {
-      map.easeTo({ center: [gym.lng, gym.lat], zoom: 14 });
-      return;
-    }
+      originMarkerRef.current?.remove();
+      originMarkerRef.current = null;
 
-    originMarkerRef.current = new Marker({
-      element: makeOriginPin(
-        t("fromAddressAria"),
-        fromPoint.label || fromDraft || locationLabel,
-      ),
-      anchor: "center",
-    })
-      .setLngLat([fromPoint.lng, fromPoint.lat])
-      .addTo(map);
+      if (!fromPoint) {
+        map.easeTo({ center: [gym.lng, gym.lat], zoom: 14 });
+        return;
+      }
 
-    const bounds = new LngLatBounds();
-    bounds.extend([gym.lng, gym.lat]);
-    bounds.extend([fromPoint.lng, fromPoint.lat]);
-    map.fitBounds(bounds, { padding: 72, maxZoom: 15 });
+      originMarkerRef.current = new Marker({
+        element: makeOriginPin(
+          t("fromAddressAria"),
+          fromPoint.label || fromDraft || locationLabel,
+        ),
+        anchor: "center",
+      })
+        .setLngLat([fromPoint.lng, fromPoint.lat])
+        .addTo(map);
+
+      const bounds = new LngLatBounds();
+      bounds.extend([gym.lng, gym.lat]);
+      bounds.extend([fromPoint.lng, fromPoint.lat]);
+      map.fitBounds(bounds, { padding: 72, maxZoom: 15 });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     fromPoint?.lat,
     fromPoint?.lng,
