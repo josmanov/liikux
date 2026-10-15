@@ -1,13 +1,13 @@
 import type { MutableRefObject } from "react";
 import type { Map } from "maplibre-gl";
-import type { Gym } from "../../../data/types";
+import type { Gym } from "../../data/types";
 import {
   applyFinlandMinZoom,
   applyPinsMinZoom,
   expandBoundsByKm,
   boundsFromPins,
   framePadForOverlays,
-} from "../utils/mapBounds";
+} from "../../features/browse/utils/mapBounds";
 
 export type BrowseMapCameraRefs = {
   mapInstanceRef: MutableRefObject<Map | null>;

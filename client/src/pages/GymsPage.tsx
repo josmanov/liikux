@@ -1,7 +1,5 @@
 import "./GymsPage.css";
 import "../components/ChainPopup.css";
-import "./GymsPage.css";
-import "../components/ChainPopup.css";
 import {
   useEffect,
   useLayoutEffect,
@@ -11,31 +9,8 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { flushSync } from "react-dom";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  Building2,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  Euro,
-  Gift,
-  Heart,
-  Link2,
-  List,
-  LocateFixed,
-  Map as MapIcon,
-  MapPin,
-  Minus,
-  Plus,
-  Route,
-  SlidersHorizontal,
-  Ticket,
-  X,
-} from "lucide-react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { List, Map as MapIcon } from "lucide-react";
 import {
   LngLatBounds,
   Map as MapLibreMap,
@@ -44,15 +19,12 @@ import {
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { type Chain, type Gym, resolveGymOffer } from "../data/types";
-import { fetchGymsAndChains } from "../data/api";
 import { useAddressSuggest } from "../data/geocode";
 import { useLockPageScroll } from "../hooks/useLockPageScroll";
 import { chainForGym } from "../data/audience";
 import {
   cleanGymDisplayName,
-  formatDistanceKm,
   formatGymStreetLine,
-  formatPriceCard,
   formatPricePill,
 } from "../data/format";
 import { useAppLocation } from "../context/LocationContext";
@@ -64,7 +36,7 @@ import {
   sameIds,
 } from "../data/browseSearch";
 import { toggleFavoriteSlug, readFavoriteSlugs } from "../data/favorites";
-import { pathGym, pathGyms, pathGymsBrowse } from "../i18n/lang";
+import { pathGyms, pathGymsBrowse } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import { usePageMeta } from "../seo/usePageMeta";
 import {
@@ -82,11 +54,9 @@ import {
   regionFromName,
   regionFromSlug,
 } from "../data/regionSlug";
-import UxSwitch from "../components/UxSwitch";
 import LoadSpin from "../components/LoadSpin";
 
 import {
-  filterChainVisual,
   filterIdFromChainSlug,
   chainFilterOptionIds,
   chainFilterBrandLabels,
@@ -108,7 +78,6 @@ import {
 import {
   ADDRESS_ZOOM,
   BROWSE_MOBILE_MQ,
-  BROWSE_SEARCH_QUICK,
   MAAKUNTA_MAP_ACTIVE,
   ORIGIN_ZOOM,
   PAGE_SIZE_MOBILE,
@@ -121,8 +90,17 @@ import {
   pointInPolygon,
   type MaakuntaGeom,
 } from "../features/browse/utils/maakuntaGeom";
-import { pageNums } from "../features/browse/utils/pageNums";
-import { BrowseDualRange } from "../features/browse/components/BrowseDualRange";
+import { BrowseChainsMenu } from "../features/browse/components/BrowseChainsMenu";
+import { BrowseExtrasMenu } from "../features/browse/components/BrowseExtrasMenu";
+import { BrowseListHead } from "../features/browse/components/BrowseListHead";
+import { BrowseMapChrome } from "../features/browse/components/BrowseMapChrome";
+import { BrowseMapSheet } from "../features/browse/components/BrowseMapSheet";
+import { BrowseResultsList } from "../features/browse/components/BrowseResultsList";
+import { BrowseSearchChrome } from "../features/browse/components/BrowseSearchChrome";
+import { BrowseSuggestChips } from "../features/browse/components/BrowseSuggestChips";
+import { BrowseFilters } from "../features/browse/components/BrowseFilters";
+import { BrowseSelectedCard } from "../features/browse/components/BrowseSelectedCard";
+import { useBrowseData, type MaakuntaFeature } from "../features/browse/hooks/useBrowseData";
 import { useBrowseMapInit } from "../features/browse/hooks/useBrowseMapInit";
 import { useBrowseMapMarkers } from "../features/browse/hooks/useBrowseMapMarkers";
 function GymsPage() {
@@ -239,8 +217,12 @@ function GymsPage() {
     setLocation,
     useMyLocation,
   } = useAppLocation();
-  const [gyms, setGyms] = useState<Gym[]>([]);
-  const [chains, setChains] = useState<Chain[]>([]);
+  const [maakunnatReady, setMaakunnatReady] = useState(false);
+  const maakuntaFeaturesRef = useRef<MaakuntaFeature[]>([]);
+  const { gyms, chains, dataReady, gymMaakuntaMap } = useBrowseData({
+    maakunnatReady,
+    maakuntaFeaturesRef,
+  });
   const localizedChainFilterOptions = useMemo(() => {
     return chainFilterOptionIds
       .filter((id) => {
@@ -297,8 +279,6 @@ function GymsPage() {
     { lat: locationLat, lng: locationLng },
   );
   const [mapReady, setMapReady] = useState(false);
-  const [dataReady, setDataReady] = useState(false);
-  const [maakunnatReady, setMaakunnatReady] = useState(false);
   const [selectedMaakunta, setSelectedMaakunta] = useState<string | null>(
     () => routeRegionName || null,
   );
@@ -324,9 +304,6 @@ function GymsPage() {
   browseCitySlugRef.current = browseCitySlug;
   const gymsRef = useRef(gyms);
   gymsRef.current = gyms;
-  const [gymMaakuntaMap, setGymMaakuntaMap] = useState<Record<string, string>>(
-    {},
-  );
   const [mapBounds, setMapBounds] = useState<{
     west: number;
     south: number;
@@ -361,9 +338,6 @@ function GymsPage() {
   const chainsByIdRef = useRef(new globalThis.Map<string, Chain>());
   const regionPickModeRef = useRef(true);
   const selectedMaakuntaRef = useRef<string | null>(null);
-  const maakuntaFeaturesRef = useRef<
-    { nimi: string; maakunta: string; geometry: MaakuntaGeom }[]
-  >([]);
   const fitKeyRef = useRef("");
   const lastOriginKeyRef = useRef("");
   const mobileMapFitKeyRef = useRef("");
@@ -1161,27 +1135,6 @@ function GymsPage() {
     originMarkerRef,
   });
 
-  useEffect(() => {
-    let cancelled = false;
-    fetchGymsAndChains()
-      .then(([gymData, chainData]) => {
-        if (cancelled) return;
-        setGyms(gymData);
-        setChains(chainData);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setGyms([]);
-        setChains([]);
-      })
-      .finally(() => {
-        if (!cancelled) setDataReady(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   useBrowseMapMarkers({
     mapInstanceRef,
     mapReady,
@@ -1260,25 +1213,6 @@ function GymsPage() {
     routeLocation.search,
     navigate,
   ]);
-
-  useEffect(() => {
-    if (!maakunnatReady || maakuntaFeaturesRef.current.length === 0) return;
-    if (gyms.length === 0) {
-      setGymMaakuntaMap({});
-      return;
-    }
-    const next: Record<string, string> = {};
-    for (const g of gyms) {
-      if (g.lat == null || g.lng == null) continue;
-      for (const f of maakuntaFeaturesRef.current) {
-        if (pointInPolygon(g.lng, g.lat, f.geometry)) {
-          next[g.id] = f.nimi;
-          break;
-        }
-      }
-    }
-    setGymMaakuntaMap(next);
-  }, [gyms, maakunnatReady]);
 
   useEffect(() => {
     const map = mapInstanceRef.current;
@@ -1970,325 +1904,88 @@ function GymsPage() {
         ref={listChromeRef}
         onClick={(e) => e.stopPropagation()}
       >
-      <div className="browse-chrome-main">
-        <h1 className="browse-page-title">{t("gymsTitle")}</h1>
-            <div className="browse-combo">
-              <div className="browse-search">
-                <svg
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  className="browse-search-icon"
-                >
-                  <path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
-                </svg>
-                <input
-                  className="browse-search-input"
-                  type="search"
-                  placeholder={t("searchGymPlaceholder")}
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                />
-              </div>
-            </div>
-            <button
-              type="button"
-              className={[
-                "browse-filters-more",
-                "browse-filters-more-search",
-                filtersMoreActive ? "is-active" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              aria-haspopup="dialog"
-              aria-expanded={extrasOpen}
-              aria-label={extrasLabel}
-              onClick={() => {
-                setOpenFilter(null);
-                setExtrasOpen(true);
-              }}
-            >
-              <SlidersHorizontal size={16} strokeWidth={2.2} />
-              <span className="browse-filters-more-label">{extrasLabel}</span>
-              {filtersMoreActive ? (
-                <span className="browse-filters-badge">
-                  {filtersMoreBadge}
-                </span>
-              ) : null}
-            </button>
-      </div>
+      <BrowseSearchChrome
+        t={t}
+        query={query}
+        onQuery={setQuery}
+        extrasOpen={extrasOpen}
+        filtersMoreActive={filtersMoreActive}
+        filtersMoreBadge={filtersMoreBadge}
+        extrasLabel={extrasLabel}
+        onOpenExtras={() => {
+          setOpenFilter(null);
+          setExtrasOpen(true);
+        }}
+      />
       </div>
       <div className="browse-tools">
-      <div className="browse-search-suggest">
-        <p className="browse-search-suggest-label">{t("popularShort")}</p>
-        <div className="browse-search-suggest-chips" ref={suggestChipsRef}>
-          {BROWSE_SEARCH_QUICK.map((item) => {
-            const label =
-              "filter" in item
-                ? item.filter === "freeTrial"
-                  ? t("freeTrial")
-                  : item.filter === "only247"
-                    ? t("open247")
-                    : t("priceDayPass")
-                : item.q;
-            const chipOn =
-              "filter" in item
-                ? item.filter === "freeTrial"
-                  ? extraFreeTrial
-                  : item.filter === "only247"
-                    ? extraOnly247
-                    : extraDayPass
-                : query.trim().toLowerCase() === item.q.toLowerCase();
-            return (
-              <button
-                key={item.id}
-                type="button"
-                className={
-                  chipOn
-                    ? "browse-search-suggest-chip is-on"
-                    : "browse-search-suggest-chip"
-                }
-                aria-pressed={chipOn}
-                onClick={(e) => {
-                  (e.currentTarget as HTMLButtonElement).blur();
-                  if ("filter" in item) {
-                    if (item.filter === "freeTrial") {
-                      setExtraFreeTrial((v) => !v);
-                    } else if (item.filter === "only247") {
-                      setExtraOnly247((v) => !v);
-                    } else {
-                      setExtraDayPass((v) => !v);
-                    }
-                    setPage(1);
-                    return;
-                  }
-                  setQuery(chipOn ? "" : item.q);
-                  setPage(1);
-                }}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-      <div className="browse-chrome-filters">
-            <div className="browse-filter">
-              <button
-                type="button"
-                className={[
-                  "browse-filter-btn",
-                  chainFilterActive ? "is-on" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                aria-haspopup="dialog"
-                onClick={() => {
-                  setOpenFilter(null);
-                  setExtrasOpen(false);
-                  setChainsOpen(true);
-                }}
-              >
-                <Link2 className="browse-filter-icon" size={18} strokeWidth={2.2} />
-                <span className="browse-filter-label">{t("chains")}</span>
-                <span className="browse-filter-info">
-                  {chainFilterActive ? `· ${selectedChains.length}` : ""}
-                </span>
-              </button>
-            </div>
-
-            <div className="browse-filter">
-              <button
-                type="button"
-                className={[
-                  "browse-filter-btn",
-                  priceFilterOn ? "is-on" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                aria-expanded={openFilter === "price"}
-                aria-haspopup="dialog"
-                onClick={() => toggleFilter("price")}
-              >
-                <Euro className="browse-filter-icon" size={18} strokeWidth={2.2} />
-                <span className="browse-filter-label">{t("price")}</span>
-                <span className="browse-filter-info">{priceInfo}</span>
-                <ChevronDown size={16} strokeWidth={2.2} />
-              </button>
-              {openFilter === "price" ? (
-                <div
-                  className="browse-filter-menu browse-filter-menu-range"
-                  role="dialog"
-                  aria-label={t("price")}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="browse-range">
-                    <div className="browse-distance-head">
-                      <span className="browse-slider-title">
-                        <Euro size={16} strokeWidth={2.2} />
-                        {t("price")}
-                      </span>
-                      <strong>
-                        {priceMin} – {priceMax} €
-                      </strong>
-                    </div>
-                    <BrowseDualRange
-                      lo={priceMin}
-                      hi={priceMax}
-                      onLo={setPriceMin}
-                      onHi={setPriceMax}
-                      minLabel={t("priceMinAria")}
-                      maxLabel={t("priceMaxAria")}
-                    />
-                    <div className="browse-dual-ends">
-                      <span>{PRICE_MIN} €</span>
-                      <span>{PRICE_MAX} €</span>
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="browse-filter">
-              <button
-                type="button"
-                className={[
-                  "browse-filter-btn",
-                  maxDistanceKm != null ? "is-on" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                aria-expanded={openFilter === "distance"}
-                aria-haspopup="dialog"
-                onClick={() => toggleFilter("distance")}
-              >
-                <Route className="browse-filter-icon" size={18} strokeWidth={2.2} />
-                <span className="browse-filter-label">{t("distance")}</span>
-                <span className="browse-filter-info">
-                  {maxDistanceKm != null ? `· ${maxDistanceKm} km` : ""}
-                </span>
-                <ChevronDown size={16} strokeWidth={2.2} />
-              </button>
-              {openFilter === "distance" ? (
-                <div
-                  className="browse-filter-menu browse-filter-menu-range is-wide"
-                  role="dialog"
-                  aria-label={t("distance")}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="browse-range">
-                    <div className="browse-distance-head">
-                      <span className="browse-slider-title">
-                        <Route size={16} strokeWidth={2.2} />
-                        {t("distanceMax")}
-                      </span>
-                      <strong>
-                        {maxDistanceKm == null
-                          ? t("distanceAll")
-                          : `${maxDistanceKm} km`}
-                      </strong>
-                    </div>
-                    <div className="browse-dual">
-                      <div className="browse-dual-rail">
-                        <div
-                          className="browse-dual-fill"
-                          style={{
-                            left: "0%",
-                            width: `${
-                              (distancePresetIndex /
-                                Math.max(1, distancePresets.length - 1)) *
-                              100
-                            }%`,
-                          }}
-                        />
-                      </div>
-                      <input
-                        className="browse-dual-input is-hi"
-                        type="range"
-                        min={0}
-                        max={distancePresets.length - 1}
-                        step={1}
-                        value={distancePresetIndex}
-                        aria-label={t("distanceMax")}
-                        aria-valuetext={
-                          maxDistanceKm == null
-                            ? t("distanceAll")
-                            : t("distanceKm", { km: maxDistanceKm })
-                        }
-                        onChange={(e) => {
-                          const next =
-                            distancePresets[Number(e.target.value)] ??
-                            distancePresets[0];
-                          setDistanceFilter(next.id);
-                        }}
-                      />
-                    </div>
-                    <div className="browse-distance-marks">
-                      {distancePresets.map((opt) => (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          className={
-                            opt.id === distanceFilter
-                              ? "browse-distance-mark is-on"
-                              : "browse-distance-mark"
-                          }
-                          onClick={() => setDistanceFilter(opt.id)}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            <div className="browse-filters-actions">
-              <button
-                type="button"
-                className={[
-                  "browse-filters-more",
-                  "browse-filters-more-desk",
-                  filtersMoreActive ? "is-active" : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ")}
-                aria-haspopup="dialog"
-                aria-expanded={extrasOpen}
-                aria-label={extrasLabel}
-                onClick={() => {
-                  setOpenFilter(null);
-                  setExtrasOpen(true);
-                }}
-              >
-                <SlidersHorizontal size={16} strokeWidth={2.2} />
-                <span className="browse-filters-more-label">{extrasLabel}</span>
-                {filtersMoreActive ? (
-                  <span className="browse-filters-badge">
-                    {filtersMoreBadge}
-                  </span>
-                ) : null}
-              </button>
-              <button
-                type="button"
-                className="browse-filters-clear"
-                onClick={() => {
-                  setSelectedChains([...visibleChainFilterIds]);
-                  setSelectedAudiences([]);
-                  setDistanceFilter("all");
-                  setPriceMin(PRICE_MIN);
-                  setPriceMax(PRICE_MAX);
-                  setExtraOnly247(false);
-                  setExtraFreeTrial(false);
-                  setExtraDayPass(false);
-                  setOpenFilter(null);
-                  setExtrasOpen(false);
-                }}
-              >
-                {t("clearFiltersBtn")}
-              </button>
-            </div>
-      </div>
+      <BrowseSuggestChips
+        t={t}
+        query={query}
+        extraOnly247={extraOnly247}
+        extraFreeTrial={extraFreeTrial}
+        extraDayPass={extraDayPass}
+        onToggleExtra247={() => {
+          setExtraOnly247((v) => !v);
+          setPage(1);
+        }}
+        onToggleFreeTrial={() => {
+          setExtraFreeTrial((v) => !v);
+          setPage(1);
+        }}
+        onToggleDayPass={() => {
+          setExtraDayPass((v) => !v);
+          setPage(1);
+        }}
+        onPickQuery={(q) => {
+          setQuery(q);
+          setPage(1);
+        }}
+        chipsRef={suggestChipsRef}
+      />
+      <BrowseFilters
+        t={t}
+        chainFilterActive={chainFilterActive}
+        selectedChainsCount={selectedChains.length}
+        priceFilterOn={priceFilterOn}
+        priceInfo={priceInfo}
+        openFilter={openFilter}
+        onToggleFilter={toggleFilter}
+        priceMin={priceMin}
+        priceMax={priceMax}
+        onPriceMin={setPriceMin}
+        onPriceMax={setPriceMax}
+        maxDistanceKm={maxDistanceKm}
+        distancePresetIndex={distancePresetIndex}
+        distancePresets={distancePresets}
+        distanceFilter={distanceFilter}
+        onDistanceFilter={setDistanceFilter}
+        filtersMoreActive={filtersMoreActive}
+        filtersMoreBadge={filtersMoreBadge}
+        extrasLabel={extrasLabel}
+        extrasOpen={extrasOpen}
+        onOpenChains={() => {
+          setOpenFilter(null);
+          setExtrasOpen(false);
+          setChainsOpen(true);
+        }}
+        onOpenExtras={() => {
+          setOpenFilter(null);
+          setExtrasOpen(true);
+        }}
+        onClear={() => {
+          setSelectedChains([...visibleChainFilterIds]);
+          setSelectedAudiences([]);
+          setDistanceFilter("all");
+          setPriceMin(PRICE_MIN);
+          setPriceMax(PRICE_MAX);
+          setExtraOnly247(false);
+          setExtraFreeTrial(false);
+          setExtraDayPass(false);
+          setOpenFilter(null);
+          setExtrasOpen(false);
+        }}
+      />
       </div>
       <div className="browse-body">
         <section
@@ -2296,521 +1993,76 @@ function GymsPage() {
             listAtEnd ? "browse-list-frame is-list-end" : "browse-list-frame"
           }
         >
-          <header className="browse-list-head">
-            <div className="browse-list-head-side">
-              {regionPickMode ? (
-                <p className="browse-list-count">{t("pickRegion")}</p>
-              ) : (
-                <div
-                  ref={regionDropRef}
-                  className={[
-                    "browse-region-drop",
-                    "browse-page-city",
-                    "browse-list-city",
-                    regionMenuOpen || mapSheet === "region" ? "is-open" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                >
-                  <button
-                    type="button"
-                    className="browse-region-drop-btn"
-                    aria-expanded={regionMenuOpen || mapSheet === "region"}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (mobileList) {
-                        setCityQuery("");
-                        setRegionMenuOpen(false);
-                        setMapSheet((cur) =>
-                          cur === "region" ? null : "region",
-                        );
-                        return;
-                      }
-                      setRegionMenuOpen((v) => !v);
-                      setCityQuery("");
-                    }}
-                  >
-                    <Building2
-                      className="browse-region-drop-ico"
-                      size={16}
-                      strokeWidth={2.3}
-                      aria-hidden="true"
-                    />
-                    <span>
-                      {browseCitySlug
-                        ? displayCityName(browseCitySlug)
-                        : t("regions")}
-                    </span>
-                    <ChevronDown
-                      className="browse-region-drop-chevron"
-                      size={16}
-                      strokeWidth={2.2}
-                    />
-                  </button>
-                  {!mobileList && regionMenuOpen ? (
-                    <div className="browse-region-drop-menu">
-                      <label className="browse-region-drop-search">
-                        <input
-                          type="search"
-                          value={cityQuery}
-                          placeholder={t("searchCity")}
-                          aria-label={t("searchCity")}
-                          onMouseDown={(e) => e.stopPropagation()}
-                          onChange={(e) => setCityQuery(e.target.value)}
-                        />
-                      </label>
-                      <ul className="browse-region-drop-list">
-                        {filteredCityOptions.map((city) => (
-                          <li key={city.slug}>
-                            <button
-                              type="button"
-                              className={
-                                city.slug === browseCitySlug ? "is-on" : ""
-                              }
-                              onMouseDown={(e) => e.preventDefault()}
-                              onClick={() => focusCity(city)}
-                            >
-                              {city.name}
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null}
-                </div>
-              )}
-            </div>
-            {!regionPickMode ? (
-              <p className="browse-list-qty">
-                {t("gymCountPcs", { count: inViewGyms.length })}
-              </p>
-            ) : (
-              <span className="browse-list-qty-spacer" aria-hidden="true" />
-            )}
-            {!regionPickMode ? (
-              <div className="browse-list-pager">
-                <button
-                  type="button"
-                  className="browse-pager-btn"
-                  aria-label={t("previous")}
-                  disabled={safePage <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                >
-                  <ChevronLeft size={16} strokeWidth={2.2} />
-                </button>
-                <span className="browse-list-page-num">{safePage}</span>
-                <button
-                  type="button"
-                  className="browse-pager-btn"
-                  aria-label={t("next")}
-                  disabled={safePage >= pageCount}
-                  onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-                >
-                  <ChevronRight size={16} strokeWidth={2.2} />
-                </button>
-              </div>
-            ) : null}
-            <div className="browse-sort">
-              <button
-                type="button"
-                className="browse-sort-btn"
-                aria-expanded={openFilter === "sort"}
-                aria-haspopup="listbox"
-                onClick={() => toggleFilter("sort")}
-              >
-                <ArrowUpDown size={16} strokeWidth={2.2} />
-                <span className="browse-sort-label">{sortLabel}</span>
-                <ChevronDown
-                  className="browse-sort-chevron"
-                  size={16}
-                  strokeWidth={2.2}
-                />
-              </button>
-              {openFilter === "sort" ? (
-                <ul className="browse-sort-menu" role="listbox">
-                  {sortOptions.map((opt) => (
-                    <li key={opt.id}>
-                      <button
-                        type="button"
-                        className={opt.id === sortId ? "is-on" : ""}
-                        role="option"
-                        aria-selected={opt.id === sortId}
-                        onClick={() => {
-                          setSortId(opt.id);
-                          setOpenFilter(null);
-                        }}
-                      >
-                        {opt.icon === "map" ? (
-                          <MapPin
-                            className="browse-sort-opt-icon"
-                            size={16}
-                            strokeWidth={2.2}
-                          />
-                        ) : null}
-                        {opt.icon === "down" ? (
-                          <ArrowDown
-                            className="browse-sort-opt-icon"
-                            size={16}
-                            strokeWidth={2.2}
-                          />
-                        ) : null}
-                        {opt.icon === "up" ? (
-                          <ArrowUp
-                            className="browse-sort-opt-icon"
-                            size={16}
-                            strokeWidth={2.2}
-                          />
-                        ) : null}
-                        <span>{opt.label}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </div>
-          </header>
-          <div
-            className="browse-list-scroll"
-            ref={listScrollRef}
-            data-count={pageGyms.length}
-          >
-            {regionPickMode ? (
-              <p className="browse-region-empty">{t("pickRegion")}</p>
-            ) : null}
-            {!listLoading &&
-            !regionPickMode &&
-            inViewGyms.length === 0 &&
-            gyms.length > 0 ? (
-              <div className="browse-missing-slot">
-                <p className="browse-missing">
-                  {visibleGyms.length === 0
-                    ? t("noGymsFilters")
-                    : t("noGymsInView")}
-                  <span>{t("missingGymHint")}</span>
-                </p>
-              </div>
-            ) : null}
-            <ul className={browseReady ? "browse-rows list-pop" : "browse-rows"}>
-              {pageGyms.map((gym, i) => {
-                const chain = chainForGym(gym, chains);
-                const offer = resolveGymOffer(gym, chain as Chain | null);
-                const distKm =
-                  gym.lat != null && gym.lng != null
-                    ? distanceKm(origin.lat, origin.lng, gym.lat, gym.lng)
-                    : null;
-                const pricePill = formatPricePill(offer.priceFrom, lang);
-                const priceLabel = pricePill
-                  ? pricePill
-                      .replace("€/kk", " €/kk")
-                      .replace("€/mo", " €/mo")
-                  : null;
-                const priceCard = formatPriceCard(offer.priceFrom, lang);
-                const isBrandChain = Boolean(
-                  chain && isListedBrandChain(chain),
-                );
-                const siteName = isBrandChain
-                  ? cleanGymDisplayName(gym.name, {
-                      chainName: chain?.name,
-                      city: gym.city,
-                    })
-                  : cleanGymDisplayName(gym.name);
-                const street = formatGymStreetLine(gym);
-                const isFav = favoriteSlugs.includes(gym.slug);
-                return (
-                  <li
-                    key={gym.id}
-                    style={{ animationDelay: `${Math.min(i, 18) * 28}ms` }}
-                  >
-                    <div
-                      data-gym-id={gym.id}
-                      className={[
-                        "browse-row",
-                        hoveredId === gym.id ? "is-hovered" : "",
-                        selectedId === gym.id ? "is-selected" : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                      onMouseEnter={() => setHoveredId(gym.id)}
-                      onMouseLeave={() => setHoveredId(null)}
-                    >
-                      <Link
-                        to={pathGym(lang, gym.slug)}
-                        className="browse-row-main"
-                        onClick={(e) => {
-                          if (gym.lat == null || gym.lng == null) return;
-                          if (selectedId === gym.id) return;
-                          e.preventDefault();
-                          focusGymFromList(gym);
-                        }}
-                      >
-                        <span
-                          className={[
-                            "browse-row-media",
-                            chain?.image && !chain.image.includes("/pins/")
-                              ? chain.logoFit === "contain"
-                                ? "is-logo"
-                                : ""
-                              : "is-pin",
-                            chain?.image && !chain.image.includes("/pins/")
-                              ? chain.logoClass || ""
-                              : "",
-                          ]
-                            .filter(Boolean)
-                            .join(" ")}
-                        >
-                          <img
-                            src={
-                              chain?.image && !chain.image.includes("/pins/")
-                                ? chain.image
-                                : "/pins/gym-pin.png"
-                            }
-                            alt=""
-                          />
-                        </span>
-                        <div className="browse-row-text">
-                          <span className="browse-row-chain">
-                            {isBrandChain ? chain!.name : t("otherLabel")}
-                          </span>
-                          <strong className="browse-row-site">
-                            {siteName}
-                          </strong>
-                          <span className="browse-row-address">
-                            {street}
-                          </span>
-                          <div className="browse-row-tags">
-                            {offer.is247 === true ? (
-                              <span className="browse-tag is-247">24/7</span>
-                            ) : null}
-                            {offer.freeTrial === true ? (
-                              <span className="browse-tag is-trial">
-                                {t("freeTrial")}
-                              </span>
-                            ) : null}
-                            {offer.dayPass === true ? (
-                              <span className="browse-tag is-daypass">
-                                {t("priceDayPass")}
-                              </span>
-                            ) : null}
-                          </div>
-                          <span className="browse-row-meta-mobile">
-                            <span className="browse-row-price">
-                              {priceCard ?? t("priceUnknown")}
-                            </span>
-                            {distKm != null ? (
-                              <span className="browse-row-distance">
-                                {" · "}
-                                {formatDistanceKm(distKm)}
-                              </span>
-                            ) : null}
-                          </span>
-                        </div>
-                      </Link>
-                      <div className="browse-row-rail">
-                        <span className="browse-row-side">
-                          <span className="browse-row-price">
-                            {priceLabel ?? t("priceUnknown")}
-                          </span>
-                          {distKm != null ? (
-                            <span className="browse-row-distance">
-                              {formatDistanceKm(distKm)}
-                            </span>
-                          ) : null}
-                        </span>
-                        <div className="browse-row-actions">
-                          <button
-                            type="button"
-                            className={
-                              (isFav
-                                ? "browse-row-fav is-on"
-                                : "browse-row-fav") + " browse-row-fav-solo"
-                            }
-                            aria-label={
-                              isFav ? t("removeFavorite") : t("addFavorite")
-                            }
-                            aria-pressed={isFav}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setFavoriteSlugs(toggleFavoriteSlug(gym.slug));
-                            }}
-                          >
-                            <Heart size={20} strokeWidth={2.2} />
-                          </button>
-                          <div className="browse-row-more">
-                            <button
-                              type="button"
-                              className={
-                                (isFav
-                                  ? "browse-row-fav is-on"
-                                  : "browse-row-fav") + " browse-row-fav-more"
-                              }
-                              aria-label={
-                                isFav ? t("removeFavorite") : t("addFavorite")
-                              }
-                              aria-pressed={isFav}
-                              tabIndex={-1}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setFavoriteSlugs(toggleFavoriteSlug(gym.slug));
-                              }}
-                            >
-                              <Heart size={20} strokeWidth={2.2} />
-                            </button>
-                            {gym.lat != null && gym.lng != null ? (
-                              <a
-                                className="browse-map-preview-maps"
-                                href={
-                                  "https://www.google.com/maps/dir/?api=1&origin=" +
-                                  origin.lat +
-                                  "," +
-                                  origin.lng +
-                                  "&destination=" +
-                                  gym.lat +
-                                  "," +
-                                  gym.lng
-                                }
-                                target="_blank"
-                                rel="noreferrer"
-                                aria-label={t("mapsRoute")}
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <img
-                                  className="is-line"
-                                  src="/pins/google-maps-outline.png"
-                                  alt=""
-                                />
-                                <img
-                                  className="is-fill"
-                                  src="/pins/google-maps-pin.png"
-                                  alt=""
-                                />
-                              </a>
-                            ) : null}
-                            <Link
-                              className="browse-map-preview-open"
-                              to={pathGym(lang, gym.slug)}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {t("open")}
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-            {showMissing ? (
-              <div className="browse-missing-slot">
-                <p className="browse-missing">
-                  {t("missingGym")}
-                  <span>{t("missingGymHint")}</span>
-                </p>
-              </div>
-            ) : null}
-            {listLoading || pageJumpLoading ? (
-              <div className="browse-list-loading">
-                <LoadSpin />
-              </div>
-            ) : null}
-            {!mobileList &&
-            !listLoading &&
-            !pageJumpLoading &&
-            !regionPickMode ? (
-              <div className="browse-pagebar">
-                <button
-                  type="button"
-                  className="browse-pager-btn"
-                  aria-label={t("previous")}
-                  disabled={safePage <= 1}
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                >
-                  <ChevronLeft size={16} strokeWidth={2.2} />
-                </button>
-                <div className="browse-pages">
-                  {pageNums(safePage, pageCount).map((item, i) =>
-                    item === "gap" ? (
-                      <span className="browse-page-gap" key={`gap-${i}`}>
-                        …
-                      </span>
-                    ) : (
-                      <button
-                        key={item}
-                        type="button"
-                        className={
-                          item === safePage
-                            ? "browse-page-num is-on"
-                            : "browse-page-num"
-                        }
-                        onClick={() => setPage(item)}
-                      >
-                        {item}
-                      </button>
-                    ),
-                  )}
-                </div>
-                <button
-                  type="button"
-                  className="browse-pager-btn"
-                  aria-label={t("next")}
-                  disabled={safePage >= pageCount}
-                  onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-                >
-                  <ChevronRight size={16} strokeWidth={2.2} />
-                </button>
-              </div>
-            ) : null}
-          </div>
-          {mobileList &&
-          !listLoading &&
-          !pageJumpLoading &&
-          !regionPickMode ? (
-            <div className="browse-pagebar">
-              <button
-                type="button"
-                className="browse-pager-btn"
-                aria-label={t("previous")}
-                disabled={safePage <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                <ChevronLeft size={16} strokeWidth={2.2} />
-              </button>
-              <div className="browse-pages">
-                {pageNums(safePage, pageCount).map((item, i) =>
-                  item === "gap" ? (
-                    <span className="browse-page-gap" key={`gap-${i}`}>
-                      …
-                    </span>
-                  ) : (
-                    <button
-                      key={item}
-                      type="button"
-                      className={
-                        item === safePage
-                          ? "browse-page-num is-on"
-                          : "browse-page-num"
-                      }
-                      onClick={() => setPage(item)}
-                    >
-                      {item}
-                    </button>
-                  ),
-                )}
-              </div>
-              <button
-                type="button"
-                className="browse-pager-btn"
-                aria-label={t("next")}
-                disabled={safePage >= pageCount}
-                onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-              >
-                <ChevronRight size={16} strokeWidth={2.2} />
-              </button>
-            </div>
-          ) : null}
+          <BrowseListHead
+            t={t}
+            regionPickMode={regionPickMode}
+            regionDropRef={regionDropRef}
+            regionMenuOpen={regionMenuOpen}
+            regionSheetOpen={mapSheet === "region"}
+            mobileList={mobileList}
+            regionLabel={
+              browseCitySlug ? displayCityName(browseCitySlug) : t("regions")
+            }
+            cityQuery={cityQuery}
+            onCityQuery={setCityQuery}
+            cityOptions={filteredCityOptions}
+            activeCitySlug={browseCitySlug}
+            onFocusCity={focusCity}
+            onRegionClick={() => {
+              if (mobileList) {
+                setCityQuery("");
+                setRegionMenuOpen(false);
+                setMapSheet((cur) => (cur === "region" ? null : "region"));
+                return;
+              }
+              setRegionMenuOpen((v) => !v);
+              setCityQuery("");
+            }}
+            inViewCount={inViewGyms.length}
+            safePage={safePage}
+            pageCount={pageCount}
+            onPrev={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => Math.min(pageCount, p + 1))}
+            sortLabel={sortLabel}
+            sortId={sortId}
+            sortOptions={sortOptions}
+            sortMenuOpen={openFilter === "sort"}
+            onToggleSort={() => toggleFilter("sort")}
+            onSelectSort={(id) => {
+              setSortId(id);
+              setOpenFilter(null);
+            }}
+          />
+          <BrowseResultsList
+            t={t}
+            lang={lang}
+            origin={origin}
+            chains={chains}
+            listScrollRef={listScrollRef}
+            regionPickMode={regionPickMode}
+            listLoading={listLoading}
+            pageJumpLoading={pageJumpLoading}
+            showMissing={showMissing}
+            browseReady={browseReady}
+            mobileList={mobileList}
+            pageGyms={pageGyms}
+            inViewCount={inViewGyms.length}
+            visibleCount={visibleGyms.length}
+            gymsCount={gyms.length}
+            hoveredId={hoveredId}
+            selectedId={selectedId}
+            favoriteSlugs={favoriteSlugs}
+            onHover={setHoveredId}
+            onToggleFavorite={(slug) =>
+              setFavoriteSlugs(toggleFavoriteSlug(slug))
+            }
+            onFocusGym={focusGymFromList}
+            safePage={safePage}
+            pageCount={pageCount}
+            onPage={setPage}
+            onPrev={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => Math.min(pageCount, p + 1))}
+          />
         </section>
         <section
           className={
@@ -2818,255 +2070,67 @@ function GymsPage() {
           }
         >
           <div className="browse-map-frame">
-            <div
-              className="browse-map-side"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {browseCitySlug ? (
-                <div className="browse-map-desk-city browse-glass">
-                  <Building2 size={14} strokeWidth={2.3} aria-hidden="true" />
-                  <span>{displayCityName(browseCitySlug)}</span>
-                </div>
-              ) : null}
-              <div className="browse-map-desk-tools">
-                <div className="browse-map-address-wrap">
-                  <label className="browse-map-address browse-glass">
-                    <MapPin size={15} strokeWidth={2.3} />
-                    <input
-                      type="text"
-                      placeholder={t("addressPlaceholder")}
-                      aria-label={t("addressAria")}
-                      value={addressDraft}
-                      autoComplete="off"
-                      onChange={(e) => {
-                        setAddressDraft(e.target.value);
-                        setAddressSuggest(true);
-                      }}
-                      onFocus={() => {
-                        if (
-                          addressDraft.trim().length >= 3 &&
-                          addressDraft.trim() !== locationLabel
-                        ) {
-                          setAddressSuggest(true);
-                        }
-                      }}
-                      onBlur={() => {
-                        setAddressSuggest(false);
-                        setAddressDraft(locationLabel);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Escape") setAddressSuggest(false);
-                      }}
-                    />
-                    <button
-                      type="button"
-                      className="browse-map-locate"
-                      aria-label={t("useMyLocation")}
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => {
-                        goMyLocation();
-                      }}
-                    >
-                      <LocateFixed size={15} strokeWidth={2.4} />
-                    </button>
-                  </label>
-                  {addressSuggest && addressDraft.trim().length >= 3 &&
-                  addressDraft.trim() !== locationLabel ? (
-                    <ul className="browse-address-hits">
-                      {addressLoading && addressHits.length === 0 ? (
-                        <li className="browse-address-hint">
-                          <LoadSpin size="sm" />
-                        </li>
-                      ) : null}
-                      {!addressLoading && addressHits.length === 0 ? (
-                        <li className="browse-address-hint">{t("noResults")}</li>
-                      ) : null}
-                      {addressHits.map((item) => (
-                        <li key={item.id}>
-                          <button
-                            type="button"
-                            onMouseDown={(e) => e.preventDefault()}
-                            onClick={() => {
-                              setAddressSuggest(false);
-                              flushSync(() => {
-                                setLocation({
-                                  label: item.label,
-                                  lat: item.lat,
-                                  lng: item.lng,
-                                });
-                              });
-                            }}
-                          >
-                            {item.label}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-            <div className="browse-map-controls">
-              <button
-                type="button"
-                className="browse-map-ctrl browse-glass"
-                aria-label={t("mapZoomIn")}
-                onClick={() => mapInstanceRef.current?.zoomIn({ duration: 280 })}
-              >
-                <Plus size={20} strokeWidth={2.4} />
-              </button>
-              <button
-                type="button"
-                className="browse-map-ctrl browse-glass"
-                aria-label={t("mapZoomOut")}
-                onClick={() => {
-                  const map = mapInstanceRef.current;
-                  if (!map) return;
-                  if (map.getZoom() <= map.getMinZoom() + 0.01) return;
-                  map.zoomOut({ duration: 280 });
-                }}
-              >
-                <Minus size={20} strokeWidth={2.4} />
-              </button>
-              <button
-                type="button"
-                className="browse-map-ctrl browse-map-locate-fab browse-glass"
-                aria-label={t("mapGoToLocation")}
-                disabled={origin.lat == null || origin.lng == null}
-                onClick={() => {
-                  if (origin.lat == null || origin.lng == null) return;
-                  const place = {
-                    label: locationLabel,
-                    lat: origin.lat,
-                    lng: origin.lng,
-                  };
-                  const city = resolveCityFromPlace(place);
-                  pendingMyLocationRef.current = {
-                    lat: place.lat,
-                    lng: place.lng,
-                    citySlug: city?.slug ?? browseCitySlugRef.current,
-                  };
-                  cityBounceLockRef.current = true;
-                  if (city && browseCitySlugRef.current !== city.slug) {
-                    applyCityForMyLocation(city);
-                  }
-                  setMyLocationTick((n) => n + 1);
-                }}
-              >
-                <LocateFixed size={19} strokeWidth={2.4} />
-              </button>
-            </div>
+            <BrowseMapChrome
+              t={t}
+              cityLabel={browseCitySlug ? displayCityName(browseCitySlug) : null}
+              addressDraft={addressDraft}
+              locationLabel={locationLabel}
+              addressSuggest={addressSuggest}
+              addressHits={addressHits}
+              addressLoading={addressLoading}
+              onAddressDraft={setAddressDraft}
+              onAddressSuggest={setAddressSuggest}
+              onPickAddress={(item) => {
+                setAddressSuggest(false);
+                flushSync(() => {
+                  setLocation({
+                    label: item.label,
+                    lat: item.lat,
+                    lng: item.lng,
+                  });
+                });
+              }}
+              onLocate={goMyLocation}
+              onZoomIn={() => mapInstanceRef.current?.zoomIn({ duration: 280 })}
+              onZoomOut={() => {
+                const map = mapInstanceRef.current;
+                if (!map) return;
+                if (map.getZoom() <= map.getMinZoom() + 0.01) return;
+                map.zoomOut({ duration: 280 });
+              }}
+              locateDisabled={origin.lat == null || origin.lng == null}
+              onLocateFab={() => {
+                if (origin.lat == null || origin.lng == null) return;
+                const place = {
+                  label: locationLabel,
+                  lat: origin.lat,
+                  lng: origin.lng,
+                };
+                const city = resolveCityFromPlace(place);
+                pendingMyLocationRef.current = {
+                  lat: place.lat,
+                  lng: place.lng,
+                  citySlug: city?.slug ?? browseCitySlugRef.current,
+                };
+                cityBounceLockRef.current = true;
+                if (city && browseCitySlugRef.current !== city.slug) {
+                  applyCityForMyLocation(city);
+                }
+                setMyLocationTick((n) => n + 1);
+              }}
+            />
             <div className="browse-map" aria-label={t("map")} ref={mapRef} />
             {selectedMapGym ? (
-              <div className="browse-map-preview">
-                <Link
-                  to={pathGym(lang, selectedMapGym.gym.slug)}
-                  className="browse-map-preview-link"
-                >
-                  <span
-                    className={[
-                      "browse-map-preview-media",
-                      selectedMapGym.chain?.image &&
-                      !selectedMapGym.chain.image.includes("/pins/")
-                        ? selectedMapGym.chain.logoFit === "contain"
-                          ? "is-logo"
-                          : ""
-                        : "is-pin",
-                      selectedMapGym.chain?.image &&
-                      !selectedMapGym.chain.image.includes("/pins/")
-                        ? selectedMapGym.chain.logoClass || ""
-                        : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                  >
-                    <img
-                      src={
-                        selectedMapGym.chain?.image &&
-                        !selectedMapGym.chain.image.includes("/pins/")
-                          ? selectedMapGym.chain.image
-                          : "/pins/gym-pin.png"
-                      }
-                      alt=""
-                    />
-                  </span>
-                  <span className="browse-map-preview-meta">
-                    <strong className="browse-map-preview-name">
-                      {selectedMapGym.siteName}
-                    </strong>
-                    {selectedMapGym.street ? (
-                      <span className="browse-map-preview-distance">
-                        {selectedMapGym.street}
-                      </span>
-                    ) : null}
-                    <span className="browse-map-preview-price">
-                      {selectedMapGym.priceLabel ?? t("priceUnknown")}
-                      {selectedMapGym.distKm != null
-                        ? ` · ${formatDistanceKm(selectedMapGym.distKm)}`
-                        : ""}
-                    </span>
-                  </span>
-                </Link>
-                <button
-                  type="button"
-                  className={
-                    favoriteSlugs.includes(selectedMapGym.gym.slug)
-                      ? "browse-row-fav browse-map-preview-fav is-on"
-                      : "browse-row-fav browse-map-preview-fav"
-                  }
-                  aria-label={
-                    favoriteSlugs.includes(selectedMapGym.gym.slug)
-                      ? t("removeFavorite")
-                      : t("addFavorite")
-                  }
-                  aria-pressed={favoriteSlugs.includes(selectedMapGym.gym.slug)}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setFavoriteSlugs(
-                      toggleFavoriteSlug(selectedMapGym.gym.slug),
-                    );
-                  }}
-                >
-                  <Heart size={18} strokeWidth={2.2} />
-                </button>
-                {selectedMapGym.gym.lat != null &&
-                selectedMapGym.gym.lng != null ? (
-                  <a
-                    className="browse-map-preview-maps"
-                    href={
-                      "https://www.google.com/maps/dir/?api=1&origin=" +
-                      origin.lat +
-                      "," +
-                      origin.lng +
-                      "&destination=" +
-                      selectedMapGym.gym.lat +
-                      "," +
-                      selectedMapGym.gym.lng
-                    }
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label={t("mapsRoute")}
-                  >
-                    <img
-                      className="is-line"
-                      src="/pins/google-maps-outline.png"
-                      alt=""
-                    />
-                    <img
-                      className="is-fill"
-                      src="/pins/google-maps-pin.png"
-                      alt=""
-                    />
-                  </a>
-                ) : null}
-                <Link
-                  className="browse-map-preview-open"
-                  to={pathGym(lang, selectedMapGym.gym.slug)}
-                >
-                  {t("open")}
-                </Link>
-              </div>
+              <BrowseSelectedCard
+                selected={selectedMapGym}
+                lang={lang}
+                t={t}
+                origin={origin}
+                isFav={favoriteSlugs.includes(selectedMapGym.gym.slug)}
+                onToggleFavorite={() =>
+                  setFavoriteSlugs(toggleFavoriteSlug(selectedMapGym.gym.slug))
+                }
+              />
             ) : null}
           </div>
         </section>
@@ -3094,534 +2158,113 @@ function GymsPage() {
 
       {mapSheet
         ? createPortal(
-            <div
-              className="browse-map-sheet-root"
-              role="presentation"
-              onClick={() => setMapSheet(null)}
-            >
-              <div
-                className="browse-map-sheet"
-                role="dialog"
-                aria-modal="true"
-                aria-label={
-                  mapSheet === "address" ? t("fromAddressAria") : t("regions")
-                }
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="browse-map-sheet-head">
-                  <h2 className="browse-map-sheet-title">
-                    {mapSheet === "address"
-                      ? t("fromAddressAria")
-                      : t("regions")}
-                  </h2>
-                  <button
-                    type="button"
-                    className="chain-popup-close"
-                    aria-label={t("close")}
-                    onClick={() => setMapSheet(null)}
-                  >
-                    <X size={20} strokeWidth={2.4} />
-                  </button>
-                </div>
-
-                {mapSheet === "address" ? (
-                  <div className="browse-map-sheet-body">
-                    <label className="browse-map-sheet-field">
-                      <MapPin size={16} strokeWidth={2.3} />
-                      <input
-                        type="search"
-                        autoFocus
-                        placeholder={t("addressPlaceholder")}
-                        aria-label={t("addressAria")}
-                        value={addressDraft}
-                        autoComplete="off"
-                        onChange={(e) => {
-                          setAddressDraft(e.target.value);
-                          setAddressSuggest(true);
-                        }}
-                      />
-                      <button
-                        type="button"
-                        className="browse-map-locate"
-                        aria-label={t("useMyLocation")}
-                        onClick={() => {
-                          goMyLocation();
-                          setMapSheet(null);
-                        }}
-                      >
-                        <LocateFixed size={16} strokeWidth={2.4} />
-                      </button>
-                    </label>
-                    <ul className="browse-map-sheet-hits">
-                      {addressDraft.trim().length >= 3 &&
-                      addressDraft.trim() !== locationLabel ? (
-                        <>
-                          {addressLoading && addressHits.length === 0 ? (
-                            <li className="browse-address-hint">
-                              <LoadSpin size="sm" />
-                            </li>
-                          ) : null}
-                          {!addressLoading && addressHits.length === 0 ? (
-                            <li className="browse-address-hint">
-                              {t("noResults")}
-                            </li>
-                          ) : null}
-                          {addressHits.map((item) => (
-                            <li key={item.id}>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setAddressSuggest(false);
-                                  flushSync(() => {
-                                    setLocation({
-                                      label: item.label,
-                                      lat: item.lat,
-                                      lng: item.lng,
-                                    });
-                                  });
-                                  setMapSheet(null);
-                                }}
-                              >
-                                {item.label}
-                              </button>
-                            </li>
-                          ))}
-                        </>
-                      ) : (
-                        <li className="browse-address-hint">
-                          {locationLabel}
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-                ) : (
-                  <div className="browse-map-sheet-body">
-                    <label className="browse-map-sheet-field">
-                      <input
-                        type="search"
-                        autoFocus
-                        placeholder={t("searchCity")}
-                        aria-label={t("searchCity")}
-                        value={cityQuery}
-                        onChange={(e) => setCityQuery(e.target.value)}
-                      />
-                    </label>
-                    <ul className="browse-map-sheet-hits is-regions">
-                      {filteredCityOptions.map((city) => (
-                        <li key={city.slug}>
-                          <button
-                            type="button"
-                            className={
-                              city.slug === browseCitySlug ? "is-on" : ""
-                            }
-                            onClick={() => focusCity(city)}
-                          >
-                            {city.name}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </div>,
+            <BrowseMapSheet
+              t={t}
+              mode={mapSheet}
+              onClose={() => setMapSheet(null)}
+              addressDraft={addressDraft}
+              onAddressChange={(value) => {
+                setAddressDraft(value);
+                setAddressSuggest(true);
+              }}
+              addressHits={addressHits}
+              addressLoading={addressLoading}
+              locationLabel={locationLabel}
+              onPickAddress={(item) => {
+                setAddressSuggest(false);
+                flushSync(() => {
+                  setLocation({
+                    label: item.label,
+                    lat: item.lat,
+                    lng: item.lng,
+                  });
+                });
+                setMapSheet(null);
+              }}
+              onLocate={() => {
+                goMyLocation();
+                setMapSheet(null);
+              }}
+              cityQuery={cityQuery}
+              onCityQuery={setCityQuery}
+              cityOptions={filteredCityOptions}
+              activeCitySlug={browseCitySlug}
+              onFocusCity={focusCity}
+            />,
             document.body,
           )
         : null}
 
       {extrasOpen
         ? createPortal(
-        <div
-          className="browse-extras-root"
-          role="presentation"
-          onClick={() => setExtrasOpen(false)}
-        >
-          <div
-            className="browse-extras-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label={t("filters")}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="browse-extras-head">
-              <div className="browse-extras-banner-row">
-                <h2 className="browse-extras-title">{t("filters")}</h2>
-                <button
-                  type="button"
-                  className="chain-popup-close"
-                  aria-label={t("close")}
-                  onClick={() => setExtrasOpen(false)}
-                >
-                  <X size={20} strokeWidth={2.4} />
-                </button>
-              </div>
-              <p className="browse-extras-text browse-extras-hint-desk">
-                {t("extrasHint")}
-              </p>
-            </div>
-
-            <div className="browse-extras-mobile-block">
-              <button
-                type="button"
-                className={
-                  "browse-extras-jump" + (chainFilterActive ? " is-on" : "")
-                }
-                onClick={() => {
-                  setExtrasOpen(false);
-                  setChainsOpen(true);
-                }}
-              >
-                <Link2 size={18} strokeWidth={2.2} />
-                <span>
-                  {t("chains")}
-                  {chainFilterActive ? ` · ${selectedChains.length}` : ""}
-                </span>
-                <ChevronRight size={16} strokeWidth={2.2} />
-              </button>
-
-              <div className="browse-extras-section">
-                <div className="browse-distance-head">
-                  <span className="browse-slider-title">
-                    <Euro size={16} strokeWidth={2.2} />
-                    {t("price")}
-                  </span>
-                  <strong>
-                    {priceMin} – {priceMax} €
-                  </strong>
-                </div>
-                <BrowseDualRange
-                  lo={priceMin}
-                  hi={priceMax}
-                  onLo={setPriceMin}
-                  onHi={setPriceMax}
-                  minLabel={t("priceMinAria")}
-                  maxLabel={t("priceMaxAria")}
-                />
-                <div className="browse-dual-ends">
-                  <span>{PRICE_MIN} €</span>
-                  <span>{PRICE_MAX} €</span>
-                </div>
-              </div>
-
-              <div className="browse-extras-section">
-                <div className="browse-distance-head">
-                  <span className="browse-slider-title">
-                    <Route size={16} strokeWidth={2.2} />
-                    {t("distanceMax")}
-                  </span>
-                  <strong>
-                    {maxDistanceKm == null
-                      ? t("distanceAll")
-                      : `${maxDistanceKm} km`}
-                  </strong>
-                </div>
-                <div className="browse-dual">
-                  <div className="browse-dual-rail">
-                    <div
-                      className="browse-dual-fill"
-                      style={{
-                        left: "0%",
-                        width: `${
-                          (distancePresetIndex /
-                            Math.max(1, distancePresets.length - 1)) *
-                          100
-                        }%`,
-                      }}
-                    />
-                  </div>
-                  <input
-                    className="browse-dual-input is-hi"
-                    type="range"
-                    min={0}
-                    max={distancePresets.length - 1}
-                    step={1}
-                    value={distancePresetIndex}
-                    aria-label={t("distanceMax")}
-                    onChange={(e) => {
-                      const next =
-                        distancePresets[Number(e.target.value)] ??
-                        distancePresets[0];
-                      setDistanceFilter(next.id);
-                    }}
-                  />
-                </div>
-                <div className="browse-distance-marks">
-                  {distancePresets.map((opt) => (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      className={
-                        opt.id === distanceFilter
-                          ? "browse-distance-mark is-on"
-                          : "browse-distance-mark"
-                      }
-                      onClick={() => setDistanceFilter(opt.id)}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-            </div>
-
-            <div className="browse-extras-options">
-              <label className="browse-extras-row browse-extras-women">
-                <span className="browse-extras-row-copy">
-                  <img
-                    className="browse-extras-row-icon"
-                    src="/icons/kenelle-women.png"
-                    alt=""
-                  />
-                  <span>
-                    <strong>{t("audienceWomen")}</strong>
-                    <span className="browse-extras-desc">
-                      {t("audienceWomenDesc")}
-                    </span>
-                  </span>
-                </span>
-                <UxSwitch
-                  checked={womenOnly}
-                  onChange={(on) => setSelectedAudiences(on ? ["women"] : [])}
-                />
-              </label>
-              <label className="browse-extras-row">
-                <span className="browse-extras-row-copy">
-                  <Clock
-                    className="browse-extras-row-icon is-lucide"
-                    size={18}
-                    strokeWidth={2.2}
-                  />
-                  <span>
-                    <strong>{t("open247")}</strong>
-                    <span className="browse-extras-desc">
-                      {t("open247Desc")}
-                    </span>
-                  </span>
-                </span>
-                <UxSwitch
-                  checked={extraOnly247}
-                  onChange={setExtraOnly247}
-                />
-              </label>
-              <label className="browse-extras-row">
-                <span className="browse-extras-row-copy">
-                  <Gift
-                    className="browse-extras-row-icon is-lucide"
-                    size={18}
-                    strokeWidth={2.2}
-                  />
-                  <span>
-                    <strong>{t("freeTrial")}</strong>
-                    <span className="browse-extras-desc">
-                      {t("freeTrialDesc")}
-                    </span>
-                  </span>
-                </span>
-                <UxSwitch
-                  checked={extraFreeTrial}
-                  onChange={setExtraFreeTrial}
-                />
-              </label>
-              <label className="browse-extras-row">
-                <span className="browse-extras-row-copy">
-                  <Ticket
-                    className="browse-extras-row-icon is-lucide"
-                    size={18}
-                    strokeWidth={2.2}
-                  />
-                  <span>
-                    <strong>{t("priceDayPass")}</strong>
-                    <span className="browse-extras-desc">
-                      {t("dayPassDesc")}
-                    </span>
-                  </span>
-                </span>
-                <UxSwitch
-                  checked={extraDayPass}
-                  onChange={setExtraDayPass}
-                />
-              </label>
-            </div>
-
-            <div className="browse-extras-footer">
-              <button
-                type="button"
-                className="browse-extras-btn browse-extras-btn-ghost browse-extras-clear-desk"
-                onClick={() => {
-                  setSelectedAudiences([]);
-                  setExtraOnly247(false);
-                  setExtraFreeTrial(false);
-                  setExtraDayPass(false);
-                }}
-              >
-                {t("clear")}
-              </button>
-              <button
-                type="button"
-                className="browse-extras-btn browse-extras-btn-ghost browse-extras-clear-mobile"
-                onClick={() => {
-                  setSelectedChains([...visibleChainFilterIds]);
-                  setSelectedAudiences([]);
-                  setDistanceFilter("all");
-                  setPriceMin(PRICE_MIN);
-                  setPriceMax(PRICE_MAX);
-                  setExtraOnly247(false);
-                  setExtraFreeTrial(false);
-                  setExtraDayPass(false);
-                }}
-              >
-                {t("clear")}
-              </button>
-              <button
-                type="button"
-                className="browse-extras-btn"
-                onClick={() => setExtrasOpen(false)}
-              >
-                {t("done")}
-              </button>
-            </div>
-          </div>
-        </div>,
+            <BrowseExtrasMenu
+              t={t}
+              chainFilterActive={chainFilterActive}
+              selectedChainsCount={selectedChains.length}
+              priceMin={priceMin}
+              priceMax={priceMax}
+              onPriceMin={setPriceMin}
+              onPriceMax={setPriceMax}
+              maxDistanceKm={maxDistanceKm}
+              distancePresetIndex={distancePresetIndex}
+              distancePresets={distancePresets}
+              distanceFilter={distanceFilter}
+              onDistanceFilter={setDistanceFilter}
+              womenOnly={womenOnly}
+              onWomenOnly={(on) => setSelectedAudiences(on ? ["women"] : [])}
+              extraOnly247={extraOnly247}
+              onExtraOnly247={setExtraOnly247}
+              extraFreeTrial={extraFreeTrial}
+              onExtraFreeTrial={setExtraFreeTrial}
+              extraDayPass={extraDayPass}
+              onExtraDayPass={setExtraDayPass}
+              onClose={() => setExtrasOpen(false)}
+              onOpenChains={() => {
+                setExtrasOpen(false);
+                setChainsOpen(true);
+              }}
+              onClearOptions={() => {
+                setSelectedAudiences([]);
+                setExtraOnly247(false);
+                setExtraFreeTrial(false);
+                setExtraDayPass(false);
+              }}
+              onClearAll={() => {
+                setSelectedChains([...visibleChainFilterIds]);
+                setSelectedAudiences([]);
+                setDistanceFilter("all");
+                setPriceMin(PRICE_MIN);
+                setPriceMax(PRICE_MAX);
+                setExtraOnly247(false);
+                setExtraFreeTrial(false);
+                setExtraDayPass(false);
+              }}
+            />,
             document.body,
           )
         : null}
 
       {chainsOpen
         ? createPortal(
-            <div
-              className="chain-popup-overlay"
-              onClick={() => setChainsOpen(false)}
-            >
-              <div
-                className="chain-popup-card browse-chains-card"
-                role="dialog"
-                aria-modal="true"
-                aria-label={t("chains")}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="chain-popup-banner">
-                  <div className="chain-popup-banner-row">
-                    <h2 className="chain-popup-title">{t("chains")}</h2>
-                    <button
-                      type="button"
-                      className="chain-popup-close"
-                      onClick={() => setChainsOpen(false)}
-                      aria-label={t("close")}
-                    >
-                      <X size={20} strokeWidth={2.4} />
-                    </button>
-                  </div>
-                  <div className="browse-chains-top">
-                    <div className="group">
-                      <svg
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                        className="search-icon"
-                      >
-                        <g>
-                          <path d="M21.53 20.47l-3.66-3.66C19.195 15.24 20 13.214 20 11c0-4.97-4.03-9-9-9s-9 4.03-9 9 4.03 9 9 9c2.215 0 4.24-.804 5.808-2.13l3.66 3.66c.147.146.34.22.53.22s.385-.073.53-.22c.295-.293.295-.767.002-1.06zM3.5 11c0-4.135 3.365-7.5 7.5-7.5s7.5 3.365 7.5 7.5-3.365 7.5-7.5 7.5-7.5-3.365-7.5-7.5z" />
-                        </g>
-                      </svg>
-                      <input
-                        className="input"
-                        type="search"
-                        placeholder={t("chainSearch")}
-                        value={chainQuery}
-                        onChange={(e) => setChainQuery(e.target.value)}
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      className="browse-chains-action"
-                      onClick={() =>
-                        setSelectedChains([...visibleChainFilterIds])
-                      }
-                    >
-                      {t("all")}
-                    </button>
-                    <button
-                      type="button"
-                      className="browse-chains-clear"
-                      onClick={() => setSelectedChains([])}
-                    >
-                      {t("clear")}
-                    </button>
-                  </div>
-                  <p className="browse-chains-picked">
-                    {t("chainsPicked", {
-                      n: selectedChains.length,
-                      total: visibleChainFilterIds.length,
-                    })}
-                  </p>
-                </div>
-                <div className="chain-popup-scroll">
-                  <ul
-                    className="chain-popup-list list-pop"
-                    onScroll={(e) => {
-                      e.currentTarget.parentElement?.classList.toggle(
-                        "is-scrolled",
-                        e.currentTarget.scrollTop > 6,
-                      );
-                    }}
-                  >
-                    {localizedChainFilterOptions
-                      .filter((opt) => {
-                        const q = chainQuery.trim().toLowerCase();
-                        if (!q) return true;
-                        return opt.label.toLowerCase().includes(q);
-                      })
-                      .map((opt, i) => {
-                      const on = selectedChains.includes(opt.id);
-                      const visual = filterChainVisual(opt.id, chains);
-                      return (
-                        <li
-                          key={opt.id}
-                          style={{
-                            animationDelay: `${Math.min(i, 18) * 28}ms`,
-                          }}
-                        >
-                          <label className="browse-chains-row">
-                            <span
-                              className={[
-                                "chain-popup-media",
-                                visual.logo ? "is-logo" : "",
-                                visual.logoClass,
-                              ]
-                                .filter(Boolean)
-                                .join(" ")}
-                            >
-                              <img src={visual.image} alt="" />
-                            </span>
-                            <span className="browse-chains-main">
-                              <span className="browse-chains-copy">
-                                <span className="browse-chains-name">
-                                  {opt.label}
-                                </span>
-                                <span className="browse-chains-hint">
-                                  {t("chainFilterHint")}
-                                </span>
-                              </span>
-                              <UxSwitch
-                                size="sm"
-                                checked={on}
-                                onChange={() => {
-                                  setSelectedChains((cur) =>
-                                    cur.includes(opt.id)
-                                      ? cur.filter((id) => id !== opt.id)
-                                      : [...cur, opt.id],
-                                  );
-                                }}
-                              />
-                            </span>
-                          </label>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              </div>
-            </div>,
+            <BrowseChainsMenu
+              t={t}
+              chains={chains}
+              options={localizedChainFilterOptions}
+              selectedChains={selectedChains}
+              visibleChainFilterIds={visibleChainFilterIds}
+              chainQuery={chainQuery}
+              onChainQuery={setChainQuery}
+              onToggleChain={(id) => {
+                setSelectedChains((cur) =>
+                  cur.includes(id)
+                    ? cur.filter((x) => x !== id)
+                    : [...cur, id],
+                );
+              }}
+              onSelectAll={() => setSelectedChains([...visibleChainFilterIds])}
+              onClearAll={() => setSelectedChains([])}
+              onClose={() => setChainsOpen(false)}
+            />,
             document.body,
           )
         : null}
