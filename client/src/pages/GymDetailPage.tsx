@@ -1,7 +1,10 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import "../map/maplibreSetup";
+import {
+  observeMapContainerResize,
+  waitForMapContainerSize,
+} from "../map/maplibreSetup";
 import { LngLatBounds, Map, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
@@ -46,118 +49,18 @@ import { useLang } from "../i18n/useLang";
 import { API } from "../data/apiBase";
 import { usePageMeta } from "../seo/usePageMeta";
 import "./GymDetailPage.css";
+import { distanceKm } from "../features/browse/utils/distanceKm";
+import { cleanHoursValue } from "../features/gym-detail/utils/cleanHoursValue";
+import { makeGymPin, makeOriginPin } from "../features/gym-detail/utils/detailPins";
+import {
+  DetailAccordion,
+  type DetailAccordionId,
+} from "../features/gym-detail/components/DetailAccordion";
 
 type GymDetail = Gym & { chain: Chain | null };
-type AccordionId =
-  | "hours"
-  | "memberships"
-  | "services"
-  | "chain"
-  | "contacts";
+type AccordionId = DetailAccordionId;
 
 const PROMO_TAGS = ["Ilmainen kokeilu", "Free trial"];
-
-function cleanHoursValue(raw: string, is247: boolean) {
-  if (is247) return "24/7";
-  return raw
-    .replace(/^ma[–-]pe\s+/i, "")
-    .replace(/^la[–-]su\s+/i, "")
-    .replace(/^la\s+/i, "")
-    .replace(/^su\s+/i, "");
-}
-
-function distanceKm(
-  aLat: number,
-  aLng: number,
-  bLat: number,
-  bLng: number,
-) {
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const dLat = toRad(bLat - aLat);
-  const dLng = toRad(bLng - aLng);
-  const lat1 = toRad(aLat);
-  const lat2 = toRad(bLat);
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-  return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-}
-
-function makeGymPin(opts: { addressText?: string | null }) {
-  const el = document.createElement("div");
-  el.className = "gym-detail-pin";
-
-  if (opts.addressText) {
-    const addr = document.createElement("span");
-    addr.className = "gym-detail-pin-address";
-    addr.textContent = opts.addressText;
-    el.appendChild(addr);
-  }
-
-  const hit = document.createElement("div");
-  hit.className = "gym-detail-pin-hit is-selected";
-  const img = document.createElement("img");
-  img.src = "/pins/gym-pin.png";
-  img.alt = "";
-  hit.appendChild(img);
-  el.appendChild(hit);
-  return el;
-}
-
-function makeOriginPin(ariaLabel: string, addressLabel?: string | null) {
-  const el = document.createElement("div");
-  el.className = "gym-detail-origin-pin";
-  el.setAttribute("aria-label", ariaLabel);
-  if (addressLabel?.trim()) {
-    const label = document.createElement("span");
-    label.className = "gym-detail-origin-label";
-    label.textContent = addressLabel.trim();
-    el.appendChild(label);
-  }
-  const ring = document.createElement("span");
-  ring.className = "gym-origin-pin-ring";
-  const ringLate = document.createElement("span");
-  ringLate.className = "gym-origin-pin-ring is-late";
-  const core = document.createElement("span");
-  core.className = "gym-origin-pin-core";
-  el.append(ring, ringLate, core);
-  return el;
-}
-
-function DetailAccordion(props: {
-  id: AccordionId;
-  openId: AccordionId | null;
-  onToggle: (id: AccordionId) => void;
-  title: string;
-  icon: ReactNode;
-  children: ReactNode;
-}) {
-  const open = props.openId === props.id;
-  return (
-    <div className={open ? "gym-detail-acc is-open" : "gym-detail-acc"}>
-      <button
-        type="button"
-        className="gym-detail-acc-head"
-        aria-expanded={open}
-        onClick={() => props.onToggle(props.id)}
-      >
-        <span className="gym-detail-acc-icon" aria-hidden="true">
-          {props.icon}
-        </span>
-        <span className="gym-detail-acc-title">{props.title}</span>
-        <ChevronDown
-          className="gym-detail-acc-chevron"
-          size={18}
-          strokeWidth={2.3}
-          aria-hidden="true"
-        />
-      </button>
-      {open ? (
-        <div className="gym-detail-acc-body">{props.children}</div>
-      ) : null}
-    </div>
-  );
-}
 
 function GymDetailPage() {
   const { slug } = useParams();
@@ -373,35 +276,35 @@ function GymDetailPage() {
 
     const gymLng = gym.lng;
     const gymLat = gym.lat;
-
-    function settleSize() {
-      map.resize();
-    }
+    let dead = false;
+    const stopContainerResize = observeMapContainerResize(
+      map.getContainer(),
+      map,
+    );
 
     map.on("load", () => {
-      settleSize();
-      const addressText =
-        formatGymStreetLine(gym) || gym.address?.trim() || null;
-      gymMarkerRef.current = new Marker({
-        element: makeGymPin({ addressText }),
-        anchor: "bottom",
-      })
-        .setLngLat([gymLng, gymLat])
-        .addTo(map);
-      requestAnimationFrame(() => {
-        settleSize();
-        requestAnimationFrame(settleSize);
-      });
+      void (async () => {
+        await waitForMapContainerSize(map.getContainer(), map);
+        if (dead) return;
+        const addressText =
+          formatGymStreetLine(gym) || gym.address?.trim() || null;
+        gymMarkerRef.current = new Marker({
+          element: makeGymPin({ addressText }),
+          anchor: "bottom",
+        })
+          .setLngLat([gymLng, gymLat])
+          .addTo(map);
+        map.jumpTo({ center: [gymLng, gymLat], zoom: 14 });
+      })();
     });
 
-    window.addEventListener("resize", settleSize);
-
     return () => {
+      dead = true;
       window.clearTimeout(pinchUnlockTimer);
+      stopContainerResize();
       canvas.removeEventListener("touchstart", onTouchStart);
       canvas.removeEventListener("touchend", onTouchEnd);
       canvas.removeEventListener("touchcancel", onTouchEnd);
-      window.removeEventListener("resize", settleSize);
       gymMarkerRef.current?.remove();
       originMarkerRef.current?.remove();
       gymMarkerRef.current = null;
@@ -415,28 +318,38 @@ function GymDetailPage() {
     const map = mapInstanceRef.current;
     if (!map || !gym || gym.lat == null || gym.lng == null) return;
 
-    originMarkerRef.current?.remove();
-    originMarkerRef.current = null;
+    let cancelled = false;
+    void (async () => {
+      await waitForMapContainerSize(map.getContainer(), map);
+      if (cancelled || mapInstanceRef.current !== map) return;
 
-    if (!fromPoint) {
-      map.easeTo({ center: [gym.lng, gym.lat], zoom: 14 });
-      return;
-    }
+      originMarkerRef.current?.remove();
+      originMarkerRef.current = null;
 
-    originMarkerRef.current = new Marker({
-      element: makeOriginPin(
-        t("fromAddressAria"),
-        fromPoint.label || fromDraft || locationLabel,
-      ),
-      anchor: "center",
-    })
-      .setLngLat([fromPoint.lng, fromPoint.lat])
-      .addTo(map);
+      if (!fromPoint) {
+        map.easeTo({ center: [gym.lng, gym.lat], zoom: 14 });
+        return;
+      }
 
-    const bounds = new LngLatBounds();
-    bounds.extend([gym.lng, gym.lat]);
-    bounds.extend([fromPoint.lng, fromPoint.lat]);
-    map.fitBounds(bounds, { padding: 72, maxZoom: 15 });
+      originMarkerRef.current = new Marker({
+        element: makeOriginPin(
+          t("fromAddressAria"),
+          fromPoint.label || fromDraft || locationLabel,
+        ),
+        anchor: "center",
+      })
+        .setLngLat([fromPoint.lng, fromPoint.lat])
+        .addTo(map);
+
+      const bounds = new LngLatBounds();
+      bounds.extend([gym.lng, gym.lat]);
+      bounds.extend([fromPoint.lng, fromPoint.lat]);
+      map.fitBounds(bounds, { padding: 72, maxZoom: 15 });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [
     fromPoint?.lat,
     fromPoint?.lng,

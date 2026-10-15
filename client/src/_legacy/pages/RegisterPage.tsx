@@ -1,4 +1,4 @@
-import "./PagePlaceholder.css";
+import "../../pages/PagePlaceholder.css";
 
 function RegisterPage() {
   return (

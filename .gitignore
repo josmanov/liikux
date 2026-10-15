@@ -10,6 +10,9 @@ logs/
 client/public/salilinkit.html
 client/public/data-review.html
 exports/
+.wrangler/
+.wrangler-out/
+client/public/maplibre/
 *.log
 npm-debug.log*
 .DS_Store
