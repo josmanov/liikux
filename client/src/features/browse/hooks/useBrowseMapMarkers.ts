@@ -1,4 +1,10 @@
-import { useEffect, type Dispatch, type MutableRefObject, type SetStateAction } from "react";
+import {
+  startTransition,
+  useEffect,
+  type Dispatch,
+  type MutableRefObject,
+  type SetStateAction,
+} from "react";
 import {
   LngLatBounds,
   Map as MapLibreMap,
@@ -21,6 +27,7 @@ import {
   zoomWhereClusterSplits,
 } from "../utils/pinCluster";
 import { frameOriginAndGym, framePadForOverlays } from "../utils/mapBounds";
+import { BROWSE_MOBILE_MQ } from "../utils/mapConstants";
 import { flushSync } from "react-dom";
 
 export type BrowseMapMarkersCtx = {
