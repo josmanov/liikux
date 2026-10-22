@@ -85,7 +85,7 @@ async function mapPool<T, R>(
     while (next < items.length) {
       const i = next;
       next += 1;
-      out[i] = await fn(items[i], i);
+      out[i] = await fn(items[i]!, i);
     }
   }
   const workers = Array.from({ length: Math.min(limit, items.length) }, () => worker());

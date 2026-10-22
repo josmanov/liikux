@@ -2,29 +2,22 @@ import "./HomePage.css";
 import { useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
-import type { LucideIcon } from "lucide-react";
 import {
   Bike,
   Dumbbell,
   Flame,
   Footprints,
-  Goal,
   ArrowRight,
   HeartPulse,
   LocateFixed,
-  Mountain,
   PersonStanding,
-  Target,
   Timer,
   Trophy,
-  Waves,
 } from "lucide-react";
-import HoverIcon, { usePickHover } from "../components/HoverIcon";
 import LoadSpin from "../components/LoadSpin";
 import { type Chain } from "../data/types";
 import { fetchChains, fetchHomeStats } from "../data/api";
 import { useAddressSuggest } from "../data/geocode";
-import { lajiGifUrl } from "../data/lajiGifs";
 import { preloadImages } from "../data/preloadImages";
 import { useInView } from "../hooks/useInView";
 import { useAppLocation } from "../context/LocationContext";
@@ -32,23 +25,6 @@ import { useChainPopup } from "../context/ChainPopupContext";
 import { pathGyms, pathGymsFromLocation } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import { usePageMeta } from "../seo/usePageMeta";
-
-const picks = [
-  {
-    name: "Kuntosalit",
-    to: "/fi/kuntosalit",
-    icon: "/picks/kuntosalit.gif",
-    still: "/picks/kuntosalit-still.png",
-    animated: true,
-  },
-  {
-    name: "Harrastukset",
-    to: "/harjoitukset",
-    icon: "/picks/harrastukset.gif",
-    still: "/picks/harrastukset-still.png",
-    animated: true,
-  },
-];
 
 const patternIcons = [
   Dumbbell,
@@ -101,46 +77,9 @@ function HeroIconPattern() {
   );
 }
 
-const lajit: {
-  name: string;
-  to: string;
-  Icon?: LucideIcon;
-}[] = [
-  { name: "Kuntosali", to: "/fi/kuntosalit", Icon: Dumbbell },
-  { name: "Jalkapallo", to: "/harjoitukset/", Icon: Goal },
-  { name: "Juoksu", to: "/harjoitukset", Icon: Footprints },
-  { name: "Pyöräily", to: "/harjoitukset", Icon: Bike },
-  { name: "Uinti", to: "/harjoitukset", Icon: Waves },
-  { name: "Tanssi", to: "/harjoitukset", Icon: PersonStanding },
-  { name: "Kiipeily", to: "/harjoitukset", Icon: Mountain },
-  { name: "Koripallo", to: "/harjoitukset", Icon: Trophy },
-  { name: "Tennis", to: "/harjoitukset", Icon: Target },
-  { name: "Padeli", to: "/harjoitukset", Icon: Trophy },
-];
-function LajiIcon({ name, Icon }: { name: string; Icon?: LucideIcon }) {
-  const gif = lajiGifUrl(name);
-  const [broken, setBroken] = useState(false);
-
-  if (gif && !broken) {
-    return (
-      <img
-        className="laji-gif"
-        src={gif}
-        alt=""
-        onError={() => setBroken(true)}
-      />
-    );
-  }
-
-  if (Icon) {
-    return <Icon className="laji-icon" strokeWidth={2} />;
-  }
-  return null;
-}
-
 function LocateButton() {
   const navigate = useNavigate();
-  const { useMyLocation } = useAppLocation();
+  const { locateMe } = useAppLocation();
   const { lang, t } = useLang();
 
   return (
@@ -149,7 +88,7 @@ function LocateButton() {
       className="hero-locate"
       aria-label={t("useMyLocation")}
       onClick={() => {
-        void useMyLocation().then(() => {
+        void locateMe().then(() => {
           navigate(pathGyms(lang), { state: { focusOrigin: true } });
         });
       }}
@@ -159,54 +98,8 @@ function LocateButton() {
   );
 }
 
-function SearchButton() {
-  const { t } = useLang();
-  return (
-    <button
-      type="button"
-      className="hero-locate"
-      aria-label={t("search")}
-    >
-      <img src="/picks/search.png" alt="" width={22} height={22} />
-    </button>
-  );
-}
-
-function PickLink({
-  pick,
-}: {
-  pick: {
-    name: string;
-    to: string;
-    icon: string;
-    still?: string;
-    animated?: boolean;
-  };
-}) {
-  const hover = usePickHover();
-
-  return (
-    <Link
-      to={pick.to}
-      className="hero-pick"
-      onMouseEnter={pick.animated ? hover.onMouseEnter : undefined}
-      onMouseLeave={pick.animated ? hover.onMouseLeave : undefined}
-    >
-      <HoverIcon
-        src={pick.icon}
-        stillSrc={pick.still}
-        animated={pick.animated}
-        playing={hover.playing}
-        playKey={hover.playKey}
-      />
-      <span>{pick.name}</span>
-    </Link>
-  );
-}
-
 function HomePage() {
   const railReveal = useInView<HTMLDivElement>();
-  const lajitReveal = useInView<HTMLDivElement>();
   const { openChains, openChain } = useChainPopup();
   const [chains, setChains] = useState<Chain[]>([]);
   const [gymCount, setGymCount] = useState(0);

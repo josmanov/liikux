@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+} from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, X } from "lucide-react";
@@ -224,7 +230,7 @@ function HeaderSearch() {
     }
   }
 
-  function openField(e?: MouseEvent) {
+  function openField(e?: ReactMouseEvent) {
     e?.stopPropagation();
     ensureData();
     setExpanded(true);

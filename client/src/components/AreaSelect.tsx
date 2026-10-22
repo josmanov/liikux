@@ -24,7 +24,7 @@ function AreaSelect({
   const { lang, t } = useLang();
   const navigate = useNavigate();
   const routeLocation = useLocation();
-  const { label, lat, lng, setLocation, useMyLocation } = useAppLocation();
+  const { label, lat, lng, setLocation, locateMe } = useAppLocation();
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
@@ -118,8 +118,13 @@ function AreaSelect({
   }
 
   function pickCity(name: string) {
+    const center = cityCenterForName(name);
     flushSync(() => {
-      setLocation({ label: name });
+      setLocation({
+        label: name,
+        lat: center?.lat ?? null,
+        lng: center?.lng ?? null,
+      });
     });
     goBrowse(name);
   }
@@ -150,7 +155,7 @@ function AreaSelect({
           className="area-select-locate"
           aria-label={t("useMyLocation")}
             onClick={() => {
-            void useMyLocation().then((place) => {
+            void locateMe().then((place) => {
               setOpen(false);
               if (!place) {
                 navigate(pathGyms(lang), { state: { focusOrigin: true } });

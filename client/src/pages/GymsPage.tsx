@@ -215,7 +215,7 @@ function GymsPage() {
     lat: locationLat,
     lng: locationLng,
     setLocation,
-    useMyLocation,
+    locateMe,
   } = useAppLocation();
   const [maakunnatReady, setMaakunnatReady] = useState(false);
   const maakuntaFeaturesRef = useRef<MaakuntaFeature[]>([]);
@@ -283,7 +283,7 @@ function GymsPage() {
     () => routeRegionName || null,
   );
   const [browseAllAreas, setBrowseAllAreas] = useState(false);
-  const [regionNames, setRegionNames] = useState<string[]>([]);
+  const [, setRegionNames] = useState<string[]>([]);
   const [regionMenuOpen, setRegionMenuOpen] = useState(false);
   const [cityQuery, setCityQuery] = useState("");
   const [browseCitySlug, setBrowseCitySlug] = useState<string | null>(
@@ -598,19 +598,41 @@ function GymsPage() {
 
   useEffect(() => {
     if (chainSlug || !routeCitySlug) return;
+
     const locCity = cityFromLabel(locationLabel);
-    if (locCity && cityCenterForName(locCity)) return;
-    if (locationLabel.trim() && locationLat != null && locationLng != null) {
+    const locCenter = locCity ? cityCenterForName(locCity) : null;
+
+    if (locCenter?.slug === routeCitySlug) return;
+
+    // Keep a full street address or geolocation label as the map origin.
+    const pureCityLabel =
+      locCenter != null &&
+      locationLabel.trim().toLowerCase() === locCenter.name.toLowerCase();
+    if (
+      !pureCityLabel &&
+      locationLabel.trim() &&
+      locationLat != null &&
+      locationLng != null
+    ) {
       return;
     }
+
     const known = cityCenterForSlug(routeCitySlug);
-    const name = known?.name || displayCityName(routeCitySlug);
+    if (!known) return;
+
     setLocation({
-      label: name,
-      lat: known?.lat ?? null,
-      lng: known?.lng ?? null,
+      label: known.name,
+      lat: known.lat,
+      lng: known.lng,
     });
-  }, [chainSlug, routeCitySlug]);
+  }, [
+    chainSlug,
+    routeCitySlug,
+    locationLabel,
+    locationLat,
+    locationLng,
+    setLocation,
+  ]);
 
   useEffect(() => {
     if (chainSlug || !routeRegionName) return;
@@ -789,15 +811,10 @@ function GymsPage() {
   }, [cityOptions, cityQuery]);
 
   useEffect(() => {
-    if (routeCitySlug) setBrowseCitySlug(routeCitySlug.trim().toLowerCase());
+    setBrowseCitySlug(
+      routeCitySlug ? routeCitySlug.trim().toLowerCase() : null,
+    );
   }, [routeCitySlug]);
-
-  useEffect(() => {
-    const fromLabel = cityFromLabel(locationLabel);
-    if (!fromLabel) return;
-    const known = cityCenterForName(fromLabel);
-    if (known) setBrowseCitySlug(known.slug);
-  }, [locationLabel, locationLat, locationLng]);
 
   const visibleGyms = useMemo(() => {
     return filterAndSortBrowseGyms({
@@ -1764,6 +1781,7 @@ function GymsPage() {
 
   function focusCity(city: CityCenter) {
     setBrowseCitySlug(city.slug);
+    setLocation({ label: city.name, lat: city.lat, lng: city.lng });
     cityFitDoneRef.current = null;
     setCityQuery("");
     setRegionMenuOpen(false);
@@ -1776,6 +1794,13 @@ function GymsPage() {
       setBrowseAllAreas(false);
       setSelectedMaakunta(region.name);
     }
+    navigate(
+      {
+        pathname: pathGymsBrowse(lang, region?.slug ?? null, city.slug),
+        search: routeLocation.search,
+      },
+      { replace: true },
+    );
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
         fitToCityGyms(city);
@@ -1842,7 +1867,7 @@ function GymsPage() {
   }
 
   function goMyLocation() {
-    void useMyLocation().then((place) => {
+    void locateMe().then((place) => {
       if (!place) return;
       const city = resolveCityFromPlace(place);
       pendingMyLocationRef.current = {
@@ -1855,32 +1880,6 @@ function GymsPage() {
         applyCityForMyLocation(city);
       }
       setMyLocationTick((n) => n + 1);
-    });
-  }
-
-  function focusRegion(nimi: string) {
-    const map = mapInstanceRef.current;
-    const full = maakuntaFeaturesRef.current.find((x) => x.nimi === nimi);
-    setRegionMenuOpen(false);
-    setMapSheet(null);
-    if (!map || !full) return;
-    selectedMaakuntaRef.current = nimi;
-    regionPickModeRef.current = false;
-    regionUserPickedRef.current = true;
-    setBrowseAllAreas(false);
-    setSelectedMaakunta(nimi);
-    const bbox = geomBBox(full.geometry);
-    const mobile = window.matchMedia(BROWSE_MOBILE_MQ).matches;
-    const pad = mobile
-      ? { top: 24, bottom: 28, left: 24, right: 24 }
-      : { top: 72, bottom: 72, left: 72, right: 72 };
-    requestAnimationFrame(() => {
-      map.resize();
-      map.fitBounds(bbox, {
-        padding: pad,
-        duration: 750,
-        maxZoom: mobile ? 10.5 : 9.5,
-      });
     });
   }
 

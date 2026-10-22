@@ -4,7 +4,7 @@ import { emptyExtracted, type Extracted } from "./adapters.js";
 export type AiExtractInput = {
   gymName: string;
   city: string;
-  chainName?: string;
+  chainName?: string | undefined;
   pageTexts: { url: string; text: string }[];
 };
 

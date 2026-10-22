@@ -13,7 +13,7 @@ if (!fileArg) {
 }
 
 async function main() {
-  const path = resolve(fileArg);
+  const path = resolve(fileArg!);
   const raw = JSON.parse(readFileSync(path, "utf8")) as {
     meta?: { count?: number };
     gyms: (typeof gyms.$inferSelect)[];

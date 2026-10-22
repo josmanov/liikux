@@ -24,7 +24,7 @@ type LocationContextValue = {
     lat?: number | null;
     lng?: number | null;
   }) => void;
-  useMyLocation: () => Promise<{
+  locateMe: () => Promise<{
     label: string;
     lat: number;
     lng: number;
@@ -142,9 +142,13 @@ export function LocationProvider({ children }: { children: ReactNode }) {
         setLat(fromCity?.lat ?? null);
         setLng(fromCity?.lng ?? null);
       },
-      useMyLocation: () => {
+      locateMe: () => {
         if (!navigator.geolocation) return Promise.resolve(null);
-        return new Promise((resolve) => {
+        return new Promise<{
+          label: string;
+          lat: number;
+          lng: number;
+        } | null>((resolve) => {
           navigator.geolocation.getCurrentPosition(
             (pos) => {
               const nextLat = pos.coords.latitude;

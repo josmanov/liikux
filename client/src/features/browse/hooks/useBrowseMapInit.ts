@@ -334,10 +334,7 @@ export function useBrowseMapInit(ctx: BrowseMapInitCtx) {
               type: "fill",
               source: "maakunnat",
               paint: {
-                "fill-color": REGION_FILL_MATCH as [
-                  "match",
-                  ...unknown[],
-                ],
+                "fill-color": REGION_FILL_MATCH as never,
                 "fill-opacity": [
                   "case",
                   ["boolean", ["feature-state", "hover"], false],

@@ -11,7 +11,6 @@ import {
   ArrowLeft,
   Building2,
   Check,
-  ChevronDown,
   Clock,
   Copy,
   Heart,
@@ -74,7 +73,7 @@ function GymDetailPage() {
     label: locationLabel,
     lat: originLat,
     lng: originLng,
-    useMyLocation,
+    locateMe,
   } = useAppLocation();
   const [gym, setGym] = useState<GymDetail | null>(null);
   const [status, setStatus] = useState<"loading" | "ok" | "missing">("loading");
@@ -987,7 +986,7 @@ function GymDetailPage() {
                   className="gym-detail-map-ctrl"
                   aria-label={t("useMyLocation")}
                   onClick={() => {
-                    void useMyLocation().then(() => {
+                    void locateMe().then(() => {
                       goToGymOrOrigin();
                     });
                   }}
@@ -1018,7 +1017,7 @@ function GymDetailPage() {
                   aria-label={t("useMyLocation")}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
-                    void useMyLocation();
+                    void locateMe();
                   }}
                 >
                   <LocateFixed size={16} strokeWidth={2.3} />

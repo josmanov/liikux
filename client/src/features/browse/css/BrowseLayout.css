@@ -511,19 +511,20 @@
 
 .browse-dual {
   position: relative;
-  height: 28px;
+  height: 36px;
   margin: 0.7rem 0 0.35rem;
 }
 
 .browse-dual-rail {
   position: absolute;
-  left: 9px;
-  right: 9px;
+  left: 14px;
+  right: 14px;
   top: 50%;
-  height: 3px;
+  height: 4px;
   border-radius: 99px;
   background: #3a4558;
   transform: translateY(-50%);
+  pointer-events: none;
 }
 
 .browse-dual-fill {
@@ -532,6 +533,7 @@
   bottom: 0;
   border-radius: inherit;
   background: var(--color-brand);
+  pointer-events: none;
 }
 
 .browse-dual-input {
@@ -540,16 +542,17 @@
   right: 0;
   top: 0;
   width: 100%;
-  height: 28px;
+  height: 36px;
   margin: 0;
   background: none;
   pointer-events: none;
+  touch-action: none;
   appearance: none;
   -webkit-appearance: none;
 }
 
 .browse-dual-input::-webkit-slider-runnable-track {
-  height: 28px;
+  height: 36px;
   background: transparent;
 }
 
@@ -557,31 +560,33 @@
   pointer-events: auto;
   -webkit-appearance: none;
   appearance: none;
-  width: 18px;
-  height: 18px;
-  margin-top: 5px;
+  width: 28px;
+  height: 28px;
+  margin-top: 4px;
   border-radius: 50%;
   background: var(--color-brand);
   border: 2px solid #fff;
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
   cursor: pointer;
+  touch-action: none;
 }
 
 .browse-dual-input::-moz-range-track {
-  height: 3px;
+  height: 4px;
   background: transparent;
   border: 0;
 }
 
 .browse-dual-input::-moz-range-thumb {
   pointer-events: auto;
-  width: 18px;
-  height: 18px;
+  width: 28px;
+  height: 28px;
   border: 2px solid #fff;
   border-radius: 50%;
   background: var(--color-brand);
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.45);
   cursor: pointer;
+  touch-action: none;
 }
 
 .browse-dual-input.is-lo {
@@ -590,6 +595,10 @@
 
 .browse-dual-input.is-hi {
   z-index: 4;
+}
+
+.browse-dual-input.is-active {
+  z-index: 6;
 }
 
 .browse-dual-ends {

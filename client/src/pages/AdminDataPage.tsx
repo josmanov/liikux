@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import "./AdminDataPage.css";
 import LoadSpin from "../components/LoadSpin";
 import { API } from "../data/apiBase";
@@ -114,6 +114,16 @@ function matchesView(r: Row, view: ViewFilter) {
   return true;
 }
 
+const ADMIN_KEY_STORAGE = "liikux-admin-key";
+
+function readStoredAdminKey() {
+  try {
+    return sessionStorage.getItem(ADMIN_KEY_STORAGE) ?? "";
+  } catch {
+    return "";
+  }
+}
+
 function AdminDataPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
@@ -124,17 +134,30 @@ function AdminDataPage() {
   const [view, setView] = useState<ViewFilter>("");
   const [chainFilter, setChainFilter] = useState("");
   const [showChanges, setShowChanges] = useState(false);
+  const [adminKey, setAdminKey] = useState(readStoredAdminKey);
+  const [keyDraft, setKeyDraft] = useState("");
+  const [needsKey, setNeedsKey] = useState(false);
 
-  async function load() {
+  async function load(key = adminKey) {
     setLoading(true);
     setError(null);
+    const headers: HeadersInit = key ? { "x-admin-key": key } : {};
     try {
       const [r, ru] = await Promise.all([
-        fetch(`${API}/api/admin/data-status`).then((x) => x.json()),
-        fetch(`${API}/api/admin/enrich-runs`).then((x) => x.json()),
+        fetch(`${API}/api/admin/data-status`, { headers }),
+        fetch(`${API}/api/admin/enrich-runs`, { headers }),
       ]);
-      setRows(Array.isArray(r) ? r : []);
-      setRuns(Array.isArray(ru) ? ru : []);
+      if (r.status === 403 || ru.status === 403) {
+        setNeedsKey(true);
+        setError("Admin-avain puuttuu tai on väärä.");
+        setRows([]);
+        setRuns([]);
+        return;
+      }
+      const [rowData, runData] = await Promise.all([r.json(), ru.json()]);
+      setRows(Array.isArray(rowData) ? rowData : []);
+      setRuns(Array.isArray(runData) ? runData : []);
+      setNeedsKey(false);
     } catch {
       setError("Tietojen haku epäonnistui.");
     } finally {
@@ -142,9 +165,29 @@ function AdminDataPage() {
     }
   }
 
+  function saveKey(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const next = keyDraft.trim();
+    if (!next) return;
+    try {
+      sessionStorage.setItem(ADMIN_KEY_STORAGE, next);
+    } catch {
+      /* ignore */
+    }
+    setAdminKey(next);
+    setKeyDraft("");
+    setNeedsKey(false);
+    void load(next);
+  }
+
   useEffect(() => {
-    load();
-  }, []);
+    if (!adminKey) {
+      setLoading(false);
+      setNeedsKey(true);
+      return;
+    }
+    void load(adminKey);
+  }, [adminKey]);
 
   const chainsList = useMemo(() => {
     const s = new Map<string, string>();
@@ -227,6 +270,31 @@ function AdminDataPage() {
 
   const pct = (a: number, b: number) => (b ? Math.round((100 * a) / b) : 0);
 
+  if (needsKey || !adminKey) {
+    return (
+      <main className="admin-data load-reveal">
+        <form className="admin-key-form" onSubmit={saveKey}>
+          <h1>Salidata</h1>
+          <p className="admin-data-sub">
+            Syötä admin-avain. Avain säilyy vain tämän selainistunnon ajan.
+          </p>
+          <input
+            type="password"
+            value={keyDraft}
+            onChange={(e) => setKeyDraft(e.target.value)}
+            placeholder="Admin key"
+            autoComplete="current-password"
+            aria-label="Admin key"
+          />
+          <button type="submit" className="admin-btn" disabled={!keyDraft.trim()}>
+            Avaa näkymä
+          </button>
+          {error ? <p className="admin-error">{error}</p> : null}
+        </form>
+      </main>
+    );
+  }
+
   if (loading && rows.length === 0 && !error) {
     return (
       <div className="load-cover">
@@ -245,7 +313,12 @@ function AdminDataPage() {
             keltainen = 8–30 pv, oranssi = yli 30 pv, punainen = ei tiedossa.
           </p>
         </div>
-        <button type="button" className="admin-btn" onClick={load} disabled={loading}>
+        <button
+          type="button"
+          className="admin-btn"
+          onClick={() => void load()}
+          disabled={loading}
+        >
           {loading ? "Ladataan…" : "Päivitä näkymä"}
         </button>
       </div>

@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import type express from "express";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "../../db/index.js";
@@ -154,10 +155,14 @@ export function registerApiRoutes(app: express.Application) {
 });
 
 function adminAllowed(req: express.Request) {
-  const key = process.env.ADMIN_KEY;
-  if (!key) return true;
-  const given = String(req.query.key ?? req.headers["x-admin-key"] ?? "");
-  return given === key;
+  const key = process.env.ADMIN_KEY?.trim();
+  if (!key) return false;
+
+  const given = String(req.query.key ?? req.headers["x-admin-key"] ?? "").trim();
+  const givenBuffer = Buffer.from(given);
+  const keyBuffer = Buffer.from(key);
+  if (givenBuffer.length !== keyBuffer.length) return false;
+  return timingSafeEqual(givenBuffer, keyBuffer);
 }
 
   app.get("/api/admin/data-status", async (req, res) => {
@@ -259,7 +264,7 @@ type NominatimRow = {
 function parseStreetQuery(q: string) {
   const m = q.match(/^(.+?)\s+(\d+\s*[a-zA-ZäöåÄÖÅ]?)\s*$/);
   if (!m) return { street: q, number: "" };
-  return { street: m[1].trim(), number: m[2].trim() };
+  return { street: m[1]!.trim(), number: m[2]!.trim() };
 }
 
 function labelFromAddress(a: Record<string, string>, displayName: string) {
@@ -299,7 +304,7 @@ async function nominatimSearch(q: string, limit: number) {
 
   const upstream = await fetch(url, {
     headers: {
-      "User-Agent": "Liikux/1.0 (localhost dev)",
+      "User-Agent": "Liikux/1.0 (+https://liikux.fi)",
       "Accept-Language": "fi",
     },
   });
@@ -399,8 +404,8 @@ async function photonSearch(
     hits.push({
       id: `ph-${p.osm_id ?? label}-${coords[0]}-${coords[1]}`,
       label,
-      lat: coords[1],
-      lng: coords[0],
+      lat: coords[1]!,
+      lng: coords[0]!,
       kind,
     });
   }
@@ -505,7 +510,7 @@ async function nominatimReverse(lat: number, lng: number) {
     });
   const upstream = await fetch(url, {
     headers: {
-      "User-Agent": "Liikux/1.0 (localhost dev)",
+      "User-Agent": "Liikux/1.0 (+https://liikux.fi)",
       "Accept-Language": "fi",
     },
   });

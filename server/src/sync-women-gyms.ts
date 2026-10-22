@@ -149,7 +149,7 @@ async function main() {
           www: g.www ?? null,
           name: g.name,
         })
-        .where(eq(gyms.id, existing[0].id));
+        .where(eq(gyms.id, existing[0]!.id));
       insertedNames.push(`updated ${g.name}`);
       continue;
     }

@@ -38,7 +38,7 @@ function extractElixia(html: string): Extracted {
   const priceCard = html.match(
     /pricing-card__price[\s\S]{0,240}?>(\d{1,3}[.,]\d{2})</i,
   );
-  const priceFrom = priceCard ? parseEuro(priceCard[1]) : null;
+  const priceFrom = priceCard ? parseEuro(priceCard[1]!) : null;
   let hoursWeekday: string | null = null;
   let hoursWeekend: string | null = null;
   let is247: boolean | null = null;
@@ -46,15 +46,15 @@ function extractElixia(html: string): Extracted {
     /(?:id="opening-hours"|Aukioloajat|Kapasiteetti)[\s\S]{0,900}?Keskus[\s\S]{0,200}?(?:Ma\s*[-–]\s*Su|Ma\s*[-–]\s*To|Ma\s*[-–]\s*Pe)[\s\S]{0,120}?(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})/i,
   );
   if (hoursBlock) {
-    hoursWeekday = `${hoursBlock[1]}–${hoursBlock[2]}`;
+    hoursWeekday = `${hoursBlock[1]!}–${hoursBlock[2]!}`;
     hoursWeekend = hoursWeekday;
   } else {
     const simple = html.match(
       /avoinna joka päivä klo\s*(\d{1,2})\s*[-–]\s*(\d{1,2})/i,
     );
     if (simple) {
-      const a = `${simple[1].padStart(2, "0")}:00`;
-      const endH = Number(simple[2]);
+      const a = `${simple[1]!.padStart(2, "0")}:00`;
+      const endH = Number(simple[2]!);
       const b = endH === 24 ? "24:00" : `${String(endH).padStart(2, "0")}:00`;
       hoursWeekday = `${a}–${b}`;
       hoursWeekend = hoursWeekday;
@@ -79,7 +79,7 @@ function extractEasyFit(html: string): Extracted {
     html.match(/alkaen\s+(\d{1,3}[.,]\d{2})\s*€/i) ||
     html.match(/Basic\s+(\d{1,3}[.,]\d{2})\s*€/i) ||
     html.match(/>(\d{1,3}[.,]\d{2})\s*€\/kk</i);
-  const priceFrom = price ? parseEuro(price[1]) : null;
+  const priceFrom = price ? parseEuro(price[1]!) : null;
   let hoursWeekday: string | null = null;
   let hoursWeekend: string | null = null;
   let is247: boolean | null = null;
@@ -92,8 +92,8 @@ function extractEasyFit(html: string): Extracted {
       /Aukioloajat[\s\S]{0,120}?(\d{1,2})\s*[–-]\s*(\d{1,2}|24)/i,
     );
     if (h) {
-      const a = `${h[1].padStart(2, "0")}:00`;
-      const b = h[2] === "24" ? "24:00" : `${h[2].padStart(2, "0")}:00`;
+      const a = `${h[1]!.padStart(2, "0")}:00`;
+      const b = h[2] === "24" ? "24:00" : `${h[2]!.padStart(2, "0")}:00`;
       hoursWeekday = `${a}–${b}`;
       hoursWeekend = hoursWeekday;
       is247 = false;
@@ -115,7 +115,7 @@ function extractForever(html: string): Extracted {
   const basic12 = html.match(
     /Basic[\s\S]{0,800}?12\s*kk[\s\S]{0,400}?<strong>(\d{1,3}[.,]\d{2})\s*€<\/strong>/i,
   );
-  let priceFrom = basic12 ? parseEuro(basic12[1]) : null;
+  let priceFrom = basic12 ? parseEuro(basic12[1]!) : null;
   if (priceFrom != null && (priceFrom < 27 || priceFrom > 45)) priceFrom = null;
   if (priceFrom === 26.1) priceFrom = 29;
 
@@ -124,7 +124,7 @@ function extractForever(html: string): Extracted {
       /Basic[\s\S]{0,400}?Toistaiseksi voimassa[\s\S]{0,400}?<strong>(\d{1,3}[.,]\d{2})\s*€<\/strong>/gi,
     ),
   ]
-    .map((m) => parseEuro(m[1]))
+    .map((m) => parseEuro(m[1]!))
     .filter((n): n is number => n != null && n >= 30 && n <= 50);
   const flexPrice = flexMatches.length ? Math.max(...flexMatches) : null;
 
@@ -138,11 +138,11 @@ function extractForever(html: string): Extracted {
     /Avoinna jäsenille:[\s\S]{0,900}?Ma[\s\u2013\u2014\-–]*to\s*(\d{1,2})[.:]?(\d{2})?\s*[\u2013\u2014\-–]\s*(\d{1,2})/i,
   );
   if (openKlo) {
-    hoursWeekday = `${openKlo[1].padStart(2, "0")}:${openKlo[2]}–${openKlo[3].padStart(2, "0")}:${openKlo[4]}`;
+    hoursWeekday = `${openKlo[1]!.padStart(2, "0")}:${openKlo[2]!}–${openKlo[3]!.padStart(2, "0")}:${openKlo[4]!}`;
     hoursWeekend = hoursWeekday;
   } else if (openMa) {
     const aM = openMa[2] || "00";
-    hoursWeekday = `${openMa[1].padStart(2, "0")}:${aM}–${openMa[3].padStart(2, "0")}:00`;
+    hoursWeekday = `${openMa[1]!.padStart(2, "0")}:${aM}–${openMa[3]!.padStart(2, "0")}:00`;
     hoursWeekend = hoursWeekday;
   }
 
@@ -181,7 +181,7 @@ function extractFressi(html: string): Extracted {
       /uabb-pricing-table-price[^>]*>\s*(\d{1,3}[.,]\d{2})\s*€\s*[-–]\s*(\d{1,3}[.,]\d{2})\s*€/gi,
     ),
   ]
-    .map((m) => parseEuro(m[1]))
+    .map((m) => parseEuro(m[1]!))
     .filter((n): n is number => n != null && n >= 35 && n <= 90);
   const priceFrom = ranges.length ? Math.min(...ranges) : null;
 
@@ -195,7 +195,7 @@ function extractFressi(html: string): Extracted {
   } else {
     const h = html.match(/avoinna\s+klo\s+(\d{1,2})\s*[–-]\s*(\d{1,2})/i);
     if (h) {
-      hoursWeekday = `${h[1].padStart(2, "0")}:00–${h[2].padStart(2, "0")}:00`;
+      hoursWeekday = `${h[1]!.padStart(2, "0")}:00–${h[2]!.padStart(2, "0")}:00`;
       hoursWeekend = hoursWeekday;
       is247 = false;
     }
@@ -225,7 +225,7 @@ function extractOleFit(html: string): Extracted {
       /<h2>\s*(\d{1,3}[.,]\d{2})\s*€\s*<\/h2>\s*<h4>\s*\/\s*4\s*viikkoa/gi,
     ),
   ]
-    .map((m) => parseEuro(m[1]))
+    .map((m) => parseEuro(m[1]!))
     .filter((n): n is number => n != null && n >= 35 && n <= 120);
 
   const legacy = [
@@ -233,7 +233,7 @@ function extractOleFit(html: string): Extracted {
       /(\d{1,3}[.,]\d{2})\s*(?:€|&euro;)[\s\S]{0,80}?(?:\/\s*4\s*vko|\/\s*4\s*viikkoa)/gi,
     ),
   ]
-    .map((m) => parseEuro(m[1]))
+    .map((m) => parseEuro(m[1]!))
     .filter((n): n is number => n != null && n >= 35 && n <= 120);
 
   const all = [...cardPrices, ...legacy];
@@ -274,7 +274,7 @@ function extractLadyLine(html: string): Extracted {
   ].map((m) => {
     const start = Math.max(0, (m.index ?? 0) - 120);
     const ctx = html.slice(start, (m.index ?? 0) + 40);
-    return { price: parseEuro(m[1]), ctx };
+    return { price: parseEuro(m[1]!), ctx };
   });
 
   const adult = priced

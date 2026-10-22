@@ -2029,23 +2029,9 @@
   }
 
   .browse-extras-section .browse-dual {
-    height: 22px;
-    min-height: 22px;
+    height: 36px;
+    min-height: 36px;
     margin: 0.2rem 0 0.1rem;
-  }
-
-  .browse-extras-section .browse-dual-input {
-    height: 22px;
-  }
-
-  .browse-extras-section .browse-dual-input::-webkit-slider-runnable-track {
-    height: 22px;
-  }
-
-  .browse-extras-section .browse-dual-input::-webkit-slider-thumb {
-    width: 16px;
-    height: 16px;
-    margin-top: 3px;
   }
 
   .browse-extras-section .browse-dual-ends {

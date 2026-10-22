@@ -6,12 +6,14 @@ import {
   type SetStateAction,
 } from "react";
 import {
+  LngLat,
   LngLatBounds,
   Map as MapLibreMap,
   Marker,
   type MapLayerMouseEvent,
 } from "maplibre-gl";
 import type { Chain, Gym } from "../../../data/types";
+import type { Lang } from "../../../i18n/lang";
 import type { MessageKey } from "../../../i18n/messages";
 import {
   formatGymStreetLine,
@@ -28,7 +30,6 @@ import {
 } from "../utils/pinCluster";
 import { frameOriginAndGym, framePadForOverlays } from "../utils/mapBounds";
 import { BROWSE_MOBILE_MQ } from "../utils/mapConstants";
-import { flushSync } from "react-dom";
 
 export type BrowseMapMarkersCtx = {
   mapInstanceRef: MutableRefObject<MapLibreMap | null>;
@@ -38,7 +39,7 @@ export type BrowseMapMarkersCtx = {
   locationLabel: string;
   selectedMaakunta: string | null;
   chains: Chain[];
-  lang: string;
+  lang: Lang;
   t: (key: MessageKey, vars?: Record<string, string | number>) => string;
   markersRef: MutableRefObject<globalThis.Map<string, Marker>>;
   originMarkerRef: MutableRefObject<Marker | null>;
@@ -85,11 +86,8 @@ export function useBrowseMapMarkers(ctx: BrowseMapMarkersCtx) {
     const {
       mapInstanceRef,
       mapReady,
-      visibleGyms,
       origin,
       locationLabel,
-      selectedMaakunta,
-      chains,
       lang,
       t,
       markersRef,
@@ -324,8 +322,9 @@ export function useBrowseMapMarkers(ctx: BrowseMapMarkersCtx) {
             ? cam.zoom
             : Math.max(map.getZoom() + 0.35, zoomWhereClusterSplits(map, group)),
         );
-        const center: [number, number] = cam?.center
-          ? [cam.center.lng, cam.center.lat]
+        const camCenter = cam?.center ? LngLat.convert(cam.center) : null;
+        const center: [number, number] = camCenter
+          ? [camCenter.lng, camCenter.lat]
           : [lng, lat];
         cityBounceLockRef.current = true;
         map.stop();
@@ -553,7 +552,7 @@ export function useBrowseMapMarkers(ctx: BrowseMapMarkersCtx) {
           }
         });
         if (best) {
-          best.click();
+          (best as HTMLElement).click();
           return;
         }
       }

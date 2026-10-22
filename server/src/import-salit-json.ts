@@ -45,9 +45,13 @@ type SalitJson = {
 };
 
 const args = process.argv.slice(2);
-const fileArg =
-  (args.find((a) => a.startsWith("--file=")) ?? "").split("=")[1] ||
-  "C:/Users/jusuf/Downloads/salit.json";
+const fileArg = (args.find((a) => a.startsWith("--file=")) ?? "").split("=")[1];
+
+if (!fileArg) {
+  throw new Error(
+    "Missing input file. Usage: npm run db:import-salit -- --file=../exports/salit.json",
+  );
+}
 
 function rangeToText(ranges: [string, string][] | null | undefined) {
   if (!ranges || !ranges.length) return null;
@@ -93,7 +97,11 @@ function pickPrice(h: SalitJson["salit"][0]["hinnat"]) {
 
 function membershipsJson(h: SalitJson["salit"][0]["hinnat"]) {
   if (!h) return null;
-  const list: { name: string; priceEur: number; note?: string }[] = [];
+  const list: {
+    name: string;
+    priceEur: number;
+    note?: string | undefined;
+  }[] = [];
   if (h.kk_sitoutumaton != null) {
     list.push({ name: "Kuukausijäsenyys (sitoutumaton)", priceEur: h.kk_sitoutumaton });
   }
@@ -131,7 +139,7 @@ function formatAddress(o: SalitJson["salit"][0]["osoite"], cityFallback: string)
 }
 
 async function main() {
-  const path = resolve(fileArg);
+  const path = resolve(fileArg!);
   const data = JSON.parse(readFileSync(path, "utf8")) as SalitJson;
   const salit = data.salit ?? [];
   console.log(`Import from ${path} salit=${salit.length}`);

@@ -22,3 +22,8 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+*.pdf
+*.pem
+*.key
+*.p12
+*.pfx

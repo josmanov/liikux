@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "flag-icons": "^7.5.0",
-    "liikux": "file:..",
     "lucide-react": "^0.469.0",
     "maplibre-gl": "^6.10.0",
     "react": "^19.2.8",
