@@ -17,6 +17,7 @@
 /* ---------- 1. Breadcrumb ---------- */
 
 .gp-crumbs {
+  margin-bottom: 1.25rem;
   display: flex;
   align-items: center;
   gap: 0.35rem;
@@ -56,7 +57,6 @@
     "sections side";
   grid-template-rows: auto 1fr;
   column-gap: 1.5rem;
-  margin-top: 1.25rem;
 }
 
 .gp-top {
@@ -74,10 +74,12 @@
 .gp-side {
   grid-area: side;
   position: sticky;
-  top: calc(var(--header-h) + 1rem);
+  /* Starts at the very top of the page content, so the whole map fits the
+     screen right away and stays in place while the left side scrolls. */
+  top: calc(var(--header-h) + 1.25rem);
   align-self: start;
-  height: calc(100vh - var(--header-h) - 2rem);
-  height: calc(100svh - var(--header-h) - 2rem);
+  height: calc(100vh - var(--header-h) - 2.5rem);
+  height: calc(100svh - var(--header-h) - 2.5rem);
   min-height: 420px;
 }
 

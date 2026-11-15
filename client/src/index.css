@@ -161,3 +161,15 @@ button {
     opacity: 1;
   }
 }
+
+/* Big monitors (2K and up): slightly larger text and a wider page, so the
+   site does not look small in the middle of the screen. */
+@media (min-width: 2200px) {
+  html {
+    font-size: 100%;
+  }
+
+  :root {
+    --max-width: 1800px;
+  }
+}

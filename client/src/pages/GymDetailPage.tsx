@@ -184,21 +184,21 @@ function GymDetailPage() {
 
   return (
     <main className="gp load-reveal">
-      {/* 1. Breadcrumb */}
-      <nav className="gp-crumbs" aria-label="Breadcrumb">
-        <Link to={pathGyms(lang)}>{t("backToBrowse")}</Link>
-        {gym.city ? (
-          <>
-            <ChevronRight size={14} strokeWidth={2.2} aria-hidden="true" />
-            <Link to={pathGymsFromLocation(lang, gym.city)}>{gym.city}</Link>
-          </>
-        ) : null}
-        <ChevronRight size={14} strokeWidth={2.2} aria-hidden="true" />
-        <span aria-current="page">{gymName}</span>
-      </nav>
-
       <div className="gp-grid">
         <div className="gp-top">
+          {/* 1. Breadcrumb */}
+          <nav className="gp-crumbs" aria-label="Breadcrumb">
+            <Link to={pathGyms(lang)}>{t("backToBrowse")}</Link>
+            {gym.city ? (
+              <>
+                <ChevronRight size={14} strokeWidth={2.2} aria-hidden="true" />
+                <Link to={pathGymsFromLocation(lang, gym.city)}>{gym.city}</Link>
+              </>
+            ) : null}
+            <ChevronRight size={14} strokeWidth={2.2} aria-hidden="true" />
+            <span aria-current="page">{gymName}</span>
+          </nav>
+
           {/* 2. Head */}
           <header className="gp-head">
             {hasLogo && chain ? (
