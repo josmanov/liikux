@@ -183,7 +183,8 @@ function Header() {
 
       <div className="header-right">
         <HeaderFeedbackLinks />
-        <HeaderSearch />
+        {/* the home page has its own big search in the hero */}
+        {homeOn ? null : <HeaderSearch />}
         <button
           type="button"
           className="header-lang playstore-button is-plain header-lang-desktop"

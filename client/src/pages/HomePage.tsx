@@ -2,7 +2,7 @@ import "./HomePage.css";
 import "../features/home/chain-tiles.css";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Clock, Dumbbell, Euro, Gift, Heart, MapPin, Scale } from "lucide-react";
+import { ArrowRight, ChevronDown, Clock, Dumbbell, Euro, Gift, Heart, MapPin, Scale } from "lucide-react";
 import HomeSearch from "../features/home/HomeSearch";
 import { type Chain, type Gym, resolveGymOffer } from "../data/types";
 import { fetchChains, fetchGyms, fetchHomeStats } from "../data/api";
@@ -141,11 +141,19 @@ function HomePage() {
             <ArrowRight size={15} strokeWidth={2.4} aria-hidden="true" />
           </Link>
         </div>
+        <button
+          type="button"
+          className="home-scroll"
+          aria-label={lang === "fi" ? "Näytä lisää" : "Show more"}
+          onClick={() => document.getElementById("home-more")?.scrollIntoView({ behavior: "smooth" })}
+        >
+          <ChevronDown size={18} strokeWidth={2.4} aria-hidden="true" />
+        </button>
       </section>
 
       {/* 2. Numbers — each opens browse with that filter */}
       <section className="home-wrap">
-        <div className="home-stats">
+        <div className="home-stats" id="home-more">
           <Link className="home-stat" to={pathGyms(lang)}>
             <Dumbbell className="home-stat-icon" size={22} strokeWidth={2.2} aria-hidden="true" />
             <strong>{numbers.gyms || dash}</strong>

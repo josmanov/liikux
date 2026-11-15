@@ -21,7 +21,16 @@
 /* ---------- 1. Hero ---------- */
 
 .home-hero {
-  padding: clamp(3.5rem, 9vw, 7rem) 0 clamp(3rem, 6vw, 4.5rem);
+  /* The hero fills the screen under the header (svh = the visible height on
+     phones too). The rest of the page starts below the fold. If the content
+     is taller than the screen, the hero simply grows. */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: calc(100vh - var(--header-h));
+  min-height: calc(100svh - var(--header-h));
+  padding: clamp(2rem, 6vh, 4.5rem) 0 clamp(4.5rem, 11vh, 7rem);
   /* a calm lift from the page colour to the panel colour, top to bottom */
   background: linear-gradient(180deg, var(--bg) 0%, var(--surface) 100%);
   border-bottom: 1px solid var(--line);
@@ -36,7 +45,8 @@
 
 .home-title {
   max-width: 15ch;
-  font-size: clamp(2.6rem, 1.4rem + 4vw, 5rem);
+  /* scales with the width, but never taller than a low screen can fit */
+  font-size: clamp(2.4rem, min(1.4rem + 4vw, 10vh), 5rem);
   line-height: 1;
   letter-spacing: -0.045em;
   text-wrap: balance;
@@ -95,12 +105,37 @@
   transform: translateX(3px);
 }
 
+/* Small round arrow at the bottom of the hero: scrolls to the next part. */
+.home-scroll {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(1rem, 3vh, 1.75rem);
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-left: -1.25rem;
+  border: 1px solid var(--outline);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.home-scroll:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+  transform: translateY(2px);
+}
+
 /* ---------- 2. Numbers: one strip, four cells (each opens browse) ---------- */
 
 .home-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   margin-top: var(--section-gap);
+  scroll-margin-top: calc(var(--header-h) + 1.5rem);
   background: var(--surface);
   border: 1px solid var(--outline);
   border-radius: var(--radius-lg);
