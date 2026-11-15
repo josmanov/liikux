@@ -1,472 +1,111 @@
-import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import {
-  observeMapContainerResize,
-  waitForMapContainerSize,
-} from "../map/maplibreSetup";
-import { LngLatBounds, Map, Marker } from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
-import {
-  ArrowLeft,
-  Building2,
+  ArrowRight,
+  ArrowUpRight,
   Check,
+  ChevronRight,
   Clock,
   Copy,
   Heart,
-  LocateFixed,
+  Mail,
   MapPin,
-  Minus,
+  Navigation,
   Phone,
-  Plus,
-  Sparkles,
-  Ticket,
   TriangleAlert,
-  X,
 } from "lucide-react";
-import {
-  type Chain,
-  type Gym,
-  resolveGymOffer,
-} from "../data/types";
-import {
-  cleanGymDisplayName,
-  formatDistanceKm,
-  formatGymStreetLine,
-} from "../data/format";
-import { offerPhrase } from "../data/offerText";
-import { getChainWebsite } from "../data/chainWebsites";
-import { useAppLocation } from "../context/LocationContext";
-import { fetchGeocode, type GeoHit } from "../data/geocode";
-import { pathFeedback, pathGym, pathGyms } from "../i18n/lang";
 import LoadSpin from "../components/LoadSpin";
-import {
-  readFavoriteSlugs,
-  toggleFavoriteSlug,
-} from "../data/favorites";
-import { useLockPageScroll } from "../hooks/useLockPageScroll";
-import { useLang } from "../i18n/useLang";
-import { API } from "../data/apiBase";
-import { usePageMeta } from "../seo/usePageMeta";
-import "./GymDetailPage.css";
-import { MAP_STYLE_URL } from "../features/browse/utils/mapConstants";
+import { useAppLocation } from "../context/LocationContext";
+import { getChainWebsite } from "../data/chainWebsites";
+import { readFavoriteSlugs, toggleFavoriteSlug } from "../data/favorites";
+import { cleanGymDisplayName, formatDistanceKm, formatGymStreetLine, formatPriceFrom } from "../data/format";
+import type { GeoHit } from "../data/geocode";
+import { offerPhrase } from "../data/offerText";
+import { resolveGymOffer } from "../data/types";
 import { distanceKm } from "../features/browse/utils/distanceKm";
+import GymRouteMap from "../features/gym-detail/components/GymRouteMap";
+import { useGymDetail } from "../features/gym-detail/hooks/useGymDetail";
 import { cleanHoursValue } from "../features/gym-detail/utils/cleanHoursValue";
-import { makeGymPin, makeOriginPin } from "../features/gym-detail/utils/detailPins";
-import {
-  DetailAccordion,
-  type DetailAccordionId,
-} from "../features/gym-detail/components/DetailAccordion";
+import { pathChain, pathFeedback, pathGym, pathGyms, pathGymsFromLocation } from "../i18n/lang";
+import { useLang } from "../i18n/useLang";
+import { usePageMeta } from "../seo/usePageMeta";
+import "../features/home/chain-tiles.css"; // per-chain logo colours and zoom
+import "./GymDetailPage.css";
 
-type GymDetail = Gym & { chain: Chain | null };
-type AccordionId = DetailAccordionId;
+/**
+ * Gym page, top to bottom:
+ *  1. Back link + breadcrumb
+ *  2. Head: chain logo, name, address, tags, actions (save, route, gym's site)
+ *  3. Facts strip: price from, distance, opening hours, free trial
+ *  4. Memberships and prices (with "checked" date and source)
+ *  5. Opening hours + contact details, services
+ *  6. Compare with nearby gyms, more gyms of the same chain
+ *  Right side (below the facts on phones): the map with the route start.
+ *  Phones also get a bar at the bottom: gym's site, save, route.
+ *
+ * Data comes from useGymDetail(); nothing here is made up. A fact we do not
+ * have is shown as "not known" or left out.
+ */
 
 const PROMO_TAGS = ["Ilmainen kokeilu", "Free trial"];
 
+/** "34,9" from 34.9 (Finnish decimal comma), "35" from 35. */
+function eurText(eur: number) {
+  return Number.isInteger(eur) ? String(eur) : String(Number(eur.toFixed(2))).replace(".", ",");
+}
+
+/** Membership prices are stored as a number, or as { hinta: number } in older rows. */
+function membershipEur(raw: unknown): number | null {
+  if (typeof raw === "number") return raw;
+  if (raw && typeof raw === "object" && "hinta" in raw) return Number((raw as { hinta: number }).hinta);
+  return null;
+}
+
+function hostOf(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
 function GymDetailPage() {
   const { slug } = useParams();
-  const navigate = useNavigate();
   const { lang, t } = useLang();
+  const { label: placeLabel, lat: placeLat, lng: placeLng, locateMe } = useAppLocation();
+  const { gym, status, nearby, chainGyms } = useGymDetail(slug);
 
-  function goBackToBrowse() {
-    navigate(pathGyms(lang));
-  }
-  const {
-    label: locationLabel,
-    lat: originLat,
-    lng: originLng,
-    locateMe,
-  } = useAppLocation();
-  const [gym, setGym] = useState<GymDetail | null>(null);
-  const [status, setStatus] = useState<"loading" | "ok" | "missing">("loading");
-  const detailTitle = gym
-    ? `${gym.name} | Liikux`
-    : lang === "fi"
-      ? "Kuntosali | Liikux"
-      : "Gym | Liikux";
-  const detailDesc = gym
-    ? lang === "fi"
-      ? `${gym.name}${gym.city ? ` – ${gym.city}` : ""}. Katso osoite, palvelut ja hinta Liikuxissa.`
-      : `${gym.name}${gym.city ? ` – ${gym.city}` : ""}. See address, services and price on Liikux.`
-    : lang === "fi"
-      ? "Kuntosalin tiedot Liikuxissa."
-      : "Gym details on Liikux.";
-  usePageMeta({
-    title: detailTitle,
-    description: detailDesc,
-    path: slug
-      ? lang === "fi"
-        ? `/fi/sali/${slug}`
-        : `/en/gym/${slug}`
-      : undefined,
-  });
-  const [fromDraft, setFromDraft] = useState("");
-  const [fromPoint, setFromPoint] = useState<GeoHit | null>(null);
-  const [geoStatus, setGeoStatus] = useState<"idle" | "loading" | "fail">(
-    "idle",
-  );
-  const [copiedKey, setCopiedKey] = useState<"phone" | "email" | null>(null);
-  const [addressSheetOpen, setAddressSheetOpen] = useState(false);
-  const [sheetDraft, setSheetDraft] = useState("");
-  const [sheetHits, setSheetHits] = useState<GeoHit[]>([]);
-  const [sheetLoading, setSheetLoading] = useState(false);
-  const [favoriteSlugs, setFavoriteSlugs] = useState(() =>
-    readFavoriteSlugs(),
-  );
-  const [openAcc, setOpenAcc] = useState<AccordionId | null>("hours");
-  const [chainGyms, setChainGyms] = useState<Gym[]>([]);
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<Map | null>(null);
-  const gymMarkerRef = useRef<Marker | null>(null);
-  const originMarkerRef = useRef<Marker | null>(null);
-
-  useLockPageScroll(addressSheetOpen);
+  const [favorites, setFavorites] = useState(() => readFavoriteSlugs());
+  const [copied, setCopied] = useState<"phone" | "email" | null>(null);
+  // Where the route starts. Follows the address chosen in the header until
+  // the user picks another one on this page's map.
+  const [from, setFrom] = useState<GeoHit | null>(null);
 
   useEffect(() => {
-    function syncFavs() {
-      setFavoriteSlugs(readFavoriteSlugs());
-    }
-    window.addEventListener("favorites-changed", syncFavs);
-    return () => window.removeEventListener("favorites-changed", syncFavs);
+    if (placeLat == null || placeLng == null || !placeLabel.trim()) setFrom(null);
+    else setFrom({ id: "place", label: placeLabel, lat: placeLat, lng: placeLng });
+  }, [slug, placeLabel, placeLat, placeLng]);
+
+  useEffect(() => {
+    const sync = () => setFavorites(readFavoriteSlugs());
+    window.addEventListener("favorites-changed", sync);
+    return () => window.removeEventListener("favorites-changed", sync);
   }, []);
 
-  useEffect(() => {
-    if (locationLabel === "Lähellä minua" || !locationLabel.trim()) {
-      setFromDraft("");
-      setFromPoint(null);
-      setGeoStatus("idle");
-      return;
-    }
-    setFromDraft(locationLabel);
-    if (originLat != null && originLng != null) {
-      setFromPoint({
-        id: "origin",
-        label: locationLabel,
-        lat: originLat,
-        lng: originLng,
-      });
-      setGeoStatus("idle");
-    }
-  }, [slug, locationLabel, originLat, originLng]);
+  const offer = gym ? resolveGymOffer(gym, gym.chain) : null;
+  const gymName = gym ? cleanGymDisplayName(gym.name) : "";
 
-  useEffect(() => {
-    if (!slug) {
-      setStatus("missing");
-      setGym(null);
-      return;
-    }
-
-    let cancelled = false;
-    setStatus("loading");
-    setOpenAcc("hours");
-    setChainGyms([]);
-
-    fetch(`${API}/api/gyms/${encodeURIComponent(slug)}`)
-      .then(async (r) => {
-        if (r.status === 404) return null;
-        if (!r.ok) throw new Error("fail");
-        return r.json() as Promise<GymDetail>;
-      })
-      .then((apiGym) => {
-        if (cancelled) return;
-        if (apiGym) {
-          setGym(apiGym);
-          setStatus("ok");
-          return;
-        }
-        setGym(null);
-        setStatus("missing");
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setGym(null);
-        setStatus("missing");
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [slug]);
-
-  useEffect(() => {
-    if (status !== "ok" || !gym?.chain?.slug) {
-      setChainGyms([]);
-      return;
-    }
-    const chainSlug = gym.chain.slug;
-    if (
-      chainSlug === "muut" ||
-      chainSlug === "yksityiset" ||
-      !chainSlug.trim()
-    ) {
-      setChainGyms([]);
-      return;
-    }
-
-    let cancelled = false;
-    fetch(`${API}/api/chains/${encodeURIComponent(chainSlug)}/gyms`)
-      .then(async (r) => {
-        if (!r.ok) throw new Error("fail");
-        return r.json() as Promise<{ gyms: Gym[] }>;
-      })
-      .then((data) => {
-        if (cancelled) return;
-        const others = (data.gyms || []).filter((g) => g.slug !== gym.slug);
-        setChainGyms(others);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setChainGyms([]);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [status, gym?.slug, gym?.chain?.slug]);
-
-  useEffect(() => {
-    if (status !== "ok" || !gym || !mapRef.current) return;
-    if (gym.lat == null || gym.lng == null) return;
-
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.remove();
-      mapInstanceRef.current = null;
-      gymMarkerRef.current = null;
-      originMarkerRef.current = null;
-    }
-
-    const map = new Map({
-      container: mapRef.current,
-      style: MAP_STYLE_URL,
-      center: [gym.lng, gym.lat],
-      zoom: 14,
-      maxPitch: 0,
-      pitchWithRotate: false,
-      touchPitch: false,
-      dragRotate: false,
-    });
-    map.touchPitch.disable();
-    map.dragRotate.disable();
-    map.touchZoomRotate.disableRotation();
-    map.setMaxPitch(0);
-    mapInstanceRef.current = map;
-
-    const canvas = map.getCanvasContainer();
-    let pinchLock = false;
-    let pinchUnlockTimer = 0;
-    function onTouchStart(e: TouchEvent) {
-      if (e.touches.length >= 2) {
-        pinchLock = true;
-        window.clearTimeout(pinchUnlockTimer);
-        map.dragPan.disable();
-      }
-    }
-    function onTouchEnd(e: TouchEvent) {
-      if (!pinchLock) return;
-      if (e.touches.length >= 2) return;
-      window.clearTimeout(pinchUnlockTimer);
-      pinchUnlockTimer = window.setTimeout(() => {
-        pinchLock = false;
-        if (!mapInstanceRef.current) return;
-        map.dragPan.enable();
-      }, 120);
-    }
-    canvas.addEventListener("touchstart", onTouchStart, { passive: true });
-    canvas.addEventListener("touchend", onTouchEnd, { passive: true });
-    canvas.addEventListener("touchcancel", onTouchEnd, { passive: true });
-
-    const gymLng = gym.lng;
-    const gymLat = gym.lat;
-    let dead = false;
-    const stopContainerResize = observeMapContainerResize(
-      map.getContainer(),
-      map,
-    );
-
-    map.on("load", () => {
-      void (async () => {
-        await waitForMapContainerSize(map.getContainer(), map);
-        if (dead) return;
-        const addressText =
-          formatGymStreetLine(gym) || gym.address?.trim() || null;
-        gymMarkerRef.current = new Marker({
-          element: makeGymPin({ addressText }),
-          anchor: "bottom",
-        })
-          .setLngLat([gymLng, gymLat])
-          .addTo(map);
-        map.jumpTo({ center: [gymLng, gymLat], zoom: 14 });
-      })();
-    });
-
-    return () => {
-      dead = true;
-      window.clearTimeout(pinchUnlockTimer);
-      stopContainerResize();
-      canvas.removeEventListener("touchstart", onTouchStart);
-      canvas.removeEventListener("touchend", onTouchEnd);
-      canvas.removeEventListener("touchcancel", onTouchEnd);
-      gymMarkerRef.current?.remove();
-      originMarkerRef.current?.remove();
-      gymMarkerRef.current = null;
-      originMarkerRef.current = null;
-      mapInstanceRef.current?.remove();
-      mapInstanceRef.current = null;
-    };
-  }, [status, gym, lang]);
-
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map || !gym || gym.lat == null || gym.lng == null) return;
-
-    let cancelled = false;
-    void (async () => {
-      await waitForMapContainerSize(map.getContainer(), map);
-      if (cancelled || mapInstanceRef.current !== map) return;
-
-      originMarkerRef.current?.remove();
-      originMarkerRef.current = null;
-
-      if (!fromPoint) {
-        map.easeTo({ center: [gym.lng, gym.lat], zoom: 14 });
-        return;
-      }
-
-      originMarkerRef.current = new Marker({
-        element: makeOriginPin(
-          t("fromAddressAria"),
-          fromPoint.label || fromDraft || locationLabel,
-        ),
-        anchor: "center",
-      })
-        .setLngLat([fromPoint.lng, fromPoint.lat])
-        .addTo(map);
-
-      const bounds = new LngLatBounds();
-      bounds.extend([gym.lng, gym.lat]);
-      bounds.extend([fromPoint.lng, fromPoint.lat]);
-      map.fitBounds(bounds, { padding: 72, maxZoom: 15 });
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    fromPoint?.lat,
-    fromPoint?.lng,
-    fromPoint?.label,
-    fromDraft,
-    locationLabel,
-    gym?.lat,
-    gym?.lng,
-    lang,
-    t,
-  ]);
-
-  function lookupAddress() {
-    const q = fromDraft.trim();
-    if (q.length < 2) {
-      setFromPoint(null);
-      setGeoStatus("idle");
-      return;
-    }
-
-    setGeoStatus("loading");
-    fetchGeocode(q, { lat: originLat, lng: originLng })
-      .then((rows) => {
-        const hit = rows[0];
-        if (!hit) {
-          setFromPoint(null);
-          setGeoStatus("fail");
-          return;
-        }
-        setFromDraft(hit.label);
-        setFromPoint(hit);
-        setGeoStatus("idle");
-      })
-      .catch(() => {
-        setFromPoint(null);
-        setGeoStatus("fail");
-      });
-  }
-
-  useEffect(() => {
-    if (!addressSheetOpen) return;
-    setSheetDraft(fromDraft || locationLabel || "");
-  }, [addressSheetOpen, fromDraft, locationLabel]);
-
-  useEffect(() => {
-    if (!addressSheetOpen) return;
-    const q = sheetDraft.trim();
-    if (q.length < 3) {
-      setSheetHits([]);
-      setSheetLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setSheetLoading(true);
-    const id = window.setTimeout(() => {
-      fetchGeocode(q, { lat: originLat, lng: originLng })
-        .then((rows) => {
-          if (cancelled) return;
-          setSheetHits(rows);
-          setSheetLoading(false);
-        })
-        .catch(() => {
-          if (cancelled) return;
-          setSheetHits([]);
-          setSheetLoading(false);
-        });
-    }, 280);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(id);
-    };
-  }, [addressSheetOpen, sheetDraft, originLat, originLng]);
-
-  function pickSheetHit(hit: GeoHit) {
-    setFromDraft(hit.label);
-    setFromPoint(hit);
-    setGeoStatus("idle");
-    setAddressSheetOpen(false);
-  }
-
-  function zoomBy(delta: number) {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-    map.easeTo({ zoom: map.getZoom() + delta, duration: 220 });
-  }
-
-  function goToGymOrOrigin() {
-    const map = mapInstanceRef.current;
-    if (!map || !gym || gym.lat == null || gym.lng == null) return;
-    if (fromPoint) {
-      const bounds = new LngLatBounds();
-      bounds.extend([gym.lng, gym.lat]);
-      bounds.extend([fromPoint.lng, fromPoint.lat]);
-      map.fitBounds(bounds, { padding: 56, maxZoom: 15, duration: 550 });
-      return;
-    }
-    map.easeTo({
-      center: [gym.lng, gym.lat],
-      zoom: Math.max(map.getZoom(), 14),
-      duration: 550,
-    });
-  }
-
-  function copyContact(key: "phone" | "email", value: string) {
-    navigator.clipboard.writeText(value).then(
-      () => {
-        setCopiedKey(key);
-        window.setTimeout(() => setCopiedKey(null), 1400);
-      },
-      () => {},
-    );
-  }
-
-  function toggleAcc(id: AccordionId) {
-    setOpenAcc((prev) => (prev === id ? null : id));
-  }
+  usePageMeta({
+    title: gym ? `${gymName}${gym.city ? `, ${gym.city}` : ""} | Liikux` : lang === "fi" ? "Kuntosali | Liikux" : "Gym | Liikux",
+    description: gym
+      ? lang === "fi"
+        ? `${gymName}${gym.city ? ` – ${gym.city}` : ""}. Katso hinnat, aukioloajat, osoite ja reitti Liikuxissa.`
+        : `${gymName}${gym.city ? ` – ${gym.city}` : ""}. See prices, opening hours, address and route on Liikux.`
+      : lang === "fi"
+        ? "Kuntosalin tiedot Liikuxissa."
+        : "Gym details on Liikux.",
+    path: slug ? pathGym(lang, slug) : undefined,
+  });
 
   if (status === "loading") {
     return (
@@ -476,656 +115,397 @@ function GymDetailPage() {
     );
   }
 
-  if (status === "missing" || !gym) {
+  if (!gym || !offer) {
     return (
-      <main className="gym-detail">
+      <main className="gp gp-missing">
         <h1>{t("gymNotFound")}</h1>
-        <p className="gym-detail-muted">{t("gymNotFoundHint")}</p>
-        <button
-          type="button"
-          className="gym-detail-back"
-          onClick={goBackToBrowse}
-        >
+        <p>{t("gymNotFoundHint")}</p>
+        <Link className="btn btn-primary" to={pathGyms(lang)}>
           {t("backToBrowse")}
-        </button>
+        </Link>
       </main>
     );
   }
 
   const chain = gym.chain;
-  const offer = resolveGymOffer(gym, chain);
-  const memberships = offer.memberships;
-  const services = offer.services;
-  const siteUrl =
-    gym.www?.trim() ||
-    chain?.website?.trim() ||
-    getChainWebsite(chain?.slug) ||
-    null;
-  const chainIsOther =
-    !chain ||
-    chain.slug === "muut" ||
-    chain.slug === "yksityiset" ||
-    !chain.image ||
-    chain.image.includes("/pins/");
-  const heroSrc = chainIsOther ? "/pins/gym-pin.png" : chain.image;
-  const heroIsPin = chainIsOther;
-  const heroIsLogo = Boolean(
-    !chainIsOther && chain?.logoFit === "contain",
-  );
-  const hasPromoService = services.some((s) => PROMO_TAGS.includes(s));
-  const promoTag =
-    hasPromoService || offer.freeTrial === true ? t("freeTrial") : null;
-  const tripKm =
-    fromPoint && gym.lat != null && gym.lng != null
-      ? distanceKm(fromPoint.lat, fromPoint.lng, gym.lat, gym.lng)
-      : null;
+  const isRealChain = Boolean(chain && chain.slug !== "muut" && chain.slug !== "yksityiset");
+  const hasLogo = Boolean(isRealChain && chain?.image && !chain.image.includes("/pins/"));
+  const streetLine = formatGymStreetLine(gym) || gym.address?.trim() || "";
+  const addressText = [streetLine, gym.city?.trim()].filter(Boolean).join(", ");
+  const siteUrl = gym.www?.trim() || chain?.website?.trim() || getChainWebsite(chain?.slug) || null;
+  const hasPoint = gym.lat != null && gym.lng != null;
+  const tripKm = from && hasPoint ? distanceKm(from.lat, from.lng, gym.lat, gym.lng) : null;
+  const routeUrl =
+    "https://www.google.com/maps/dir/?api=1" +
+    (from ? `&origin=${from.lat},${from.lng}` : "") +
+    `&destination=${gym.lat},${gym.lng}`;
 
-  const hours247 = offer.is247 === true;
-  const hoursWeekday = offer.hoursWeekday;
-  const hoursWeekend = offer.hoursWeekend;
-  const hasHours = Boolean(
-    hoursWeekday || hoursWeekend || offer.freeTrial === true || hours247,
+  const is247 = offer.is247 === true;
+  const freeTrial = offer.freeTrial === true || offer.services.some((s) => PROMO_TAGS.includes(s));
+  const services = offer.services.filter((s) => !PROMO_TAGS.includes(s));
+  const isFav = favorites.includes(gym.slug);
+
+  const checkedRaw = gym.offerCheckedAt || chain?.checkedAt || null;
+  const checkedDate = checkedRaw ? new Date(checkedRaw) : null;
+  const checkedText =
+    checkedDate && !Number.isNaN(checkedDate.getTime())
+      ? checkedDate.toLocaleDateString(lang === "fi" ? "fi-FI" : "en-GB")
+      : null;
+  const sourceUrl = gym.offerSourceUrl || chain?.sourceUrl || null;
+  const phone = gym.phone?.trim() || null;
+  const email = gym.email?.trim() || null;
+
+  function copy(key: "phone" | "email", value: string) {
+    void navigator.clipboard.writeText(value).then(() => {
+      setCopied(key);
+      window.setTimeout(() => setCopied(null), 1400);
+    });
+  }
+
+  const favButton = (
+    <button
+      type="button"
+      className={isFav ? "btn btn-soft gp-fav is-on" : "btn btn-soft gp-fav"}
+      aria-pressed={isFav}
+      aria-label={isFav ? t("removeFavorite") : t("addFavorite")}
+      onClick={() => setFavorites(toggleFavoriteSlug(gym.slug))}
+    >
+      <Heart size={17} strokeWidth={2.3} aria-hidden="true" />
+      <span>{isFav ? t("gymSaved") : t("gymSave")}</span>
+    </button>
   );
 
-  const contact = {
-    phone: gym.phone?.trim() || null,
-    email: gym.email?.trim() || null,
-  };
-  const isFav = favoriteSlugs.includes(gym.slug);
-  const streetLine =
-    formatGymStreetLine(gym) || gym.address?.trim() || "";
-  const showChainAcc = chainGyms.length > 0;
-  const priceNum = offer.priceFrom;
-  const priceText =
-    priceNum != null && Number.isFinite(priceNum)
-      ? Number.isInteger(priceNum)
-        ? String(priceNum)
-        : String(priceNum).replace(".", ",")
-      : null;
+  const siteButton = siteUrl ? (
+    <a className="btn btn-primary gp-site" href={siteUrl} target="_blank" rel="noreferrer">
+      {t("gymWebsite")}
+      <ArrowUpRight size={17} strokeWidth={2.4} aria-hidden="true" />
+    </a>
+  ) : null;
 
   return (
-    <main className="gym-detail load-reveal">
-      <div className="gym-detail-shell">
-        <div className="gym-detail-top-mobile">
-          <button
-            type="button"
-            className="gym-detail-back gym-detail-back-mobile"
-            onClick={goBackToBrowse}
-          >
-            <ArrowLeft size={18} strokeWidth={2.4} aria-hidden="true" />
-            {t("backToBrowse")}
-          </button>
-          <button
-            type="button"
-            className="gym-detail-top-address"
-            aria-label={t("fromAddressAria")}
-            onClick={() => setAddressSheetOpen(true)}
-          >
-            {fromDraft.trim() || locationLabel || t("fromAddressPlaceholder")}
-          </button>
-        </div>
+    <main className="gp load-reveal">
+      {/* 1. Breadcrumb */}
+      <nav className="gp-crumbs" aria-label="Breadcrumb">
+        <Link to={pathGyms(lang)}>{t("backToBrowse")}</Link>
+        {gym.city ? (
+          <>
+            <ChevronRight size={14} strokeWidth={2.2} aria-hidden="true" />
+            <Link to={pathGymsFromLocation(lang, gym.city)}>{gym.city}</Link>
+          </>
+        ) : null}
+        <ChevronRight size={14} strokeWidth={2.2} aria-hidden="true" />
+        <span aria-current="page">{gymName}</span>
+      </nav>
 
-        <div className="gym-detail-layout">
-          <div className="gym-detail-content">
-            <div className="gym-detail-left-sticky">
-              <button
-                type="button"
-                className="gym-detail-back"
-                onClick={goBackToBrowse}
-              >
-                <ArrowLeft size={18} strokeWidth={2.4} aria-hidden="true" />
-                {t("backToBrowse")}
-              </button>
-            </div>
-
-            <div className="gym-detail-brand-row">
-              <div
-                className={[
-                  "gym-detail-logo-sq",
-                  heroIsLogo ? "is-logo" : "",
-                  heroIsPin ? "is-pin" : "",
-                  heroIsPin ? "" : chain?.logoClass || "",
-                ]
+      <div className="gp-grid">
+        <div className="gp-top">
+          {/* 2. Head */}
+          <header className="gp-head">
+            {hasLogo && chain ? (
+              <Link
+                className={["chain-tile-img gp-logo", chain.logoFit === "contain" ? "is-contain" : "", chain.logoClass || ""]
                   .filter(Boolean)
                   .join(" ")}
+                to={pathChain(lang, chain.slug)}
+                aria-label={chain.name}
               >
-                <img src={heroSrc} alt="" />
-              </div>
-              <div className="gym-detail-brand-side">
-                <div className="gym-detail-brand-summary">
-                  <div className="gym-detail-meta">
-                    {chain && !chainIsOther ? (
-                      <p className="gym-detail-chain-name">{chain.name}</p>
-                    ) : null}
-                    <h1 className="gym-detail-name">
-                      {cleanGymDisplayName(gym.name)}
-                    </h1>
-                    {streetLine || gym.city ? (
-                      <p className="gym-detail-address-line">
-                        <MapPin
-                          size={15}
-                          strokeWidth={2.3}
-                          aria-hidden="true"
-                        />
-                        <span>
-                          {[streetLine, gym.city?.trim()]
-                            .filter(Boolean)
-                            .join(", ")}
-                        </span>
-                      </p>
-                    ) : null}
-                  </div>
-
-                  {(hours247 || promoTag) && (
-                    <div className="gym-detail-badges">
-                      {hours247 ? (
-                        <span className="gym-detail-badge">24/7</span>
-                      ) : null}
-                      {promoTag ? (
-                        <span className="gym-detail-badge is-promo">
-                          {promoTag}
-                        </span>
-                      ) : null}
-                    </div>
-                  )}
-
-                  <div className="gym-detail-brand-actions">
-                    {gym.lat != null && gym.lng != null ? (
-                      <a
-                        className="gym-detail-maps-btn"
-                        href={
-                          "https://www.google.com/maps/dir/?api=1&origin=" +
-                          (fromPoint?.lat ?? originLat ?? gym.lat) +
-                          "," +
-                          (fromPoint?.lng ?? originLng ?? gym.lng) +
-                          "&destination=" +
-                          gym.lat +
-                          "," +
-                          gym.lng
-                        }
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label={t("mapsRoute")}
-                      >
-                        <img
-                          className="is-line"
-                          src="/pins/google-maps-outline.png"
-                          alt=""
-                        />
-                        <img
-                          className="is-fill"
-                          src="/pins/google-maps-pin.png"
-                          alt=""
-                        />
-                      </a>
-                    ) : null}
-                    <button
-                      type="button"
-                      className={
-                        isFav
-                          ? "gym-detail-fav-btn is-on"
-                          : "gym-detail-fav-btn"
-                      }
-                      aria-label={
-                        isFav ? t("removeFavorite") : t("addFavorite")
-                      }
-                      aria-pressed={isFav}
-                      onClick={() => {
-                        setFavoriteSlugs(toggleFavoriteSlug(gym.slug));
-                      }}
-                    >
-                      <Heart size={28} strokeWidth={2.2} />
-                    </button>
-                  </div>
-
-                  <div className="gym-detail-stats">
-                    <div className="gym-detail-stat">
-                      <span className="gym-detail-stat-label">
-                        {t("statsFrom")}
-                      </span>
-                      <strong className="gym-detail-stat-value is-price">
-                        {priceText != null ? `${priceText} €` : "—"}
-                      </strong>
-                    </div>
-                    <div className="gym-detail-stat">
-                      <span className="gym-detail-stat-label">
-                        {t("statsDistance")}
-                      </span>
-                      <strong className="gym-detail-stat-value">
-                        {tripKm != null ? formatDistanceKm(tripKm) : "—"}
-                      </strong>
-                    </div>
-                  </div>
-
-                  {hours247 || hoursWeekday || hoursWeekend ? (
-                    <ul className="gym-detail-hours-inline">
-                      {hours247 ? (
-                        <li>
-                          <span>{t("hoursAccess")}</span>
-                          <strong>24/7</strong>
-                        </li>
-                      ) : null}
-                      {!hours247 && hoursWeekday ? (
-                        <li>
-                          <span>{t("weekdays")}</span>
-                          <strong>
-                            {cleanHoursValue(hoursWeekday, hours247)}
-                          </strong>
-                        </li>
-                      ) : null}
-                      {!hours247 && hoursWeekend ? (
-                        <li>
-                          <span>{t("weekend")}</span>
-                          <strong>
-                            {cleanHoursValue(hoursWeekend, hours247)}
-                          </strong>
-                        </li>
-                      ) : null}
-                    </ul>
-                  ) : null}
-                </div>
-
-                <div className="gym-detail-brand-foot">
-                  {siteUrl ? (
-                    <a
-                      className="gym-detail-cta"
-                      href={siteUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {t("visitGymSite")}
-                    </a>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-
-            <div className="gym-detail-accs">
-              <div className="gym-detail-acc-hours-mobile">
-                <DetailAccordion
-                  id="hours"
-                  openId={openAcc}
-                  onToggle={toggleAcc}
-                  title={t("hoursAccess")}
-                  icon={<Clock size={18} strokeWidth={2.2} />}
-                >
-                  {!hasHours ? (
-                    <p className="gym-detail-muted">{t("noHours")}</p>
-                  ) : (
-                    <ul className="gym-detail-plans">
-                      {hours247 ? (
-                        <li>
-                          <span>{t("hoursAccess")}</span>
-                          <strong>24/7</strong>
-                        </li>
-                      ) : null}
-                      {!hours247 && hoursWeekday ? (
-                        <li>
-                          <span>{t("weekdays")}</span>
-                          <strong>
-                            {cleanHoursValue(hoursWeekday, hours247)}
-                          </strong>
-                        </li>
-                      ) : null}
-                      {!hours247 && hoursWeekend ? (
-                        <li>
-                          <span>{t("weekend")}</span>
-                          <strong>
-                            {cleanHoursValue(hoursWeekend, hours247)}
-                          </strong>
-                        </li>
-                      ) : null}
-                      {offer.freeTrial === true ? (
-                        <li>
-                          <span>{t("trial")}</span>
-                          <strong>{t("freeTrial")}</strong>
-                        </li>
-                      ) : null}
-                      {offer.dayPass === true ? (
-                        <li>
-                          <span>{t("priceDayPass")}</span>
-                          <strong>{t("available")}</strong>
-                        </li>
-                      ) : null}
-                    </ul>
-                  )}
-                </DetailAccordion>
-              </div>
-
-              <DetailAccordion
-                id="memberships"
-                openId={openAcc}
-                onToggle={toggleAcc}
-                title={t("membershipsPrices")}
-                icon={<Ticket size={18} strokeWidth={2.2} />}
-              >
-                {memberships.length > 0 ? (
-                  <ul className="gym-detail-plans">
-                    {memberships.map((m) => {
-                      const rawPrice = m.priceEur as unknown;
-                      const eur =
-                        typeof rawPrice === "number"
-                          ? rawPrice
-                          : rawPrice &&
-                              typeof rawPrice === "object" &&
-                              "hinta" in rawPrice
-                            ? Number((rawPrice as { hinta: number }).hinta)
-                            : null;
-                      return (
-                        <li key={m.name}>
-                          <span>
-                            {offerPhrase(lang, m.name)}
-                            {m.note ? ` · ${offerPhrase(lang, m.note)}` : ""}
-                          </span>
-                          <strong>
-                            {eur == null
-                              ? "—"
-                              : Number.isInteger(eur)
-                                ? eur
-                                : String(eur).replace(".", ",")}{" "}
-                            €
-                          </strong>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                ) : (
-                  <p className="gym-detail-muted">{t("noMemberships")}</p>
-                )}
-              </DetailAccordion>
-
-              <DetailAccordion
-                id="services"
-                openId={openAcc}
-                onToggle={toggleAcc}
-                title={t("services")}
-                icon={<Sparkles size={18} strokeWidth={2.2} />}
-              >
-                {services.length > 0 ? (
-                  <ul className="gym-detail-tags">
-                    {services.map((s) => {
-                      const isPromo = PROMO_TAGS.includes(s);
-                      return (
-                        <li
-                          key={s}
-                          className={isPromo ? "is-promo" : undefined}
-                        >
-                          {isPromo ? t("freeTrial") : offerPhrase(lang, s)}
-                        </li>
-                      );
-                    })}
-                    {promoTag && !hasPromoService ? (
-                      <li className="is-promo">{promoTag}</li>
-                    ) : null}
-                  </ul>
-                ) : (
-                  <p className="gym-detail-muted">{t("noServices")}</p>
-                )}
-              </DetailAccordion>
-
-              {showChainAcc ? (
-                <DetailAccordion
-                  id="chain"
-                  openId={openAcc}
-                  onToggle={toggleAcc}
-                  title={t("moreFromChain")}
-                  icon={<Building2 size={18} strokeWidth={2.2} />}
-                >
-                  <ul className="gym-detail-chain-list">
-                    {chainGyms.map((g) => (
-                      <li key={g.slug}>
-                        <Link to={pathGym(lang, g.slug)}>
-                          <span>{cleanGymDisplayName(g.name)}</span>
-                          {g.city ? <em>{g.city}</em> : null}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </DetailAccordion>
-              ) : null}
-
-              <DetailAccordion
-                id="contacts"
-                openId={openAcc}
-                onToggle={toggleAcc}
-                title={t("contacts")}
-                icon={<Phone size={18} strokeWidth={2.2} />}
-              >
-                {contact.phone || contact.email ? (
-                  <div className="gym-detail-contact">
-                    {contact.phone ? (
-                      <div className="gym-detail-contact-item">
-                        <span>{t("phone")}</span>
-                        <div className="gym-detail-contact-row">
-                          <a
-                            href={`tel:${contact.phone.replace(/\s/g, "")}`}
-                          >
-                            {contact.phone}
-                          </a>
-                          <button
-                            type="button"
-                            className="gym-detail-copy"
-                            aria-label={t("copyPhone")}
-                            onClick={() =>
-                              copyContact("phone", contact.phone!)
-                            }
-                          >
-                            {copiedKey === "phone" ? (
-                              <Check size={15} strokeWidth={2.4} />
-                            ) : (
-                              <Copy size={15} strokeWidth={2.2} />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    ) : null}
-                    {contact.email ? (
-                      <div className="gym-detail-contact-item">
-                        <span>{t("email")}</span>
-                        <div className="gym-detail-contact-row">
-                          <a href={`mailto:${contact.email}`}>
-                            {contact.email}
-                          </a>
-                          <button
-                            type="button"
-                            className="gym-detail-copy"
-                            aria-label={t("copyEmail")}
-                            onClick={() =>
-                              copyContact("email", contact.email!)
-                            }
-                          >
-                            {copiedKey === "email" ? (
-                              <Check size={15} strokeWidth={2.4} />
-                            ) : (
-                              <Copy size={15} strokeWidth={2.2} />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                ) : (
-                  <p className="gym-detail-muted">{t("noContacts")}</p>
-                )}
-              </DetailAccordion>
-              <Link className="gym-detail-report" to={pathFeedback(lang, "error", gym.slug)}>
-                <TriangleAlert size={16} strokeWidth={2.3} aria-hidden="true" />
-                {t("reportGymError")}
+                <img src={chain.image} alt="" />
               </Link>
-            </div>
-          </div>
-
-          <aside className="gym-detail-map-col" aria-label={t("map")}>
-            <div className="gym-detail-map-frame">
-              <div className="gym-detail-map-side">
-                <div className="gym-detail-map-chips">
-                  <button
-                    type="button"
-                    className="gym-detail-map-chip"
-                    aria-label={t("fromAddressAria")}
-                    aria-expanded={addressSheetOpen}
-                    onClick={() => setAddressSheetOpen(true)}
-                  >
-                    <MapPin size={18} strokeWidth={2.3} />
-                  </button>
-                </div>
-              </div>
-              <div className="gym-detail-map-controls">
-                <button
-                  type="button"
-                  className="gym-detail-map-ctrl"
-                  aria-label={t("mapZoomIn")}
-                  onClick={() => zoomBy(1)}
-                >
-                  <Plus size={18} strokeWidth={2.4} />
-                </button>
-                <button
-                  type="button"
-                  className="gym-detail-map-ctrl"
-                  aria-label={t("mapZoomOut")}
-                  onClick={() => zoomBy(-1)}
-                >
-                  <Minus size={18} strokeWidth={2.4} />
-                </button>
-                <button
-                  type="button"
-                  className="gym-detail-map-ctrl"
-                  aria-label={t("useMyLocation")}
-                  onClick={() => {
-                    void locateMe().then(() => {
-                      goToGymOrOrigin();
-                    });
-                  }}
-                >
-                  <LocateFixed size={17} strokeWidth={2.4} />
-                </button>
-              </div>
-              <div className="gym-detail-map-float">
-                <MapPin size={18} strokeWidth={2.2} aria-hidden="true" />
-                <input
-                  className="gym-detail-from"
-                  type="text"
-                  value={fromDraft}
-                  placeholder={t("fromAddressPlaceholder")}
-                  aria-label={t("fromAddressAria")}
-                  onChange={(e) => {
-                    setFromDraft(e.target.value);
-                    setGeoStatus("idle");
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") lookupAddress();
-                  }}
-                  onBlur={lookupAddress}
-                />
-                <button
-                  type="button"
-                  className="gym-detail-locate"
-                  aria-label={t("useMyLocation")}
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => {
-                    void locateMe();
-                  }}
-                >
-                  <LocateFixed size={16} strokeWidth={2.3} />
-                </button>
-                <span className="gym-detail-crumb-sep" aria-hidden="true">
-                  &gt;
-                </span>
-                <span
-                  className="gym-detail-crumb-to"
-                  title={cleanGymDisplayName(gym.name)}
-                >
-                  {cleanGymDisplayName(gym.name)}
-                </span>
-              </div>
-              {geoStatus === "loading" ||
-              geoStatus === "fail" ||
-              tripKm != null ? (
-                <p className="gym-detail-route-meta">
-                  {geoStatus === "loading"
-                    ? t("lookingUpAddress")
-                    : geoStatus === "fail"
-                      ? t("addressNotFound")
-                      : tripKm != null
-                        ? t("tripAbout", {
-                            km: tripKm.toFixed(1).replace(".", ","),
-                          })
-                        : null}
+            ) : null}
+            <div className="gp-head-text">
+              {isRealChain && chain ? (
+                <Link className="gp-chain" to={pathChain(lang, chain.slug)}>
+                  {chain.name}
+                </Link>
+              ) : null}
+              <h1 className="gp-name">{gymName}</h1>
+              {addressText ? (
+                <p className="gp-address">
+                  <MapPin size={15} strokeWidth={2.2} aria-hidden="true" />
+                  {addressText}
                 </p>
               ) : null}
-              <div className="gym-detail-map" ref={mapRef} />
+              {is247 || freeTrial || offer.dayPass === true ? (
+                <ul className="gp-tags">
+                  {is247 ? <li>24/7</li> : null}
+                  {freeTrial ? <li>{t("freeTrial")}</li> : null}
+                  {offer.dayPass === true ? <li>{t("priceDayPass")}</li> : null}
+                </ul>
+              ) : null}
             </div>
+            <div className="gp-actions">
+              {favButton}
+              {hasPoint ? (
+                <a className="btn btn-soft" href={routeUrl} target="_blank" rel="noreferrer">
+                  <Navigation size={16} strokeWidth={2.3} aria-hidden="true" />
+                  {t("gymRoute")}
+                </a>
+              ) : null}
+              {siteButton}
+            </div>
+          </header>
+
+          {/* 3. Facts */}
+          <dl className="gp-facts">
+            <div className="gp-fact">
+              <dt>{t("statsFrom")}</dt>
+              <dd className="is-price">
+                {offer.priceFrom != null ? (
+                  <>
+                    {eurText(offer.priceFrom)} <small>{t("gymPerMonth")}</small>
+                  </>
+                ) : (
+                  <span className="is-unknown">{t("gymNotKnown")}</span>
+                )}
+              </dd>
+            </div>
+            <div className="gp-fact">
+              <dt>{t("statsDistance")}</dt>
+              <dd>
+                {tripKm != null ? formatDistanceKm(tripKm) : <span className="is-unknown">–</span>}
+                {from && tripKm != null ? <em>{from.label}</em> : null}
+              </dd>
+            </div>
+            <div className="gp-fact">
+              <dt>{t("gymHours")}</dt>
+              <dd>
+                {is247 ? (
+                  "24/7"
+                ) : offer.hoursWeekday ? (
+                  <>
+                    {cleanHoursValue(offer.hoursWeekday, false)}
+                    <em>{t("weekdays")}</em>
+                  </>
+                ) : (
+                  <span className="is-unknown">{t("gymNotKnown")}</span>
+                )}
+              </dd>
+            </div>
+            <div className="gp-fact">
+              <dt>{t("freeTrial")}</dt>
+              <dd>
+                {freeTrial ? (
+                  <span className="is-good">
+                    <Check size={18} strokeWidth={2.8} aria-hidden="true" />
+                    {t("gymYes")}
+                  </span>
+                ) : (
+                  <span className="is-unknown">{t("gymNotKnown")}</span>
+                )}
+              </dd>
+            </div>
+          </dl>
+        </div>
+
+        {/* Map (right column on desktop, under the facts on phones) */}
+        {hasPoint ? (
+          <aside className="gp-side" aria-label={t("map")}>
+            <GymRouteMap
+              gymLat={gym.lat}
+              gymLng={gym.lng}
+              from={from}
+              tripKm={tripKm}
+              routeUrl={routeUrl}
+              onPickFrom={setFrom}
+              onLocate={() => void locateMe()}
+            />
           </aside>
+        ) : null}
+
+        <div className="gp-sections">
+          {/* 4. Memberships and prices */}
+          <section className="gp-card">
+            <div className="gp-card-head">
+              <h2>{t("membershipsPrices")}</h2>
+              {checkedText ? (
+                <span className="gp-checked">
+                  <Check size={14} strokeWidth={2.8} aria-hidden="true" />
+                  {t("gymChecked", { date: checkedText })}
+                </span>
+              ) : null}
+            </div>
+            {offer.memberships.length > 0 ? (
+              <ul className="gp-rows">
+                {offer.memberships.map((m) => {
+                  const eur = membershipEur(m.priceEur);
+                  return (
+                    <li key={m.name}>
+                      <span>
+                        {offerPhrase(lang, m.name)}
+                        {m.note ? <em>{offerPhrase(lang, m.note)}</em> : null}
+                      </span>
+                      <strong>{eur != null && Number.isFinite(eur) ? `${eurText(eur)} €` : "–"}</strong>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="gp-empty">{t("noMemberships")}</p>
+            )}
+            <p className="gp-note">
+              {t("gymPriceNote")}
+              {sourceUrl ? (
+                <>
+                  {" "}
+                  {t("gymSource")}:{" "}
+                  <a href={sourceUrl} target="_blank" rel="noreferrer">
+                    {hostOf(sourceUrl)}
+                  </a>
+                </>
+              ) : null}
+            </p>
+          </section>
+
+          {/* 5. Hours + contact */}
+          <div className="gp-pair">
+            <section className="gp-card">
+              <div className="gp-card-head">
+                <h2>{t("gymHours")}</h2>
+                <Clock size={18} strokeWidth={2.2} aria-hidden="true" />
+              </div>
+              {is247 || offer.hoursWeekday || offer.hoursWeekend ? (
+                <ul className="gp-rows">
+                  {is247 ? (
+                    <li>
+                      <span>{t("hoursAccess")}</span>
+                      <strong>24/7</strong>
+                    </li>
+                  ) : null}
+                  {!is247 && offer.hoursWeekday ? (
+                    <li>
+                      <span>{t("weekdays")}</span>
+                      <strong>{cleanHoursValue(offer.hoursWeekday, false)}</strong>
+                    </li>
+                  ) : null}
+                  {!is247 && offer.hoursWeekend ? (
+                    <li>
+                      <span>{t("weekend")}</span>
+                      <strong>{cleanHoursValue(offer.hoursWeekend, false)}</strong>
+                    </li>
+                  ) : null}
+                </ul>
+              ) : (
+                <p className="gp-empty">{t("noHours")}</p>
+              )}
+            </section>
+
+            <section className="gp-card">
+              <div className="gp-card-head">
+                <h2>{t("contacts")}</h2>
+              </div>
+              {phone || email || siteUrl ? (
+                <ul className="gp-rows gp-contacts">
+                  {phone ? (
+                    <li>
+                      <a href={`tel:${phone.replace(/\s/g, "")}`}>
+                        <Phone size={16} strokeWidth={2.2} aria-hidden="true" />
+                        {phone}
+                      </a>
+                      <button type="button" aria-label={t("copyPhone")} onClick={() => copy("phone", phone)}>
+                        {copied === "phone" ? <Check size={15} strokeWidth={2.6} /> : <Copy size={15} strokeWidth={2.2} />}
+                      </button>
+                    </li>
+                  ) : null}
+                  {email ? (
+                    <li>
+                      <a href={`mailto:${email}`}>
+                        <Mail size={16} strokeWidth={2.2} aria-hidden="true" />
+                        {email}
+                      </a>
+                      <button type="button" aria-label={t("copyEmail")} onClick={() => copy("email", email)}>
+                        {copied === "email" ? <Check size={15} strokeWidth={2.6} /> : <Copy size={15} strokeWidth={2.2} />}
+                      </button>
+                    </li>
+                  ) : null}
+                  {siteUrl ? (
+                    <li>
+                      <a href={siteUrl} target="_blank" rel="noreferrer">
+                        <ArrowUpRight size={16} strokeWidth={2.2} aria-hidden="true" />
+                        {hostOf(siteUrl)}
+                      </a>
+                    </li>
+                  ) : null}
+                </ul>
+              ) : (
+                <p className="gp-empty">{t("noContacts")}</p>
+              )}
+            </section>
+          </div>
+
+          {services.length > 0 ? (
+            <section className="gp-card">
+              <div className="gp-card-head">
+                <h2>{t("services")}</h2>
+              </div>
+              <ul className="gp-services">
+                {services.map((s) => (
+                  <li key={s}>{offerPhrase(lang, s)}</li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {/* 6. Nearby gyms */}
+          {nearby.length > 0 ? (
+            <section className="gp-block">
+              <h2>{t("gymNearbyTitle")}</h2>
+              <div className="gp-near">
+                {nearby.map((g) => {
+                  const o = resolveGymOffer(g, g.chain);
+                  return (
+                    <Link key={g.slug} className="gp-near-card" to={pathGym(lang, g.slug)}>
+                      {g.chain && g.chain.slug !== "muut" ? <span className="gp-near-chain">{g.chain.name}</span> : null}
+                      <span className="gp-near-name">{cleanGymDisplayName(g.name)}</span>
+                      <span className="gp-near-price">{formatPriceFrom(o.priceFrom, lang) ?? "–"}</span>
+                      <span className="gp-near-km">{t("gymAwayFromThis", { km: formatDistanceKm(g.km) })}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
+
+          {chainGyms.length > 0 && chain ? (
+            <section className="gp-block">
+              <div className="gp-block-head">
+                <h2>{t("moreFromChain")}</h2>
+                <Link className="gp-more" to={pathChain(lang, chain.slug)}>
+                  {t("gymChainAll", { chain: chain.name })}
+                  <ArrowRight size={15} strokeWidth={2.4} aria-hidden="true" />
+                </Link>
+              </div>
+              <ul className="gp-chain-list">
+                {chainGyms.map((g) => (
+                  <li key={g.slug}>
+                    <Link to={pathGym(lang, g.slug)}>
+                      <span>{cleanGymDisplayName(g.name)}</span>
+                      <em>
+                        {g.city} · {formatDistanceKm(g.km)}
+                      </em>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          <Link className="gp-report" to={pathFeedback(lang, "error", gym.slug)}>
+            <TriangleAlert size={15} strokeWidth={2.3} aria-hidden="true" />
+            {t("reportGymError")}
+          </Link>
         </div>
       </div>
 
-      {addressSheetOpen
-        ? createPortal(
-            <div
-              className="gym-detail-sheet-root"
-              role="presentation"
-              onClick={() => setAddressSheetOpen(false)}
-            >
-              <div
-                className="gym-detail-sheet"
-                role="dialog"
-                aria-modal="true"
-                aria-label={t("fromAddressAria")}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="gym-detail-sheet-head">
-                  <h2 className="gym-detail-sheet-title">
-                    {t("fromAddressAria")}
-                  </h2>
-                  <button
-                    type="button"
-                    className="gym-detail-sheet-close"
-                    aria-label={t("close")}
-                    onClick={() => setAddressSheetOpen(false)}
-                  >
-                    <X size={20} strokeWidth={2.4} />
-                  </button>
-                </div>
-                <div className="gym-detail-sheet-body">
-                  <label className="gym-detail-sheet-field">
-                    <MapPin size={16} strokeWidth={2.3} />
-                    <input
-                      type="text"
-                      value={sheetDraft}
-                      placeholder={t("fromAddressPlaceholder")}
-                      aria-label={t("fromAddressAria")}
-                      autoFocus
-                      onChange={(e) => setSheetDraft(e.target.value)}
-                    />
-                  </label>
-                  <ul className="gym-detail-sheet-hits">
-                    {sheetLoading && sheetHits.length === 0 ? (
-                      <li className="gym-detail-sheet-hint">
-                        <LoadSpin size="sm" />
-                      </li>
-                    ) : null}
-                    {!sheetLoading &&
-                    sheetDraft.trim().length >= 3 &&
-                    sheetHits.length === 0 ? (
-                      <li className="gym-detail-sheet-hint">{t("noResults")}</li>
-                    ) : null}
-                    {sheetHits.map((hit) => (
-                      <li key={hit.id}>
-                        <button
-                          type="button"
-                          onClick={() => pickSheetHit(hit)}
-                        >
-                          {hit.label}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </div>,
-            document.body,
-          )
-        : null}
+      {/* Phones: actions always within reach */}
+      <div className="gp-bar">
+        {siteButton}
+        {favButton}
+        {hasPoint ? (
+          <a className="btn btn-soft" href={routeUrl} target="_blank" rel="noreferrer" aria-label={t("mapsRoute")}>
+            <Navigation size={17} strokeWidth={2.3} aria-hidden="true" />
+          </a>
+        ) : null}
+      </div>
     </main>
   );
 }

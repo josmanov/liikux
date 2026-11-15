@@ -67,6 +67,9 @@ export type Gym = {
   membershipsJson?: string | null;
   servicesJson?: string | null;
   audienceJson?: string | null;
+  /** When the price/offer data was last checked (ISO date), and where from. */
+  offerCheckedAt?: string | null;
+  offerSourceUrl?: string | null;
   chain?: ChainSummary | null;
 };
 
