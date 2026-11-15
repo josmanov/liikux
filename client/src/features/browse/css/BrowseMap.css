@@ -30,17 +30,16 @@
   margin-top: 0;
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid var(--line-strong);
-  background: #e8e8e8;
+  border: 1px solid var(--outline);
+  background: #14161b; /* same as the map land colour, so no light edge shows while tiles load */
 }
 
-.browse-map-frame .maplibregl-ctrl-attrib,
 .browse-map-frame .maplibregl-ctrl-logo {
   display: none !important;
 }
 
 .browse-glass {
-  border: 1px solid var(--line);
+  border: 1px solid var(--outline);
   background: var(--surface);
   box-shadow: 0 6px 16px rgba(20, 22, 26, 0.02);
   backdrop-filter: blur(16px);
@@ -165,7 +164,7 @@
   width: 100%;
   padding: 0.55rem 0.7rem;
   border-radius: 12px;
-  border: 1.5px solid var(--color-border);
+  border: 1px solid var(--outline);
   background: var(--color-surface);
   box-sizing: border-box;
 }
@@ -512,7 +511,7 @@
   max-height: 11rem;
   overflow-y: auto;
   border-radius: 12px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--outline);
   background: var(--surface);
   box-shadow: 0 14px 32px rgba(20, 22, 26, 0.04);
 }
@@ -651,5 +650,5 @@
 .gym-pin,
 .gym-cluster,
 .gym-origin-pin {
-  transition: filter 0.35s ease;
+  transition: filter 0.35s ease, opacity 0.3s ease;
 }

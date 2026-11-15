@@ -1,0 +1,69 @@
+/*
+ * List panel polish (all screen sizes).
+ *
+ *  - The favourite heart is a quiet round icon button (no box around every heart);
+ *    it fills red when the gym is a favourite.
+ *  - Rows get a soft hover fill.
+ *  - Map credits are restyled dark.
+ */
+.browse-row-fav {
+  border-color: transparent;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.browse-row-fav:hover {
+  background: var(--surface-3);
+  color: var(--ink);
+}
+
+.browse-row-fav.is-on {
+  color: var(--bad);
+}
+
+.browse-row-fav.is-on svg {
+  fill: var(--bad);
+}
+
+.browse-row.is-hovered {
+  background: var(--surface-2);
+}
+
+/* Row text hierarchy: chain label small and muted, gym name strongest. */
+.browse-row-chain {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.browse-row-site {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.browse-row-address {
+  color: var(--muted);
+}
+
+.browse-row-distance {
+  color: var(--muted);
+}
+
+/* Map credits (required by OpenStreetMap): small and dark, to match the site. */
+.maplibregl-ctrl-attrib.maplibregl-compact,
+.maplibregl-ctrl-attrib {
+  background: rgba(13, 14, 17, 0.72) !important;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.maplibregl-ctrl-attrib a {
+  color: var(--muted) !important;
+}
+
+.maplibregl-ctrl-attrib-button {
+  filter: invert(1);
+  opacity: 0.7;
+}

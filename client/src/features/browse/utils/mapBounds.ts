@@ -77,6 +77,51 @@ export function framePadForOverlays(
   };
 }
 
+/**
+ * Is the point inside the part of the map the user can actually see
+ * (not under the filter bar, the zoom buttons or the preview card)?
+ * "extraTop" leaves room for the price label that sits above a pin.
+ */
+export function isPointComfortablyVisible(
+  map: Map,
+  lng: number,
+  lat: number,
+  extraTop = 70,
+) {
+  const pad = framePadForOverlays(map, { labelTop: 0, labelBottom: 0 });
+  const el = map.getContainer();
+  const p = map.project([lng, lat]);
+  return (
+    p.x >= pad.left &&
+    p.x <= el.clientWidth - pad.right &&
+    p.y >= pad.top + extraTop &&
+    p.y <= el.clientHeight - pad.bottom
+  );
+}
+
+/**
+ * Click on a pin: the map does NOT jump or zoom. It only pans, and only if the
+ * pin is near the edge or hidden under an overlay, by just enough to bring it
+ * back into the comfortable area. Zoom stays exactly as the user had it.
+ */
+export function revealGym(map: Map, lng: number, lat: number) {
+  if (isPointComfortablyVisible(map, lng, lat)) return;
+  const pad = framePadForOverlays(map, { labelTop: 0, labelBottom: 0 });
+  const el = map.getContainer();
+  const p = map.project([lng, lat]);
+  const minX = pad.left + 24;
+  const maxX = el.clientWidth - pad.right - 24;
+  const minY = pad.top + 90;
+  const maxY = el.clientHeight - pad.bottom - 12;
+  const targetX = Math.min(Math.max(p.x, minX), Math.max(minX, maxX));
+  const targetY = Math.min(Math.max(p.y, minY), Math.max(minY, maxY));
+  map.stop();
+  map.panBy([p.x - targetX, p.y - targetY], {
+    duration: 450,
+    easing: (t) => 1 - (1 - t) ** 3,
+  });
+}
+
 export function frameOriginAndGym(
   map: Map,
   originLng: number,

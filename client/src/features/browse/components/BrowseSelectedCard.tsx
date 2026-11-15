@@ -1,4 +1,4 @@
-import { Heart } from "lucide-react";
+import { Heart, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { ChainSummary, Gym } from "../../../data/types";
 import { formatDistanceKm } from "../../../data/format";
@@ -23,6 +23,8 @@ type BrowseSelectedCardProps = {
   origin: { lat: number; lng: number };
   isFav: boolean;
   onToggleFavorite: () => void;
+  /** Closes the card (deselects the gym). */
+  onClose?: () => void;
 };
 
 export function BrowseSelectedCard({
@@ -32,6 +34,7 @@ export function BrowseSelectedCard({
   origin,
   isFav,
   onToggleFavorite,
+  onClose,
 }: BrowseSelectedCardProps) {
   return (
     <div className="browse-map-preview">
@@ -65,6 +68,9 @@ export function BrowseSelectedCard({
           />
         </span>
         <span className="browse-map-preview-meta">
+          {selected.chain && selected.chain.slug !== "muut" ? (
+            <span className="browse-map-preview-chain">{selected.chain.name}</span>
+          ) : null}
           <strong className="browse-map-preview-name">
             {selected.siteName}
           </strong>
@@ -125,6 +131,16 @@ export function BrowseSelectedCard({
       >
         {t("open")}
       </Link>
+      {onClose ? (
+        <button
+          type="button"
+          className="browse-map-preview-close"
+          aria-label={t("close")}
+          onClick={onClose}
+        >
+          <X size={16} strokeWidth={2.4} />
+        </button>
+      ) : null}
     </div>
   );
 }

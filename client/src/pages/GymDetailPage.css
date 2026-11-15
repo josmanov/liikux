@@ -7,10 +7,8 @@
   --gd-sticky-top: var(--header-h, 5.75rem);
   --gd-top: 1rem;
   --gd-acc-icon: var(--muted);
-  max-width: calc(var(--max-width) + 2 * var(--gd-side));
-  margin: 0 auto;
   width: 100%;
-  padding: 16px var(--gd-side) 1.5rem;
+  padding: 16px var(--gutter) 1.5rem;
   box-sizing: border-box;
 }
 
@@ -104,7 +102,7 @@
   border-radius: 14px;
   overflow: hidden;
   isolation: isolate;
-  border: 1.5px solid var(--color-border);
+  border: 1px solid var(--outline);
   background: var(--color-surface);
   box-sizing: border-box;
   padding: 0;
@@ -185,6 +183,7 @@
   transition: opacity 0.16s ease;
 }
 
+/* Desktop: white outline pin, coloured Google Maps pin on hover (phones: always coloured, see below). */
 .gym-detail-maps-btn .is-fill {
   position: absolute;
   opacity: 0;
@@ -887,7 +886,7 @@
   height: 100%;
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--outline);
   background: #e8e8e8;
 }
 
@@ -907,7 +906,7 @@
   width: min(22rem, calc(100% - 4.4rem));
   padding: 0.28rem 0.55rem;
   border-radius: 12px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--outline);
   background: var(--surface);
   box-shadow: 0 6px 16px rgba(20, 22, 26, 0.02);
   backdrop-filter: blur(16px);
@@ -1018,7 +1017,7 @@
   max-width: 11rem;
   padding: 0.22rem 0.5rem;
   border-radius: 8px;
-  border: 1.5px solid var(--line);
+  border: 1px solid var(--outline);
   background: var(--surface);
   color: var(--ink);
   font-family: var(--font-body);
@@ -1060,7 +1059,7 @@
   z-index: 3;
   max-width: 11rem;
   padding: 0.22rem 0.5rem;
-  border: 1.5px solid var(--line);
+  border: 1px solid var(--outline);
   border-radius: 8px;
   background: var(--surface);
   box-shadow: 0 4px 12px rgba(20, 22, 26, 0.03);
@@ -1104,7 +1103,7 @@
   margin: -7px 0 0 -7px;
   border-radius: 50%;
   background: #2563eb;
-  border: 2.5px solid var(--line-strong);
+  border: 1px solid var(--outline);
   box-shadow: 0 1px 3px rgba(20, 22, 26, 0.03);
   z-index: 2;
 }
@@ -1161,7 +1160,7 @@
   width: 2.25rem;
   height: 2.25rem;
   padding: 0;
-  border: 1px solid var(--line);
+  border: 1px solid var(--outline);
   border-radius: 10px;
   background: var(--surface);
   box-shadow: 0 6px 16px rgba(20, 22, 26, 0.02);
@@ -1258,7 +1257,7 @@
   width: 100%;
   padding: 0.55rem 0.7rem;
   border-radius: 12px;
-  border: 1.5px solid var(--color-border);
+  border: 1px solid var(--outline);
   background: var(--color-surface);
   box-sizing: border-box;
 }
@@ -1485,7 +1484,7 @@
     width: 100%;
     height: 100%;
     border-radius: 16px;
-    border: 1px solid var(--line);
+    border: 1px solid var(--outline);
   }
 
   .gym-detail-map-side {
@@ -1518,10 +1517,6 @@
   }
 }
 
-/* The outline Google Maps icon is drawn white (made for the old dark theme): show it dark. */
-.gym-detail-maps-btn .is-line {
-  filter: invert(1);
-}
 
 /* "Something wrong here? Let us know" link under the details. */
 .gym-detail-report {

@@ -72,6 +72,7 @@ import {
   applyPinsMinZoom,
   expandBoundsByKm,
   frameOriginAndGym,
+  isPointComfortablyVisible,
   framePadForOverlays,
   boundsFromPins,
 } from "../features/browse/utils/mapBounds";
@@ -1006,6 +1007,9 @@ function GymsPage() {
       skipBoundsResetRef.current = false;
       return;
     }
+    // A gym is selected: moving or zooming the map must NOT reset the list
+    // (page, scroll, highlighted row). The layout stays exactly as it is.
+    if (selectedIdRef.current) return;
     setPage(1);
     const id = window.requestAnimationFrame(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -1718,6 +1722,9 @@ function GymsPage() {
     const lat = gym.lat;
     const lng = gym.lng;
     window.requestAnimationFrame(() => {
+      // Pin already visible: just highlight it, do not move the map.
+      if (isPointComfortablyVisible(map, lng, lat)) return;
+      // Not visible: show you and the gym together, so you see how far it is.
       frameOriginAndGym(
         map,
         here.lng,
@@ -1898,6 +1905,7 @@ function GymsPage() {
         (mobileMapOpen ? " is-mobile-map" : "")
       }
     >
+      <div className="browse-top">
       <div
         className="browse-chrome"
         ref={listChromeRef}
@@ -1985,6 +1993,7 @@ function GymsPage() {
           setExtrasOpen(false);
         }}
       />
+      </div>
       </div>
       <div className="browse-body">
         <section
@@ -2129,6 +2138,10 @@ function GymsPage() {
                 onToggleFavorite={() =>
                   setFavoriteSlugs(toggleFavoriteSlug(selectedMapGym.gym.slug))
                 }
+                onClose={() => {
+                  selectedIdRef.current = null;
+                  setSelectedId(null);
+                }}
               />
             ) : null}
           </div>

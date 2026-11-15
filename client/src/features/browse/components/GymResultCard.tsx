@@ -19,6 +19,8 @@ type GymResultCardProps = {
   chain: ChainSummary | null;
   distKm: number | null;
   index: number;
+  /** true only during the first reveal of the list; later updates appear instantly */
+  introDelayMs?: boolean;
   lang: Lang;
   t: TFn;
   origin: { lat: number; lng: number };
@@ -35,6 +37,7 @@ export function GymResultCard({
   chain,
   distKm,
   index,
+  introDelayMs,
   lang,
   t,
   origin,
@@ -61,7 +64,7 @@ export function GymResultCard({
   const street = formatGymStreetLine(gym);
 
   return (
-    <li style={{ animationDelay: `${Math.min(index, 18) * 28}ms` }}>
+    <li style={introDelayMs ? { animationDelay: `${Math.min(index, 18) * 28}ms` } : undefined}>
       <div
         data-gym-id={gym.id}
         className={[

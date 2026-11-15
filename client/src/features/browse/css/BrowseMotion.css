@@ -1,0 +1,42 @@
+/*
+ * Motion: when the list or the map changes (filters, distance, page, panning),
+ * the NEW rows and pins fade in quickly. Snappy, but not an abrupt pop.
+ * Rows that were already there do not animate again.
+ *
+ * (The slower, staggered intro of the very first load is handled in
+ * BrowseResultsList.tsx with the "list-pop" class.)
+ */
+@keyframes browse-row-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.browse-rows > li {
+  animation: browse-row-in 0.16s ease-out backwards;
+}
+
+/* The first-load intro (list-pop) uses its own timing. */
+.browse-rows.list-pop > li {
+  animation: list-pop 0.28s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@keyframes browse-pin-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* "backwards" only: afterwards normal styles (e.g. dimmed pins) apply. */
+.gym-pin,
+.gym-cluster {
+  animation: browse-pin-in 0.18s ease-out backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .browse-rows > li,
+  .gym-pin,
+  .gym-cluster {
+    animation: none;
+  }
+}

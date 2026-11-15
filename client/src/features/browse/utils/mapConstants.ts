@@ -65,12 +65,17 @@ export const distancePresetMeta = [
 export const PAGE_SIZE_START = 8;
 export const PAGE_SIZE_MOBILE = 18;
 export const BROWSE_MOBILE_MQ = "(max-width: 900px)";
+/**
+ * Chains switched off for now (no gyms added yet). They are hidden everywhere:
+ * chips, chain lists, popups. Remove a slug here when its gyms are in the database.
+ */
+export const DISABLED_CHAIN_SLUGS: readonly string[] = ["go-fitness", "gofitness"];
+
 export const BROWSE_SEARCH_QUICK = [
   { id: "fressi", q: "Fressi" },
   { id: "elixia", q: "Elixia" },
   { id: "easyfit", q: "EasyFit" },
   { id: "f24", q: "Fitness24Seven" },
-  { id: "gofitness", q: "GoFitness" },
   { id: "liikku", q: "Liikku" },
   { id: "forever", q: "Forever" },
   { id: "trial", filter: "freeTrial" as const },
@@ -81,8 +86,8 @@ export const BROWSE_SEARCH_QUICK = [
 export type FilterKey = "sort" | "price" | "distance";
 
 /**
- * Base map look. Dark to match the site (temporary: Phase 2 replaces this
- * with our own Liikux-coloured style on OpenFreeMap).
+ * Base map look: the Liikux style (public/map/liikux-style.json), generated
+ * from OpenFreeMap tiles by scripts/build-map-style.mjs. Edit the palette in
+ * that script to change the colours.
  */
-export const MAP_STYLE_URL =
-  "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+export const MAP_STYLE_URL = "/map/liikux-style.json";

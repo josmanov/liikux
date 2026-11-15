@@ -3,10 +3,16 @@
   touch-action: none;
 }
 
-.browse.is-pin-selected .maplibregl-canvas,
+/* A gym is selected: the map itself dims a little, and every OTHER pin and
+   cluster fades almost away, so the selected gym is easy to find.
+   (Dimmed pins can still be clicked to switch the selection.) */
+.browse.is-pin-selected .maplibregl-canvas {
+  filter: brightness(0.62);
+}
+
 .browse.is-pin-selected .gym-pin:not(:has(.is-selected)),
 .browse.is-pin-selected .gym-cluster {
-  filter: brightness(0.58);
+  opacity: 0.18;
 }
 
 .browse.is-pin-selected .gym-origin-pin {
@@ -36,12 +42,6 @@
   backdrop-filter: blur(22px);
   transform: translateX(-50%);
   animation: browse-preview-in 0.22s ease-out;
-}
-
-@media (min-width: 901px) {
-  .browse-map-preview {
-    display: none;
-  }
 }
 
 @keyframes browse-preview-in {
@@ -85,7 +85,7 @@
   flex-shrink: 0;
   border-radius: 999px;
   overflow: hidden;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--outline);
   background: var(--color-bg);
 }
 
@@ -266,7 +266,7 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 1.5px solid var(--line-strong);
+  border: 1px solid var(--outline);
   border-radius: 999px;
   background: var(--surface);
   box-sizing: border-box;
@@ -281,6 +281,8 @@
   transition: opacity 0.16s ease;
 }
 
+/* Desktop: white outline pin; on hover it turns into the coloured Google Maps pin.
+   Phones: always the coloured pin (no hover on touch). */
 .browse-map-preview-maps .is-fill {
   position: absolute;
   opacity: 0;
@@ -312,7 +314,7 @@
   height: 2.4rem;
   padding: 0 0.85rem;
   border-radius: 999px;
-  border: 1.5px solid var(--line-strong);
+  border: 1px solid var(--outline);
   background: transparent;
   color: var(--ink);
   font-size: 0.88rem;
@@ -342,7 +344,7 @@
   border-radius: 8px;
   overflow: hidden;
   isolation: isolate;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--outline);
   background: var(--color-surface);
 }
 
@@ -579,7 +581,7 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 1.5px solid var(--line-strong);
+  border: 1px solid var(--outline);
   border-radius: 10px;
   background: var(--surface);
   box-sizing: border-box;
@@ -679,9 +681,11 @@
   color: var(--good);
 }
 
+/* "You are here": a big blue dot with a thick white ring and pulsing waves,
+   plus a blue label with your address. Gym pins are white/yellow, so this never blends in. */
 .gym-origin-pin {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   overflow: visible;
   z-index: 15000;
   pointer-events: none;
@@ -699,13 +703,13 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 14px;
-  height: 14px;
-  margin: -7px 0 0 -7px;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
   border-radius: 50%;
-  background: #2563eb;
-  border: 2.5px solid var(--line-strong);
-  box-shadow: 0 1px 3px rgba(20, 22, 26, 0.03);
+  background: #3b82f6;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35), 0 4px 14px rgba(0, 0, 0, 0.6);
   z-index: 2;
 }
 
@@ -713,11 +717,11 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 14px;
-  height: 14px;
-  margin: -7px 0 0 -7px;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
   border-radius: 50%;
-  border: 1.5px solid rgba(37, 99, 235, 0.55);
+  border: 2px solid rgba(96, 165, 250, 0.9);
   background: transparent;
   box-sizing: border-box;
   animation: gym-origin-echo 2.8s ease-out infinite;
@@ -734,7 +738,7 @@
     opacity: 0.55;
   }
   100% {
-    transform: scale(2.2);
+    transform: scale(3);
     opacity: 0;
   }
 }
@@ -761,7 +765,7 @@
   transform: translateX(-50%);
   z-index: 2;
   padding: 0.16rem 0.4rem 0.19rem;
-  border: 1.5px solid var(--line);
+  border: 1px solid var(--outline);
   border-radius: 999px;
   background: #fff;
   color: var(--on-ink);
@@ -786,7 +790,7 @@
   z-index: 6;
   max-width: 11rem;
   padding: 0.22rem 0.5rem;
-  border: 1.5px solid var(--line);
+  border: 1px solid var(--outline);
   border-radius: 8px;
   background: var(--surface);
   box-shadow: 0 4px 12px rgba(20, 22, 26, 0.03);
@@ -808,7 +812,19 @@
 }
 
 .gym-origin-pin-label {
-  bottom: calc(50% + 11px);
+  bottom: calc(50% + 17px);
+  max-width: 14rem;
+  padding: 0.3rem 0.65rem;
+  border: 2px solid #fff;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
+}
+
+.gym-origin-pin-label::after {
+  border-top-color: #fff !important;
 }
 
 .gym-pin-address::after,
@@ -921,7 +937,7 @@
   left: 50%;
   top: 61%;
   transform: translate(-50%, -50%);
-  color: var(--ink);
+  color: #14130f;
   font-family: var(--font-body);
   font-size: 0.8rem;
   font-weight: 800;
@@ -1300,7 +1316,7 @@
     flex-direction: column;
     overflow: hidden;
     border-radius: 16px;
-    border: 1px solid var(--line);
+    border: 1px solid var(--outline);
     background: var(--surface);
     transition: opacity 0.16s ease-out;
     will-change: opacity;
@@ -1365,7 +1381,7 @@
 
   .browse.is-mobile-map .browse-list-qty {
     padding: 0.35rem 0.75rem;
-    border: 1px solid var(--line);
+    border: 1px solid var(--outline);
     border-radius: 999px;
     background: var(--surface);
     box-shadow: 0 6px 16px rgba(20, 22, 26, 0.02);
@@ -1405,7 +1421,7 @@
     min-width: 8.5rem;
     height: 2.85rem;
     padding: 0 1.15rem;
-    border: 1.5px solid var(--line);
+    border: 1px solid var(--outline);
     border-radius: 999px;
     background: var(--surface);
     color: var(--ink);
@@ -1995,7 +2011,7 @@
     gap: 0.65rem;
     width: 100%;
     padding: 0.75rem 0.85rem;
-    border: 1.5px solid var(--color-border);
+    border: 1px solid var(--outline);
     border-radius: 12px;
     background: var(--color-surface);
     color: var(--ink);
@@ -2019,7 +2035,7 @@
     flex-direction: column;
     gap: 0.28rem;
     padding: 0.5rem 0.75rem 0.45rem;
-    border: 1.5px solid var(--color-border);
+    border: 1px solid var(--outline);
     border-radius: 12px;
     background: var(--surface);
   }
@@ -2070,7 +2086,3 @@
   }
 }
 
-/* The outline Google Maps icon is drawn white (made for the old dark theme): show it dark. */
-.browse-map-preview-maps .is-line {
-  filter: invert(1);
-}

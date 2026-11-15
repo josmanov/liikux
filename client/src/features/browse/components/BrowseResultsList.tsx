@@ -1,4 +1,4 @@
-import type { RefObject } from "react";
+import { useEffect, useState, type RefObject } from "react";
 import LoadSpin from "../../../components/LoadSpin";
 import { chainForGym } from "../../../data/audience";
 import type { Chain, Gym } from "../../../data/types";
@@ -68,6 +68,16 @@ export function BrowseResultsList({
   onPrev,
   onNext,
 }: BrowseResultsListProps) {
+  // The fade-in with a small stagger plays only when the list first appears.
+  // After that (changing a filter, distance, page…) rows must appear instantly,
+  // otherwise the list feels a second behind the map.
+  const [intro, setIntro] = useState(true);
+  useEffect(() => {
+    if (!browseReady) return;
+    const id = window.setTimeout(() => setIntro(false), 900);
+    return () => window.clearTimeout(id);
+  }, [browseReady]);
+
   return (
     <>
       <div
@@ -92,7 +102,7 @@ export function BrowseResultsList({
             </p>
           </div>
         ) : null}
-        <ul className={browseReady ? "browse-rows list-pop" : "browse-rows"}>
+        <ul className={browseReady && intro ? "browse-rows list-pop" : "browse-rows"}>
           {pageGyms.map((gym, i) => {
             const chain = chainForGym(gym, chains);
             const distKm =
@@ -106,6 +116,7 @@ export function BrowseResultsList({
                 chain={chain}
                 distKm={distKm}
                 index={i}
+                introDelayMs={browseReady && intro}
                 lang={lang}
                 t={t}
                 origin={origin}

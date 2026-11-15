@@ -28,7 +28,7 @@ import {
   pinTouchPx,
   zoomWhereClusterSplits,
 } from "../utils/pinCluster";
-import { frameOriginAndGym, framePadForOverlays } from "../utils/mapBounds";
+import { framePadForOverlays, revealGym } from "../utils/mapBounds";
 import { BROWSE_MOBILE_MQ } from "../utils/mapConstants";
 
 export type BrowseMapMarkersCtx = {
@@ -102,9 +102,7 @@ export function useBrowseMapMarkers(ctx: BrowseMapMarkersCtx) {
       inViewGymsRef,
       pageGymsRef,
       pageSizeRef,
-      originRef,
       cityBounceLockRef,
-      preCompareCameraRef,
       freezeListBoundsRef,
       selectFromMapRef,
       mapPinchRef,
@@ -245,18 +243,8 @@ export function useBrowseMapMarkers(ctx: BrowseMapMarkersCtx) {
         selectedIdRef.current = g.id;
         setSelectedId(g.id);
         setListRevealKey((n) => n + 1);
-        const here = originRef.current;
-        if (g.lat != null && g.lng != null) {
-          frameOriginAndGym(
-            map,
-            here.lng,
-            here.lat,
-            g.lng,
-            g.lat,
-            cityBounceLockRef,
-            preCompareCameraRef,
-          );
-        }
+        // Select only. The map moves only if the pin is not comfortably visible.
+        if (g.lat != null && g.lng != null) revealGym(map, g.lng, g.lat);
       });
 
       const marker = new Marker({ element: el, anchor: "bottom" })
@@ -469,21 +457,8 @@ export function useBrowseMapMarkers(ctx: BrowseMapMarkersCtx) {
       } else {
         pushBounds();
       }
-      if (!e?.originalEvent) return;
-      const picked = selectedIdRef.current;
-      if (!picked) return;
-      const g = visibleGymsRef.current.find((x) => x.id === picked);
-      if (!g || g.lat == null || g.lng == null) return;
-      const b = map.getBounds();
-      const onScreen =
-        g.lng >= b.getWest() &&
-        g.lng <= b.getEast() &&
-        g.lat >= b.getSouth() &&
-        g.lat <= b.getNorth();
-      if (!onScreen) {
-        selectedIdRef.current = null;
-        startTransition(() => setSelectedId(null));
-      }
+      // The selection stays while you pan the map (the card on the map has a close
+      // button, and clicking empty map clears it). The list must not change under you.
     }
     function scheduleIdleListSync(e?: { originalEvent?: Event }) {
       window.clearTimeout(idleListTimer);
