@@ -2,12 +2,11 @@
 import { Link, useLocation } from "react-router-dom";
 import { Dumbbell, Heart, Home, Menu, MessageSquarePlus, Store, TriangleAlert, X } from "lucide-react";
 import AreaSelect from "./AreaSelect";
-import FavoritesPopup from "./FavoritesPopup";
 import HeaderSearch from "./HeaderSearch";
 import HeaderFeedbackLinks from "./HeaderFeedbackLinks";
 import { readFavoriteSlugs } from "../data/favorites";
 import { useAppLocation } from "../context/LocationContext";
-import { pathFeedback, pathGyms, pathGymsFromLocation, pathHome, switchLangPath } from "../i18n/lang";
+import { pathFavorites, pathFeedback, pathGyms, pathGymsFromLocation, pathHome, switchLangPath } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import { useChainPopup } from "../context/ChainPopupContext";
 import "flag-icons/css/flag-icons.min.css";
@@ -15,7 +14,6 @@ import "./uiverse-playstore.css";
 import "./Header.css";
 
 function Header() {
-  const [favoritesOpen, setFavoritesOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { lang, t } = useLang();
   const location = useLocation();
@@ -40,7 +38,9 @@ function Header() {
   const [favShown, setFavShown] = useState(0);
   const [favFilled, setFavFilled] = useState(false);
   const [favCount, setFavCount] = useState(() => readFavoriteSlugs().length);
-  const favOn = favHover || favKept || favoritesOpen;
+  const favPath = pathFavorites(lang);
+  const favPageOn = location.pathname === favPath;
+  const favOn = favHover || favKept || favPageOn;
 
   useEffect(() => {
     function syncFavs() {
@@ -150,8 +150,8 @@ function Header() {
         </nav>
       </div>
 
-      <button
-        type="button"
+      <Link
+        to={favPath}
         className={
           "header-nav-link header-fav" +
           (favShown > 0 ? " is-typing" : "") +
@@ -161,7 +161,6 @@ function Header() {
         aria-label={favCount > 0 ? `${favWord}, ${favCount}` : favWord}
         onMouseEnter={() => setFavHover(true)}
         onMouseLeave={() => setFavHover(false)}
-        onClick={() => setFavoritesOpen(true)}
       >
         <span className="header-fav-icon">
           <Heart size={20} strokeWidth={2.4} />
@@ -179,7 +178,7 @@ function Header() {
             </span>
           ))}
         </span>
-      </button>
+      </Link>
 
       <div className="header-right">
         <HeaderFeedbackLinks />
@@ -308,10 +307,6 @@ function Header() {
         </nav>
       </div>
 
-      <FavoritesPopup
-        open={favoritesOpen}
-        onClose={() => setFavoritesOpen(false)}
-      />
     </header>
   );
 }

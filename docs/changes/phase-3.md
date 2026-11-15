@@ -26,6 +26,26 @@ The chain logo block reuses the per-chain colour/zoom rules in `features/home/ch
 
 Removed: `DetailAccordion.tsx`, `detailPins.ts` and the old 1500-line stylesheet.
 
+## Favorites + compare page
+
+The heart in the header now opens a real page (`/fi/suosikit`, `/en/favorites`) instead of a popup.
+
+- **Compare table:** one row per saved gym with price, distance from your address, opening hours and free trial. Click "Sali", "Hinta alk." or "Etäisyys" to sort. The lowest price and the shortest distance are highlighted.
+- **Map:** the same gyms as price labels, plus your address as a blue dot. Pointing at a row lights up its pin; clicking a pin scrolls to its row.
+- **Poista kaikki:** asks "Poistetaanko 7 suosikkia?" first, then shows "Kumoa" for 5 seconds. Removing one gym with its heart also offers "Kumoa".
+- **Jaa vertailu:** copies a link like `/fi/suosikit?salit=slug,slug`. Whoever opens it sees the same list without their own favorites changing, and can save them all with one button.
+- **Phones:** the map is on top and every row becomes a card.
+
+Note: the plan said "gyms as columns". I used gyms as rows, because with 10–20 favorites columns would not fit on any screen, and rows can be sorted.
+
+| File | Job |
+| --- | --- |
+| `client/src/pages/FavoritesPage.tsx` + `.css` | The page: table, actions, undo message. |
+| `client/src/features/favorites/FavoritesMap.tsx` | The map with price pins. |
+| `client/src/data/favorites.ts` | Unchanged: favorites are saved in the browser (localStorage). |
+
+Removed: `components/FavoritesPopup.tsx`.
+
 ## Not done yet (still Phase 3)
 
-- Chains page and favorites + compare page (they are still popups).
+- Chains page (still a popup).

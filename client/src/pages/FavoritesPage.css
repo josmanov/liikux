@@ -1,0 +1,509 @@
+/*
+ * Favorites + compare page (FavoritesPage.tsx).
+ *
+ * Desktop: the compare table on the left, the map on the right (the map
+ * stays in view while the table scrolls). Phones: every table row becomes
+ * a small card and the map sits above the list.
+ */
+
+.fav {
+  padding: 1.5rem var(--gutter) 4rem;
+}
+
+/* ---------- Head ---------- */
+
+.fav-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  flex-wrap: wrap;
+}
+
+.fav-title {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: clamp(1.7rem, 1.3rem + 1.3vw, 2.4rem);
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+}
+
+.fav-title span {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.fav-lead {
+  max-width: 40rem;
+  margin-top: 0.5rem;
+  color: var(--muted);
+}
+
+.fav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.fav-confirm {
+  margin-right: 0.25rem;
+  font-weight: 700;
+}
+
+.fav-danger {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+
+.fav-danger:hover {
+  background: var(--bad);
+  color: #fff;
+}
+
+.fav-shared {
+  margin-top: 1.25rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: var(--radius-md);
+  background: var(--brand-soft);
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
+
+.fav-shared a {
+  color: var(--brand);
+  font-weight: 700;
+}
+
+/* ---------- Layout ---------- */
+
+.fav-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.fav-side {
+  position: sticky;
+  top: calc(var(--header-h) + 1.25rem);
+  align-self: start;
+  height: calc(100vh - var(--header-h) - 2.5rem);
+  height: calc(100svh - var(--header-h) - 2.5rem);
+  min-height: 380px;
+}
+
+/* ---------- Table ---------- */
+
+.fav-table-wrap {
+  align-self: start;
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.fav-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.fav-table th {
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.fav-table th:first-child,
+.fav-table td:first-child {
+  padding-left: 1.4rem;
+}
+
+.fav-table th button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.fav-table th button:hover,
+.fav-table th button.is-on {
+  color: var(--ink);
+}
+
+.fav-table td {
+  padding: 0.95rem 1rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.fav-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.fav-table tbody tr {
+  transition: background-color 0.12s ease;
+}
+
+.fav-table tbody tr:hover,
+.fav-table tbody tr.is-active {
+  background: var(--surface-2);
+}
+
+.fav-table tbody tr.is-active td:first-child {
+  box-shadow: inset 3px 0 0 var(--brand);
+}
+
+.fav-cell-gym {
+  width: 100%; /* takes the free space; the number columns stay compact */
+  white-space: normal !important;
+}
+
+.fav-chain,
+.fav-place {
+  display: block;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.fav-place {
+  color: var(--faint);
+  font-weight: 500;
+}
+
+.fav-name {
+  display: block;
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.fav-name:hover {
+  color: var(--brand);
+}
+
+.fav-table td strong {
+  font-weight: 800;
+}
+
+.fav-table td small {
+  color: var(--faint);
+  font-size: var(--text-xs);
+}
+
+/* Best value in the column */
+.fav-table td.is-best strong {
+  padding: 0.2rem 0.5rem;
+  margin-left: -0.5rem;
+  border-radius: var(--radius-sm);
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+.fav-none {
+  color: var(--faint);
+}
+
+.fav-yes {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--good);
+  font-weight: 700;
+}
+
+.fav-cell-act {
+  padding-left: 0 !important;
+}
+
+.fav-heart {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.fav-heart:hover {
+  background: var(--surface-3);
+  color: var(--ink);
+}
+
+.fav-heart.is-on {
+  color: var(--bad);
+}
+
+.fav-heart.is-on svg {
+  fill: var(--bad);
+}
+
+.fav-foot {
+  padding: 0.8rem 1.4rem;
+  border-top: 1px solid var(--line);
+  color: var(--faint);
+  font-size: var(--text-xs);
+}
+
+/* ---------- Empty + loading ---------- */
+
+.fav-loading {
+  display: grid;
+  place-items: center;
+  min-height: 40vh;
+}
+
+.fav-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+  padding: clamp(2.5rem, 8vh, 5rem) 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-lg);
+  color: var(--faint);
+  text-align: center;
+}
+
+.fav-empty h2 {
+  color: var(--ink);
+  font-size: var(--text-xl);
+  letter-spacing: -0.02em;
+}
+
+.fav-empty p {
+  max-width: 26rem;
+  margin-bottom: 0.75rem;
+  color: var(--muted);
+}
+
+/* ---------- Map (FavoritesMap.tsx) ---------- */
+
+.fav-map {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  background: #14161b;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-lg);
+}
+
+.fav-map-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.fav-map .maplibregl-ctrl-attrib {
+  background: rgba(13, 14, 17, 0.72) !important;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.fav-map .maplibregl-ctrl-attrib a {
+  color: var(--muted) !important;
+}
+
+.fav-map .maplibregl-ctrl-attrib-button {
+  filter: invert(1);
+  opacity: 0.7;
+}
+
+/* A pin = a small price label with a point under it. */
+.fav-pin {
+  margin-top: -6px; /* lifts the label so the point under it touches the gym */
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+}
+
+.fav-pin::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 9px;
+  height: 9px;
+  margin-left: -4.5px;
+  border-right: 1px solid var(--line-strong);
+  border-bottom: 1px solid var(--line-strong);
+  background: var(--surface);
+  transform: rotate(45deg);
+}
+
+.fav-pin:hover,
+.fav-pin.is-active {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: var(--on-primary);
+}
+
+.fav-pin:hover::after,
+.fav-pin.is-active::after {
+  border-color: var(--brand);
+  background: var(--brand);
+}
+
+.maplibregl-marker:has(.fav-pin.is-active),
+.maplibregl-marker.fav-pin.is-active {
+  z-index: 5;
+}
+
+.fav-origin {
+  width: 18px;
+  height: 18px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #3b82f6;
+  box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.25);
+}
+
+/* ---------- Undo message ---------- */
+
+.fav-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.7rem 0.8rem 0.7rem 1.2rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-lg);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.fav-toast button {
+  padding: 0.45rem 0.9rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+  color: var(--on-primary);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1100px) {
+  .fav-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fav-side {
+    position: static;
+    order: -1;
+    height: 20rem;
+    min-height: 0;
+  }
+}
+
+/* Phones: each row is a card. The gym on top, the facts in a row under it. */
+@media (max-width: 700px) {
+  .fav-actions {
+    width: 100%;
+  }
+
+  .fav-table-wrap {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+  }
+
+  .fav-table thead {
+    display: none;
+  }
+
+  .fav-table,
+  .fav-table tbody {
+    display: block;
+  }
+
+  .fav-table tbody tr {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    justify-content: start;
+    gap: 0.9rem 1.5rem;
+    margin-bottom: 0.75rem;
+    padding: 1rem 1.1rem;
+    background: var(--surface);
+    border: 1px solid var(--outline);
+    border-radius: var(--radius-lg);
+  }
+
+  .fav-table td,
+  .fav-table td:first-child {
+    display: block;
+    padding: 0;
+    border: 0;
+    box-shadow: none !important;
+  }
+
+  .fav-cell-gym {
+    grid-column: 1 / -1;
+    padding-right: 2.75rem !important;
+  }
+
+  .fav-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 0.15rem;
+    color: var(--faint);
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  .fav-cell-act {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+  }
+
+  .fav-foot {
+    padding: 0.25rem 0.25rem 0;
+    border: 0;
+  }
+}

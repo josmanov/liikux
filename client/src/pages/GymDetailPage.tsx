@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowRight,
@@ -496,7 +497,8 @@ function GymDetailPage() {
         </div>
       </div>
 
-      {/* Phones: actions always within reach */}
+      {/* Phones: actions always within reach. Drawn into <body> so the footer cannot cover it. */}
+      {createPortal(
       <div className="gp-bar">
         {siteButton}
         {favButton}
@@ -505,7 +507,9 @@ function GymDetailPage() {
             <Navigation size={17} strokeWidth={2.3} aria-hidden="true" />
           </a>
         ) : null}
-      </div>
+      </div>,
+        document.body,
+      )}
     </main>
   );
 }
