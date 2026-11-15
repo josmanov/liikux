@@ -30,7 +30,7 @@
 
 .playstore-button.is-plain:hover {
   background: transparent;
-  color: var(--color-brand);
+  color: var(--ink);
   transform: scale(1.06);
 }
 

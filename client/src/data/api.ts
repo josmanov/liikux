@@ -21,6 +21,24 @@ export type HomeStats = {
   chainCount: number;
 };
 
+/**
+ * GET JSON, and try once more after a short pause if the first try fails
+ * (e.g. a network hiccup on mobile). Without this, one failed request
+ * showed an empty gym list until the page was reloaded.
+ */
+async function getJson(url: string, init?: RequestInit): Promise<unknown> {
+  try {
+    const r = await fetch(url, init);
+    if (!r.ok) throw new Error(String(r.status));
+    return await r.json();
+  } catch {
+    await new Promise((ok) => setTimeout(ok, 700));
+    const r = await fetch(url, init);
+    if (!r.ok) throw new Error(String(r.status));
+    return r.json();
+  }
+}
+
 function stillFresh(at: number) {
   return Date.now() - at < CLIENT_TTL_MS;
 }
@@ -28,8 +46,7 @@ function stillFresh(at: number) {
 export function fetchGyms(): Promise<Gym[]> {
   if (gymsCache && stillFresh(gymsCache.at)) return gymsCache.promise;
 
-  const promise = fetch(`${API}/api/gyms`)
-    .then((r) => r.json())
+  const promise = getJson(`${API}/api/gyms`)
     .then((data) => (Array.isArray(data) ? (data as Gym[]) : []))
     .catch(() => {
       gymsCache = null;
@@ -43,8 +60,7 @@ export function fetchGyms(): Promise<Gym[]> {
 export function fetchChains(): Promise<Chain[]> {
   if (chainsCache && stillFresh(chainsCache.at)) return chainsCache.promise;
 
-  const promise = fetch(`${API}/api/chains`, { cache: "no-store" })
-    .then((r) => r.json())
+  const promise = getJson(`${API}/api/chains`)
     .then((data) => (Array.isArray(data) ? (data as Chain[]) : []))
     .catch(() => {
       chainsCache = null;
@@ -58,13 +74,15 @@ export function fetchChains(): Promise<Chain[]> {
 export function fetchHomeStats(): Promise<HomeStats> {
   if (statsCache && stillFresh(statsCache.at)) return statsCache.promise;
 
-  const promise = fetch(`${API}/api/stats`)
-    .then((r) => r.json())
-    .then((data) => ({
+  const promise = getJson(`${API}/api/stats`)
+    .then((raw) => {
+      const data = raw as Partial<HomeStats> | null;
+      return {
       gymCount: Number(data?.gymCount) || 0,
       cityCount: Number(data?.cityCount) || 0,
       chainCount: Number(data?.chainCount) || 0,
-    }))
+      };
+    })
     .catch(() => {
       statsCache = null;
       return { gymCount: 0, cityCount: 0, chainCount: 0 };

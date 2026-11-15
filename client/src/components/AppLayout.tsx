@@ -17,7 +17,7 @@ function AppLayout() {
     <LocationProvider>
       <ChainPopupProvider>
         <ScrollToTop />
-        <div className={home ? "layout is-home" : "layout"}>
+        <div className={["layout", home ? "is-home" : "", browse ? "is-browse" : ""].filter(Boolean).join(" ")}>
           <Header />
           <div className="layout-content">
             <Outlet />

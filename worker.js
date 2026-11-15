@@ -315,10 +315,60 @@ Allow: /
 Sitemap: https://liikux.fi/sitemap.xml
 `;
 
+/**
+ * API proxy with edge cache.
+ *
+ * The browser calls https://liikux.fi/api/... (same domain, no CORS).
+ * This worker forwards the call to the Render API, but first checks
+ * Cloudflare's cache in the data centre closest to the user (Helsinki for most).
+ * Public GET answers are kept for as long as the API's `s-maxage` header says,
+ * so most visitors never wait for Render or the database.
+ * Admin routes are never cached.
+ */
+const API_ORIGIN = "https://liikux.onrender.com";
+
+async function proxyApi(request, url, ctx) {
+  const upstreamUrl = API_ORIGIN + url.pathname + url.search;
+  // Pass the visitor IP on, so the API rate limit stays per visitor
+  // instead of treating all of Cloudflare as one user.
+  const clientIp = request.headers.get("cf-connecting-ip") ?? "";
+  const cacheable =
+    request.method === "GET" && !url.pathname.startsWith("/api/admin");
+
+  if (!cacheable) {
+    const fwd = new Request(upstreamUrl, request);
+    if (clientIp) fwd.headers.set("x-forwarded-for", clientIp);
+    return fetch(fwd);
+  }
+
+  const cache = caches.default;
+  const cacheKey = new Request(url.toString(), { method: "GET" });
+  const hit = await cache.match(cacheKey);
+  if (hit) {
+    const res = new Response(hit.body, hit);
+    res.headers.set("x-edge-cache", "HIT");
+    return res;
+  }
+
+  const upstream = await fetch(upstreamUrl, {
+    headers: { accept: "application/json", "x-forwarded-for": clientIp },
+  });
+  const res = new Response(upstream.body, upstream);
+  res.headers.set("x-edge-cache", "MISS");
+  if (upstream.ok && /s-maxage=\d+/.test(res.headers.get("cache-control") ?? "")) {
+    ctx.waitUntil(cache.put(cacheKey, res.clone()));
+  }
+  return res;
+}
+
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
+
+    if (path.startsWith("/api/")) {
+      return proxyApi(request, url, ctx);
+    }
 
     if (path === "/sitemap.xml") {
       return new Response(SITEMAP, {

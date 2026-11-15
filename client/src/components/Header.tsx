@@ -1,12 +1,13 @@
 ﻿import { useEffect, useState, type MouseEvent } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Dumbbell, Heart, Home, Menu, Store, X } from "lucide-react";
+import { Dumbbell, Heart, Home, Menu, MessageSquarePlus, Store, TriangleAlert, X } from "lucide-react";
 import AreaSelect from "./AreaSelect";
 import FavoritesPopup from "./FavoritesPopup";
 import HeaderSearch from "./HeaderSearch";
+import HeaderFeedbackLinks from "./HeaderFeedbackLinks";
 import { readFavoriteSlugs } from "../data/favorites";
 import { useAppLocation } from "../context/LocationContext";
-import { pathGyms, pathGymsFromLocation, pathHome, switchLangPath } from "../i18n/lang";
+import { pathFeedback, pathGyms, pathGymsFromLocation, pathHome, switchLangPath } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import { useChainPopup } from "../context/ChainPopupContext";
 import "flag-icons/css/flag-icons.min.css";
@@ -109,10 +110,10 @@ function Header() {
           onClick={(e) => stayIfSame(e, homePath)}
         >
           <img
-            src="/liikux-logo-light.png?v=3"
+            src="/brand/logo-white.png?v=1"
             alt="Liikux"
-            width={140}
-            height={63}
+            width={120}
+            height={38}
             decoding="async"
             fetchPriority="high"
           />
@@ -181,6 +182,7 @@ function Header() {
       </button>
 
       <div className="header-right">
+        <HeaderFeedbackLinks />
         <HeaderSearch />
         <button
           type="button"
@@ -271,6 +273,22 @@ function Header() {
             <Store size={18} strokeWidth={2.2} />
             <span>{t("chains")}</span>
           </button>
+          <Link
+            to={pathFeedback(lang, "suggest")}
+            className="header-menu-link"
+            onClick={() => setMenuOpen(false)}
+          >
+            <MessageSquarePlus size={18} strokeWidth={2.2} />
+            <span>{t("headerMissingGym")}</span>
+          </Link>
+          <Link
+            to={pathFeedback(lang, "error")}
+            className="header-menu-link"
+            onClick={() => setMenuOpen(false)}
+          >
+            <TriangleAlert size={18} strokeWidth={2.2} />
+            <span>{t("reportError")}</span>
+          </Link>
           <button
             type="button"
             className="header-menu-link header-menu-lang"

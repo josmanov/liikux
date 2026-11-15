@@ -31,7 +31,8 @@
 .ux-slider {
   position: absolute;
   inset: 0;
-  border: 2px solid #414141;
+  border: 0;
+  background: var(--surface-3);
   border-radius: 50px;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   pointer-events: none;
@@ -45,16 +46,16 @@
   left: 0.2em;
   bottom: 0.2em;
   background-color: white;
+  box-shadow: var(--shadow-sm);
   border-radius: inherit;
   transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .ux-switch.is-on .ux-slider {
-  border: 2px solid var(--color-brand);
-  background: color-mix(in srgb, var(--color-brand) 28%, transparent);
+  background: var(--primary);
 }
 
 .ux-switch.is-on .ux-slider:before {
   transform: translateX(1.5em);
-  background-color: var(--color-brand);
+  background-color: var(--on-primary);
 }

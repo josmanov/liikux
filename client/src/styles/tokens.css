@@ -1,0 +1,97 @@
+/*
+ * Liikux design tokens — the ONE place where colours, fonts, spacing,
+ * radii and shadows are defined. Every other CSS file uses these variables.
+ *
+ * Want to change how the whole site looks? Change it here.
+ *
+ * Palette idea: dark graphite (not navy) with Liikux yellow as THE action
+ * colour: main buttons, active states, map pins. Text is warm white.
+ */
+:root {
+  color-scheme: dark;
+
+  /* ---- Surfaces (darkest → lightest) ---- */
+  --bg: #0d0e11;            /* page background */
+  --surface: #15171c;       /* cards, panels, header */
+  --surface-2: #1c1f26;     /* inputs, chips, hover */
+  --surface-3: #262a33;     /* pressed / selected */
+  --line: #262a32;          /* borders, dividers */
+  --line-strong: #343944;
+
+  /* ---- Text ---- */
+  --ink: #f3f2ee;           /* main text */
+  --ink-2: #d9d8d3;
+  --muted: #a3a7b1;         /* secondary text */
+  --faint: #6f7480;         /* hints, placeholders */
+  --on-ink: #0d0e11;        /* text on light (ink-coloured) fills */
+
+  /* ---- Brand & actions ---- */
+  --brand: #ffc83d;         /* Liikux yellow */
+  --brand-strong: #ffb800;
+  --brand-soft: rgba(255, 200, 61, 0.12);  /* yellow tint for small highlights */
+  --brand-rgb: 255, 200, 61;
+  --primary: var(--brand);          /* main buttons ("Etsi", "Siirry salin sivulle") */
+  --primary-hover: #ffd466;
+  --on-primary: #14130f;            /* text on yellow */
+
+  /* ---- Status ---- */
+  --good: #5fd39a;          /* verified, free trial, 24/7 */
+  --good-soft: rgba(95, 211, 154, 0.12);
+  --warn: #ffb547;          /* "trial becomes paid" */
+  --warn-soft: rgba(255, 181, 71, 0.12);
+  --bad: #ff5c5c;           /* favourites heart, errors */
+  --bad-soft: rgba(255, 92, 92, 0.12);
+  --info: #4c8dff;          /* "you are here" dot */
+
+  /* ---- Typography ---- */
+  --font-body: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --text-3xl: clamp(2.1rem, 1.4rem + 2.6vw, 3.4rem);
+
+  /* ---- Shape ---- */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  /* ---- Depth (on dark, shadows are deeper and borders do most of the work) ---- */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.35), 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 24px 56px rgba(0, 0, 0, 0.55), 0 4px 12px rgba(0, 0, 0, 0.35);
+  --overlay: rgba(5, 6, 8, 0.6);
+  --focus-ring: 0 0 0 3px rgba(var(--brand-rgb), 0.55);
+
+  /* ---- Layout ---- */
+  --header-h: 64px;
+  --max-width: 1400px;     /* content width; the header lines up with it */
+  --page-side: clamp(1rem, 3vw, 2.5rem);
+  --page-side-mobile: 1rem;
+
+  /* ---- Old names (used across the existing CSS) mapped to the new tokens ---- */
+  --brand-a: var(--brand);
+  --brand-b: var(--brand-strong);
+  --brand-gradient: linear-gradient(90deg, var(--brand), var(--brand-strong));
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-border: var(--line);
+  --color-text: var(--ink);
+  --color-muted: var(--muted);
+  --color-brand: var(--brand);
+  --color-brand-rgb: var(--brand-rgb);
+  --color-accent: var(--good);
+  --color-on-brand: var(--on-primary);
+  --color-input-bg: var(--surface);
+  --color-input-text: var(--ink);
+  --color-input-placeholder: var(--faint);
+  --popup-glass: rgba(21, 23, 28, 0.97);
+  --popup-glass-blur: blur(12px);
+  --popup-overlay: var(--overlay);
+  --popup-overlay-blur: blur(4px);
+  --popup-shadow: var(--shadow-lg);
+}

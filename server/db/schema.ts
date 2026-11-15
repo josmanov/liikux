@@ -80,3 +80,21 @@ export const enrichRuns = pgTable("enrich_runs", {
     hoursChanged: integer("hours_changed").notNull().default(0),
     changesJson: text("changes_json"),
 });
+
+/**
+ * Messages from the site: "suggest a gym", "report an error" and general
+ * feedback. Read them in the admin view (GET /api/admin/feedback).
+ */
+export const feedback = pgTable("feedback", {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    createdAt: varchar("created_at", { length: 32 }).notNull(),
+    type: varchar("type", { length: 16 }).notNull(), // suggest | error | feedback
+    gymSlug: varchar("gym_slug", { length: 128 }),
+    gymName: text("gym_name"),
+    place: text("place"),
+    url: text("url"),
+    message: text("message").notNull(),
+    email: text("email"),
+    lang: varchar("lang", { length: 4 }),
+    status: varchar("status", { length: 16 }).notNull().default("new"), // new | done
+});

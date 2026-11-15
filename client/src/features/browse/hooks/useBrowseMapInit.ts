@@ -16,6 +16,7 @@ import {
   ADDRESS_ZOOM,
   MAP_MAX_BOUNDS,
   MAAKUNTA_MAP_ACTIVE,
+  MAP_STYLE_URL,
   ORIGIN_ZOOM,
   REGION_FILL_MATCH,
 } from "../utils/mapConstants";
@@ -81,7 +82,7 @@ export function useBrowseMapInit(ctx: BrowseMapInitCtx) {
     const start = originRef.current;
     const map = new MapLibreMap({
       container: mapRef.current,
-      style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+      style: MAP_STYLE_URL,
       center: [start.lng, start.lat],
       zoom: ORIGIN_ZOOM,
       maxBounds: MAP_MAX_BOUNDS,
@@ -89,7 +90,8 @@ export function useBrowseMapInit(ctx: BrowseMapInitCtx) {
       pitchWithRotate: false,
       touchPitch: false,
       dragRotate: false,
-      attributionControl: false,
+      // Map credits are required by the OpenStreetMap licence; compact = a small (i) button.
+      attributionControl: { compact: true },
     });
 
     map.touchPitch.disable();
@@ -259,8 +261,8 @@ export function useBrowseMapInit(ctx: BrowseMapInitCtx) {
               type: "fill",
               source: "finland-mask",
               paint: {
-                "fill-color": "#0b1220",
-                "fill-opacity": 0.55,
+                "fill-color": "#0d0e11",
+                "fill-opacity": 0.6,
               },
             });
           }
@@ -275,7 +277,7 @@ export function useBrowseMapInit(ctx: BrowseMapInitCtx) {
               type: "line",
               source: "finland-outline",
               paint: {
-                "line-color": "#94a3b8",
+                "line-color": "#6f7480",
                 "line-width": 1.2,
                 "line-opacity": 0.7,
               },
@@ -348,7 +350,7 @@ export function useBrowseMapInit(ctx: BrowseMapInitCtx) {
               type: "line",
               source: "maakunnat",
               paint: {
-                "line-color": "#0f2744",
+                "line-color": "#0d0e11",
                 "line-width": 1.4,
                 "line-opacity": 0.85,
               },
@@ -368,8 +370,8 @@ export function useBrowseMapInit(ctx: BrowseMapInitCtx) {
                   "text-ignore-placement": false,
                 },
                 paint: {
-                  "text-color": "#ffffff",
-                  "text-halo-color": "rgba(15, 39, 68, 0.8)",
+                  "text-color": "#f3f2ee",
+                  "text-halo-color": "rgba(13, 14, 17, 0.85)",
                   "text-halo-width": 1.5,
                 },
               });

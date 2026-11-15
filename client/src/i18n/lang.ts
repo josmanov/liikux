@@ -63,6 +63,16 @@ export function pathChain(lang: Lang, slug: string) {
   return lang === "en" ? `/en/chain/${slug}` : `/fi/ketju/${slug}`;
 }
 
+export type FeedbackType = "suggest" | "error" | "feedback";
+
+/** Feedback page: suggest a gym, report an error, or general feedback. */
+export function pathFeedback(lang: Lang, type: FeedbackType = "feedback", gymSlug?: string) {
+  const base = lang === "en" ? "/en/feedback" : "/fi/palaute";
+  const q = new URLSearchParams({ type });
+  if (gymSlug) q.set("gym", gymSlug);
+  return `${base}?${q}`;
+}
+
 export type LegalPageId = "terms" | "privacy" | "cookies";
 
 export function pathLegal(lang: Lang, page: LegalPageId) {
@@ -119,6 +129,8 @@ export function switchLangPath(
                       ? "privacy"
                       : "cookies";
                 path = pathLegal(next, id);
+              } else if (/^\/(fi\/palaute|en\/feedback)$/.test(pathname)) {
+                path = next === "en" ? "/en/feedback" : "/fi/palaute";
               }
             }
           }

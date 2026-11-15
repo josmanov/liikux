@@ -2,27 +2,8 @@
   min-height: 40vh;
 }
 
+/* Colours, fonts etc. live in styles/tokens.css. Only chain-logo tweaks here. */
 :root {
-  --brand-a: #ffbf00;
-  --brand-b: #e6ac00;
-  --brand-gradient: linear-gradient(90deg, #ffbf00, #e6ac00);
-  --color-bg: #0f172a;
-  --color-surface: #1e293b;
-  --color-border: #334155;
-  --color-text: #ffffff;
-  --color-muted: #94a3b8;
-  --color-brand: #ffbf00;
-  --color-brand-rgb: 255, 191, 0;
-  --color-accent: #22c55e;
-  --color-on-brand: #0f172a;
-  --color-input-bg: #ffffff;
-  --color-input-text: #0f172a;
-  --color-input-placeholder: #64748b;
-  --font-display: "Fredoka", system-ui, sans-serif;
-  --font-body: "Plus Jakarta Sans", system-ui, sans-serif;
-  --max-width: 1100px;
-  --page-side: 3rem;
-  --page-side-mobile: 1rem;
   --logo-scale-easyfit: 2;
   --logo-scale-elixia: 1.2;
   --logo-scale-fressi: 1.5;
@@ -35,15 +16,12 @@
   --logo-scale-mm: 1;
   --logo-scale-esport: 1;
   --logo-scale-liikku: 1.5;
-  --popup-glass: rgba(10, 10, 14, 0.82);
-  --popup-glass-blur: blur(22px);
-  --popup-overlay: rgba(0, 0, 0, 0.34);
-  --popup-overlay-blur: blur(16px);
-  --popup-shadow: 0 22px 55px rgba(0, 0, 0, 0.62), 0 0 28px rgba(0, 0, 0, 0.4);
 }
 
 html {
-  font-size: 90%;
+  font-size: 90%; /* existing layouts are sized for this; revisit in the Phase 2 rebuild */
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -80,6 +58,9 @@ a:focus:not(:focus-visible),
 
 h1, h2, h3 {
   font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
   margin: 0;
 }
 
@@ -88,7 +69,17 @@ p {
 }
 
 a {
-  color: var(--color-brand);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+::selection {
+  background: var(--brand-soft);
 }
 
 button {
@@ -135,8 +126,8 @@ button {
   width: 4.5rem;
   height: 4.5rem;
   border-radius: 50%;
-  border: 5px solid rgba(255, 255, 255, 0.16);
-  border-top-color: #fff;
+  border: 5px solid var(--line);
+  border-top-color: var(--ink);
   animation: load-spin 0.7s linear infinite;
 }
 

@@ -2,7 +2,8 @@ import type { RefObject } from "react";
 import LoadSpin from "../../../components/LoadSpin";
 import { chainForGym } from "../../../data/audience";
 import type { Chain, Gym } from "../../../data/types";
-import type { Lang } from "../../../i18n/lang";
+import { Link } from "react-router-dom";
+import { pathFeedback, type Lang } from "../../../i18n/lang";
 import type { MessageKey } from "../../../i18n/messages";
 import { distanceKm } from "../utils/distanceKm";
 import { BrowsePageBar } from "./BrowsePageBar";
@@ -85,6 +86,9 @@ export function BrowseResultsList({
             <p className="browse-missing">
               {visibleCount === 0 ? t("noGymsFilters") : t("noGymsInView")}
               <span>{t("missingGymHint")}</span>
+              <Link className="browse-missing-suggest" to={pathFeedback(lang, "suggest")}>
+                {t("missingGymSuggest")}
+              </Link>
             </p>
           </div>
         ) : null}
@@ -120,6 +124,9 @@ export function BrowseResultsList({
             <p className="browse-missing">
               {t("missingGym")}
               <span>{t("missingGymHint")}</span>
+              <Link className="browse-missing-suggest" to={pathFeedback(lang, "suggest")}>
+                {t("missingGymSuggest")}
+              </Link>
             </p>
           </div>
         ) : null}

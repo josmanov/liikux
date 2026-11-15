@@ -3,7 +3,9 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    padding: 1.1rem var(--page-side, 3rem);
+    height: var(--header-h);
+    /* Same left/right edges as the page content (max-width + side padding). */
+    padding: 0 max(var(--page-side), calc((100% - var(--max-width)) / 2));
     position: sticky;
     top: 0;
     z-index: 20;
@@ -34,7 +36,7 @@
 }
 
 .header-logo img {
-    height: 3.4375rem;
+    height: 2.15rem;
     width: auto;
     display: block;
 }
@@ -66,7 +68,7 @@
   padding: 0.15rem 0 0.4rem;
   border: 0;
   background: transparent;
-  color: #fff;
+  color: var(--ink);
   font-family: var(--font-body);
   font-size: 0.95rem;
   font-weight: 650;
@@ -77,16 +79,20 @@
 
 .header-nav-link svg {
   flex-shrink: 0;
-  color: var(--color-brand);
+  color: var(--muted);
+}
+
+.header-nav-link.is-on svg {
+  color: var(--ink);
 }
 
 .header-nav-link:hover:not(.header-fav) {
-  color: #64748b;
+  color: var(--muted);
   background: transparent;
 }
 
 .header-nav-link:hover:not(.header-fav) svg {
-  color: #64748b;
+  color: var(--muted);
 }
 
 .header-nav-link.is-on::after {
@@ -149,7 +155,7 @@
 }
 
 .header-fav:hover .header-fav-label {
-  color: #64748b;
+  color: var(--muted);
 }
 
 .header-fav.is-typing .header-fav-label {
@@ -262,8 +268,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.45rem;
-    padding: 0.8rem var(--page-side-mobile, 1rem);
-    min-height: 3.9rem;
+    padding: 0 var(--page-side-mobile, 1rem);
   }
 
   .header-left {
@@ -273,7 +278,7 @@
   }
 
   .header-logo img {
-    height: 2.5rem;
+    height: 1.9rem;
   }
 
   .header-sep,
@@ -367,12 +372,12 @@
     border: 0;
     border-radius: 10px;
     background: transparent;
-    color: #fff;
+    color: var(--ink);
     cursor: pointer;
   }
 
   .header-menu-btn:hover {
-    color: #94a3b8;
+    color: var(--faint);
   }
 
   .header-menu-backdrop {
@@ -383,7 +388,7 @@
     border: 0;
     padding: 0;
     margin: 0;
-    background: rgba(0, 0, 0, 0.34);
+    background: rgba(20, 22, 26, 0.12);
     -webkit-backdrop-filter: blur(16px);
     backdrop-filter: blur(16px);
     opacity: 0;
@@ -398,7 +403,7 @@
 
   .header-menu-backdrop:focus,
   .header-menu-backdrop:active {
-    background: rgba(0, 0, 0, 0.34);
+    background: rgba(20, 22, 26, 0.12);
     outline: none;
   }
 
@@ -414,7 +419,7 @@
     padding: 0.85rem 0.9rem 1.25rem;
     background: var(--color-bg);
     border-left: 1px solid var(--color-border);
-    box-shadow: -18px 0 40px rgba(0, 0, 0, 0.35);
+    box-shadow: -18px 0 40px rgba(20, 22, 26, 0.03);
     transform: translateX(104%);
     pointer-events: none;
     transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
@@ -446,7 +451,7 @@
     font-family: var(--font-display);
     font-size: 1.35rem;
     font-weight: 700;
-    color: #fff;
+    color: var(--ink);
   }
 
   .header-menu-close {
@@ -458,7 +463,7 @@
     border: 0;
     border-radius: 10px;
     background: transparent;
-    color: #fff;
+    color: var(--ink);
     cursor: pointer;
   }
 
@@ -466,7 +471,7 @@
     display: flex;
     flex-direction: column;
     margin-bottom: 0.15rem;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+    border-bottom: 1px solid var(--line-strong);
   }
 
   .header-menu-area-label {
@@ -490,14 +495,14 @@
     border-radius: 0;
     background: transparent;
     box-sizing: border-box;
-    color: #fff;
+    color: var(--ink);
     font-size: 1rem;
     font-weight: 650;
   }
 
   .header-menu-area .area-select-btn:hover {
     border-color: transparent;
-    color: var(--color-brand);
+    color: var(--ink);
   }
 
   .header-menu-area .area-select-pin {
@@ -539,10 +544,10 @@
     width: 100%;
     padding: 0.95rem 0.25rem;
     border: 0;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+    border-bottom: 1px solid var(--line-strong);
     border-radius: 0;
     background: transparent;
-    color: #fff;
+    color: var(--ink);
     font-family: var(--font-body);
     font-size: 1rem;
     font-weight: 650;
@@ -553,7 +558,7 @@
 
   .header-menu-link:hover,
   .header-menu-link.is-on {
-    color: var(--color-brand);
+    color: var(--ink);
   }
 
   .header-menu-link svg {
@@ -567,7 +572,7 @@
     height: 1rem;
     border-radius: 2px;
     flex-shrink: 0;
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
+    box-shadow: 0 0 0 1px rgba(20, 22, 26, 0.03);
   }
 
   .header-menu-lang {

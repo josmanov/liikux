@@ -79,3 +79,10 @@ export const BROWSE_SEARCH_QUICK = [
 ] as const;
 
 export type FilterKey = "sort" | "price" | "distance";
+
+/**
+ * Base map look. Dark to match the site (temporary: Phase 2 replaces this
+ * with our own Liikux-coloured style on OpenFreeMap).
+ */
+export const MAP_STYLE_URL =
+  "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";

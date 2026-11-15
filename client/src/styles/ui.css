@@ -1,0 +1,125 @@
+/*
+ * Shared UI building blocks. Use these classes instead of styling every
+ * button from scratch:
+ *
+ *   <button class="btn btn-primary">   yellow button, the main action
+ *   <button class="btn btn-ghost">     outlined button, secondary action
+ *   <button class="btn btn-soft">      quiet grey button
+ *   <button class="btn btn-dark">      near-black button (use on yellow areas)
+ *   <a class="chip">                   small rounded tag/link (cities, filters)
+ *   <div class="card">                 panel with border + soft shadow
+ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0 1.15rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+    transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn-ghost {
+  background: var(--surface);
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+.btn-ghost:hover {
+  border-color: var(--ink);
+}
+
+.btn-soft {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.btn-soft:hover {
+  background: var(--surface-3);
+}
+
+.btn-dark {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.btn-dark:hover {
+  background: var(--surface-2);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 36px;
+  padding: 0 0.9rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.chip:hover {
+  border-color: var(--ink);
+}
+
+.chip.is-on {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--on-ink);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.is-skeleton {
+  background: var(--surface-2) !important;
+  border-color: transparent !important;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-skeleton {
+    animation: none;
+  }
+}

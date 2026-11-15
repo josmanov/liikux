@@ -1,5 +1,5 @@
 .layout {
-  --header-h: 5.75rem;
+  --header-h: 4.5rem; /* the header is exactly this tall (Header.css), browse uses it to fit the screen */
   position: relative;
   min-height: 100dvh;
   display: flex;
@@ -17,10 +17,6 @@
   flex: 1 0 auto;
 }
 
-.layout.is-home .shell {
-  min-height: calc(100dvh - var(--header-h));
-  flex: none;
-}
 
 .layout-content {
   position: relative;
@@ -29,4 +25,11 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+
+/* Browse is a full-screen app view (list + map edge to edge), so its header
+   uses the full width too instead of lining up with the 1400px content. */
+.layout.is-browse .header {
+  padding-left: var(--page-side);
+  padding-right: var(--page-side);
 }

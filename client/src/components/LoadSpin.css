@@ -17,8 +17,8 @@
   width: 4.5rem;
   height: 4.5rem;
   border-radius: 50%;
-  border: 5px solid rgba(255, 255, 255, 0.16);
-  border-top-color: #fff;
+  border: 5px solid var(--line);
+  border-top-color: var(--line-strong);
   animation: load-spin 0.7s linear infinite;
 }
 

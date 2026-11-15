@@ -1,413 +1,271 @@
 import "./HomePage.css";
-import { useEffect, useState } from "react";
-import { flushSync } from "react-dom";
-import { Link, useNavigate } from "react-router-dom";
-import {
-  Bike,
-  Dumbbell,
-  Flame,
-  Footprints,
-  ArrowRight,
-  HeartPulse,
-  LocateFixed,
-  PersonStanding,
-  Timer,
-  Trophy,
-} from "lucide-react";
-import LoadSpin from "../components/LoadSpin";
-import { type Chain } from "../data/types";
-import { fetchChains, fetchHomeStats } from "../data/api";
-import { useAddressSuggest } from "../data/geocode";
-import { preloadImages } from "../data/preloadImages";
-import { useInView } from "../hooks/useInView";
-import { useAppLocation } from "../context/LocationContext";
+import "../features/home/chain-tiles.css";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight, Clock, Dumbbell, Euro, Gift, Heart, MapPin, Scale } from "lucide-react";
+import HomeSearch from "../features/home/HomeSearch";
+import { type Chain, type Gym, resolveGymOffer } from "../data/types";
+import { fetchChains, fetchGyms, fetchHomeStats } from "../data/api";
+import { CITY_CENTERS } from "../data/citySlug";
+import { formatPriceFrom } from "../data/format";
 import { useChainPopup } from "../context/ChainPopupContext";
-import { pathGyms, pathGymsFromLocation } from "../i18n/lang";
+import { useAppLocation } from "../context/LocationContext";
+import { pathChain, pathGyms, pathGymsCity, pathGymsFromLocation } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import { usePageMeta } from "../seo/usePageMeta";
 
-const patternIcons = [
-  Dumbbell,
-  Bike,
-  Footprints,
-  HeartPulse,
-  Timer,
-  Flame,
-  Trophy,
-  PersonStanding,
-] as const;
+/**
+ * Home page, top to bottom:
+ *  1. Hero (centered): headline, address search, "or browse", city chips
+ *  2. Numbers from the real data (each one opens browse with that filter)
+ *  3. "How it works" in three steps
+ *  4. Popular chains as brand tiles (click → that chain on the map)
+ *  5. Gyms by city
+ *  6. Call to action
+ */
 
-const PATTERN_CELL = 120;
-const PATTERN_COLS = 8;
-const PATTERN_ROWS = 5;
+const QUICK_CITIES = ["helsinki", "espoo", "vantaa", "tampere", "turku", "oulu"];
 
-const heroPatternItems = Array.from({ length: PATTERN_ROWS }, (_, r) =>
-  Array.from({ length: PATTERN_COLS }, (_, c) => {
-    const Icon = patternIcons[(r * 3 + c * 5 + r * c) % patternIcons.length];
-    const wobble = (((r * 13 + c * 17) % 13) - 6) * 2.4;
-    return {
-      key: `${r}-${c}`,
-      Icon,
-      left: c * PATTERN_CELL + (r % 2 ? PATTERN_CELL / 2 : 0) - 10,
-      top: r * PATTERN_CELL + 4 + wobble,
-      rot: (((r * 7 + c * 11) % 5) - 2) * 10,
-    };
-  }),
-).flat();
-
-function HeroIconPattern() {
-  return (
-    <div className="hero-icon-wrap" aria-hidden="true">
-      <div className="hero-icon-bg">
-        {heroPatternItems.map((item) => (
-          <item.Icon
-            key={item.key}
-            className="hero-icon-bg-item"
-            size={34}
-            strokeWidth={1.55}
-            style={{
-              left: item.left,
-              top: item.top,
-              transform: `rotate(${item.rot}deg)`,
-            }}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function LocateButton() {
-  const navigate = useNavigate();
-  const { locateMe } = useAppLocation();
-  const { lang, t } = useLang();
-
-  return (
-    <button
-      type="button"
-      className="hero-locate"
-      aria-label={t("useMyLocation")}
-      onClick={() => {
-        void locateMe().then(() => {
-          navigate(pathGyms(lang), { state: { focusOrigin: true } });
-        });
-      }}
-    >
-      <LocateFixed size={18} strokeWidth={2.2} />
-    </button>
-  );
-}
-
-function HomePage() {
-  const railReveal = useInView<HTMLDivElement>();
-  const { openChains, openChain } = useChainPopup();
+function useHomeData() {
   const [chains, setChains] = useState<Chain[]>([]);
-  const [gymCount, setGymCount] = useState(0);
+  const [gyms, setGyms] = useState<Gym[]>([]);
   const [cityCount, setCityCount] = useState(0);
-  const { label, lat, lng, setLocation } = useAppLocation();
-  const navigate = useNavigate();
-  const { lang, t } = useLang();
-  const cityWordFi =
-    cityCount === 1 ? "kaupungissa" : "kaupungeissa";
-  const homeTitle =
-    lang === "fi"
-      ? gymCount > 0 && cityCount > 0
-        ? `Liikux – ${gymCount} kuntosalia ${cityCount} ${cityWordFi} | etsi sali`
-        : "Liikux – yli 1000 kuntosalia Suomessa | etsi sali lähelläsi"
-      : gymCount > 0 && cityCount > 0
-        ? `Liikux – ${gymCount} gyms in ${cityCount} cities | find a gym`
-        : "Liikux – over 1000 gyms in Finland | find a gym near you";
-  const homeDescription =
-    lang === "fi"
-      ? gymCount > 0 && cityCount > 0
-        ? `${gymCount} kuntosalia ${cityCount} ${cityWordFi}. Löydä sali lähelläsi, selaa ketjuja ja hintoja kartalla sekä listalla – Liikux, Suomen kuntosalihakemisto.`
-        : "Yli 1000 kuntosalia kymmenissä kaupungeissa. Löydä sali lähelläsi, selaa ketjuja ja hintoja kartalla sekä listalla – Liikux, Suomen kuntosalihakemisto."
-      : gymCount > 0 && cityCount > 0
-        ? `${gymCount} gyms in ${cityCount} cities. Find a gym near you, browse chains and prices on the map and list – Liikux.`
-        : "Over 1000 gyms across Finland. Find a gym near you, browse chains and prices on the map and list – Liikux.";
-  usePageMeta({
-    title: homeTitle,
-    description: homeDescription,
-    path: lang === "fi" ? "/" : "/en",
-  });
-  const [addressDraft, setAddressDraft] = useState("");
-  const [suggestOpen, setSuggestOpen] = useState(false);
-  const { hits: suggestions, loading: suggestLoading } = useAddressSuggest(
-    addressDraft,
-    suggestOpen,
-    { lat, lng },
-  );
-
-  function goBrowseWithPick(item: {
-    label: string;
-    lat: number;
-    lng: number;
-  }) {
-    flushSync(() => {
-      setLocation({ label: item.label, lat: item.lat, lng: item.lng });
-    });
-    setSuggestOpen(false);
-    navigate(pathGymsFromLocation(lang, item.label), {
-      replace: true,
-      state: { focusOrigin: true },
-    });
-  }
 
   useEffect(() => {
-    if (label === "Helsinki" || label === "Lähellä minua") {
-      setAddressDraft("");
-    } else {
-      setAddressDraft(label);
-    }
-  }, [label]);
-
-  const [homeReady, setHomeReady] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const [chainData, stats] = await Promise.all([
-        fetchChains().catch(() => [] as Chain[]),
-        fetchHomeStats().catch(() => ({ gymCount: 0, cityCount: 0 })),
-      ]);
-      if (cancelled) return;
-      setChains(chainData);
-      setGymCount(stats.gymCount);
-      setCityCount(stats.cityCount);
-
-      const topImages = chainData
-        .filter((c) => c.slug !== "muut" && (c.gymCount ?? 0) > 0)
-        .slice()
-        .sort((a, b) => {
-          const diff = (b.gymCount ?? 0) - (a.gymCount ?? 0);
-          if (diff !== 0) return diff;
-          return a.name.localeCompare(b.name, "fi");
-        })
-        .slice(0, 8)
-        .map((c) => c.image);
-
-      await preloadImages(topImages);
-      if (cancelled) return;
-      setHomeReady(true);
-    })();
+    let alive = true;
+    fetchChains().then((c) => alive && setChains(c));
+    fetchHomeStats().then((s) => alive && setCityCount(s.cityCount));
+    fetchGyms().then((g) => alive && setGyms(g));
     return () => {
-      cancelled = true;
+      alive = false;
     };
   }, []);
 
-  const listedChains = chains
-    .filter((c) => c.slug !== "muut" && (c.gymCount ?? 0) > 0)
-    .slice()
-    .sort((a, b) => {
-      const diff = (b.gymCount ?? 0) - (a.gymCount ?? 0);
-      if (diff !== 0) return diff;
-      return a.name.localeCompare(b.name, "fi");
-    });
-  const suositutKetjut = listedChains.slice(0, 8);
-  const chainCount = listedChains.length;
+  const listedChains = useMemo(
+    () =>
+      chains
+        .filter((c) => c.slug !== "muut" && (c.gymCount ?? 0) > 0)
+        .sort((a, b) => (b.gymCount ?? 0) - (a.gymCount ?? 0) || a.name.localeCompare(b.name, "fi")),
+    [chains],
+  );
 
-  if (!homeReady) {
-    return (
-      <div className="load-cover">
-        <LoadSpin />
-      </div>
-    );
-  }
+  // Real numbers from the gym list: 24/7 gyms, free trials, average price.
+  const numbers = useMemo(() => {
+    let open247 = 0;
+    let trial = 0;
+    let priceSum = 0;
+    let priced = 0;
+    for (const g of gyms) {
+      const offer = resolveGymOffer(g, g.chain);
+      if (offer.is247) open247++;
+      if (offer.freeTrial) trial++;
+      if (offer.priceFrom != null && offer.priceFrom > 0) {
+        priceSum += offer.priceFrom;
+        priced++;
+      }
+    }
+    return {
+      gyms: gyms.length,
+      open247,
+      trial,
+      avgPrice: priced > 0 ? Math.round(priceSum / priced) : null,
+    };
+  }, [gyms]);
+
+  // Count gyms per known city, biggest first.
+  const cities = useMemo(() => {
+    const count = new Map<string, number>();
+    for (const g of gyms) {
+      const key = g.city.trim().toLowerCase();
+      count.set(key, (count.get(key) ?? 0) + 1);
+    }
+    return CITY_CENTERS.map((c) => ({ ...c, count: count.get(c.name.toLowerCase()) ?? 0 }))
+      .filter((c) => c.count > 0)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 12);
+  }, [gyms]);
+
+  return {
+    topChains: listedChains.slice(0, 6),
+    chainCount: listedChains.length,
+    cities,
+    numbers,
+    cityCount,
+  };
+}
+
+function HomePage() {
+  const { lang, t } = useLang();
+  const { openChains } = useChainPopup();
+  const { label } = useAppLocation();
+  const { topChains, chainCount, cities, numbers, cityCount } = useHomeData();
+  const gymsText = numbers.gyms > 0 ? String(numbers.gyms) : lang === "fi" ? "yli 1000" : "over 1,000";
+  const browsePath = pathGymsFromLocation(lang, label);
+  const dash = "–";
+
+  usePageMeta({
+    title:
+      lang === "fi"
+        ? "Liikux – vertaa kuntosaleja, hintoja ja kokeiluja | etsi sali lähelläsi"
+        : "Liikux – compare gyms, prices and free trials in Finland",
+    description:
+      lang === "fi"
+        ? `Vertaa ${gymsText} kuntosalin hintoja, ilmaisia kokeiluja ja aukioloaikoja kartalla. Löydä sali kotisi tai työpaikkasi läheltä – Liikux.`
+        : `Compare prices, free trials and opening hours of ${gymsText} gyms in Finland on a map – Liikux.`,
+    path: lang === "fi" ? "/" : "/en",
+  });
 
   return (
-    <main className="shell load-reveal">
-      <section className="hero">
-        <HeroIconPattern />
-        <div className="hero-top">
-          <h1 className="title">{t("heroTitle")}</h1>
-          <div className="hero-search-wrap">
-            <div className="hero-search" id="input">
-              <input
-                className="hero-search-input"
-                id="address_input"
-                type="text"
-                placeholder={t("addressPlaceholder")}
-                aria-label={t("addressAria")}
-                value={addressDraft}
-                autoComplete="off"
-                onChange={(e) => {
-                  setAddressDraft(e.target.value);
-                  setSuggestOpen(true);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    const first = suggestions[0];
-                    if (first) goBrowseWithPick(first);
-                  }
-                  if (e.key === "Escape") {
-                    setSuggestOpen(false);
-                  }
-                }}
-                onFocus={() => {
-                  if (addressDraft.trim().length >= 3) setSuggestOpen(true);
-                }}
-                onBlur={() => {
-                  setSuggestOpen(false);
-                }}
-              />
-              <LocateButton />
-              {suggestOpen && addressDraft.trim().length >= 3 ? (
-                <div className="hero-suggest" role="listbox">
-                  {suggestLoading && suggestions.length === 0 ? (
-                    <p className="hero-suggest-empty">
-                      <LoadSpin size="sm" />
-                    </p>
-                  ) : null}
-                  {!suggestLoading && suggestions.length === 0 ? (
-                    <p className="hero-suggest-empty">{t("noResults")}</p>
-                  ) : null}
-                  {suggestions.length > 0 ? (
-                    <ul className="hero-suggest-list">
-                      {suggestions.slice(0, 6).map((item) => {
-                        const comma = item.label.lastIndexOf(",");
-                        const name =
-                          comma >= 0
-                            ? item.label.slice(0, comma).trim()
-                            : item.label;
-                        const meta =
-                          comma >= 0
-                            ? item.label.slice(comma + 1).trim()
-                            : "";
-                        return (
-                          <li key={item.id}>
-                            <button
-                              type="button"
-                              className="hero-suggest-hit"
-                              role="option"
-                              onMouseDown={(e) => e.preventDefault()}
-                              onClick={() => goBrowseWithPick(item)}
-                            >
-                              <span className="hero-suggest-hit-text">
-                                <span className="hero-suggest-hit-name">
-                                  {name}
-                                </span>
-                                {meta ? (
-                                  <span className="hero-suggest-hit-meta">
-                                    {meta}
-                                  </span>
-                                ) : null}
-                              </span>
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-            <p className="hero-or">{t("heroOr")}</p>
-            <Link
-              to={pathGymsFromLocation(lang, label)}
-              state={{ focusOrigin: true }}
-              className="hero-browse"
-            >
+    <main className="home">
+      {/* 1. Hero */}
+      <section className="home-hero">
+        <div className="home-wrap home-hero-inner">
+          <h1 className="home-title">{t("homeTitle")}</h1>
+          <p className="home-lead">{t("homeLead", { gyms: gymsText })}</p>
+          <HomeSearch />
+          <div className="home-or">
+            <span>{t("heroOr")}</span>
+            <Link className="btn btn-ghost" to={browsePath} state={{ focusOrigin: true }}>
               {t("browseGyms")}
-              <ArrowRight size={16} strokeWidth={2.4} />
+              <ArrowRight size={16} strokeWidth={2.4} aria-hidden="true" />
             </Link>
-            <p className="hero-stats">
-              {t("heroStats", {
-                gyms: gymCount,
-                chains: chainCount,
-                cities: cityCount,
-              })}
-            </p>
           </div>
-        </div>
-
-        <div className="hero-bottom">
-          <div
-            id="suositut"
-            className="rail reveal is-in"
-            ref={railReveal.ref}
-          >
-            <h2 className="rail-title">{t("popularInFinland")}</h2>
-            {chainCount > 0 ? (
-              <button
-                type="button"
-                className="rail-show-all"
-                onClick={() => openChains()}
-              >
-                {t("showAllChains", { count: chainCount })}
-                <span aria-hidden="true">›</span>
-              </button>
-            ) : null}
-            <div className="rail-viewport">
-              <div className="rail-track list-pop">
-                {suositutKetjut.map((chain, i) => (
-                  <button
-                    key={chain.id}
-                    type="button"
-                    className="place-card"
-                    style={{
-                      animationDelay: `${Math.min(i, 18) * 28}ms`,
-                    }}
-                    onClick={() => openChain(chain.slug)}
-                  >
-                    <span
-                      className={[
-                        "place-card-media",
-                        chain.logoFit === "contain" ? "is-logo" : "",
-                        chain.logoClass || "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                    >
-                      <span
-                        className="place-card-shine"
-                        aria-hidden="true"
-                      />
-                      <img
-                        src={chain.image}
-                        alt=""
-                        width={160}
-                        height={90}
-                        loading="eager"
-                        decoding="async"
-                        fetchPriority={i < 4 ? "high" : "auto"}
-                      />
-                    </span>
-                    <span className="place-card-name">{chain.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
+          <div className="home-quick">
+            {QUICK_CITIES.map((slug) => {
+              const city = CITY_CENTERS.find((c) => c.slug === slug)!;
+              return (
+                <Link key={slug} className="chip" to={pathGymsCity(lang, slug)}>
+                  <MapPin size={14} strokeWidth={2.2} aria-hidden="true" />
+                  {city.name}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/*
-      <section className="discover" aria-label="Harrastukset">
-        <div
-          className={`lajit reveal ${lajitReveal.inView ? "is-in" : ""}`}
-          ref={lajitReveal.ref}
-        >
-          <div className="rail-head">
-            <h2 className="rail-title">Suositut harrastukset Suomessa</h2>
-            <Link to="/harjoitukset" className="lajit-all">
-              Kaikki harrastukset
-            </Link>
+      {/* 2. Numbers — each opens browse with that filter */}
+      <section className="home-wrap">
+        <div className="home-stats">
+          <Link className="home-stat" to={pathGyms(lang)}>
+            <Dumbbell className="home-stat-icon" size={22} strokeWidth={2.2} aria-hidden="true" />
+            <strong>{numbers.gyms || dash}</strong>
+            <span>{t("homeStatGyms", { cities: cityCount || dash })}</span>
+          </Link>
+          <Link className="home-stat" to={`${browsePath}?247=1`}>
+            <Clock className="home-stat-icon" size={22} strokeWidth={2.2} aria-hidden="true" />
+            <strong>{numbers.open247 || dash}</strong>
+            <span>{t("homeStat247")}</span>
+          </Link>
+          <Link className="home-stat" to={`${browsePath}?trial=1`}>
+            <Gift className="home-stat-icon" size={22} strokeWidth={2.2} aria-hidden="true" />
+            <strong>{numbers.trial || dash}</strong>
+            <span>{t("homeStatTrial")}</span>
+          </Link>
+          <Link className="home-stat" to={`${browsePath}?sort=price-asc`}>
+            <Euro className="home-stat-icon" size={22} strokeWidth={2.2} aria-hidden="true" />
+            <strong>{numbers.avgPrice != null ? `${numbers.avgPrice} €` : dash}</strong>
+            <span>{t("homeStatAvg")}</span>
+          </Link>
+        </div>
+      </section>
+
+      {/* 3. How it works */}
+      <section className="home-section">
+        <div className="home-wrap">
+          <h2 className="home-h2">{t("homeHowTitle")}</h2>
+          <ol className="home-steps">
+            <li className="home-step">
+              <span className="home-step-num">01</span>
+              <MapPin className="home-step-icon" size={22} strokeWidth={2.2} aria-hidden="true" />
+              <h3>{t("homeStep1Title")}</h3>
+              <p>{t("homeStep1Text")}</p>
+            </li>
+            <li className="home-step">
+              <span className="home-step-num">02</span>
+              <Scale className="home-step-icon" size={22} strokeWidth={2.2} aria-hidden="true" />
+              <h3>{t("homeStep2Title")}</h3>
+              <p>{t("homeStep2Text")}</p>
+            </li>
+            <li className="home-step">
+              <span className="home-step-num">03</span>
+              <Heart className="home-step-icon" size={22} strokeWidth={2.2} aria-hidden="true" />
+              <h3>{t("homeStep3Title")}</h3>
+              <p>{t("homeStep3Text")}</p>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      {/* 4. Popular chains */}
+      <section className="home-section">
+        <div className="home-wrap">
+          <div className="home-section-head">
+            <div>
+              <h2 className="home-h2">{t("homeChainsTitle")}</h2>
+              <p className="home-sub">{t("homeChainsLead")}</p>
+            </div>
+            {chainCount > 0 ? (
+              <button type="button" className="btn btn-ghost" onClick={() => openChains()}>
+                {t("showAllChains", { count: chainCount })}
+                <ArrowRight size={16} strokeWidth={2.4} aria-hidden="true" />
+              </button>
+            ) : null}
           </div>
-          <div className="lajit-grid">
-            {lajit.map((laji) => (
-              <Link key={laji.name} to={laji.to} className="laji-item">
-                <span className="laji-label">{laji.name}</span>
-                <span className="laji-btn">
-                  <span className="laji-shine" aria-hidden="true" />
-                  <LajiIcon name={laji.name} Icon={laji.Icon} />
-                </span>
+
+          <div className="home-chains">
+            {topChains.length === 0
+              ? Array.from({ length: 6 }, (_, i) => (
+                  <div key={i} className="chain-tile is-skeleton" aria-hidden="true" />
+                ))
+              : topChains.map((chain) => (
+                  <Link key={chain.id} className="chain-tile" to={pathChain(lang, chain.slug)}>
+                    <span className={["chain-tile-img", chain.logoFit === "contain" ? "is-contain" : "", chain.logoClass || ""].filter(Boolean).join(" ")}>
+                      <img src={chain.image} alt="" width={320} height={200} loading="lazy" decoding="async" />
+                    </span>
+                    <span className="chain-tile-body">
+                      <span className="chain-tile-name">{chain.name}</span>
+                      <span className="chain-tile-meta">
+                        {t("homeChainGyms", { count: chain.gymCount ?? 0 })}
+                        {chain.priceFrom != null ? ` · ${formatPriceFrom(chain.priceFrom, lang)}` : ""}
+                      </span>
+                    </span>
+                  </Link>
+                ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Cities */}
+      <section className="home-section">
+        <div className="home-wrap">
+          <h2 className="home-h2">{t("homeCitiesTitle")}</h2>
+          <div className="home-cities">
+            {cities.map((c) => (
+              <Link key={c.slug} className="city-link" to={pathGymsCity(lang, c.slug)}>
+                <span className="city-link-name">{c.name}</span>
+                <span className="city-link-count">{t("homeCityGyms", { count: c.count })}</span>
               </Link>
             ))}
           </div>
         </div>
       </section>
-      */}
+
+      {/* 6. Call to action */}
+      <section className="home-section">
+        <div className="home-wrap">
+          <div className="home-cta">
+            <div>
+              <h2 className="home-h2">{t("homeCtaTitle")}</h2>
+              <p className="home-sub">{t("homeCtaText")}</p>
+            </div>
+            <Link className="btn btn-dark" to={browsePath} state={{ focusOrigin: true }}>
+              {t("browseGyms")}
+              <ArrowRight size={16} strokeWidth={2.4} aria-hidden="true" />
+            </Link>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }

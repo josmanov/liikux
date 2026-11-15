@@ -64,7 +64,7 @@
 
 .area-select-pin {
   flex-shrink: 0;
-  color: var(--color-brand);
+  color: var(--brand-strong);
 }
 
 .area-select-label {
@@ -111,7 +111,7 @@
   border: 1.5px solid var(--color-border);
   border-radius: 16px;
   background: var(--color-surface);
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 14px 32px rgba(20, 22, 26, 0.04);
 }
 
 .area-select-sheet-root {
@@ -123,7 +123,7 @@
   justify-content: center;
   padding: 1rem;
   box-sizing: border-box;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(20, 22, 26, 0.14);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
 }
@@ -134,9 +134,9 @@
   display: flex;
   flex-direction: column;
   border-radius: 20px;
-  background: rgba(22, 23, 30, 0.96);
+  background: var(--surface);
   border: 0;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 18px 40px rgba(20, 22, 26, 0.04);
   overflow: hidden;
 }
 
@@ -155,7 +155,7 @@
   font-family: var(--font-display);
   font-size: 1.25rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--ink);
 }
 
 .area-select-sheet-close {
@@ -167,12 +167,12 @@
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: #fff;
+  color: var(--ink);
   cursor: pointer;
 }
 
 .area-select-sheet-close:hover {
-  color: var(--color-brand);
+  color: var(--ink);
 }
 
 .area-select-sheet-body {
@@ -194,13 +194,13 @@
   padding: 0 0.4rem 0 0.75rem;
   border: 1.5px solid var(--color-border);
   border-radius: 12px;
-  background: #16171d;
+  background: var(--surface);
   box-sizing: border-box;
 }
 
 .area-select-field-icon {
   flex-shrink: 0;
-  color: #bdbecb;
+  color: var(--faint);
 }
 
 .area-select-input {
@@ -216,7 +216,7 @@
 }
 
 .area-select-input::placeholder {
-  color: #bdbecb;
+  color: var(--faint);
 }
 
 .area-select-locate {
@@ -228,8 +228,8 @@
   padding: 0;
   border: 1.5px solid var(--color-border);
   border-radius: 50%;
-  background: #1e293b;
-  color: var(--color-brand);
+  background: var(--surface);
+  color: var(--ink);
   cursor: pointer;
 }
 
@@ -263,7 +263,7 @@
 }
 
 .area-select-suggestions button:hover {
-  background: rgba(0, 0, 0, 0.28);
+  background: rgba(20, 22, 26, 0.1);
 }
 
 .area-select-hint {
@@ -308,21 +308,21 @@
 }
 
 .area-select-cities button:hover {
-  background: rgba(0, 0, 0, 0.28);
+  background: rgba(20, 22, 26, 0.1);
 }
 
 .area-select-cities button.is-on {
-  color: var(--color-brand);
+  color: var(--ink);
   box-shadow: inset 0 0 0 1.5px var(--color-brand);
 }
 
 .area-select-cities button.is-on:hover {
-  background: rgba(0, 0, 0, 0.28);
+  background: rgba(20, 22, 26, 0.1);
 }
 
 .area-select-city-count {
   flex-shrink: 0;
-  color: #8b8c98;
+  color: var(--faint);
   font-size: 0.78rem;
   font-weight: 600;
 }

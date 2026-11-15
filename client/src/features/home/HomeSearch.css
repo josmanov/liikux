@@ -1,0 +1,163 @@
+/* The big address box on the home page (HomeSearch.tsx). */
+
+.home-search {
+  position: relative;
+  width: 100%;
+  max-width: 40rem;
+  margin-top: 2rem;
+  text-align: left;
+}
+
+.home-search-box {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.4rem 0.4rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-md);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.home-search-box:focus-within {
+  border-color: var(--ink);
+  box-shadow: var(--shadow-md), var(--focus-ring);
+}
+
+.home-search-icon {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.home-search-input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  font-weight: 500;
+}
+
+.home-search-input::placeholder {
+  color: var(--faint);
+}
+
+.home-search-input:focus-visible {
+  box-shadow: none;
+}
+
+.home-search-locate {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.home-search-locate:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.home-search-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  height: 48px;
+  padding: 0 1.3rem;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.home-search-submit:hover {
+  background: var(--primary-hover);
+}
+
+.home-search-list {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  padding: 0.4rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.home-search-hint {
+  display: flex;
+  justify-content: center;
+  padding: 0.9rem;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.home-search-hit {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  text-align: left;
+  cursor: pointer;
+}
+
+.home-search-hit svg {
+  flex-shrink: 0;
+  color: var(--faint);
+}
+
+.home-search-hit.is-active {
+  background: var(--surface-2);
+}
+
+.home-search-hit-main {
+  font-weight: 600;
+}
+
+.home-search-hit-city {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 680px) {
+  .home-search-box {
+    padding-left: 0.85rem;
+  }
+
+  .home-search-submit span {
+    display: none;
+  }
+
+  .home-search-submit {
+    width: 48px;
+    padding: 0;
+    justify-content: center;
+  }
+}

@@ -15,6 +15,7 @@ import {
 const GymsPage = lazy(() => import("./pages/GymsPage"));
 const GymDetailPage = lazy(() => import("./pages/GymDetailPage"));
 const AdminDataPage = lazy(() => import("./pages/AdminDataPage"));
+const FeedbackPage = lazy(() => import("./pages/FeedbackPage"));
 
 function RouteFallback() {
   return <div className="route-fallback" aria-hidden="true" />;
@@ -123,6 +124,22 @@ function App() {
             element={
               <Suspense fallback={<RouteFallback />}>
                 <GymDetailPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/fi/palaute"
+            element={
+              <Suspense fallback={<RouteFallback />}>
+                <FeedbackPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/en/feedback"
+            element={
+              <Suspense fallback={<RouteFallback />}>
+                <FeedbackPage />
               </Suspense>
             }
           />

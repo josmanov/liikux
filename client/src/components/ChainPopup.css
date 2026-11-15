@@ -22,7 +22,7 @@
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(0, 0, 0, 0.34);
+  background: rgba(20, 22, 26, 0.12);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   display: flex;
@@ -40,7 +40,7 @@
   width: min(560px, 100%);
   height: min(85vh, 820px);
   border-radius: 24px;
-  background: rgba(22, 23, 30, 0.94);
+  background: var(--surface);
   border: 0;
   box-shadow: var(--popup-shadow);
   -webkit-backdrop-filter: blur(22px);
@@ -76,10 +76,10 @@
   min-height: 2.75rem;
   height: 44px;
   padding: 0 0.85rem;
-  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  border: 1.5px solid var(--line);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
+  background: var(--surface-2);
+  color: var(--ink);
   font-family: var(--font-body);
   font-size: 0.88rem;
   font-weight: 650;
@@ -114,9 +114,9 @@
   min-width: 100%;
   width: max-content;
   border-radius: 14px;
-  background: rgba(22, 23, 30, 0.98);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 28px rgba(20, 22, 26, 0.03);
 }
 
 .chain-popup-sort-menu button {
@@ -127,7 +127,7 @@
   padding: 0.55rem 0.9rem;
   border: 0;
   background: transparent;
-  color: #e2e8f0;
+  color: var(--ink);
   font-family: var(--font-body);
   font-size: 0.88rem;
   font-weight: 600;
@@ -136,12 +136,12 @@
 }
 
 .chain-popup-sort-menu button:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink);
+  background: var(--surface-2);
 }
 
 .chain-popup-sort-menu button.is-on {
-  color: var(--color-brand);
+  color: var(--ink);
 }
 
 .chain-popup-sort-opt-icon {
@@ -172,7 +172,7 @@
   font-size: 2rem;
   font-weight: 700;
   line-height: 1.1;
-  color: #fff;
+  color: var(--ink);
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -188,7 +188,7 @@
   margin: 0.55rem 0 0;
   padding: 0 0.25rem;
   font-size: 0.85rem;
-  color: #9a9aa8;
+  color: var(--faint);
 }
 
 .chain-popup-close {
@@ -199,15 +199,15 @@
   margin-left: 0;
   border: 0;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #ddd;
+  background: var(--surface-2);
+  color: var(--ink);
   cursor: pointer;
   flex-shrink: 0;
 }
 
 .chain-popup-close:hover {
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
+  background: var(--surface-3);
+  color: var(--ink);
 }
 
 .chain-popup-top {
@@ -235,10 +235,10 @@
   max-width: none;
   height: 45px;
   padding: 0 0.95rem;
-  border: 1.5px solid #2b2c37;
+  border: 1.5px solid var(--line);
   border-radius: 12px;
-  background: #1c1d26;
-  color: #fff;
+  background: var(--surface);
+  color: var(--ink);
   font-family: var(--font-body);
   font-size: 0.82rem;
   font-weight: 700;
@@ -249,7 +249,7 @@
 
 .chain-popup-map-btn svg {
   flex-shrink: 0;
-  color: var(--color-brand);
+  color: var(--ink);
 }
 
 .chain-popup-map-btn span {
@@ -260,7 +260,7 @@
 
 .chain-popup-map-btn:hover {
   border-color: var(--color-brand);
-  background: #1c1d26;
+  background: var(--surface);
 }
 
 .chain-popup-banner-row .chain-popup-close {
@@ -278,9 +278,9 @@
   height: 45px;
   box-sizing: border-box;
   max-width: 100%;
-  background: #16171d;
-  border-color: #2b2c37;
-  color: #bdbecb;
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--faint);
 }
 
 .chain-popup-top .area-select-panel {
@@ -306,33 +306,33 @@
   width: 100%;
   height: 45px;
   padding-left: 2.5rem;
-  box-shadow: 0 0 0 1.5px #2b2c37, 0 0 25px -17px #000;
+  box-shadow: 0 0 0 1.5px rgba(20, 22, 26, 0.05), 0 0 25px -17px rgba(20, 22, 26, 0.05);
   border: 0;
   border-radius: 12px;
-  background-color: #1c1d26;
+  background-color: var(--surface);
   outline: none;
-  color: #bdbecb;
+  color: var(--faint);
   transition: all 0.25s cubic-bezier(0.19, 1, 0.22, 1);
   cursor: text;
   z-index: 0;
 }
 
 .chain-popup-card .input::placeholder {
-  color: #bdbecb;
+  color: var(--faint);
 }
 
 .chain-popup-card .input:hover {
-  box-shadow: 0 0 0 2.5px #2f303d, 0 0 25px -15px #000;
+  box-shadow: 0 0 0 2.5px rgba(20, 22, 26, 0.05), 0 0 25px -15px rgba(20, 22, 26, 0.05);
 }
 
 .chain-popup-card .input:focus {
-  box-shadow: 0 0 0 2.5px #2f303d;
+  box-shadow: 0 0 0 2.5px rgba(20, 22, 26, 0.05);
 }
 
 .chain-popup-card .search-icon {
   position: absolute;
   left: 1rem;
-  fill: #bdbecb;
+  fill: var(--faint);
   width: 1rem;
   height: 1rem;
   pointer-events: none;
@@ -358,9 +358,9 @@
   pointer-events: none;
   background: linear-gradient(
     to bottom,
-    rgba(16, 16, 20, 0.82) 0%,
-    rgba(16, 16, 20, 0.42) 42%,
-    rgba(16, 16, 20, 0) 100%
+    var(--surface) 0%,
+    rgba(20, 22, 26, 0.15) 42%,
+    rgba(20, 22, 26, 0) 100%
   );
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -381,7 +381,7 @@
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
-  scrollbar-color: #6b7280 #1e293b;
+  scrollbar-color: var(--line) var(--line);
 }
 
 .chain-popup-list::-webkit-scrollbar {
@@ -389,7 +389,7 @@
 }
 
 .chain-popup-list::-webkit-scrollbar-thumb {
-  background: #6b7280;
+  background: var(--surface-2);
   border-radius: 999px;
 }
 
@@ -398,7 +398,7 @@
 }
 
 .chain-popup-list::-webkit-scrollbar-track {
-  background: #1e293b;
+  background: var(--surface);
   border-radius: 999px;
 }
 
@@ -409,15 +409,15 @@
   height: 2.1rem;
   border: 0;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #ddd;
+  background: var(--surface-2);
+  color: var(--ink);
   cursor: pointer;
   flex-shrink: 0;
 }
 
 .chain-popup-back:hover {
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
+  background: var(--surface-3);
+  color: var(--ink);
 }
 
 .chain-popup-heading {
@@ -426,7 +426,7 @@
   gap: 0.15rem;
   margin: 0 0 1rem;
   padding: 0 0.25rem;
-  color: #eee;
+  color: var(--ink);
 }
 
 .chain-popup-heading strong {
@@ -435,7 +435,7 @@
 
 .chain-popup-heading span {
   font-size: 0.85rem;
-  color: #9a9aa8;
+  color: var(--faint);
 }
 
 .chain-popup-item {
@@ -447,7 +447,7 @@
 }
 
 .chain-popup-item:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--surface-2);
 }
 
 .chain-popup-shot {
@@ -470,19 +470,19 @@
   display: grid;
   place-items: center;
   padding: 0;
-  border: 1.5px solid rgba(255, 255, 255, 0.32);
+  border: 1.5px solid var(--line);
   border-radius: 9px;
-  background: rgba(12, 12, 16, 0.55);
+  background: rgba(20, 22, 26, 0.2);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  color: #fff;
+  color: var(--ink);
   cursor: pointer;
 }
 
 .chain-popup-fav svg {
   overflow: visible;
   fill: transparent;
-  color: #fff;
+  color: var(--ink);
   transition:
     transform 0.16s ease,
     color 0.16s ease,
@@ -496,7 +496,7 @@
 
 .chain-popup-fav:hover svg,
 .chain-popup-fav:focus-visible svg {
-  color: #fff;
+  color: var(--ink);
   fill: transparent;
   transform: scale(1.08);
   filter: drop-shadow(0 0 0 1.8px #fff);
@@ -513,7 +513,7 @@
 
 .chain-popup-fav.is-on:hover svg,
 .chain-popup-fav.is-on:focus-visible svg {
-  color: #fff;
+  color: var(--ink);
   fill: #e53935;
   filter: drop-shadow(0 0 0 2.2px #fff);
 }
@@ -542,7 +542,7 @@
   gap: 0;
   margin: 0.35rem 0 0;
   font-size: 0.82rem;
-  color: #9a9aa8;
+  color: var(--faint);
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -550,14 +550,14 @@
 }
 
 .chain-popup-price {
-  color: #fff;
+  color: var(--ink);
   font-weight: 700;
 }
 
 
 
 .chain-popup-row:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--surface-2);
 }
 
 .chain-popup-media {
@@ -627,7 +627,7 @@
 }
 
 .chain-popup-media.logo-fressi {
-  background: #2a2a2a;
+  background: var(--surface);
 }
 
 .chain-popup-media.logo-fressi img {
@@ -700,7 +700,7 @@
 }
 
 .chain-popup-media.logo-mm {
-  background: #000;
+  background: var(--surface);
   padding: 0.45rem 0.55rem;
 }
 
@@ -711,7 +711,7 @@
 }
 
 .chain-popup-media.logo-esport {
-  background: #000;
+  background: var(--surface);
   padding: 0.45rem 0.55rem;
 }
 
@@ -736,7 +736,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 0.2rem;
-  color: #fff;
+  color: var(--ink);
   min-width: 0;
   text-decoration: none;
 }
@@ -748,7 +748,7 @@
   gap: 0.12rem;
   min-width: 0;
   width: 100%;
-  color: #fff;
+  color: var(--ink);
 }
 
 .chain-popup-chain {
@@ -757,7 +757,7 @@
   font-size: 0.95rem;
   font-weight: 700;
   line-height: 1.2;
-  color: #fff;
+  color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -767,29 +767,29 @@
 .chain-popup-site {
   font-size: 1.05rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--ink);
 }
 
 .chain-popup-blurb {
   margin: 0;
   font-size: 0.82rem;
   line-height: 1.3;
-  color: #d0d0da;
+  color: var(--muted);
 }
 
 .chain-popup-cities {
   margin: 0;
   font-size: 0.8rem;
   line-height: 1.25;
-  color: #d0d0da;
+  color: var(--muted);
 }
 
 .chain-popup-sep {
-  color: #d0d0da;
+  color: var(--muted);
 }
 
 .chain-popup-empty {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--ink);
   text-align: center;
   padding: 2rem 1rem;
   list-style: none;

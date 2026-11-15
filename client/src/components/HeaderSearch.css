@@ -17,13 +17,13 @@
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: #fff;
+  color: var(--ink);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
 .header-search-trigger:hover {
-  color: #64748b;
+  color: var(--muted);
 }
 
 .header-search-field {
@@ -48,21 +48,21 @@
 .header-search.is-open .header-search-field {
   width: 16rem;
   border-radius: 12px;
-  background: #121a2e;
+  background: var(--surface);
   box-shadow: 0 0 0 1.5px #314056;
 }
 
 .header-search-icon {
   position: absolute;
   left: 0.48rem;
-  color: #fff;
+  color: var(--ink);
   pointer-events: none;
   flex-shrink: 0;
   transition: color 0.22s ease;
 }
 
 .header-search:not(.is-open) .header-search-field:hover .header-search-icon {
-  color: #64748b;
+  color: var(--muted);
 }
 
 .header-search-input {
@@ -75,14 +75,14 @@
   border-radius: 12px;
   background: transparent;
   outline: none;
-  color: #fff;
+  color: var(--ink);
   color-scheme: dark;
   appearance: none;
   -webkit-appearance: none;
   font-size: 0.92rem;
   font-weight: 500;
   box-sizing: border-box;
-  caret-color: #fff;
+  caret-color: var(--ink);
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.28s ease 0.06s;
@@ -98,13 +98,13 @@
 }
 
 .header-search-input::placeholder {
-  color: #8b95a8;
+  color: var(--faint);
   font-weight: 500;
   opacity: 1;
 }
 
 .header-search-input:focus {
-  color: #fff;
+  color: var(--ink);
 }
 
 .header-search-panel {
@@ -119,10 +119,10 @@
   border-radius: 16px;
   background: var(--color-surface);
   border: 1.5px solid var(--color-border);
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 14px 32px rgba(20, 22, 26, 0.04);
   z-index: 40;
   scrollbar-width: thin;
-  scrollbar-color: #6b7280 #1e293b;
+  scrollbar-color: var(--line) var(--line);
 }
 
 .header-search-panel::-webkit-scrollbar {
@@ -130,7 +130,7 @@
 }
 
 .header-search-panel::-webkit-scrollbar-thumb {
-  background: #6b7280;
+  background: var(--surface-2);
   border-radius: 999px;
 }
 
@@ -139,7 +139,7 @@
 }
 
 .header-search-panel::-webkit-scrollbar-track {
-  background: #1e293b;
+  background: var(--surface);
   border-radius: 999px;
 }
 
@@ -154,7 +154,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #8b8c98;
+  color: var(--faint);
 }
 
 .header-search-section ul {
@@ -170,7 +170,7 @@
   width: 100%;
   padding: 0.55rem 0.9rem;
   text-decoration: none;
-  color: #e8e8ef;
+  color: var(--ink);
   font-size: 0.92rem;
   border: 0;
   background: transparent;
@@ -181,7 +181,7 @@
 }
 
 .header-search-hit:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--surface-2);
 }
 
 .header-search-media {
@@ -237,7 +237,7 @@
 }
 
 .header-search-media.logo-fressi {
-  background: #2a2a2a;
+  background: var(--surface);
 }
 
 .header-search-media.logo-fressi img {
@@ -273,11 +273,11 @@
 }
 
 .header-search-media.logo-mm {
-  background: #000;
+  background: var(--surface);
 }
 
 .header-search-media.logo-esport {
-  background: #000;
+  background: var(--surface);
 }
 
 .header-search-media.logo-liikku {
@@ -291,7 +291,7 @@
 .header-search-empty {
   margin: 0;
   padding: 0.85rem 1rem;
-  color: #8b8c98;
+  color: var(--faint);
   font-size: 0.9rem;
 }
 
@@ -311,7 +311,7 @@
   border: 0;
   padding: 0;
   margin: 0;
-  background: rgba(0, 0, 0, 0.34);
+  background: rgba(20, 22, 26, 0.12);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   cursor: pointer;
@@ -321,7 +321,7 @@
 .header-search-popup-bg:focus,
 .header-search-popup-bg:active {
   outline: none;
-  background: rgba(0, 0, 0, 0.34);
+  background: rgba(20, 22, 26, 0.12);
 }
 
 .header-search-popup-card {
@@ -332,7 +332,7 @@
   border-radius: 16px;
   border: 1.5px solid var(--color-border);
   background: var(--color-surface);
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 18px 40px rgba(20, 22, 26, 0.04);
   overflow: hidden;
 }
 
@@ -344,12 +344,12 @@
   min-height: 3.15rem;
   padding: 0.35rem 0.45rem 0.35rem 0.85rem;
   border-bottom: 1px solid var(--color-border);
-  background: #121a2e;
+  background: var(--surface);
 }
 
 .header-search-popup-icon {
   flex-shrink: 0;
-  color: #fff;
+  color: var(--ink);
 }
 
 .header-search-popup-bar .header-search-input {
@@ -368,7 +368,7 @@
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: #fff;
+  color: var(--ink);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -378,7 +378,7 @@
   overflow-y: auto;
   padding: 0.35rem 0 0.55rem;
   scrollbar-width: thin;
-  scrollbar-color: #6b7280 #1e293b;
+  scrollbar-color: var(--line) var(--line);
 }
 
 .header-search-popup-list::-webkit-scrollbar {
@@ -386,12 +386,12 @@
 }
 
 .header-search-popup-list::-webkit-scrollbar-thumb {
-  background: #6b7280;
+  background: var(--surface-2);
   border-radius: 999px;
 }
 
 .header-search-popup-list::-webkit-scrollbar-track {
-  background: #1e293b;
+  background: var(--surface);
   border-radius: 999px;
 }
 

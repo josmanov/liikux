@@ -30,7 +30,7 @@
   gap: 0.45rem;
   border-radius: 999px;
   border: 0;
-  background: rgba(22, 23, 30, 0.94);
+  background: var(--surface);
   box-shadow: var(--popup-shadow);
   -webkit-backdrop-filter: blur(22px);
   backdrop-filter: blur(22px);
@@ -128,7 +128,7 @@
 }
 
 .browse-map-preview-media.logo-fressi {
-  background: #2a2a2a;
+  background: var(--surface);
 }
 
 .browse-map-preview-media.logo-fressi img {
@@ -191,7 +191,7 @@
 
 .browse-map-preview-media.logo-mm,
 .browse-map-preview-media.logo-esport {
-  background: #000;
+  background: var(--surface);
 }
 
 .browse-map-preview-media.logo-mm img {
@@ -241,7 +241,7 @@
   min-width: 0;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #94a3b8;
+  color: var(--faint);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -254,7 +254,7 @@
   white-space: nowrap;
   font-size: 0.78rem;
   font-weight: 600;
-  color: #e2e8f0;
+  color: var(--ink);
 }
 
 .browse-map-preview-maps {
@@ -266,9 +266,9 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 1.5px solid #fff;
+  border: 1.5px solid var(--line-strong);
   border-radius: 999px;
-  background: #121c30;
+  background: var(--surface);
   box-sizing: border-box;
   text-decoration: none;
 }
@@ -312,9 +312,9 @@
   height: 2.4rem;
   padding: 0 0.85rem;
   border-radius: 999px;
-  border: 1.5px solid #fff;
+  border: 1.5px solid var(--line-strong);
   background: transparent;
-  color: #fff;
+  color: var(--ink);
   font-size: 0.88rem;
   font-weight: 700;
   text-decoration: none;
@@ -328,7 +328,7 @@
 .browse-map-preview-open:hover {
   background: var(--color-brand);
   border-color: var(--color-brand);
-  color: #0b1220;
+  color: var(--on-primary);
 }
 
 .browse-row-media {
@@ -393,7 +393,7 @@
 }
 
 .browse-row-media.logo-fressi {
-  background: #2a2a2a;
+  background: var(--surface);
 }
 
 .browse-row-media.logo-fressi img {
@@ -461,7 +461,7 @@
 }
 
 .browse-row-media.logo-mm {
-  background: #000;
+  background: var(--surface);
 }
 
 .browse-row-media.logo-mm img {
@@ -471,7 +471,7 @@
 }
 
 .browse-row-media.logo-esport {
-  background: #000;
+  background: var(--surface);
 }
 
 .browse-row-media.logo-esport img {
@@ -533,7 +533,7 @@
   font-size: 12px;
   font-weight: 600;
   line-height: 1.25;
-  color: #c8c8d4;
+  color: var(--muted);
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -579,11 +579,11 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 1.5px solid #fff;
+  border: 1.5px solid var(--line-strong);
   border-radius: 10px;
-  background: #121218;
+  background: var(--surface);
   box-sizing: border-box;
-  color: #fff;
+  color: var(--ink);
   cursor: pointer;
 }
 
@@ -668,7 +668,7 @@
   font-weight: 700;
   line-height: 1.2;
   white-space: nowrap;
-  color: var(--color-brand);
+  color: var(--good);
 }
 
 .browse-tag.is-247,
@@ -676,7 +676,7 @@
 .browse-tag.is-trial,
 .browse-tag.is-daypass {
   background: none;
-  color: var(--color-brand);
+  color: var(--good);
 }
 
 .gym-origin-pin {
@@ -704,8 +704,8 @@
   margin: -7px 0 0 -7px;
   border-radius: 50%;
   background: #2563eb;
-  border: 2.5px solid #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  border: 2.5px solid var(--line-strong);
+  box-shadow: 0 1px 3px rgba(20, 22, 26, 0.03);
   z-index: 2;
 }
 
@@ -761,17 +761,17 @@
   transform: translateX(-50%);
   z-index: 2;
   padding: 0.16rem 0.4rem 0.19rem;
-  border: 1.5px solid #111;
+  border: 1.5px solid var(--line);
   border-radius: 999px;
   background: #fff;
-  color: #111;
+  color: var(--on-ink);
   font-family: var(--font-body);
   font-size: 0.59rem;
   font-weight: 700;
   line-height: 1.1;
   white-space: nowrap;
   pointer-events: none;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 1px 4px rgba(20, 22, 26, 0.02);
 }
 
 .gym-pin:has(.gym-pin-hit.is-selected) .gym-pin-price {
@@ -786,11 +786,11 @@
   z-index: 6;
   max-width: 11rem;
   padding: 0.22rem 0.5rem;
-  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border: 1.5px solid var(--line);
   border-radius: 8px;
-  background: rgba(8, 12, 22, 0.88);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-  color: #fff;
+  background: var(--surface);
+  box-shadow: 0 4px 12px rgba(20, 22, 26, 0.03);
+  color: var(--ink);
   font-family: var(--font-body);
   font-size: 0.68rem;
   font-weight: 600;
@@ -819,7 +819,7 @@
   top: 100%;
   transform: translateX(-50%);
   border: 5px solid transparent;
-  border-top-color: rgba(8, 12, 22, 0.88);
+  border-top-color: var(--line);
 }
 
 .gym-pin:has(.gym-pin-hit.is-selected) .gym-pin-address {
@@ -846,7 +846,7 @@
   z-index: 5;
   place-items: center;
   border-radius: inherit;
-  background: rgba(0, 0, 0, 0.22);
+  background: rgba(20, 22, 26, 0.08);
   pointer-events: none;
   cursor: pointer;
 }
@@ -873,7 +873,7 @@
   top: 100%;
   transform: translateX(-50%);
   border: 4px solid transparent;
-  border-top-color: #111;
+  border-top-color: #d6d1c4;
 }
 
 .gym-pin-price::before {
@@ -921,7 +921,7 @@
   left: 50%;
   top: 61%;
   transform: translate(-50%, -50%);
-  color: #111;
+  color: var(--ink);
   font-family: var(--font-body);
   font-size: 0.8rem;
   font-weight: 800;
@@ -944,7 +944,7 @@
   background: transparent;
   cursor: pointer;
   overflow: visible;
-  box-shadow: 0 0 0 1.5px #111;
+  box-shadow: 0 0 0 1.5px rgba(20, 22, 26, 0.05);
   transform: scale(var(--pin-scale, 1));
   transform-origin: center bottom;
   transition:
@@ -965,7 +965,7 @@
   background: #fff;
   padding: 0;
   box-sizing: border-box;
-  box-shadow: 0 0 0 1.5px #111;
+  box-shadow: 0 0 0 1.5px rgba(20, 22, 26, 0.05);
 }
 
 .gym-pin.is-plain-pin .gym-pin-media img {
@@ -1010,7 +1010,7 @@
 }
 
 .gym-pin-hit.logo-fressi {
-  background: #2a2a2a;
+  background: var(--surface);
 }
 
 .gym-pin-hit.logo-fressi img {
@@ -1082,7 +1082,7 @@
 }
 
 .gym-pin-hit.logo-mm {
-  background: #000;
+  background: var(--surface);
 }
 
 .gym-pin-hit.logo-mm img {
@@ -1092,7 +1092,7 @@
 }
 
 .gym-pin-hit.logo-esport {
-  background: #000;
+  background: var(--surface);
 }
 
 .gym-pin-hit.logo-esport img {
@@ -1120,7 +1120,7 @@
   transform: scale(calc(var(--pin-scale, 1) * 1.16));
   outline: none;
   border: 0;
-  box-shadow: 0 0 0 1.5px #111;
+  box-shadow: 0 0 0 1.5px rgba(20, 22, 26, 0.05);
   z-index: 3;
 }
 
@@ -1300,8 +1300,8 @@
     flex-direction: column;
     overflow: hidden;
     border-radius: 16px;
-    border: 1px solid #25324f;
-    background: #121c33;
+    border: 1px solid var(--line);
+    background: var(--surface);
     transition: opacity 0.16s ease-out;
     will-change: opacity;
   }
@@ -1328,7 +1328,7 @@
     height: 100%;
     border: 0;
     border-radius: 0;
-    background: #121c33;
+    background: var(--surface);
   }
 
   .browse.is-mobile-map .browse-list-frame {
@@ -1365,10 +1365,10 @@
 
   .browse.is-mobile-map .browse-list-qty {
     padding: 0.35rem 0.75rem;
-    border: 1px solid rgba(255, 255, 255, 0.22);
+    border: 1px solid var(--line);
     border-radius: 999px;
-    background: rgba(8, 12, 22, 0.84);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+    background: var(--surface);
+    box-shadow: 0 6px 16px rgba(20, 22, 26, 0.02);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
     font-size: 0.9rem;
@@ -1405,19 +1405,19 @@
     min-width: 8.5rem;
     height: 2.85rem;
     padding: 0 1.15rem;
-    border: 1.5px solid rgba(255, 255, 255, 0.18);
+    border: 1.5px solid var(--line);
     border-radius: 999px;
-    background: #121c33;
-    color: #fff;
+    background: var(--surface);
+    color: var(--ink);
     font-family: var(--font-body);
     font-size: 0.95rem;
     font-weight: 700;
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 10px 28px rgba(20, 22, 26, 0.03);
     cursor: pointer;
   }
 
   .browse-map-open-btn svg {
-    color: var(--color-brand);
+    color: var(--ink);
   }
 
   .browse-map-side {
@@ -1490,7 +1490,7 @@
 
   .browse-list-count-mobile {
     display: block;
-    color: #fff;
+    color: var(--ink);
     font-size: 0.95rem;
     font-weight: 700;
   }
@@ -1517,7 +1517,7 @@
     text-align: center;
     font-size: 0.92rem;
     font-weight: 700;
-    color: #fff;
+    color: var(--ink);
   }
 
   .browse-list-head .browse-sort {
@@ -1628,7 +1628,7 @@
   }
 
   .browse-missing {
-    color: var(--color-brand);
+    color: var(--warn);
   }
 
   .browse-missing span {
@@ -1644,8 +1644,8 @@
     min-height: 3rem;
     margin-top: 0;
     padding: 0.35rem 0.5rem;
-    border-top: 1px solid #1b2842;
-    background: #121c33;
+    border-top: 1px solid var(--line);
+    background: var(--surface);
   }
 
   .browse-list-frame > .browse-pagebar::before {
@@ -1658,8 +1658,8 @@
     pointer-events: none;
     background: linear-gradient(
       to bottom,
-      rgba(18, 28, 51, 0) 0%,
-      rgba(8, 12, 22, 0.22) 100%
+      rgba(20, 22, 26, 0) 0%,
+      rgba(20, 22, 26, 0.13) 100%
     );
     -webkit-backdrop-filter: blur(1px);
     backdrop-filter: blur(1px);
@@ -1712,7 +1712,7 @@
   }
 
   .browse-rows li:nth-child(odd) .browse-row {
-    border-right: 1px solid #1b2842;
+    border-right: 1px solid var(--line);
   }
 
   .browse-row {
@@ -1776,7 +1776,7 @@
     font-size: 0.95rem;
     font-weight: 700;
     line-height: 1.2;
-    color: #fff;
+    color: var(--ink);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1787,7 +1787,7 @@
     font-size: 0.84rem;
     font-weight: 650;
     line-height: 1.2;
-    color: #fff;
+    color: var(--ink);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1796,7 +1796,7 @@
   .browse-row-address {
     margin-top: 0.05rem;
     font-size: 0.78rem;
-    color: #c8c8d4;
+    color: var(--muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1814,13 +1814,13 @@
 
   .browse-row-meta-mobile .browse-row-price {
     font-size: inherit;
-    color: #fff;
+    color: var(--ink);
   }
 
   .browse-row-meta-mobile .browse-row-distance {
     font-size: inherit;
     font-weight: 500;
-    color: #c8c8d4;
+    color: var(--muted);
     margin-top: 0;
   }
 
@@ -1934,7 +1934,7 @@
 
   .browse-row.is-selected {
     border-radius: 0;
-    border-bottom-color: #1b2842;
+    border-bottom-color: var(--line);
   }
 
   .browse-row.is-selected .browse-row-more {
@@ -1998,7 +1998,7 @@
     border: 1.5px solid var(--color-border);
     border-radius: 12px;
     background: var(--color-surface);
-    color: #fff;
+    color: var(--ink);
     font: inherit;
     font-weight: 650;
     text-align: left;
@@ -2021,7 +2021,7 @@
     padding: 0.5rem 0.75rem 0.45rem;
     border: 1.5px solid var(--color-border);
     border-radius: 12px;
-    background: rgba(12, 14, 22, 0.92);
+    background: var(--surface);
   }
 
   .browse-extras-section .browse-distance-head {
@@ -2068,4 +2068,9 @@
   .browse-rows li:nth-child(odd) .browse-row {
     border-right: 0;
   }
+}
+
+/* The outline Google Maps icon is drawn white (made for the old dark theme): show it dark. */
+.browse-map-preview-maps .is-line {
+  filter: invert(1);
 }

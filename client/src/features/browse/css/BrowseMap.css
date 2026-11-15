@@ -30,7 +30,7 @@
   margin-top: 0;
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--line-strong);
   background: #e8e8e8;
 }
 
@@ -40,12 +40,12 @@
 }
 
 .browse-glass {
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: rgba(8, 12, 22, 0.84);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: 0 6px 16px rgba(20, 22, 26, 0.02);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  color: #fff;
+  color: var(--ink);
 }
 
 .browse-map-side {
@@ -70,7 +70,7 @@
 
 .browse-map-desk-city svg {
   flex-shrink: 0;
-  color: var(--color-brand);
+  color: var(--ink);
 }
 
 .browse-map-desk-city span {
@@ -109,7 +109,7 @@
   justify-content: center;
   padding: 0.75rem 1.25rem 1.25rem;
   box-sizing: border-box;
-  background: rgba(0, 0, 0, 0.34);
+  background: rgba(20, 22, 26, 0.12);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   overscroll-behavior: none;
@@ -122,7 +122,7 @@
   display: flex;
   flex-direction: column;
   border-radius: 20px;
-  background: rgba(22, 23, 30, 0.94);
+  background: var(--surface);
   border: 0;
   box-shadow: var(--popup-shadow);
   -webkit-backdrop-filter: blur(22px);
@@ -146,7 +146,7 @@
   font-family: var(--font-display);
   font-size: 1.35rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--ink);
 }
 
 .browse-map-sheet-body {
@@ -172,7 +172,7 @@
 
 .browse-map-sheet-field svg {
   flex-shrink: 0;
-  color: var(--color-brand);
+  color: var(--ink);
 }
 
 .browse-map-sheet-field input {
@@ -180,7 +180,7 @@
   min-width: 0;
   border: 0;
   background: transparent;
-  color: #fff;
+  color: var(--ink);
   font: inherit;
   font-size: 0.95rem;
   font-weight: 600;
@@ -212,7 +212,7 @@
   border: 0;
   border-radius: 12px;
   background: transparent;
-  color: #fff;
+  color: var(--ink);
   font: inherit;
   font-size: 0.92rem;
   font-weight: 600;
@@ -222,11 +222,11 @@
 }
 
 .browse-map-sheet-hits button:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--surface-2);
 }
 
 .browse-map-sheet-hits button.is-on {
-  color: var(--color-brand);
+  color: var(--ink);
   box-shadow: inset 0 0 0 1.5px var(--color-brand);
 }
 
@@ -347,7 +347,7 @@
   flex-shrink: 0;
   width: 100%;
   padding: 0.4rem 0.45rem 0.35rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  border-bottom: 1px solid var(--line);
   box-sizing: border-box;
 }
 
@@ -357,8 +357,8 @@
   padding: 0 0.65rem;
   border: 0;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
+  background: var(--surface-2);
+  color: var(--ink);
   font-family: var(--font-body);
   font-size: 0.8rem;
   font-weight: 600;
@@ -367,7 +367,7 @@
 }
 
 .browse-region-drop-search input::placeholder {
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--faint);
 }
 
 .browse-region-drop-list {
@@ -384,7 +384,7 @@
   box-shadow: none;
   scroll-behavior: smooth;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.4) transparent;
+  scrollbar-color: var(--line) transparent;
   box-sizing: border-box;
 }
 
@@ -398,12 +398,12 @@
 }
 
 .browse-region-drop-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.38);
+  background: rgba(255, 255, 255, 0.92);
   border-radius: 999px;
 }
 
 .browse-region-drop-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.62);
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .browse-region-drop-list button {
@@ -415,7 +415,7 @@
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #fff;
+  color: var(--ink);
   font-family: var(--font-body);
   font-size: 0.84rem;
   font-weight: 600;
@@ -428,11 +428,11 @@
 .browse-region-drop-list button:hover,
 .browse-region-drop-list button.is-on:hover {
   background: transparent;
-  color: #64748b;
+  color: var(--muted);
 }
 
 .browse-region-drop-list button.is-on {
-  color: var(--color-brand);
+  color: var(--ink);
   box-shadow: inset 0 0 0 1.5px var(--color-brand);
 }
 
@@ -453,7 +453,7 @@
   height: 1.65rem;
   border: 0;
   background: transparent;
-  color: #fff;
+  color: var(--ink);
   font-family: var(--font-body);
   font-size: 0.82rem;
   font-weight: 600;
@@ -461,13 +461,13 @@
 }
 
 .browse-map-address input::placeholder {
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--muted);
   font-weight: 500;
 }
 
 .browse-map-address svg {
   flex-shrink: 0;
-  color: var(--color-brand);
+  color: var(--brand-strong);
 }
 
 .browse-map-locate {
@@ -481,16 +481,16 @@
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #fff;
+  color: var(--ink);
   cursor: pointer;
 }
 
 .browse-map-locate svg {
-  color: #fff;
+  color: var(--ink);
 }
 
 .browse-map-locate:hover svg {
-  color: var(--color-brand);
+  color: var(--ink);
 }
 
 .browse-map-address:hover {
@@ -512,9 +512,9 @@
   max-height: 11rem;
   overflow-y: auto;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: #141820;
-  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.45);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: 0 14px 32px rgba(20, 22, 26, 0.04);
 }
 
 .browse-address-hits button {
@@ -524,7 +524,7 @@
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #fff;
+  color: var(--ink);
   font-family: var(--font-body);
   font-size: 0.8rem;
   text-align: left;
@@ -532,12 +532,12 @@
 }
 
 .browse-address-hits button:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--surface-2);
 }
 
 .browse-address-hint {
   padding: 0.45rem 0.35rem;
-  color: #bdbecb;
+  color: var(--faint);
   font-size: 0.8rem;
 }
 
@@ -555,12 +555,12 @@
 .browse-map-distance .browse-distance-head {
   margin-bottom: 0.2rem;
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--ink);
 }
 
 .browse-map-distance .browse-distance-head strong {
   font-size: 0.75rem;
-  color: #fff;
+  color: var(--ink);
 }
 
 .browse-map-distance .browse-distance-slider {
@@ -578,12 +578,12 @@
   font-size: 0.58rem;
   line-height: 1.1;
   white-space: nowrap;
-  color: rgba(255, 255, 255, 0.62);
+  color: var(--muted);
 }
 
 .browse-map-distance .browse-distance-mark.is-on,
 .browse-map-distance .browse-distance-mark:hover {
-  color: #fff;
+  color: var(--ink);
 }
 
 .browse-map-controls {
@@ -606,7 +606,7 @@
   flex-shrink: 0;
   align-self: stretch;
   margin-top: 0.55rem;
-  color: #fff;
+  color: var(--ink);
 }
 
 .browse-map-locate-fab svg {
@@ -625,7 +625,7 @@
 
 .browse-map-ctrl.browse-glass:hover:not(:disabled) {
   border-color: var(--color-brand);
-  background: rgba(8, 12, 22, 0.92);
+  background: var(--surface);
 }
 
 .browse-map-ctrl:disabled {

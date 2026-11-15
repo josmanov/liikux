@@ -2,7 +2,7 @@
   max-width: 1400px;
   margin: 0 auto;
   padding: 2rem 1.25rem 4rem;
-  color: #eee;
+  color: var(--ink);
 }
 
 .admin-data h1 {
@@ -13,7 +13,7 @@
 .admin-data h2 {
   font-size: 1.05rem;
   margin: 0 0 0.75rem;
-  color: #ddd;
+  color: var(--ink);
 }
 
 .admin-data-head {
@@ -26,7 +26,7 @@
 }
 
 .admin-data-sub {
-  color: #aaa;
+  color: var(--faint);
   font-size: 0.9rem;
   max-width: 70ch;
   margin: 0;
@@ -34,7 +34,7 @@
 
 .admin-btn {
   background: #ffd84d;
-  color: #111;
+  color: var(--on-primary);
   border: 0;
   border-radius: 999px;
   padding: 0.6rem 1.1rem;
@@ -58,10 +58,10 @@
 .admin-key-form input {
   min-height: 2.75rem;
   padding: 0 0.9rem;
-  border: 1px solid #444;
+  border: 1px solid var(--line);
   border-radius: 0.5rem;
-  background: #161616;
-  color: #eee;
+  background: var(--surface);
+  color: var(--ink);
   font: inherit;
 }
 
@@ -70,7 +70,7 @@
 }
 
 .admin-muted {
-  color: #999;
+  color: var(--faint);
   font-size: 0.85rem;
 }
 
@@ -82,7 +82,7 @@
 }
 
 .admin-stat {
-  background: #1c1f2a;
+  background: var(--surface);
   border: 1px solid transparent;
   border-radius: 12px;
   padding: 0.85rem 1rem;
@@ -96,16 +96,16 @@
 }
 
 .admin-stat:hover {
-  border-color: #3a4158;
+  border-color: var(--line);
 }
 
 .admin-stat.active {
   border-color: #ffd84d;
-  background: #22263a;
+  background: var(--surface);
 }
 
 .admin-stat-label {
-  color: #aaa;
+  color: var(--faint);
   font-size: 0.8rem;
 }
 
@@ -115,7 +115,7 @@
 
 .admin-stat strong small {
   font-size: 0.75rem;
-  color: #aaa;
+  color: var(--faint);
   font-weight: 500;
   margin-left: 0.25rem;
 }
@@ -129,14 +129,14 @@
 }
 
 .admin-hint {
-  color: #888;
+  color: var(--faint);
   font-size: 0.8rem;
   margin: 0 0 1.25rem;
 }
 
 .admin-run,
 .admin-perchain {
-  background: #161925;
+  background: var(--surface);
   border-radius: 12px;
   padding: 1rem 1.1rem;
   margin-bottom: 1.5rem;
@@ -155,15 +155,15 @@
 }
 
 .admin-run-grid span {
-  color: #999;
+  color: var(--faint);
   font-size: 0.78rem;
 }
 
 .admin-link-btn {
   margin-top: 0.85rem;
   background: none;
-  border: 1px solid #444;
-  color: #ddd;
+  border: 1px solid var(--line);
+  color: var(--ink);
   border-radius: 8px;
   padding: 0.4rem 0.75rem;
   cursor: pointer;
@@ -176,7 +176,7 @@
   font-size: 0.85rem;
   max-height: 320px;
   overflow: auto;
-  color: #ccc;
+  color: var(--muted);
 }
 
 .admin-changes .old {
@@ -194,7 +194,7 @@
 }
 
 .admin-chain-card {
-  background: #1c1f2a;
+  background: var(--surface);
   border-radius: 10px;
   padding: 0.65rem 0.8rem;
   display: flex;
@@ -208,7 +208,7 @@
 }
 
 .admin-chain-card .warn {
-  color: #ffd84d;
+  color: var(--warn);
 }
 
 .admin-chain-card .bad {
@@ -225,9 +225,9 @@
 
 .admin-toolbar input[type="search"],
 .admin-toolbar select {
-  background: #1c1f2a;
-  color: #eee;
-  border: 1px solid #333;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0.55rem 0.75rem;
   font-size: 0.9rem;
@@ -243,13 +243,13 @@
   align-items: center;
   gap: 0.4rem;
   font-size: 0.9rem;
-  color: #ccc;
+  color: var(--muted);
 }
 
 .admin-table-wrap {
   overflow: auto;
   border-radius: 12px;
-  border: 1px solid #262a38;
+  border: 1px solid var(--line);
 }
 
 .admin-table {
@@ -261,7 +261,7 @@
 .admin-table th,
 .admin-table td {
   padding: 0.5rem 0.6rem;
-  border-bottom: 1px solid #262a38;
+  border-bottom: 1px solid var(--line);
   text-align: left;
   vertical-align: top;
   white-space: nowrap;
@@ -270,8 +270,8 @@
 .admin-table th {
   position: sticky;
   top: 0;
-  background: #1c1f2a;
-  color: #bbb;
+  background: var(--surface);
+  color: var(--faint);
   font-weight: 600;
   z-index: 1;
 }
@@ -283,7 +283,7 @@
 .admin-table td small,
 .admin-mode {
   display: block;
-  color: #888;
+  color: var(--faint);
   font-size: 0.72rem;
   font-weight: 400;
 }
@@ -294,7 +294,7 @@
 }
 
 .cell-old {
-  color: #ffd84d;
+  color: var(--warn);
   font-weight: 600;
 }
 
@@ -309,7 +309,7 @@
 }
 
 .admin-date {
-  color: #aaa;
+  color: var(--faint);
   font-size: 0.8rem;
 }
 
@@ -330,32 +330,32 @@
   padding: 0.12rem 0.5rem;
   border-radius: 999px;
   font-size: 0.75rem;
-  background: #2a2e3d;
-  color: #ccc;
+  background: var(--surface);
+  color: var(--muted);
 }
 
 .status-ok {
-  background: #1f3d2a;
+  background: var(--surface);
   color: #8dffb0;
 }
 
 .status-partial {
-  background: #3d371f;
-  color: #ffd84d;
+  background: var(--surface);
+  color: var(--warn);
 }
 
 .status-unknown,
 .status-none {
-  background: #3d1f1f;
+  background: var(--surface);
   color: #ff8b8b;
 }
 
 .status-fail {
-  background: #4a1f1f;
-  color: #ffb3b3;
+  background: var(--surface);
+  color: var(--muted);
 }
 
 .status-chain {
-  background: #1f2e3d;
+  background: var(--surface);
   color: #9ecbff;
 }

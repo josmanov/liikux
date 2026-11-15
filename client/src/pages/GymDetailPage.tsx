@@ -21,6 +21,7 @@ import {
   Plus,
   Sparkles,
   Ticket,
+  TriangleAlert,
   X,
 } from "lucide-react";
 import {
@@ -37,7 +38,7 @@ import { offerPhrase } from "../data/offerText";
 import { getChainWebsite } from "../data/chainWebsites";
 import { useAppLocation } from "../context/LocationContext";
 import { fetchGeocode, type GeoHit } from "../data/geocode";
-import { pathGym, pathGyms } from "../i18n/lang";
+import { pathFeedback, pathGym, pathGyms } from "../i18n/lang";
 import LoadSpin from "../components/LoadSpin";
 import {
   readFavoriteSlugs,
@@ -48,6 +49,7 @@ import { useLang } from "../i18n/useLang";
 import { API } from "../data/apiBase";
 import { usePageMeta } from "../seo/usePageMeta";
 import "./GymDetailPage.css";
+import { MAP_STYLE_URL } from "../features/browse/utils/mapConstants";
 import { distanceKm } from "../features/browse/utils/distanceKm";
 import { cleanHoursValue } from "../features/gym-detail/utils/cleanHoursValue";
 import { makeGymPin, makeOriginPin } from "../features/gym-detail/utils/detailPins";
@@ -235,7 +237,7 @@ function GymDetailPage() {
 
     const map = new Map({
       container: mapRef.current,
-      style: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+      style: MAP_STYLE_URL,
       center: [gym.lng, gym.lat],
       zoom: 14,
       maxPitch: 0,
@@ -946,6 +948,10 @@ function GymDetailPage() {
                   <p className="gym-detail-muted">{t("noContacts")}</p>
                 )}
               </DetailAccordion>
+              <Link className="gym-detail-report" to={pathFeedback(lang, "error", gym.slug)}>
+                <TriangleAlert size={16} strokeWidth={2.3} aria-hidden="true" />
+                {t("reportGymError")}
+              </Link>
             </div>
           </div>
 

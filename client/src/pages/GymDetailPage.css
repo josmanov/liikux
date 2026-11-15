@@ -1,12 +1,15 @@
 .gym-detail {
   --gd-border: var(--color-border);
-  --gd-price: #c4a574;
-  --gd-promo-bg: color-mix(in srgb, #854f0b 22%, transparent);
-  --gd-promo-fg: #e8c48a;
+  --gd-price: var(--ink);
+  --gd-promo-bg: var(--warn-soft);
+  --gd-promo-fg: var(--warn);
   --gd-side: var(--page-side, 3rem);
   --gd-sticky-top: var(--header-h, 5.75rem);
   --gd-top: 1rem;
-  --gd-acc-icon: #facc15;
+  --gd-acc-icon: var(--muted);
+  max-width: calc(var(--max-width) + 2 * var(--gd-side));
+  margin: 0 auto;
+  width: 100%;
   padding: 16px var(--gd-side) 1.5rem;
   box-sizing: border-box;
 }
@@ -73,7 +76,7 @@
 }
 
 .gym-detail-back:hover {
-  color: var(--color-brand);
+  color: var(--ink);
 }
 
 .gym-detail-top-mobile {
@@ -169,7 +172,7 @@
   padding: 0;
   border: 0;
   border-radius: 10px;
-  background: #121c30;
+  background: var(--surface);
   text-decoration: none;
   box-sizing: border-box;
 }
@@ -205,8 +208,8 @@
   padding: 0;
   border: 0;
   border-radius: 10px;
-  background: #121c30;
-  color: #e8e8ef;
+  background: var(--surface);
+  color: var(--ink);
   cursor: pointer;
   box-sizing: border-box;
 }
@@ -247,9 +250,9 @@
   margin-top: 0;
   padding: 0.6rem 0.85rem;
   border: none;
-  border-radius: 10px;
-  background: var(--color-brand);
-  color: #111;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--on-primary);
   font-size: 0.95rem;
   font-weight: 700;
   text-decoration: none;
@@ -339,8 +342,8 @@
 }
 
 .gym-detail-cta:hover {
-  color: #111;
-  opacity: 0.94;
+  color: var(--on-primary);
+  background: var(--primary-hover);
 }
 
 .gym-detail-logo-sq.logo-easyfit {
@@ -363,7 +366,7 @@
 }
 
 .gym-detail-logo-sq.logo-fressi {
-  background: #2a2a2a;
+  background: var(--surface);
 }
 
 .gym-detail-logo-sq.logo-fressi img {
@@ -436,7 +439,7 @@
 }
 
 .gym-detail-logo-sq.logo-mm {
-  background: #000;
+  background: var(--surface);
   padding: 0.45rem 0.55rem;
 }
 
@@ -447,7 +450,7 @@
 }
 
 .gym-detail-logo-sq.logo-esport {
-  background: #000;
+  background: var(--surface);
   padding: 0.45rem 0.55rem;
 }
 
@@ -499,7 +502,7 @@
 .gym-detail-address-line svg {
   flex-shrink: 0;
   margin-top: 0.12rem;
-  color: var(--color-brand);
+  color: var(--brand-strong);
 }
 
 .gym-detail-badges {
@@ -808,7 +811,7 @@
 }
 
 .gym-detail-chain-list a:hover {
-  color: var(--color-brand);
+  color: var(--ink);
 }
 
 .gym-detail-chain-list em {
@@ -848,7 +851,7 @@
 }
 
 .gym-detail-contact-row a:hover {
-  color: var(--color-brand);
+  color: var(--ink);
 }
 
 .gym-detail-copy {
@@ -884,7 +887,7 @@
   height: 100%;
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--line-strong);
   background: #e8e8e8;
 }
 
@@ -904,18 +907,18 @@
   width: min(22rem, calc(100% - 4.4rem));
   padding: 0.28rem 0.55rem;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: rgba(8, 12, 22, 0.84);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: 0 6px 16px rgba(20, 22, 26, 0.02);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-sizing: border-box;
-  color: #fff;
+  color: var(--ink);
 }
 
 .gym-detail-map-float svg {
   flex-shrink: 0;
-  color: var(--color-brand);
+  color: var(--ink);
 }
 
 .gym-detail-from {
@@ -924,7 +927,7 @@
   height: 1.65rem;
   border: 0;
   background: transparent;
-  color: #fff;
+  color: var(--ink);
   font: inherit;
   font-size: 0.82rem;
   font-weight: 600;
@@ -932,7 +935,7 @@
 }
 
 .gym-detail-from::placeholder {
-  color: rgba(255, 255, 255, 0.55);
+  color: var(--muted);
   font-weight: 500;
 }
 
@@ -945,16 +948,16 @@
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #fff;
+  color: var(--ink);
   cursor: pointer;
 }
 
 .gym-detail-locate:hover {
-  color: var(--color-brand);
+  color: var(--ink);
 }
 
 .gym-detail-crumb-sep {
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--faint);
   font-weight: 700;
 }
 
@@ -965,7 +968,7 @@
   white-space: nowrap;
   font-size: 0.78rem;
   font-weight: 650;
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--ink);
 }
 
 .gym-detail-route-meta {
@@ -976,10 +979,10 @@
   margin: 0;
   padding: 0.28rem 0.55rem;
   border-radius: 8px;
-  background: rgba(15, 23, 42, 0.78);
+  background: var(--surface);
   font-size: 0.78rem;
   font-weight: 600;
-  color: #fff;
+  color: var(--ink);
   pointer-events: none;
 }
 
@@ -1015,9 +1018,9 @@
   max-width: 11rem;
   padding: 0.22rem 0.5rem;
   border-radius: 8px;
-  border: 1.5px solid rgba(255, 255, 255, 0.35);
-  background: rgba(8, 12, 22, 0.88);
-  color: #fff;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
   font-family: var(--font-body);
   font-size: 0.68rem;
   font-weight: 600;
@@ -1027,7 +1030,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   pointer-events: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 12px rgba(20, 22, 26, 0.03);
 }
 
 .gym-detail-pin-address::after {
@@ -1037,7 +1040,7 @@
   top: 100%;
   transform: translateX(-50%);
   border: 5px solid transparent;
-  border-top-color: rgba(8, 12, 22, 0.88);
+  border-top-color: var(--line);
 }
 
 .gym-detail-origin-pin {
@@ -1057,11 +1060,11 @@
   z-index: 3;
   max-width: 11rem;
   padding: 0.22rem 0.5rem;
-  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  border: 1.5px solid var(--line);
   border-radius: 8px;
-  background: rgba(8, 12, 22, 0.88);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-  color: #fff;
+  background: var(--surface);
+  box-shadow: 0 4px 12px rgba(20, 22, 26, 0.03);
+  color: var(--ink);
   font-family: var(--font-body);
   font-size: 0.68rem;
   font-weight: 600;
@@ -1089,7 +1092,7 @@
   top: 100%;
   transform: translateX(-50%);
   border: 5px solid transparent;
-  border-top-color: rgba(8, 12, 22, 0.88);
+  border-top-color: var(--line);
 }
 
 .gym-detail-origin-pin .gym-origin-pin-core {
@@ -1101,8 +1104,8 @@
   margin: -7px 0 0 -7px;
   border-radius: 50%;
   background: #2563eb;
-  border: 2.5px solid #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  border: 2.5px solid var(--line-strong);
+  box-shadow: 0 1px 3px rgba(20, 22, 26, 0.03);
   z-index: 2;
 }
 
@@ -1158,23 +1161,23 @@
   width: 2.25rem;
   height: 2.25rem;
   padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 1px solid var(--line);
   border-radius: 10px;
-  background: rgba(8, 12, 22, 0.84);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
+  background: var(--surface);
+  box-shadow: 0 6px 16px rgba(20, 22, 26, 0.02);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   cursor: pointer;
-  color: #fff;
+  color: var(--ink);
 }
 
 .gym-detail-map-chip svg {
-  color: var(--color-brand);
+  color: var(--ink);
 }
 
 .gym-detail-map-ctrl:hover {
   border-color: var(--color-brand);
-  background: rgba(8, 12, 22, 0.92);
+  background: var(--surface);
 }
 
 .gym-detail-sheet-root {
@@ -1186,7 +1189,7 @@
   justify-content: center;
   padding: calc(var(--header-h, 3.9rem) + 0.65rem) 0.85rem 0.85rem;
   box-sizing: border-box;
-  background: rgba(0, 0, 0, 0.34);
+  background: rgba(20, 22, 26, 0.12);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   overscroll-behavior: none;
@@ -1198,7 +1201,7 @@
   display: flex;
   flex-direction: column;
   border-radius: 20px;
-  background: rgba(22, 23, 30, 0.94);
+  background: var(--surface);
   border: 0;
   box-shadow: var(--popup-shadow);
   -webkit-backdrop-filter: blur(22px);
@@ -1221,7 +1224,7 @@
   font-family: var(--font-display);
   font-size: 1.35rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--ink);
 }
 
 .gym-detail-sheet-close {
@@ -1232,8 +1235,8 @@
   padding: 0;
   border: 0;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #ddd;
+  background: var(--surface-2);
+  color: var(--ink);
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -1262,7 +1265,7 @@
 
 .gym-detail-sheet-field svg {
   flex-shrink: 0;
-  color: var(--color-brand);
+  color: var(--ink);
 }
 
 .gym-detail-sheet-field input {
@@ -1270,7 +1273,7 @@
   min-width: 0;
   border: 0;
   background: transparent;
-  color: #fff;
+  color: var(--ink);
   font: inherit;
   font-size: 0.95rem;
   font-weight: 600;
@@ -1293,7 +1296,7 @@
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: #fff;
+  color: var(--ink);
   font: inherit;
   font-size: 0.92rem;
   font-weight: 600;
@@ -1302,7 +1305,7 @@
 }
 
 .gym-detail-sheet-hits button:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--surface-2);
 }
 
 .gym-detail-sheet-hint {
@@ -1369,7 +1372,7 @@
     padding: 0;
     border: 0;
     background: transparent;
-    color: #facc15;
+    color: var(--ink);
     font: inherit;
     font-size: 0.82rem;
     font-weight: 700;
@@ -1482,7 +1485,7 @@
     width: 100%;
     height: 100%;
     border-radius: 16px;
-    border: 1px solid #25324f;
+    border: 1px solid var(--line);
   }
 
   .gym-detail-map-side {
@@ -1513,4 +1516,25 @@
   .gym-detail-route-meta {
     display: none;
   }
+}
+
+/* The outline Google Maps icon is drawn white (made for the old dark theme): show it dark. */
+.gym-detail-maps-btn .is-line {
+  filter: invert(1);
+}
+
+/* "Something wrong here? Let us know" link under the details. */
+.gym-detail-report {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.gym-detail-report:hover {
+  color: var(--brand);
 }
