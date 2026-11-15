@@ -1,29 +1,33 @@
-/* Home page. Colours/spacing come from styles/tokens.css. */
+/*
+ * Home page. Colours/spacing come from styles/tokens.css.
+ *
+ * Design rules used here (keep them when adding sections):
+ *  - every section sits in .home-wrap, so it lines up with the header
+ *  - the same space between sections (--section-gap)
+ *  - panels are filled surfaces with a hairline border; no heavy outlines
+ *  - yellow is only for the main action and key numbers
+ */
 
 .home {
+  --section-gap: clamp(3.5rem, 6vw, 5.5rem);
   background: var(--bg);
-  padding-bottom: 4rem;
+  padding-bottom: var(--section-gap);
 }
 
-/* Same width + side padding as the header, so the edges line up. */
 .home-wrap {
-  max-width: calc(var(--max-width) + 2 * var(--page-side));
-  margin: 0 auto;
-  padding: 0 var(--page-side);
+  padding: 0 var(--gutter);
 }
 
-/* ---------- 1. Hero (centered) ---------- */
+/* ---------- 1. Hero ---------- */
 
 .home-hero {
-  position: relative;
-  overflow: hidden;
-  padding: clamp(3rem, 8vw, 6rem) 0 clamp(2.5rem, 6vw, 4.5rem);
+  padding: clamp(3.5rem, 9vw, 7rem) 0 clamp(3rem, 6vw, 4.5rem);
+  /* a calm lift from the page colour to the panel colour, top to bottom */
+  background: linear-gradient(180deg, var(--bg) 0%, var(--surface) 100%);
   border-bottom: 1px solid var(--line);
 }
 
 .home-hero-inner {
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -31,31 +35,28 @@
 }
 
 .home-title {
-  max-width: 16ch;
-  font-size: clamp(2.4rem, 1.4rem + 3.4vw, 4.2rem);
-  line-height: 1.03;
-  letter-spacing: -0.04em;
+  max-width: 15ch;
+  font-size: clamp(2.6rem, 1.4rem + 4vw, 5rem);
+  line-height: 1;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+.home-title-accent {
+  color: var(--brand);
 }
 
 .home-lead {
-  max-width: 36rem;
-  margin-top: 1.1rem;
+  max-width: 38rem;
+  margin-top: 1.4rem;
   color: var(--muted);
-  font-size: var(--text-lg);
+  font-size: clamp(1.05rem, 0.95rem + 0.4vw, 1.3rem);
   line-height: 1.55;
+  text-wrap: balance;
 }
 
 .home-hero-inner .home-search {
-  margin-top: 2rem;
-}
-
-.home-or {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 1.1rem;
-  color: var(--muted);
-  font-size: var(--text-sm);
+  margin-top: 2.4rem;
 }
 
 .home-quick {
@@ -63,66 +64,93 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: 0.5rem;
-  margin-top: 1.4rem;
+  margin-top: 1.25rem;
 }
 
 .home-quick .chip svg {
   color: var(--brand);
 }
 
-/* ---------- 2. Numbers (each tile is a link to browse) ---------- */
+.home-browse-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 1.5rem;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.home-browse-all:hover {
+  color: var(--ink);
+}
+
+.home-browse-all svg {
+  transition: transform 0.15s ease;
+}
+
+.home-browse-all:hover svg {
+  transform: translateX(3px);
+}
+
+/* ---------- 2. Numbers: one strip, four cells (each opens browse) ---------- */
 
 .home-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-  margin-top: clamp(2rem, 4vw, 3rem);
+  margin-top: var(--section-gap);
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
 }
 
 .home-stat {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  padding: 1.25rem 1.4rem;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
+  gap: 0.45rem;
+  padding: 1.6rem 1.75rem;
   color: var(--ink);
   text-decoration: none;
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  transition: background-color 0.15s ease;
+}
+
+.home-stat + .home-stat {
+  border-left: 1px solid var(--line);
 }
 
 .home-stat:hover {
-  border-color: var(--brand);
-  transform: translateY(-2px);
+  background: var(--surface-2);
 }
 
 .home-stat-icon {
   position: absolute;
-  top: 1.2rem;
-  right: 1.2rem;
+  top: 1.5rem;
+  right: 1.5rem;
   color: var(--faint);
 }
 
 .home-stat strong {
   color: var(--brand);
-  font-size: clamp(1.7rem, 1.2rem + 1.3vw, 2.4rem);
+  font-size: clamp(1.9rem, 1.3rem + 1.6vw, 2.75rem);
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.035em;
   line-height: 1;
 }
 
 .home-stat span {
   color: var(--muted);
   font-size: var(--text-sm);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 /* ---------- Sections ---------- */
 
 .home-section {
-  padding-top: clamp(3rem, 6vw, 5rem);
+  padding-top: var(--section-gap);
 }
 
 .home-section-head {
@@ -134,13 +162,15 @@
 }
 
 .home-h2 {
-  font-size: clamp(1.4rem, 1.1rem + 0.8vw, 1.85rem);
-  line-height: 1.2;
+  font-size: clamp(1.5rem, 1.2rem + 0.9vw, 2.1rem);
+  line-height: 1.15;
+  letter-spacing: -0.03em;
 }
 
 .home-sub {
-  margin-top: 0.35rem;
+  margin-top: 0.4rem;
   color: var(--muted);
+  font-size: var(--text-md);
 }
 
 /* 3. Steps */
@@ -149,44 +179,48 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
-  margin: 1.5rem 0 0;
+  margin: 1.75rem 0 0;
   padding: 0;
   list-style: none;
 }
 
 .home-step {
   position: relative;
-  padding: 1.5rem;
+  padding: 1.75rem;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--outline);
   border-radius: var(--radius-lg);
 }
 
 .home-step-num {
-  display: block;
+  display: inline-grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: var(--brand-soft);
   color: var(--brand);
   font-size: var(--text-sm);
   font-weight: 800;
-  letter-spacing: 0.08em;
 }
 
 .home-step-icon {
   position: absolute;
-  top: 1.4rem;
-  right: 1.4rem;
+  top: 1.9rem;
+  right: 1.75rem;
   color: var(--faint);
 }
 
 .home-step h3 {
-  margin-top: 0.9rem;
+  margin-top: 1.1rem;
   font-size: var(--text-lg);
   letter-spacing: -0.01em;
 }
 
 .home-step p {
-  margin-top: 0.4rem;
+  margin-top: 0.45rem;
   color: var(--muted);
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 /* 4. Chains: see features/home/chain-tiles.css */
@@ -195,27 +229,28 @@
 
 .home-cities {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.5rem;
-  margin-top: 1.5rem;
+  grid-template-columns: repeat(6, 1fr); /* 12 cities = 2 full rows */
+  gap: 0.6rem;
+  margin-top: 1.75rem;
 }
 
 .city-link {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.95rem 1.1rem;
+  padding: 1rem 1.15rem;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--outline);
   border-radius: var(--radius-md);
   color: var(--ink);
   text-decoration: none;
-  transition: border-color 0.15s ease;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 .city-link:hover {
-  border-color: var(--brand);
+  border-color: var(--line-strong);
+  background: var(--surface-2);
 }
 
 .city-link-name {
@@ -235,7 +270,7 @@
   justify-content: space-between;
   gap: 1.5rem;
   flex-wrap: wrap;
-  padding: clamp(1.5rem, 4vw, 2.5rem);
+  padding: clamp(1.75rem, 4vw, 3rem);
   border-radius: var(--radius-lg);
   background: var(--brand);
 }
@@ -245,28 +280,49 @@
 }
 
 .home-cta .home-sub {
-  color: rgba(20, 19, 15, 0.75);
+  color: rgba(20, 19, 15, 0.72);
 }
 
 /* ---------- Responsive ---------- */
 
-@media (max-width: 1080px) {
-  .home-stats,
+@media (max-width: 1280px) {
   .home-cities {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
-@media (max-width: 680px) {
-  .home-steps {
-    grid-template-columns: 1fr;
+@media (max-width: 900px) {
+  .home-cities {
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .home-stats {
-    gap: 0.6rem;
+    grid-template-columns: repeat(2, 1fr);
   }
 
+  .home-stat:nth-child(3) {
+    border-left: 0;
+  }
+
+  .home-stat:nth-child(n + 3) {
+    border-top: 1px solid var(--line);
+  }
+
+  .home-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
   .home-stat {
-    padding: 1rem 1.1rem;
+    padding: 1.15rem 1.1rem;
+  }
+
+  .home-stat-icon {
+    display: none;
+  }
+
+  .home-cities {
+    grid-template-columns: repeat(2, 1fr);
   }
 }

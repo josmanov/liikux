@@ -4,10 +4,10 @@
   align-items: center;
   gap: 0.4rem;
   height: 36px;
-  padding: 0 0.85rem;
-  border: 1px solid var(--line-strong);
+  padding: 0 0.75rem;
+  border: 1px solid transparent;
   border-radius: var(--radius-pill);
-  color: var(--ink);
+  color: var(--muted);
   font-size: 0.82rem;
   font-weight: 650;
   text-decoration: none;
@@ -16,11 +16,18 @@
 }
 
 .header-fb-btn svg {
-  color: var(--brand);
+  color: var(--faint);
+  transition: color 0.15s ease;
 }
 
+/* Quiet by default (they are helpers, not main navigation); clear on hover. */
 .header-fb-btn:hover {
-  border-color: var(--brand);
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.header-fb-btn:hover svg {
+  color: var(--brand);
 }
 
 /* Medium screens: icon only. */

@@ -1,5 +1,6 @@
 import type { Chain, Gym } from "./types";
 import { API } from "./apiBase";
+import { DISABLED_CHAIN_SLUGS } from "../features/browse/utils/mapConstants";
 const CLIENT_TTL_MS = 2 * 60 * 1000;
 
 type CacheEntry<T> = {
@@ -62,6 +63,12 @@ export function fetchChains(): Promise<Chain[]> {
 
   const promise = getJson(`${API}/api/chains`)
     .then((data) => (Array.isArray(data) ? (data as Chain[]) : []))
+    // Hide chains that are switched off or have no gyms yet (see DISABLED_CHAIN_SLUGS).
+    .then((chains) =>
+      chains.filter(
+        (c) => !DISABLED_CHAIN_SLUGS.includes(c.slug) && (c.gymCount ?? 1) > 0,
+      ),
+    )
     .catch(() => {
       chainsCache = null;
       return [] as Chain[];

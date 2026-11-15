@@ -58,7 +58,7 @@
 .admin-key-form input {
   min-height: 2.75rem;
   padding: 0 0.9rem;
-  border: 1px solid var(--line);
+  border: 1px solid var(--outline);
   border-radius: 0.5rem;
   background: var(--surface);
   color: var(--ink);
@@ -162,7 +162,7 @@
 .admin-link-btn {
   margin-top: 0.85rem;
   background: none;
-  border: 1px solid var(--line);
+  border: 1px solid var(--outline);
   color: var(--ink);
   border-radius: 8px;
   padding: 0.4rem 0.75rem;
@@ -227,7 +227,7 @@
 .admin-toolbar select {
   background: var(--surface);
   color: var(--ink);
-  border: 1px solid var(--line);
+  border: 1px solid var(--outline);
   border-radius: 8px;
   padding: 0.55rem 0.75rem;
   font-size: 0.9rem;
@@ -249,7 +249,7 @@
 .admin-table-wrap {
   overflow: auto;
   border-radius: 12px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--outline);
 }
 
 .admin-table {

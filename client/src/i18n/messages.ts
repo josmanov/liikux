@@ -179,7 +179,9 @@ const fi = {
   statsDistance: "Etäisyys",
   directions: "Reitti",
   // --- Home page (2026-11 redesign) ---
-  homeTitle: "Löydä sali, joka sopii arkeesi.",
+  homeTitle: "Löydä sali, joka sopii",
+  homeTitleAccent: "arkeesi.",
+  homeBrowseAll: "tai selaa kaikkia kuntosaleja",
   homeLead: "Vertaa hintoja, ilmaisia kokeiluja ja aukioloaikoja {gyms} kuntosalilla – kartalla ja rinnakkain.",
   homeSearchBtn: "Etsi",
   homeStatGyms: "kuntosalia · {cities} kaupungissa",
@@ -413,7 +415,9 @@ const en: typeof fi = {
   statsDistance: "Distance",
   directions: "Directions",
   // --- Home page (2026-11 redesign) ---
-  homeTitle: "Find a gym that fits your life.",
+  homeTitle: "Find a gym that fits",
+  homeTitleAccent: "your life.",
+  homeBrowseAll: "or browse all gyms",
   homeLead: "Compare prices, free trials and opening hours across {gyms} gyms – on a map and side by side.",
   homeSearchBtn: "Search",
   homeStatGyms: "gyms · in {cities} cities",

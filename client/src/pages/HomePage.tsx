@@ -120,16 +120,11 @@ function HomePage() {
       {/* 1. Hero */}
       <section className="home-hero">
         <div className="home-wrap home-hero-inner">
-          <h1 className="home-title">{t("homeTitle")}</h1>
+          <h1 className="home-title">
+            {t("homeTitle")} <span className="home-title-accent">{t("homeTitleAccent")}</span>
+          </h1>
           <p className="home-lead">{t("homeLead", { gyms: gymsText })}</p>
           <HomeSearch />
-          <div className="home-or">
-            <span>{t("heroOr")}</span>
-            <Link className="btn btn-ghost" to={browsePath} state={{ focusOrigin: true }}>
-              {t("browseGyms")}
-              <ArrowRight size={16} strokeWidth={2.4} aria-hidden="true" />
-            </Link>
-          </div>
           <div className="home-quick">
             {QUICK_CITIES.map((slug) => {
               const city = CITY_CENTERS.find((c) => c.slug === slug)!;
@@ -141,6 +136,10 @@ function HomePage() {
               );
             })}
           </div>
+          <Link className="home-browse-all" to={browsePath} state={{ focusOrigin: true }}>
+            {t("homeBrowseAll")}
+            <ArrowRight size={15} strokeWidth={2.4} aria-hidden="true" />
+          </Link>
         </div>
       </section>
 
@@ -176,19 +175,19 @@ function HomePage() {
           <h2 className="home-h2">{t("homeHowTitle")}</h2>
           <ol className="home-steps">
             <li className="home-step">
-              <span className="home-step-num">01</span>
+              <span className="home-step-num">1</span>
               <MapPin className="home-step-icon" size={22} strokeWidth={2.2} aria-hidden="true" />
               <h3>{t("homeStep1Title")}</h3>
               <p>{t("homeStep1Text")}</p>
             </li>
             <li className="home-step">
-              <span className="home-step-num">02</span>
+              <span className="home-step-num">2</span>
               <Scale className="home-step-icon" size={22} strokeWidth={2.2} aria-hidden="true" />
               <h3>{t("homeStep2Title")}</h3>
               <p>{t("homeStep2Text")}</p>
             </li>
             <li className="home-step">
-              <span className="home-step-num">03</span>
+              <span className="home-step-num">3</span>
               <Heart className="home-step-icon" size={22} strokeWidth={2.2} aria-hidden="true" />
               <h3>{t("homeStep3Title")}</h3>
               <p>{t("homeStep3Text")}</p>

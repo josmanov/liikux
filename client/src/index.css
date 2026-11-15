@@ -19,6 +19,8 @@
 }
 
 html {
+  /* Always reserve the scrollbar space, so the header does not shift between pages. */
+  scrollbar-gutter: stable;
   font-size: 90%; /* existing layouts are sized for this; revisit in the Phase 2 rebuild */
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -126,7 +128,7 @@ button {
   width: 4.5rem;
   height: 4.5rem;
   border-radius: 50%;
-  border: 5px solid var(--line);
+  border: 1px solid var(--outline);
   border-top-color: var(--ink);
   animation: load-spin 0.7s linear infinite;
 }

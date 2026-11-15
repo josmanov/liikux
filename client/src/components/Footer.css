@@ -7,9 +7,7 @@
 }
 
 .footer-inner {
-  max-width: calc(var(--max-width) + 2 * var(--page-side));
-  margin: 0 auto;
-  padding: 2.5rem var(--page-side) 2rem;
+  padding: 2.5rem var(--gutter) 2rem;
   display: grid;
   grid-template-columns: 1.6fr 1fr 1fr 1fr;
   gap: 2rem;
@@ -66,9 +64,7 @@
 }
 
 .footer-bottom {
-  max-width: calc(var(--max-width) + 2 * var(--page-side));
-  margin: 0 auto;
-  padding: 1rem var(--page-side) 1.5rem;
+  padding: 1rem var(--gutter) 1.5rem;
   border-top: 1px solid var(--line);
   color: var(--faint);
   font-size: var(--text-xs);

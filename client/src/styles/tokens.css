@@ -15,8 +15,10 @@
   --surface: #15171c;       /* cards, panels, header */
   --surface-2: #1c1f26;     /* inputs, chips, hover */
   --surface-3: #262a33;     /* pressed / selected */
-  --line: #262a32;          /* borders, dividers */
-  --line-strong: #343944;
+  /* Borders are hairlines. Boxes are separated by their fill colour, not by loud outlines. */
+  --line: rgba(255, 255, 255, 0.07);        /* dividers between rows/sections */
+  --line-strong: rgba(255, 255, 255, 0.16); /* hover / emphasised border */
+  --outline: rgba(255, 255, 255, 0.1);      /* border of boxes: cards, buttons, inputs, popups */
 
   /* ---- Text ---- */
   --ink: #f3f2ee;           /* main text */
@@ -69,7 +71,10 @@
 
   /* ---- Layout ---- */
   --header-h: 64px;
-  --max-width: 1400px;     /* content width; the header lines up with it */
+  --max-width: 1600px;     /* widest the content gets; header and every page share it */
+  /* Left/right space of every page AND the header: side padding on small
+     screens, centred 1600px column on big ones. Use: padding-inline: var(--gutter) */
+  --gutter: max(var(--page-side), calc((100% - var(--max-width)) / 2));
   --page-side: clamp(1rem, 3vw, 2.5rem);
   --page-side-mobile: 1rem;
 

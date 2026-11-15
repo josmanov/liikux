@@ -2,7 +2,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--color-border);
+  border: 1px solid var(--outline);
   border-radius: 9999px;
   background-color: var(--color-surface);
   padding: 0.625rem 1.5rem;

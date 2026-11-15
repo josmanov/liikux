@@ -68,7 +68,7 @@
 .legal-table-wrap {
   margin-top: 1rem;
   overflow-x: auto;
-  border: 1px solid var(--line);
+  border: 1px solid var(--outline);
   border-radius: var(--radius-md);
 }
 

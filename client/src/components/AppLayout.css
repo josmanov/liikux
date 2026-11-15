@@ -26,10 +26,3 @@
   flex-direction: column;
   min-height: 0;
 }
-
-/* Browse is a full-screen app view (list + map edge to edge), so its header
-   uses the full width too instead of lining up with the 1400px content. */
-.layout.is-browse .header {
-  padding-left: var(--page-side);
-  padding-right: var(--page-side);
-}

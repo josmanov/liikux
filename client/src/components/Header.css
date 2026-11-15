@@ -4,8 +4,8 @@
     justify-content: space-between;
     gap: 1rem;
     height: var(--header-h);
-    /* Same left/right edges as the page content (max-width + side padding). */
-    padding: 0 max(var(--page-side), calc((100% - var(--max-width)) / 2));
+    /* Same left/right edges as every page (see --gutter in tokens.css). */
+    padding: 0 var(--gutter);
     position: sticky;
     top: 0;
     z-index: 20;
