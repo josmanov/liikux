@@ -5,8 +5,6 @@ import Footer from "./Footer";
 import ScrollToTop from "./ScrollToTop";
 import CookieBanner from "./CookieBanner";
 import { LocationProvider } from "../context/LocationContext";
-import { ChainPopupProvider } from "../context/ChainPopupContext";
-import ChainPopup from "./ChainPopup";
 
 function AppLayout() {
   const { pathname } = useLocation();
@@ -15,7 +13,6 @@ function AppLayout() {
 
   return (
     <LocationProvider>
-      <ChainPopupProvider>
         <ScrollToTop />
         <div className={["layout", home ? "is-home" : "", browse ? "is-browse" : ""].filter(Boolean).join(" ")}>
           <Header />
@@ -24,9 +21,7 @@ function AppLayout() {
           </div>
           {browse ? null : <Footer />}
         </div>
-        <ChainPopup />
         <CookieBanner />
-      </ChainPopupProvider>
     </LocationProvider>
   );
 }

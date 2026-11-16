@@ -46,6 +46,19 @@ Note: the plan said "gyms as columns". I used gyms as rows, because with 10–20
 
 Removed: `components/FavoritesPopup.tsx`.
 
-## Not done yet (still Phase 3)
+## Chains page
 
-- Chains page (still a popup).
+"Ketjut" in the header, phone menu, footer and front page now opens a real page (`/fi/ketjut`, `/en/chains`) instead of a popup.
+
+- **One card per chain:** logo, number of gyms and cities, price range, 24/7 and free-trial tags, and the distance to the nearest gym from your address. All numbers are counted from the real gym list.
+- **Search and sort:** Eniten saleja, Halvin, Lähin ("Lähin" only shows when an address is set).
+- **Click a card:** opens that chain on the map (`/fi/ketju/:slug`, the browse page filtered to the chain). The header search does the same when you pick a chain.
+- The line under the grid says how many independent gyms there are, with a link to browse.
+
+| File | Job |
+| --- | --- |
+| `client/src/pages/ChainsPage.tsx` + `.css` | The page. |
+
+Removed: `components/ChainPopup.tsx` and `context/ChainPopupContext.tsx`. `ChainPopup.css` stays for now because the browse page still uses some of its styles.
+
+Phase 3 is complete: gym page, favorites + compare, chains.

@@ -1,0 +1,262 @@
+/*
+ * Chains page (ChainsPage.tsx): a grid of chain cards.
+ * The logo block on each card uses the shared per-chain rules in
+ * features/home/chain-tiles.css (.chain-tile-img).
+ */
+
+.chains {
+  padding: 1.5rem var(--gutter) 4rem;
+}
+
+/* ---------- Head ---------- */
+
+.chains-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem 2rem;
+  flex-wrap: wrap;
+}
+
+.chains-title {
+  font-size: clamp(1.7rem, 1.3rem + 1.3vw, 2.4rem);
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+}
+
+.chains-lead {
+  max-width: 40rem;
+  margin-top: 0.5rem;
+  color: var(--muted);
+}
+
+.chains-tools {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.chains-search {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 15rem;
+  height: 44px;
+  padding: 0 1rem;
+  background: var(--surface-2);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-pill);
+  color: var(--muted);
+  transition: border-color 0.15s ease;
+}
+
+.chains-search:focus-within {
+  border-color: var(--brand);
+}
+
+.chains-search input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.chains-search input:focus-visible {
+  box-shadow: none;
+}
+
+.chains-search input::placeholder {
+  color: var(--faint);
+}
+
+.chains-sort {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.chains-sort .chip {
+  cursor: pointer;
+}
+
+.chains-sort .chip.is-on {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+}
+
+/* ---------- Grid ---------- */
+
+.chains-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.75rem;
+}
+
+.chains-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-lg);
+  color: var(--ink);
+  text-decoration: none;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.chains-card:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-2px);
+}
+
+.chains-card .chain-tile-img {
+  aspect-ratio: 16 / 8;
+}
+
+.chains-card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 1.1rem 1.25rem 1.2rem;
+}
+
+.chains-card-name {
+  font-size: var(--text-lg);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.chains-card-count {
+  margin-top: 0.15rem;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.chains-card-price {
+  margin-top: 0.9rem;
+  color: var(--brand);
+  font-size: var(--text-lg);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.chains-card-price.is-unknown {
+  color: var(--faint);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.chains-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 1.75rem;
+  margin-top: auto;
+  padding-top: 0.9rem;
+}
+
+.chains-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.chains-card-tags em {
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--good-soft);
+  color: var(--good);
+  font-size: var(--text-xs);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.chains-card-near {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+/* ---------- Other states ---------- */
+
+.chains-loading {
+  display: grid;
+  place-items: center;
+  min-height: 40vh;
+}
+
+.chains-empty {
+  margin-top: 2.5rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.chains-others {
+  margin-top: 1.75rem;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.chains-others a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.chains-others a:hover {
+  color: var(--brand);
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1280px) {
+  .chains-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .chains-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .chains-tools,
+  .chains-search {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .chains-card-body {
+    padding: 0.85rem 0.9rem 0.95rem;
+  }
+
+  .chains-card-name {
+    font-size: var(--text-md);
+  }
+
+  .chains-card-price {
+    font-size: var(--text-md);
+  }
+
+  .chains-card-foot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+}

@@ -11,8 +11,7 @@ import { Search, X } from "lucide-react";
 import { type Chain, type Gym } from "../data/types";
 import { fetchGymsAndChains } from "../data/api";
 import { useAppLocation } from "../context/LocationContext";
-import { useChainPopup } from "../context/ChainPopupContext";
-import { pathGym } from "../i18n/lang";
+import { pathChain, pathGym } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import "./HeaderSearch.css";
 import LoadSpin from "./LoadSpin";
@@ -56,7 +55,6 @@ function distanceKm(
 function HeaderSearch() {
   const navigate = useNavigate();
   const location = useAppLocation();
-  const { openChain } = useChainPopup();
   const { lang, t } = useLang();
   const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -220,7 +218,7 @@ function HeaderSearch() {
 
   function goFirst() {
     if (chainHits[0]) {
-      openChain(chainHits[0].slug);
+      navigate(pathChain(lang, chainHits[0].slug));
       collapse();
       return;
     }
@@ -264,7 +262,7 @@ function HeaderSearch() {
                     type="button"
                     className="header-search-hit"
                     onClick={() => {
-                      openChain(chain.slug);
+                      navigate(pathChain(lang, chain.slug));
                       collapse();
                     }}
                   >

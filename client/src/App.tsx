@@ -16,6 +16,7 @@ const GymsPage = lazy(() => import("./pages/GymsPage"));
 const GymDetailPage = lazy(() => import("./pages/GymDetailPage"));
 const AdminDataPage = lazy(() => import("./pages/AdminDataPage"));
 const FeedbackPage = lazy(() => import("./pages/FeedbackPage"));
+const ChainsPage = lazy(() => import("./pages/ChainsPage"));
 const FavoritesPage = lazy(() => import("./pages/FavoritesPage"));
 
 function RouteFallback() {
@@ -125,6 +126,22 @@ function App() {
             element={
               <Suspense fallback={<RouteFallback />}>
                 <GymDetailPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/fi/ketjut"
+            element={
+              <Suspense fallback={<RouteFallback />}>
+                <ChainsPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/en/chains"
+            element={
+              <Suspense fallback={<RouteFallback />}>
+                <ChainsPage />
               </Suspense>
             }
           />

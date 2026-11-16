@@ -6,9 +6,8 @@ import HeaderSearch from "./HeaderSearch";
 import HeaderFeedbackLinks from "./HeaderFeedbackLinks";
 import { readFavoriteSlugs } from "../data/favorites";
 import { useAppLocation } from "../context/LocationContext";
-import { pathFavorites, pathFeedback, pathGyms, pathGymsFromLocation, pathHome, switchLangPath } from "../i18n/lang";
+import { pathChains, pathFavorites, pathFeedback, pathGyms, pathGymsFromLocation, pathHome, switchLangPath } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
-import { useChainPopup } from "../context/ChainPopupContext";
 import "flag-icons/css/flag-icons.min.css";
 import "./uiverse-playstore.css";
 import "./Header.css";
@@ -18,7 +17,8 @@ function Header() {
   const { lang, t } = useLang();
   const location = useLocation();
   const { label: locationLabel } = useAppLocation();
-  const { openChains } = useChainPopup();
+  const chainsPath = pathChains(lang);
+  const chainsOn = location.pathname === chainsPath;
   const nextLang = lang === "fi" ? "en" : "fi";
   const homePath = pathHome(lang);
   const gymsPath = pathGymsFromLocation(lang, locationLabel);
@@ -139,14 +139,10 @@ function Header() {
             <Dumbbell size={16} strokeWidth={2.2} />
             {t("navBrowse")}
           </Link>
-          <button
-            type="button"
-            className="header-nav-link"
-            onClick={() => openChains()}
-          >
+          <Link to={chainsPath} className={chainsOn ? "header-nav-link is-on" : "header-nav-link"}>
             <Store size={16} strokeWidth={2.2} />
             {t("chains")}
-          </button>
+          </Link>
         </nav>
       </div>
 
@@ -262,17 +258,14 @@ function Header() {
             <Dumbbell size={18} strokeWidth={2.2} />
             <span>{t("navBrowse")}</span>
           </Link>
-          <button
-            type="button"
-            className="header-menu-link"
-            onClick={() => {
-              setMenuOpen(false);
-              openChains();
-            }}
+          <Link
+            to={chainsPath}
+            className={chainsOn ? "header-menu-link is-on" : "header-menu-link"}
+            onClick={() => setMenuOpen(false)}
           >
             <Store size={18} strokeWidth={2.2} />
             <span>{t("chains")}</span>
-          </button>
+          </Link>
           <Link
             to={pathFeedback(lang, "suggest")}
             className="header-menu-link"

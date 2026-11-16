@@ -63,6 +63,11 @@ export function pathChain(lang: Lang, slug: string) {
   return lang === "en" ? `/en/chain/${slug}` : `/fi/ketju/${slug}`;
 }
 
+/** The page that lists every chain. */
+export function pathChains(lang: Lang) {
+  return lang === "en" ? "/en/chains" : "/fi/ketjut";
+}
+
 /** Favorites + compare page. Pass slugs to make a share link. */
 export function pathFavorites(lang: Lang, sharedSlugs?: string[]) {
   const base = lang === "en" ? "/en/favorites" : "/fi/suosikit";
@@ -101,6 +106,7 @@ export function switchLangPath(
   if (pathname === "/" || pathname === "/en") {
     path = pathHome(next);
   } else {
+    if (pathname === "/fi/ketjut" || pathname === "/en/chains") return pathChains(next);
     if (pathname === "/fi/suosikit" || pathname === "/en/favorites") return pathFavorites(next) + search;
     const gymsNested = pathname.match(
       /^\/(fi|en)\/(kuntosalit|gyms)\/([^/]+)\/([^/]+)$/,

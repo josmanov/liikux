@@ -8,9 +8,8 @@ import { type Chain, type Gym, resolveGymOffer } from "../data/types";
 import { fetchChains, fetchGyms, fetchHomeStats } from "../data/api";
 import { CITY_CENTERS } from "../data/citySlug";
 import { formatPriceFrom } from "../data/format";
-import { useChainPopup } from "../context/ChainPopupContext";
 import { useAppLocation } from "../context/LocationContext";
-import { pathChain, pathGyms, pathGymsCity, pathGymsFromLocation } from "../i18n/lang";
+import { pathChain, pathChains, pathGyms, pathGymsCity, pathGymsFromLocation } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import { usePageMeta } from "../seo/usePageMeta";
 
@@ -96,7 +95,6 @@ function useHomeData() {
 
 function HomePage() {
   const { lang, t } = useLang();
-  const { openChains } = useChainPopup();
   const { label } = useAppLocation();
   const { topChains, chainCount, cities, numbers, cityCount } = useHomeData();
   const gymsText = numbers.gyms > 0 ? String(numbers.gyms) : lang === "fi" ? "yli 1000" : "over 1,000";
@@ -213,10 +211,10 @@ function HomePage() {
               <p className="home-sub">{t("homeChainsLead")}</p>
             </div>
             {chainCount > 0 ? (
-              <button type="button" className="btn btn-ghost" onClick={() => openChains()}>
+              <Link className="btn btn-ghost" to={pathChains(lang)}>
                 {t("showAllChains", { count: chainCount })}
                 <ArrowRight size={16} strokeWidth={2.4} aria-hidden="true" />
-              </button>
+              </Link>
             ) : null}
           </div>
 

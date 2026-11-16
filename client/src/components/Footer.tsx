@@ -8,8 +8,8 @@ import {
   pathLegal,
   switchLangPath,
 } from "../i18n/lang";
+import { pathChains } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
-import { useChainPopup } from "../context/ChainPopupContext";
 import "./Footer.css";
 
 const FOOTER_CITIES: Array<[slug: string, name: string]> = [
@@ -28,7 +28,6 @@ const FOOTER_CITIES: Array<[slug: string, name: string]> = [
 function Footer() {
   const { lang, t } = useLang();
   const { pathname, search } = useLocation();
-  const { openChains } = useChainPopup();
   const nextLang = lang === "fi" ? "en" : "fi";
 
   return (
@@ -51,9 +50,7 @@ function Footer() {
         <nav className="footer-col" aria-label={t("footerFind")}>
           <h2 className="footer-h">{t("footerFind")}</h2>
           <Link to={pathGyms(lang)}>{t("footerAllGyms")}</Link>
-          <button type="button" className="footer-link-btn" onClick={() => openChains()}>
-            {t("chains")}
-          </button>
+          <Link to={pathChains(lang)}>{t("chains")}</Link>
           <Link to={`${pathGyms(lang)}?247=1`}>{t("footer247")}</Link>
           <Link to={`${pathGyms(lang)}?trial=1`}>{t("footerTrial")}</Link>
         </nav>
