@@ -1,0 +1,572 @@
+/*
+ * Map pins, shared by every map on the site (browse, gym page, favorites).
+ *
+ *   .gym-origin-pin   "you are here": blue dot + blue address label
+ *   .gym-pin          one gym: a square logo tile, a price label above it,
+ *                     and the street address when the pin is selected
+ *   .gym-cluster      several gyms too close together: kettlebell + count
+ *   .map-ctrls        the round + / − buttons on the map
+ *
+ * The pin's size follows the zoom level through --pin-scale (set in JS).
+ * --pin-live is that size including the hover / selected growth, so the
+ * price label can move and grow together with the tile under it.
+ *
+ * The pin elements are built in src/map/gymPin.ts.
+ */
+
+/* "You are here": a big blue dot with a thick white ring and pulsing waves,
+   plus a blue label with your address. Gym pins are white/yellow, so this never blends in. */
+.gym-origin-pin {
+  width: 44px;
+  height: 44px;
+  overflow: visible;
+  z-index: 15000;
+  pointer-events: none;
+}
+
+.gym-origin-pin-label {
+  z-index: 2;
+}
+
+.gym-origin-pin-label::before {
+  display: none;
+}
+
+.gym-origin-pin-core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  background: #3b82f6;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35), 0 4px 14px rgba(0, 0, 0, 0.6);
+  z-index: 2;
+}
+
+.gym-origin-pin-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  border: 2px solid rgba(96, 165, 250, 0.9);
+  background: transparent;
+  box-sizing: border-box;
+  animation: gym-origin-echo 2.8s ease-out infinite;
+  z-index: 1;
+}
+
+.gym-origin-pin-ring.is-late {
+  animation-delay: 1.4s;
+}
+
+@keyframes gym-origin-echo {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+
+.gym-pin {
+  width: 28px;
+  height: 28px;
+  overflow: visible;
+}
+
+.gym-pin.is-brand-pin {
+  width: 36px;
+  height: 36px;
+}
+
+.gym-pin.is-front {
+  z-index: 8;
+}
+
+.gym-pin-address,
+.gym-origin-pin-label {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 6;
+  max-width: 11rem;
+  padding: 0.22rem 0.5rem;
+  border: 1px solid var(--outline);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: 0 4px 12px rgba(20, 22, 26, 0.03);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.gym-pin-address {
+  display: none;
+  bottom: calc(100% + 2px);
+}
+
+.gym-origin-pin-label {
+  bottom: calc(50% + 17px);
+  max-width: 14rem;
+  padding: 0.3rem 0.65rem;
+  border: 2px solid #fff;
+  background: #2563eb;
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
+}
+
+.gym-origin-pin-label::after {
+  border-top-color: #fff !important;
+}
+
+.gym-pin-address::after,
+.gym-origin-pin-label::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--line);
+}
+
+.gym-pin:has(.gym-pin-hit.is-selected) .gym-pin-address {
+  display: block;
+}
+
+.gym-pin:has(.gym-pin-hit.is-selected):has(.gym-pin-price) .gym-pin-address::after {
+  display: none;
+}
+
+.gym-pin,
+.gym-pin-hit {
+  cursor: pointer;
+}
+
+.gym-pin-fav {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  place-items: center;
+  border-radius: inherit;
+  background: rgba(20, 22, 26, 0.08);
+  pointer-events: none;
+  cursor: pointer;
+}
+
+.gym-pin.is-fav .gym-pin-fav {
+  display: grid;
+}
+
+.gym-pin-fav svg {
+  pointer-events: none;
+  width: 58%;
+  height: 58%;
+  fill: #e53935;
+  stroke: #e53935;
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.4));
+}
+
+.gym-cluster {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+  box-shadow: none;
+  display: block;
+}
+
+.gym-cluster-visual {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform: scale(var(--pin-scale, 1));
+  transform-origin: center center;
+}
+
+.gym-cluster img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.gym-cluster-count {
+  position: absolute;
+  left: 50%;
+  top: 61%;
+  transform: translate(-50%, -50%);
+  color: #14130f;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.gym-cluster-count.is-long {
+  font-size: 0.62rem;
+}
+
+.gym-pin-hit {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+  overflow: visible;
+  box-shadow: 0 0 0 1.5px rgba(20, 22, 26, 0.05);
+  transform: scale(var(--pin-scale, 1));
+  transform-origin: center bottom;
+  transition:
+    transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1),
+    box-shadow 0.18s ease;
+}
+
+.gym-pin-media {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.gym-pin.is-plain-pin .gym-pin-hit {
+  border-radius: 6px;
+  background: #fff;
+  padding: 0;
+  box-sizing: border-box;
+  box-shadow: 0 0 0 1.5px rgba(20, 22, 26, 0.05);
+}
+
+.gym-pin.is-plain-pin .gym-pin-media img {
+  object-fit: contain;
+}
+
+.gym-pin-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.gym-pin-hit.is-brand {
+  background: #fff;
+  border-radius: 8px;
+}
+
+.gym-pin-hit.is-brand.is-logo .gym-pin-media img,
+.gym-pin-hit.is-brand .gym-pin-media img {
+  object-fit: contain;
+}
+
+.gym-pin-hit.logo-easyfit {
+  background: #fef164;
+}
+
+.gym-pin-hit.logo-easyfit img {
+  transform: scale(var(--logo-scale-easyfit));
+  object-position: center;
+}
+
+.gym-pin-hit.logo-elixia {
+  background: #fff;
+}
+
+.gym-pin-hit.is-brand.logo-elixia img,
+.gym-pin-hit.logo-elixia img {
+  transform: scale(var(--logo-scale-elixia));
+  object-position: center;
+}
+
+.gym-pin-hit.logo-fressi {
+  background: var(--surface);
+}
+
+.gym-pin-hit.logo-fressi img {
+  transform: scale(var(--logo-scale-fressi));
+  object-position: center;
+}
+
+.gym-pin-hit.logo-fitness24 {
+  background: #002d54;
+}
+
+.gym-pin-hit.is-brand.logo-fitness24 img,
+.gym-pin-hit.logo-fitness24 img {
+  object-fit: contain;
+  object-position: center;
+  transform: scale(var(--logo-scale-fitness24));
+}
+
+.gym-pin-hit.logo-gofitness {
+  background: #fff;
+}
+
+.gym-pin-hit.logo-gofitness img {
+  transform: scale(var(--logo-scale-gofitness));
+  object-position: center;
+}
+
+.gym-pin-hit.logo-olefit {
+  background: #fff;
+}
+
+.gym-pin-hit.is-brand.logo-olefit img,
+.gym-pin-hit.logo-olefit img {
+  transform: scale(var(--logo-scale-olefit));
+  object-position: center;
+  object-fit: contain;
+}
+
+.gym-pin-hit.logo-ladyline {
+  background: #fff;
+}
+
+.gym-pin-hit.logo-ladyline img {
+  transform: scale(var(--logo-scale-ladyline));
+  object-position: center;
+  object-fit: contain;
+}
+
+.gym-pin-hit.logo-forever {
+  background: #fff;
+}
+
+.gym-pin-hit.is-brand.logo-forever img,
+.gym-pin-hit.logo-forever img {
+  transform: scale(var(--logo-scale-forever));
+  object-position: center;
+  object-fit: contain;
+}
+
+.gym-pin-hit.logo-unisport {
+  background: #fff;
+}
+
+.gym-pin-hit.is-brand.logo-unisport img,
+.gym-pin-hit.logo-unisport img {
+  transform: scale(var(--logo-scale-unisport));
+  object-position: center;
+  object-fit: contain;
+}
+
+.gym-pin-hit.logo-mm {
+  background: var(--surface);
+}
+
+.gym-pin-hit.logo-mm img {
+  transform: scale(var(--logo-scale-mm));
+  object-position: center;
+  object-fit: contain;
+}
+
+.gym-pin-hit.logo-esport {
+  background: var(--surface);
+}
+
+.gym-pin-hit.logo-esport img {
+  transform: scale(var(--logo-scale-esport));
+  object-position: center;
+  object-fit: contain;
+}
+
+.gym-pin-hit.logo-liikku {
+  background: #4da10f;
+}
+
+.gym-pin-hit.is-brand.logo-liikku img,
+.gym-pin-hit.logo-liikku img {
+  transform: scale(var(--logo-scale-liikku));
+  object-position: center;
+}
+
+.gym-pin-hit.is-hovered {
+  transform: scale(calc(var(--pin-scale, 1) * 1.18));
+  z-index: 2;
+}
+
+.gym-pin-hit.is-selected {
+  transform: scale(calc(var(--pin-scale, 1) * 1.16));
+  outline: none;
+  border: 0;
+  box-shadow: 0 0 0 1.5px rgba(20, 22, 26, 0.05);
+  z-index: 3;
+}
+
+.gym-pin-hit.is-hovered.is-selected {
+  transform: scale(calc(var(--pin-scale, 1) * 1.2));
+}
+
+/* ---------- Price label ---------- */
+
+.gym-pin {
+  --pin-live: var(--pin-scale, 1);
+  --pin-grow: cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.gym-pin:has(.gym-pin-hit.is-hovered) {
+  --pin-live: calc(var(--pin-scale, 1) * 1.18);
+}
+
+.gym-pin:has(.gym-pin-hit.is-selected) {
+  --pin-live: calc(var(--pin-scale, 1) * 1.16);
+}
+
+.gym-pin:has(.gym-pin-hit.is-hovered.is-selected) {
+  --pin-live: calc(var(--pin-scale, 1) * 1.2);
+}
+
+/* Dark pill with the price. It sits just above the tile, however big the tile is. */
+.gym-pin-price {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% * var(--pin-live) + 6px);
+  z-index: 2;
+  padding: 0.2rem 0.5rem 0.22rem;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+  transform: translateX(-50%) scale(var(--pin-live));
+  transform-origin: 50% 100%;
+  transition:
+    bottom 0.18s var(--pin-grow),
+    transform 0.18s var(--pin-grow),
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+/* The small point under the pill. */
+.gym-pin-price::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 7px;
+  height: 7px;
+  margin-left: -3.5px;
+  border-right: 1px solid rgba(255, 255, 255, 0.24);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.24);
+  background: var(--surface);
+  transform: rotate(45deg);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+/* Hovered or selected gym: the label turns yellow together with the tile growing. */
+.gym-pin:has(.gym-pin-hit.is-hovered) .gym-pin-price,
+.gym-pin:has(.gym-pin-hit.is-selected) .gym-pin-price,
+.gym-pin:has(.gym-pin-hit.is-hovered) .gym-pin-price::after,
+.gym-pin:has(.gym-pin-hit.is-selected) .gym-pin-price::after {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: var(--on-primary);
+}
+
+/* Selected gym: the address sits above the tile, or above the price label if there is one. */
+.gym-pin-address {
+  bottom: calc(100% * var(--pin-live) + 4px);
+  transition: bottom 0.18s var(--pin-grow);
+}
+
+.gym-pin:has(.gym-pin-price) .gym-pin-address {
+  bottom: calc(100% * var(--pin-live) + 6px + 1.75rem * var(--pin-live));
+}
+
+@media (max-width: 900px) {
+  .gym-pin:has(.gym-pin-hit.is-hovered) {
+    --pin-live: calc(var(--pin-scale, 1) * 1.12);
+  }
+
+  .gym-pin:has(.gym-pin-hit.is-selected) {
+    --pin-live: calc(var(--pin-scale, 1) * 1.14);
+  }
+
+  .gym-pin:has(.gym-pin-hit.is-hovered.is-selected) {
+    --pin-live: calc(var(--pin-scale, 1) * 1.18);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gym-pin-hit,
+  .gym-pin-price,
+  .gym-pin-address {
+    transition: none;
+  }
+}
+
+/* ---------- + / − buttons ---------- */
+
+.map-ctrls {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.map-ctrl {
+  display: grid;
+  place-items: center;
+  width: 2.55rem;
+  height: 2.55rem;
+  padding: 0;
+  border: 1px solid var(--outline);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.map-ctrl:hover:not(:disabled) {
+  border-color: var(--brand);
+}
+
+.map-ctrl.is-locate {
+  margin-top: 0.55rem;
+}
+
+.map-ctrl.is-locate svg {
+  color: #2563eb;
+}

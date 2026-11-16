@@ -1,46 +1,30 @@
 import { useEffect, useRef, useState } from "react";
-import { LngLatBounds, Map, Marker } from "maplibre-gl";
+import { LngLatBounds, type Map, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { LocateFixed, MapPin, Minus, Navigation, Plus } from "lucide-react";
+import { LocateFixed, MapPin, Navigation } from "lucide-react";
 import LoadSpin from "../../../components/LoadSpin";
 import { useAddressSuggest, type GeoHit } from "../../../data/geocode";
 import { formatDistanceKm } from "../../../data/format";
 import { useLang } from "../../../i18n/useLang";
+import type { Chain, Gym } from "../../../data/types";
+import { buildGymPin, buildOriginPin } from "../../../map/gymPin";
 import { observeMapContainerResize, waitForMapContainerSize } from "../../../map/maplibreSetup";
-import { MAP_STYLE_URL } from "../../browse/utils/mapConstants";
+import { createSmallMap, limitZoomOut, MapZoomButtons } from "../../../map/smallMap";
+import "../../../map/pins.css";
 
 /**
  * The map on the gym page.
  *
- * Shows the gym (yellow pin) and, if we know it, where the user starts from
- * (blue dot). The box at the top lets the user type another starting address;
- * the bar at the bottom shows the distance and opens the route in Google Maps.
+ * Shows the gym and, if we know it, where the user starts from. The pins,
+ * the + / − buttons and the limits are the same as on the browse page
+ * (map/gymPin.ts, map/smallMap.tsx). The box at the top lets the user type
+ * another starting address; the bar at the bottom shows the distance and
+ * opens the route in Google Maps.
  */
 
-const DUMBBELL_SVG =
-  '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11"/></svg>';
-
-function makeGymPin() {
-  const el = document.createElement("div");
-  el.className = "gp-pin";
-  el.innerHTML = DUMBBELL_SVG;
-  return el;
-}
-
-function makeFromPin(label: string) {
-  const el = document.createElement("div");
-  el.className = "gp-from-pin";
-  if (label) {
-    const text = document.createElement("span");
-    text.textContent = label;
-    el.appendChild(text);
-  }
-  return el;
-}
-
 type Props = {
-  gymLat: number;
-  gymLng: number;
+  gym: Gym;
+  chain: Chain | null;
   from: GeoHit | null;
   tripKm: number | null;
   routeUrl: string;
@@ -48,8 +32,11 @@ type Props = {
   onLocate: () => void;
 };
 
-export default function GymRouteMap({ gymLat, gymLng, from, tripKm, routeUrl, onPickFrom, onLocate }: Props) {
-  const { t } = useLang();
+export default function GymRouteMap({ gym, chain, from, tripKm, routeUrl, onPickFrom, onLocate }: Props) {
+  const { lang, t } = useLang();
+  const gymLat = gym.lat;
+  const gymLng = gym.lng;
+  const [map, setMap] = useState<Map | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
   const fromMarkerRef = useRef<Marker | null>(null);
@@ -66,28 +53,19 @@ export default function GymRouteMap({ gymLat, gymLng, from, tripKm, routeUrl, on
   // 1. Create the map once per gym.
   useEffect(() => {
     if (!boxRef.current) return;
-    const map = new Map({
-      container: boxRef.current,
-      style: MAP_STYLE_URL,
-      center: [gymLng, gymLat],
-      zoom: 14,
-      maxPitch: 0,
-      dragRotate: false,
-      pitchWithRotate: false,
-      touchPitch: false,
-      attributionControl: { compact: true },
-    });
-    map.touchZoomRotate.disableRotation();
-    // On phones one finger scrolls the page; the map moves with two fingers.
-    map.cooperativeGestures.enable();
+    const map = createSmallMap(boxRef.current, [gymLng, gymLat], 14);
     mapRef.current = map;
+    setMap(map);
 
     let alive = true;
     const stopResize = observeMapContainerResize(map.getContainer(), map);
     map.on("load", () => {
       void waitForMapContainerSize(map.getContainer(), map).then(() => {
         if (!alive) return;
-        new Marker({ element: makeGymPin(), anchor: "bottom" }).setLngLat([gymLng, gymLat]).addTo(map);
+        // The same pin as on the browse map, shown as the selected one.
+        const pin = buildGymPin(gym, chain, { lang, selected: true });
+        pin.el.classList.add("is-front");
+        new Marker({ element: pin.el, anchor: "bottom" }).setLngLat([gymLng, gymLat]).addTo(map);
         setReady(true);
       });
     });
@@ -97,10 +75,13 @@ export default function GymRouteMap({ gymLat, gymLng, from, tripKm, routeUrl, on
       stopResize();
       fromMarkerRef.current = null;
       mapRef.current = null;
+      setMap(null);
       setReady(false);
       map.remove();
     };
-  }, [gymLat, gymLng]);
+    // The map is rebuilt only when the page shows another gym.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gym.id, gymLat, gymLng, lang]);
 
   // 2. Show the starting point and fit both points on screen.
   useEffect(() => {
@@ -109,20 +90,37 @@ export default function GymRouteMap({ gymLat, gymLng, from, tripKm, routeUrl, on
     fromMarkerRef.current?.remove();
     fromMarkerRef.current = null;
 
+    map.setMinZoom(3);
+    if (!from) {
+      map.easeTo({ center: [gymLng, gymLat], zoom: 14 });
+      limitZoomOut(map, 12);
+      return;
+    }
+    fromMarkerRef.current = new Marker({
+      element: buildOriginPin(from.label, t("fromAddressAria")),
+      anchor: "center",
+    })
+      .setLngLat([from.lng, from.lat])
+      .addTo(map);
+    showBoth();
+    // showBoth reads the latest values itself.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, from, gymLat, gymLng]);
+
+  /** Fits the gym and the starting point on screen (also the "back" button). */
+  function showBoth() {
+    const map = mapRef.current;
+    if (!map) return;
     if (!from) {
       map.easeTo({ center: [gymLng, gymLat], zoom: 14 });
       return;
     }
-    fromMarkerRef.current = new Marker({ element: makeFromPin(from.label), anchor: "center" })
-      .setLngLat([from.lng, from.lat])
-      .addTo(map);
     const bounds = new LngLatBounds().extend([gymLng, gymLat]).extend([from.lng, from.lat]);
-    map.fitBounds(bounds, { padding: { top: 96, bottom: 96, left: 56, right: 56 }, maxZoom: 15 });
-  }, [ready, from, gymLat, gymLng]);
-
-  function zoomBy(step: number) {
-    const map = mapRef.current;
-    if (map) map.easeTo({ zoom: map.getZoom() + step, duration: 200 });
+    const padding = { top: 110, bottom: 96, left: 64, right: 64 };
+    const fitted = map.cameraForBounds(bounds, { padding, maxZoom: 15 });
+    map.setMinZoom(3);
+    map.fitBounds(bounds, { padding, maxZoom: 15 });
+    if (fitted?.zoom != null) limitZoomOut(map, fitted.zoom);
   }
 
   function pick(hit: GeoHit) {
@@ -192,14 +190,13 @@ export default function GymRouteMap({ gymLat, gymLng, from, tripKm, routeUrl, on
         ) : null}
       </form>
 
-      <div className="gp-map-zoom">
-        <button type="button" aria-label={t("mapZoomIn")} onClick={() => zoomBy(1)}>
-          <Plus size={18} strokeWidth={2.4} />
-        </button>
-        <button type="button" aria-label={t("mapZoomOut")} onClick={() => zoomBy(-1)}>
-          <Minus size={18} strokeWidth={2.4} />
-        </button>
-      </div>
+      <MapZoomButtons
+        map={map}
+        zoomInLabel={t("mapZoomIn")}
+        zoomOutLabel={t("mapZoomOut")}
+        onReset={showBoth}
+        resetLabel={t("mapGoToLocation")}
+      />
 
       <div className="gp-map-foot">
         <span className="gp-map-trip">

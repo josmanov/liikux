@@ -21,7 +21,7 @@ import {
 } from "../data/format";
 import { type Gym, resolveGymOffer } from "../data/types";
 import { distanceKm } from "../features/browse/utils/distanceKm";
-import FavoritesMap, { type FavPin } from "../features/favorites/FavoritesMap";
+import FavoritesMap from "../features/favorites/FavoritesMap";
 import { cleanHoursValue } from "../features/gym-detail/utils/cleanHoursValue";
 import { pathFavorites, pathGym, pathGymsFromLocation } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
@@ -175,17 +175,9 @@ function FavoritesPage() {
   const bestPrice = bestOf(rows.map((r) => r.price));
   const bestKm = bestOf(rows.map((r) => r.km));
 
-  const pins = useMemo<FavPin[]>(
-    () =>
-      rows
-        .filter((r) => r.gym.lat != null && r.gym.lng != null)
-        .map((r) => ({
-          slug: r.gym.slug,
-          lat: r.gym.lat,
-          lng: r.gym.lng,
-          label:
-            r.price != null ? `${eurText(r.price)} €` : r.name.slice(0, 14),
-        })),
+  // Gyms for the map, with the price the table shows (the chain's price when the gym has none).
+  const mapGyms = useMemo<Gym[]>(
+    () => rows.map((r) => ({ ...r.gym, priceFrom: r.price ?? null })),
     [rows],
   );
 
@@ -465,10 +457,11 @@ function FavoritesPage() {
 
           <aside className="fav-side" aria-label={t("map")}>
             <FavoritesMap
-              pins={pins}
-              origin={hasOrigin ? { lat: placeLat, lng: placeLng } : null}
+              gyms={mapGyms}
+              origin={hasOrigin ? { lat: placeLat, lng: placeLng, label: placeLabel } : null}
               activeSlug={activeSlug}
               onPick={pickFromMap}
+              onHover={setActiveSlug}
             />
           </aside>
         </div>

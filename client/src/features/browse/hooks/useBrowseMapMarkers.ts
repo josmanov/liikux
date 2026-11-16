@@ -15,10 +15,7 @@ import {
 import type { Chain, Gym } from "../../../data/types";
 import type { Lang } from "../../../i18n/lang";
 import type { MessageKey } from "../../../i18n/messages";
-import {
-  formatGymStreetLine,
-  formatPricePill,
-} from "../../../data/format";
+import { buildGymPin, buildOriginPin } from "../../../map/gymPin";
 import {
   clusterGymsByScreenTouch,
   clusterMarkerKey,
@@ -142,20 +139,13 @@ export function useBrowseMapMarkers(ctx: BrowseMapMarkersCtx) {
         return;
       }
 
-      const chain =
-        g.chain ?? chainsByIdRef.current.get(g.chainId) ?? undefined;
-      const brandImg =
-        chain?.image && !chain.image.includes("/pins/")
-          ? chain.image
-          : null;
-      const el = document.createElement("div");
-      el.className = ["gym-pin", brandImg ? "is-brand-pin" : "is-plain-pin"]
-        .filter(Boolean)
-        .join(" ");
-      el.dataset.gymId = g.id;
-      el.dataset.gymSlug = g.slug;
-      if (favoriteSlugsRef.current.includes(g.slug)) el.classList.add("is-fav");
-      el.style.setProperty("--pin-scale", String(scale));
+      const { el, hit } = buildGymPin(g, g.chain ?? chainsByIdRef.current.get(g.chainId), {
+        lang,
+        scale,
+        favorite: favoriteSlugsRef.current.includes(g.slug),
+        selected: g.id === selectedIdRef.current,
+        hovered: g.id === hoveredIdRef.current,
+      });
       const stackZ = pinStackZ(
         g.lat,
         g.priceFrom != null ? "price" : "pin",
@@ -166,55 +156,6 @@ export function useBrowseMapMarkers(ctx: BrowseMapMarkersCtx) {
         el.style.zIndex = "12000";
       } else {
         el.style.zIndex = String(stackZ);
-      }
-
-      const hit = document.createElement("button");
-      hit.type = "button";
-      hit.className = [
-        "gym-pin-hit",
-        brandImg ? "is-brand" : "",
-        brandImg && chain?.logoFit === "contain" ? "is-logo" : "",
-        brandImg && chain?.logoClass ? chain.logoClass : "",
-      ]
-        .filter(Boolean)
-        .join(" ");
-      if (g.id === selectedIdRef.current) hit.classList.add("is-selected");
-      if (g.id === hoveredIdRef.current) hit.classList.add("is-hovered");
-      hit.setAttribute("aria-label", g.name);
-
-      const media = document.createElement("span");
-      media.className = "gym-pin-media";
-      const img = document.createElement("img");
-      img.src = brandImg || "/pins/gym-pin.png";
-      img.alt = "";
-      img.decoding = "async";
-      media.appendChild(img);
-      hit.appendChild(media);
-
-      const fav = document.createElement("span");
-      fav.className = "gym-pin-fav";
-      fav.innerHTML =
-        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-9.2C5 8 6.8 6.2 9.1 6.2c1.3 0 2.3.6 2.9 1.6.6-1 1.6-1.6 2.9-1.6 2.3 0 4.1 1.8 4.1 4.6C19 15.6 12 20 12 20z"/></svg>';
-      hit.appendChild(fav);
-
-      el.appendChild(hit);
-
-      const street = formatGymStreetLine(g);
-      if (street) {
-        const address = document.createElement("span");
-        address.className = "gym-pin-address";
-        address.textContent = street;
-        el.appendChild(address);
-      }
-
-      if (g.priceFrom != null) {
-        const priceText = formatPricePill(g.priceFrom, lang);
-        if (priceText) {
-          const pill = document.createElement("span");
-          pill.className = "gym-pin-price";
-          pill.textContent = priceText;
-          el.appendChild(pill);
-        }
       }
 
       hit.addEventListener("mouseenter", () => setHoveredId(g.id));
@@ -391,25 +332,7 @@ export function useBrowseMapMarkers(ctx: BrowseMapMarkersCtx) {
       originMarkerRef.current?.remove();
       originMarkerRef.current = null;
       if (origin.lat == null || origin.lng == null) return;
-      const el = document.createElement("div");
-      el.className = "gym-origin-pin";
-      el.style.zIndex = "15000";
-      el.setAttribute("aria-label", t("fromAddressAria"));
-      if (locationLabel.trim()) {
-        const label = document.createElement("span");
-        label.className = "gym-origin-pin-label";
-        label.textContent = locationLabel;
-        el.appendChild(label);
-      }
-      const ring = document.createElement("span");
-      ring.className = "gym-origin-pin-ring";
-      const ringLate = document.createElement("span");
-      ringLate.className = "gym-origin-pin-ring is-late";
-      const core = document.createElement("span");
-      core.className = "gym-origin-pin-core";
-      el.appendChild(ring);
-      el.appendChild(ringLate);
-      el.appendChild(core);
+      const el = buildOriginPin(locationLabel, t("fromAddressAria"));
       originMarkerRef.current = new Marker({ element: el, anchor: "center" })
         .setLngLat([origin.lng, origin.lat])
         .addTo(map);

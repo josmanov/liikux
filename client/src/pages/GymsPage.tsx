@@ -433,10 +433,8 @@ function GymsPage() {
 
     function onScroll() {
       if (window.matchMedia("(min-width: 901px)").matches) {
+        // Desktop: the page may scroll, so the footer under the map can be reached.
         chrome?.classList.remove("is-scrolled");
-        if (window.scrollY > 0) {
-          window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-        }
         return;
       }
       chrome?.classList.toggle("is-scrolled", window.scrollY > 6);
@@ -1519,6 +1517,10 @@ function GymsPage() {
     extraOnly247,
     extraDayPass,
     browseReady,
+    selectedAudiences,
+    chainFilterActive,
+    priceFilterOn,
+    maxDistanceKm,
   ]);
 
   useEffect(() => {
@@ -1932,6 +1934,13 @@ function GymsPage() {
         extraOnly247={extraOnly247}
         extraFreeTrial={extraFreeTrial}
         extraDayPass={extraDayPass}
+        womenOnly={selectedAudiences.includes("women")}
+        onToggleWomen={() => {
+          setSelectedAudiences((list) =>
+            list.includes("women") ? list.filter((a) => a !== "women") : [...list, "women"],
+          );
+          setPage(1);
+        }}
         onToggleExtra247={() => {
           setExtraOnly247((v) => !v);
           setPage(1);

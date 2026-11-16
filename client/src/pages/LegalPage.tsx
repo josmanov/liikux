@@ -51,7 +51,7 @@ function LegalPage() {
   const others = (["terms", "privacy", "cookies"] as LegalSlug[]).filter((s) => s !== key);
 
   return (
-    <main className="legal-page">
+    <main className="legal-page load-reveal">
       <div className="legal-page-inner">
         <p className="legal-page-updated">{doc.updated}</p>
         <h1 className="legal-page-title">{doc.title}</h1>

@@ -224,7 +224,8 @@ export function useBrowseMapInit(ctx: BrowseMapInitCtx) {
         setMapReady(true);
       }
 
-      const failSafe = window.setTimeout(reveal, 700);
+      // Show the page soon after the map is set up; the last map tiles may still fade in.
+      const failSafe = window.setTimeout(reveal, 150);
       map.once("idle", reveal);
       if (map.areTilesLoaded()) {
         window.setTimeout(reveal, 40);

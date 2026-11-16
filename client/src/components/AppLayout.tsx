@@ -19,7 +19,7 @@ function AppLayout() {
           <div className="layout-content">
             <Outlet />
           </div>
-          {browse ? null : <Footer />}
+          <Footer />
         </div>
         <CookieBanner />
     </LocationProvider>

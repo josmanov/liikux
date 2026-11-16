@@ -114,7 +114,7 @@ function HomePage() {
   });
 
   return (
-    <main className="home">
+    <main className="home load-reveal">
       {/* 1. Hero */}
       <section className="home-hero">
         <div className="home-wrap home-hero-inner">

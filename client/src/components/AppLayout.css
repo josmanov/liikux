@@ -26,3 +26,10 @@
   flex-direction: column;
   min-height: 0;
 }
+
+/* Browse on a phone is a full-screen map/list, so the footer is left out there. */
+@media (max-width: 900px) {
+  .layout.is-browse .footer {
+    display: none;
+  }
+}

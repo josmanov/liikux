@@ -1,5 +1,6 @@
 @import "./BrowseLayout.css";
 @import "./BrowseMap.css";
+@import "../../../map/pins.css"; /* pins shared with the gym page and favorites */
 @import "./BrowsePins.css";
 @import "./BrowseSelected.css";
 @import "./BrowseToolbar.css";

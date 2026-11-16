@@ -89,19 +89,49 @@
 
 .fav-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.5rem;
   margin-top: 1.5rem;
 }
 
-.fav-side {
-  position: sticky;
-  top: calc(var(--header-h) + 1.25rem);
-  align-self: start;
-  height: calc(100vh - var(--header-h) - 2.5rem);
-  height: calc(100svh - var(--header-h) - 2.5rem);
-  min-height: 380px;
+/*
+ * Desktop: the page itself is the two-column grid. Everything (title,
+ * buttons, table) goes in the left column; the map takes the right column
+ * from the very top, so the whole map is on screen without scrolling.
+ */
+@media (min-width: 1101px) {
+  .fav:has(.fav-grid) {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    column-gap: 1.5rem;
+    align-content: start;
+  }
+
+  .fav:has(.fav-grid) > * {
+    grid-column: 1;
+  }
+
+  .fav-grid {
+    display: contents;
+  }
+
+  .fav-table-wrap {
+    grid-column: 1;
+    margin-top: 1.5rem;
+  }
+
+  .fav-side {
+    grid-column: 2;
+    grid-row: 1 / span 12;
+    position: sticky;
+    top: calc(var(--header-h) + 1.25rem);
+    align-self: start;
+    height: calc(100vh - var(--header-h) - 2.5rem);
+    height: calc(100svh - var(--header-h) - 2.5rem);
+    min-height: 380px;
+  }
 }
+
 
 /* ---------- Table ---------- */
 
@@ -335,63 +365,6 @@
   opacity: 0.7;
 }
 
-/* A pin = a small price label with a point under it. */
-.fav-pin {
-  margin-top: -6px; /* lifts the label so the point under it touches the gym */
-  padding: 0.3rem 0.6rem;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-pill);
-  background: var(--surface);
-  color: var(--ink);
-  font-family: var(--font-body);
-  font-size: 0.78rem;
-  font-weight: 800;
-  white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
-  cursor: pointer;
-}
-
-.fav-pin::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -5px;
-  width: 9px;
-  height: 9px;
-  margin-left: -4.5px;
-  border-right: 1px solid var(--line-strong);
-  border-bottom: 1px solid var(--line-strong);
-  background: var(--surface);
-  transform: rotate(45deg);
-}
-
-.fav-pin:hover,
-.fav-pin.is-active {
-  border-color: var(--brand);
-  background: var(--brand);
-  color: var(--on-primary);
-}
-
-.fav-pin:hover::after,
-.fav-pin.is-active::after {
-  border-color: var(--brand);
-  background: var(--brand);
-}
-
-.maplibregl-marker:has(.fav-pin.is-active),
-.maplibregl-marker.fav-pin.is-active {
-  z-index: 5;
-}
-
-.fav-origin {
-  width: 18px;
-  height: 18px;
-  border: 3px solid #fff;
-  border-radius: 50%;
-  background: #3b82f6;
-  box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.25);
-}
-
 /* ---------- Undo message ---------- */
 
 .fav-toast {
@@ -427,10 +400,6 @@
 /* ---------- Responsive ---------- */
 
 @media (max-width: 1100px) {
-  .fav-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
   .fav-side {
     position: static;
     order: -1;

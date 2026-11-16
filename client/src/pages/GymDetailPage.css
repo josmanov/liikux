@@ -575,8 +575,7 @@
   color: var(--faint);
 }
 
-.gp-map-from > button,
-.gp-map-zoom button {
+.gp-map-from > button {
   display: grid;
   place-items: center;
   width: 36px;
@@ -589,8 +588,7 @@
   cursor: pointer;
 }
 
-.gp-map-from > button:hover,
-.gp-map-zoom button:hover {
+.gp-map-from > button:hover {
   background: var(--surface-3);
   color: var(--ink);
 }
@@ -633,18 +631,6 @@
   padding: 0.7rem;
   color: var(--muted);
   font-size: var(--text-sm);
-}
-
-.gp-map-zoom {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  background: var(--surface);
-  border: 1px solid var(--outline);
-  border-radius: var(--radius-pill);
 }
 
 /* Distance + route, bottom */
@@ -710,63 +696,7 @@
 }
 
 /* The gym: yellow round pin with a small point under it. */
-.gp-pin {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  margin-bottom: 8px;
-  border: 3px solid #14130f;
-  border-radius: 50%;
-  background: var(--brand);
-  color: #14130f;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
-}
-
-.gp-pin::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: 1px;
-  width: 12px;
-  height: 12px;
-  margin-left: -6px;
-  border-radius: 2px;
-  background: #14130f;
-  transform: rotate(45deg);
-  z-index: -1;
-}
-
 /* Where the route starts: blue dot with the address above it. */
-.gp-from-pin {
-  position: relative;
-  width: 18px;
-  height: 18px;
-  border: 3px solid #fff;
-  border-radius: 50%;
-  background: #3b82f6;
-  box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.25);
-}
-
-.gp-from-pin span {
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 10px);
-  max-width: 12rem;
-  overflow: hidden;
-  padding: 0.3rem 0.6rem;
-  border-radius: var(--radius-pill);
-  background: var(--surface);
-  border: 1px solid var(--outline);
-  color: var(--ink);
-  font-family: var(--font-body);
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  transform: translateX(-50%);
-}
-
 /* ---------- Not found ---------- */
 
 .gp-missing {

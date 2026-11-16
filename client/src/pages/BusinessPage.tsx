@@ -38,7 +38,7 @@ function BusinessPage() {
   const number = (n: number) => n.toLocaleString(lang === "fi" ? "fi-FI" : "en-GB");
 
   return (
-    <main className="biz">
+    <main className="biz load-reveal">
       <header className="biz-head">
         <div>
           <p className="biz-eyebrow">{text.eyebrow}</p>

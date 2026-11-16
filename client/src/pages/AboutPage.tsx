@@ -39,7 +39,7 @@ function AboutPage() {
   const number = (n: number) => n.toLocaleString(lang === "fi" ? "fi-FI" : "en-GB");
 
   return (
-    <main className="about">
+    <main className="about load-reveal">
       <header className="about-head">
         <h1 className="about-title">{text.title}</h1>
         <p className="about-lead">{text.lead}</p>

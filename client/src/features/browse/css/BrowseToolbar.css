@@ -8,8 +8,8 @@
  * One system for every control in the bar:
  *  - same height (--ctl-h), same fill, same hairline border
  *  - on = yellow border + soft yellow fill
- *  - the on/off filters sit in the same row as the dropdowns; the chain
- *    shortcuts are hidden here, because "Ketjut" does the same job
+ *  - the on/off filters and the chain shortcuts fill the rest of the row;
+ *    the ones that do not fit are hidden (GymsPage.tsx, fitChips)
  *  - "Kaikki suodattimet" is pushed to the right edge
  *  - "Tyhjennä suodatus" only shows when a filter is on
  *
@@ -134,8 +134,9 @@
   /* On/off filters: same row, after a thin divider */
   .browse-top .browse-search-suggest {
     order: 4;
-    flex: 0 0 auto;
+    flex: 1 1 0;
     width: auto;
+    min-width: 0;
     max-width: none;
     flex-direction: row;
     align-items: center;
@@ -145,23 +146,30 @@
     border-left: 1px solid var(--line-strong);
   }
 
-  .browse-top .browse-search-suggest-label,
-  .browse-top .browse-search-suggest-chip.is-chain {
+  .browse-top .browse-search-suggest-label {
     display: none;
   }
 
   .browse-top .browse-search-suggest-chips {
-    flex: 0 0 auto;
+    flex: 1 1 0;
     width: auto;
+    min-width: 0;
     gap: 0.5rem;
-    overflow: visible;
+    overflow: hidden;
+    /* room for the yellow border of a chip that is on */
+    padding: 1px;
+    margin: -1px;
   }
 
-  /* The on/off filters always fit here, so none of them is hidden. */
-  .browse-top .browse-search-suggest-chip.is-toggle,
-  .browse-top .browse-search-suggest-chip.is-toggle.is-overflow {
-    display: inline-flex !important;
+  .browse-top .browse-search-suggest-chip {
+    display: inline-flex;
     align-items: center;
+  }
+
+  /* Chain shortcuts are a little quieter than the on/off filters. */
+  .browse-top .browse-search-suggest-chip.is-chain {
+    color: var(--ink-2);
+    font-weight: 500;
   }
 
   /* A small dot shows the state of an on/off filter. */

@@ -262,7 +262,8 @@ function adminAllowed(req: express.Request) {
     "geocode:" + q.toLowerCase() + (bias ? `:${bias.lat},${bias.lng}` : "");
 
   try {
-    const { data, hit } = await cached(cacheKey, 60 * 60 * 1000, () =>
+    // Addresses do not move: keep answers for a day.
+    const { data, hit } = await cached(cacheKey, 24 * 60 * 60 * 1000, () =>
       searchAddress(q, bias),
     );
     // Addresses rarely change: let browsers and the Cloudflare edge reuse answers.

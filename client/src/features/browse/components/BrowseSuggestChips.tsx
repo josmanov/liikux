@@ -10,6 +10,8 @@ type BrowseSuggestChipsProps = {
   extraOnly247: boolean;
   extraFreeTrial: boolean;
   extraDayPass: boolean;
+  womenOnly: boolean;
+  onToggleWomen: () => void;
   onToggleExtra247: () => void;
   onToggleFreeTrial: () => void;
   onToggleDayPass: () => void;
@@ -23,6 +25,8 @@ export function BrowseSuggestChips({
   extraOnly247,
   extraFreeTrial,
   extraDayPass,
+  womenOnly,
+  onToggleWomen,
   onToggleExtra247,
   onToggleFreeTrial,
   onToggleDayPass,
@@ -40,7 +44,9 @@ export function BrowseSuggestChips({
                 ? t("freeTrial")
                 : item.filter === "only247"
                   ? t("open247")
-                  : t("priceDayPass")
+                  : item.filter === "women"
+                    ? t("audienceWomen")
+                    : t("priceDayPass")
               : item.q;
           const chipOn =
             "filter" in item
@@ -48,7 +54,9 @@ export function BrowseSuggestChips({
                 ? extraFreeTrial
                 : item.filter === "only247"
                   ? extraOnly247
-                  : extraDayPass
+                  : item.filter === "women"
+                    ? womenOnly
+                    : extraDayPass
               : query.trim().toLowerCase() === item.q.toLowerCase();
           return (
             <button
@@ -70,6 +78,8 @@ export function BrowseSuggestChips({
                     onToggleFreeTrial();
                   } else if (item.filter === "only247") {
                     onToggleExtra247();
+                  } else if (item.filter === "women") {
+                    onToggleWomen();
                   } else {
                     onToggleDayPass();
                   }

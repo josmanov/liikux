@@ -69,7 +69,23 @@ export function observeMapContainerResize(
   };
 }
 
-export async function fetchGeoJson(path: string): Promise<unknown | null> {
+/** Files already downloaded in this visit (Finland outline, regions). */
+const geoJsonCache = new Map<string, Promise<unknown | null>>();
+
+/** Downloads a GeoJSON file once; later calls reuse it without the network. */
+export function fetchGeoJson(path: string): Promise<unknown | null> {
+  let pending = geoJsonCache.get(path);
+  if (!pending) {
+    pending = downloadGeoJson(path).then((data) => {
+      if (data == null) geoJsonCache.delete(path); // failed: try again next time
+      return data;
+    });
+    geoJsonCache.set(path, pending);
+  }
+  return pending;
+}
+
+async function downloadGeoJson(path: string): Promise<unknown | null> {
   try {
     const res = await fetch(path);
     if (!res.ok) return null;

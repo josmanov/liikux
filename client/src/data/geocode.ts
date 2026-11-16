@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { API } from "./apiBase";
+import { CITY_CENTERS } from "./citySlug";
 
 export type GeoHit = {
   id: string;
@@ -60,6 +61,24 @@ export function fetchReverseLabel(
 
 const suggestCache = new Map<string, GeoHit[]>();
 
+/**
+ * City names we already know in the browser. They are shown at once, while
+ * the address search (which asks a server) is still on its way.
+ */
+function localCityHits(q: string): GeoHit[] {
+  const n = norm(q);
+  if (n.length < 2 || /\d/.test(n)) return [];
+  return CITY_CENTERS.filter((c) => c.name.toLowerCase().startsWith(n))
+    .slice(0, 3)
+    .map((c) => ({ id: "city-" + c.slug, label: c.name, lat: c.lat, lng: c.lng }));
+}
+
+/** Server hits first; a known city is added only if the server did not return it. */
+function withCities(hits: GeoHit[], cities: GeoHit[]) {
+  const seen = new Set(hits.map((h) => norm(h.label)));
+  return [...cities.filter((c) => !seen.has(norm(c.label))), ...hits].slice(0, 6);
+}
+
 function suggestKey(q: string, lat: number | null, lng: number | null) {
   const bias =
     lat != null && lng != null ? `${lat.toFixed(2)},${lng.toFixed(2)}` : "";
@@ -92,15 +111,18 @@ export function useAddressSuggest(
       return;
     }
 
-    setHits((prev) => prev.filter((h) => labelMatchesQuery(h.label, q)));
+    // Straight away: known cities + earlier hits that still fit what was typed.
+    const cities = localCityHits(q);
+    setHits((prev) => withCities(prev.filter((h) => labelMatchesQuery(h.label, q)), cities));
     setLoading(true);
     const ac = new AbortController();
     const t = window.setTimeout(() => {
       fetchGeocode(q, { lat, lng, signal: ac.signal })
         .then((data) => {
           if (ac.signal.aborted) return;
-          suggestCache.set(key, data);
-          setHits(data);
+          const merged = withCities(data, cities);
+          suggestCache.set(key, merged);
+          setHits(merged);
         })
         .catch((err: unknown) => {
           if (err instanceof DOMException && err.name === "AbortError") return;
@@ -109,7 +131,7 @@ export function useAddressSuggest(
         .finally(() => {
           if (!ac.signal.aborted) setLoading(false);
         });
-    }, 180);
+    }, 120);
 
     return () => {
       window.clearTimeout(t);

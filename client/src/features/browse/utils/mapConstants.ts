@@ -71,16 +71,21 @@ export const BROWSE_MOBILE_MQ = "(max-width: 900px)";
  */
 export const DISABLED_CHAIN_SLUGS: readonly string[] = ["go-fitness", "gofitness"];
 
+/**
+ * Quick choices in the browse bar: first the on/off filters, then shortcuts
+ * that search for a chain by name. The bar shows as many as fit the row.
+ */
 export const BROWSE_SEARCH_QUICK = [
-  { id: "fressi", q: "Fressi" },
-  { id: "elixia", q: "Elixia" },
-  { id: "easyfit", q: "EasyFit" },
-  { id: "f24", q: "Fitness24Seven" },
-  { id: "liikku", q: "Liikku" },
-  { id: "forever", q: "Forever" },
   { id: "trial", filter: "freeTrial" as const },
   { id: "247", filter: "only247" as const },
   { id: "day", filter: "dayPass" as const },
+  { id: "women", filter: "women" as const },
+  { id: "f24", q: "Fitness24Seven" },
+  { id: "fressi", q: "Fressi" },
+  { id: "liikku", q: "Liikku" },
+  { id: "elixia", q: "Elixia" },
+  { id: "easyfit", q: "EasyFit" },
+  { id: "forever", q: "Forever" },
 ] as const;
 
 export type FilterKey = "sort" | "price" | "distance";

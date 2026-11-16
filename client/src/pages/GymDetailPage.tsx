@@ -330,8 +330,8 @@ function GymDetailPage() {
         {hasPoint ? (
           <aside className="gp-side" aria-label={t("map")}>
             <GymRouteMap
-              gymLat={gym.lat}
-              gymLng={gym.lng}
+              gym={gym}
+              chain={chain ?? null}
               from={from}
               tripKm={tripKm}
               routeUrl={routeUrl}

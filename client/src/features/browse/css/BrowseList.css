@@ -67,3 +67,11 @@
   filter: invert(1);
   opacity: 0.7;
 }
+
+/* Desktop: the list never scrolls by itself (it is paged), so the mouse wheel
+   over it scrolls the page, down to the footer. */
+@media (min-width: 901px) {
+  .browse-list-scroll {
+    overscroll-behavior: auto;
+  }
+}

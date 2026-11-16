@@ -93,7 +93,7 @@ function FeedbackPage() {
   ];
 
   return (
-    <main className="fb">
+    <main className="fb load-reveal">
       <div className="fb-inner">
         <Link className="fb-back" to={gymSlug ? pathGym(lang, gymSlug) : pathHome(lang)}>
           <ArrowLeft size={16} strokeWidth={2.4} aria-hidden="true" />
