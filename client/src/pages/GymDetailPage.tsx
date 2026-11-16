@@ -22,7 +22,8 @@ import { readFavoriteSlugs, toggleFavoriteSlug } from "../data/favorites";
 import { cleanGymDisplayName, formatDistanceKm, formatGymStreetLine, formatPriceFrom } from "../data/format";
 import type { GeoHit } from "../data/geocode";
 import { offerPhrase } from "../data/offerText";
-import { resolveGymOffer } from "../data/types";
+import { confirmedDaysAgo } from "../data/freshness";
+import { resolveGymOffer, type FactCheck } from "../data/types";
 import { distanceKm } from "../features/browse/utils/distanceKm";
 import GymRouteMap from "../features/gym-detail/components/GymRouteMap";
 import { useGymDetail } from "../features/gym-detail/hooks/useGymDetail";
@@ -153,7 +154,27 @@ function GymDetailPage() {
     checkedDate && !Number.isNaN(checkedDate.getTime())
       ? checkedDate.toLocaleDateString(lang === "fi" ? "fi-FI" : "en-GB")
       : null;
-  const sourceUrl = gym.offerSourceUrl || chain?.sourceUrl || null;
+  const sourceUrl = gym.offerSourceUrl?.split("|")[0]?.trim() || chain?.sourceUrl || null;
+
+  // "Confirmed today": the daily robot found this value on the gym's own page.
+  function confirmedLabel(check: FactCheck | undefined) {
+    const days = confirmedDaysAgo(check);
+    if (days == null) return null;
+    const text =
+      days === 0
+        ? t("gymConfirmedToday")
+        : days === 1
+          ? t("gymConfirmedYesterday")
+          : t("gymConfirmedDays", { n: days });
+    return (
+      <span className="gp-checked" title={t("gymConfirmedHint")}>
+        <Check size={14} strokeWidth={2.8} aria-hidden="true" />
+        {text}
+      </span>
+    );
+  }
+  const priceConfirmed = confirmedLabel(gym.checks?.price);
+  const hoursConfirmed = confirmedLabel(gym.checks?.hours);
   const phone = gym.phone?.trim() || null;
   const email = gym.email?.trim() || null;
 
@@ -319,7 +340,9 @@ function GymDetailPage() {
           <section className="gp-card">
             <div className="gp-card-head">
               <h2>{t("membershipsPrices")}</h2>
-              {checkedText ? (
+              {priceConfirmed ? (
+                priceConfirmed
+              ) : checkedText ? (
                 <span className="gp-checked">
                   <Check size={14} strokeWidth={2.8} aria-hidden="true" />
                   {t("gymChecked", { date: checkedText })}
@@ -363,7 +386,7 @@ function GymDetailPage() {
             <section className="gp-card">
               <div className="gp-card-head">
                 <h2>{t("gymHours")}</h2>
-                <Clock size={18} strokeWidth={2.2} aria-hidden="true" />
+                {hoursConfirmed ?? <Clock size={18} strokeWidth={2.2} aria-hidden="true" />}
               </div>
               {is247 || offer.hoursWeekday || offer.hoursWeekend ? (
                 <ul className="gp-rows">

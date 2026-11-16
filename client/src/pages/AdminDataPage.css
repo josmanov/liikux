@@ -359,3 +359,10 @@
   background: var(--surface);
   color: #9ecbff;
 }
+
+/* Daily robot check: the extra note under the status ("sivulla: 29,90 €…") */
+.admin-robot-note {
+  display: block;
+  max-width: 16rem;
+  white-space: normal;
+}

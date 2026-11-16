@@ -21,7 +21,45 @@ type Row = {
   missReason: string | null;
   sourceUrl: string | null;
   method: string | null;
+  /** What the daily robot check found on the gym's own page. */
+  priceCheck: RobotCheck | null;
+  hoursCheck: RobotCheck | null;
 };
+
+type RobotCheck = {
+  status: string;
+  checkedAt: string;
+  verifiedAt: string | null;
+  sourceUrl: string | null;
+  note: string | null;
+};
+
+const ROBOT_TEXT: Record<string, string> = {
+  confirmed: "vahvistettu",
+  not_found: "ei löytynyt sivulta",
+  unreachable: "sivu ei auennut",
+  blocked: "robotit kielletty",
+  no_source: "ei lähdesivua",
+};
+
+function RobotCell({ check }: { check: RobotCheck | null }) {
+  if (!check) return <span className="admin-muted">–</span>;
+  return (
+    <>
+      <span className={`admin-status status-${check.status === "confirmed" ? "ok" : check.status === "not_found" ? "partial" : "fail"}`}>
+        {ROBOT_TEXT[check.status] ?? check.status}
+      </span>
+      {check.note ? <small className="admin-robot-note">{check.note}</small> : null}
+      {check.sourceUrl ? (
+        <small>
+          <a href={check.sourceUrl} target="_blank" rel="noreferrer">
+            sivu
+          </a>
+        </small>
+      ) : null}
+    </>
+  );
+}
 
 type Run = {
   id: string;
@@ -91,7 +129,9 @@ type ViewFilter =
   | "miss_price"
   | "miss_hours"
   | "miss_any"
-  | "miss_both";
+  | "miss_both"
+  | "robot_review"
+  | "robot_ok";
 
 function rowHasPrice(r: Row) {
   return r.price != null;
@@ -111,6 +151,8 @@ function matchesView(r: Row, view: ViewFilter) {
   if (view === "miss_hours") return !hasH;
   if (view === "miss_any") return !hasP || !hasH;
   if (view === "miss_both") return !hasP && !hasH;
+  if (view === "robot_review") return r.priceCheck?.status === "not_found";
+  if (view === "robot_ok") return r.priceCheck?.status === "confirmed";
   return true;
 }
 
@@ -259,6 +301,8 @@ function AdminDataPage() {
   }, [rows, hideMuut]);
 
   const lastRun = runs[0] ?? null;
+  // Runs of the daily check (verify-data.ts) have an id that starts with "check-".
+  const lastRunIsCheck = Boolean(lastRun?.id.startsWith("check-"));
   const lastChanges: Change[] = useMemo(() => {
     if (!lastRun?.changesJson) return [];
     try {
@@ -446,13 +490,13 @@ function AdminDataPage() {
                 <strong>{lastRun.scanned}</strong>
               </div>
               <div>
-                <span>OK / osittain</span>
+                <span>{lastRunIsCheck ? "Hinta vahvistettu / ei löytynyt sivulta" : "OK / osittain"}</span>
                 <strong>
                   {lastRun.okCount} / {lastRun.partialCount}
                 </strong>
               </div>
               <div>
-                <span>Ei löytynyt / virhe</span>
+                <span>{lastRunIsCheck ? "Ei lähdesivua / sivu ei auennut" : "Ei löytynyt / virhe"}</span>
                 <strong>
                   {lastRun.unknownCount} / {lastRun.failCount}
                 </strong>
@@ -480,7 +524,11 @@ function AdminDataPage() {
                 className="admin-link-btn"
                 onClick={() => setShowChanges((s) => !s)}
               >
-                {showChanges ? "Piilota muutokset" : `Näytä muutokset (${lastChanges.length})`}
+                {showChanges
+                  ? "Piilota lista"
+                  : lastRunIsCheck
+                    ? `Tarkista käsin (${lastChanges.length})`
+                    : `Näytä muutokset (${lastChanges.length})`}
               </button>
             ) : null}
             {showChanges ? (
@@ -546,6 +594,8 @@ function AdminDataPage() {
           <option value="miss_hours">Puuttuu: aukiolo</option>
           <option value="miss_any">Puuttuu: jompikumpi</option>
           <option value="miss_both">Puuttuu: molemmat</option>
+          <option value="robot_review">Robotti: hinta ei löytynyt sivulta</option>
+          <option value="robot_ok">Robotti: hinta vahvistettu</option>
         </select>
         <label>
           <input
@@ -567,6 +617,8 @@ function AdminDataPage() {
               <th>Kaupunki</th>
               <th>Hinta</th>
               <th>Aukiolo</th>
+              <th>Robotti: hinta</th>
+              <th>Robotti: aukiolo</th>
               <th>Tarkistettu</th>
               <th>Tila</th>
               <th>Syy jos puuttuu</th>
@@ -594,6 +646,12 @@ function AdminDataPage() {
                 <td className={freshnessClass(Boolean(r.hours), r.checkedAt)}>
                   {r.hours ?? "EI TIEDOSSA"}
                   {r.hoursSource ? <small>{r.hoursSource}</small> : null}
+                </td>
+                <td>
+                  <RobotCell check={r.priceCheck} />
+                </td>
+                <td>
+                  <RobotCell check={r.hoursCheck} />
                 </td>
                 <td className="admin-date">{fmtDate(r.checkedAt) ?? "–"}</td>
                 <td>

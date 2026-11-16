@@ -10,6 +10,7 @@ import {
 } from "../gymListQuery.js";
 import { reverseAddress, searchAddress } from "../geocode/index.js";
 import { registerFeedbackRoutes } from "./feedback.js";
+import { allChecks, checksForGym } from "../factChecks.js";
 const LIST_CACHE_MS = 2 * 60 * 1000;
 // Browsers keep lists 2 min; the Cloudflare edge (worker.js) keeps them 5 min.
 const LIST_CACHE_HEADER = "public, max-age=120, s-maxage=300";
@@ -135,7 +136,7 @@ export function registerApiRoutes(app: express.Application) {
     return;
   }
 
-  const { data, hit } = await cached(`gym:${slug}`, LIST_CACHE_MS, async () => {
+  const { data, hit } = await cached(`gym-v2:${slug}`, LIST_CACHE_MS, async () => {
     const rows = await db
       .select()
       .from(gyms)
@@ -148,7 +149,9 @@ export function registerApiRoutes(app: express.Application) {
       .from(chains)
       .where(eq(chains.id, gym.chainId))
       .limit(1);
-    return { ...gym, chain: chainRows[0] ?? null };
+    // checks = what the daily robot confirmed on the gym's own page.
+    const checks = await checksForGym(gym.id);
+    return { ...gym, chain: chainRows[0] ?? null, checks };
   });
 
   if (!data) {
@@ -182,6 +185,7 @@ function adminAllowed(req: express.Request) {
   const chainRows = await db.select().from(chains);
   const chainById = new Map(chainRows.map((c) => [c.id, c]));
   const gymRows = await db.select().from(gyms).where(eq(gyms.listed, true));
+  const checksByGym = await allChecks();
 
   const rows = gymRows.map((g) => {
     const c = chainById.get(g.chainId);
@@ -216,6 +220,8 @@ function adminAllowed(req: express.Request) {
       missReason: g.missReason ?? null,
       sourceUrl: g.offerSourceUrl ?? (priceSource === "ketju" ? c?.sourceUrl ?? null : null),
       method: g.offerMethod ?? (priceSource === "ketju" ? "chain" : null),
+      priceCheck: checksByGym.get(g.id)?.price ?? null,
+      hoursCheck: checksByGym.get(g.id)?.hours ?? null,
     };
   });
 

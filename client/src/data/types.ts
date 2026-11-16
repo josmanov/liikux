@@ -70,7 +70,19 @@ export type Gym = {
   /** When the price/offer data was last checked (ISO date), and where from. */
   offerCheckedAt?: string | null;
   offerSourceUrl?: string | null;
+  /** Results of the daily robot check. Only on the single-gym API answer. */
+  checks?: { price?: FactCheck; hours?: FactCheck } | null;
   chain?: ChainSummary | null;
+};
+
+/** One fact ("price" or "hours") checked against the gym's own page. */
+export type FactCheck = {
+  status: "confirmed" | "not_found" | "unreachable" | "blocked" | "no_source";
+  checkedAt: string;
+  /** Last time the value was really found on the page. */
+  verifiedAt: string | null;
+  sourceUrl: string | null;
+  note: string | null;
 };
 
 export function parseMembershipsJson(

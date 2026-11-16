@@ -23,6 +23,8 @@
     "db:backup-gyms": "tsx src/backup-gyms.ts",
     "db:import-salit": "tsx src/import-salit-json.ts",
     "db:restore-gyms": "tsx src/restore-gyms-backup.ts",
+    "db:verify": "tsx src/verify-data.ts",
+    "db:verify:dry": "tsx src/verify-data.ts --dry-run",
     "db:enrich": "tsx src/enrich-gyms.ts",
     "db:enrich:dry": "tsx src/enrich-gyms.ts --dry-run --limit=25",
     "db:enrich:chains": "tsx src/enrich-gyms.ts --skip-other --only-missing"

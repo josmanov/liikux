@@ -5,6 +5,7 @@ import {
     doublePrecision,
     boolean,
     integer,
+    primaryKey,
 } from "drizzle-orm/pg-core";
 
 export const chains = pgTable("chains", {
@@ -80,6 +81,29 @@ export const enrichRuns = pgTable("enrich_runs", {
     hoursChanged: integer("hours_changed").notNull().default(0),
     changesJson: text("changes_json"),
 });
+
+/**
+ * The daily data check (src/verify-data.ts) writes one row per gym and fact
+ * ("price" or "hours"). It says whether the value we show was found on the
+ * gym's own page, and when.
+ *
+ *   checkedAt  = last time the robot looked
+ *   verifiedAt = last time the value was really found on the page
+ */
+export const factChecks = pgTable(
+    "fact_checks",
+    {
+        gymId: varchar("gym_id", { length: 64 }).notNull(),
+        field: varchar("field", { length: 16 }).notNull(), // price | hours
+        value: text("value"), // the value that was checked, e.g. "32.9" or "06:00–23:00"
+        status: varchar("status", { length: 16 }).notNull(), // confirmed | not_found | unreachable | blocked | no_source
+        sourceUrl: text("source_url"),
+        checkedAt: varchar("checked_at", { length: 32 }).notNull(),
+        verifiedAt: varchar("verified_at", { length: 32 }),
+        note: text("note"), // e.g. other prices seen on the page
+    },
+    (t) => [primaryKey({ columns: [t.gymId, t.field] })],
+);
 
 /**
  * Messages from the site: "suggest a gym", "report an error" and general
