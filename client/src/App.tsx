@@ -19,6 +19,7 @@ const FeedbackPage = lazy(() => import("./pages/FeedbackPage"));
 const ChainsPage = lazy(() => import("./pages/ChainsPage"));
 const FavoritesPage = lazy(() => import("./pages/FavoritesPage"));
 const AboutPage = lazy(() => import("./pages/AboutPage"));
+const BusinessPage = lazy(() => import("./pages/BusinessPage"));
 
 function RouteFallback() {
   return <div className="route-fallback" aria-hidden="true" />;
@@ -191,6 +192,22 @@ function App() {
             element={
               <Suspense fallback={<RouteFallback />}>
                 <AboutPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/fi/yrityksille"
+            element={
+              <Suspense fallback={<RouteFallback />}>
+                <BusinessPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/en/for-gyms"
+            element={
+              <Suspense fallback={<RouteFallback />}>
+                <BusinessPage />
               </Suspense>
             }
           />

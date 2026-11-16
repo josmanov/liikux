@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
-import { ArrowLeft, CircleCheck, MessageSquarePlus, MessagesSquare, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Building2, CircleCheck, MessageSquarePlus, MessagesSquare, TriangleAlert } from "lucide-react";
 import { API } from "../data/apiBase";
 import { pathGym, pathHome, type FeedbackType } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
@@ -13,13 +13,14 @@ import "./FeedbackPage.css";
  *   ?type=suggest  → suggest a new gym
  *   ?type=error    → report wrong details (add &gym=<slug> to tie it to a gym)
  *   ?type=feedback → anything else
+ *   ?type=business → a gym owner or chain getting in touch (email is required)
  *
  * Sends a POST to /api/feedback; messages are stored in the `feedback` table.
  */
 type Status = "idle" | "sending" | "sent" | "failed";
 
 function readType(raw: string | null): FeedbackType {
-  return raw === "suggest" || raw === "error" ? raw : "feedback";
+  return raw === "suggest" || raw === "error" || raw === "business" ? raw : "feedback";
 }
 
 function FeedbackPage() {
@@ -32,7 +33,13 @@ function FeedbackPage() {
   const [status, setStatus] = useState<Status>("idle");
 
   const title =
-    type === "suggest" ? t("fbTitleSuggest") : type === "error" ? t("fbTitleError") : t("fbTitleFeedback");
+    type === "suggest"
+      ? t("fbTitleSuggest")
+      : type === "error"
+        ? t("fbTitleError")
+        : type === "business"
+          ? t("fbTitleBusiness")
+          : t("fbTitleFeedback");
   usePageMeta({ title: `${title} | Liikux`, description: t("fbLead"), path: pathname });
 
   // When reporting an error about a specific gym, show its name.
@@ -82,6 +89,7 @@ function FeedbackPage() {
     ["suggest", t("fbTypeSuggest"), MessageSquarePlus],
     ["error", t("fbTypeError"), TriangleAlert],
     ["feedback", t("fbTypeFeedback"), MessagesSquare],
+    ["business", t("fbTypeBusiness"), Building2],
   ];
 
   return (
@@ -134,7 +142,7 @@ function FeedbackPage() {
               </>
             ) : null}
 
-            {type === "error" && !gymSlug ? (
+            {(type === "error" && !gymSlug) || type === "business" ? (
               <label className="fb-field">
                 <span>{t("fbAboutGym")}</span>
                 <input name="gymName" maxLength={200} />
@@ -162,8 +170,17 @@ function FeedbackPage() {
             </label>
 
             <label className="fb-field">
-              <span>{t("fbEmail")}</span>
-              <input name="email" type="email" inputMode="email" maxLength={200} autoComplete="email" />
+              <span>
+                {type === "business" ? t("fbEmailBusiness") + " *" : t("fbEmail")}
+              </span>
+              <input
+                name="email"
+                type="email"
+                inputMode="email"
+                maxLength={200}
+                autoComplete="email"
+                required={type === "business"}
+              />
             </label>
 
             {/* Honeypot: hidden from people, bots fill it in and get ignored. */}

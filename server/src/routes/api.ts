@@ -10,6 +10,7 @@ import {
 } from "../gymListQuery.js";
 import { reverseAddress, searchAddress } from "../geocode/index.js";
 import { registerFeedbackRoutes } from "./feedback.js";
+import { registerGoRoutes } from "./go.js";
 import { allChecks, checksForGym } from "../factChecks.js";
 const LIST_CACHE_MS = 2 * 60 * 1000;
 // Browsers keep lists 2 min; the Cloudflare edge (worker.js) keeps them 5 min.
@@ -178,6 +179,7 @@ function adminAllowed(req: express.Request) {
 }
 
   registerFeedbackRoutes(app, adminAllowed);
+  registerGoRoutes(app, adminAllowed);
 
   app.get("/api/admin/data-status", async (req, res) => {
   if (!adminAllowed(req)) {

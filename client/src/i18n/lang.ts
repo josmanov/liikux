@@ -73,13 +73,18 @@ export function pathAbout(lang: Lang) {
   return lang === "en" ? "/en/about" : "/fi/tietoa";
 }
 
+/** Page for gym owners and chains. */
+export function pathBusiness(lang: Lang) {
+  return lang === "en" ? "/en/for-gyms" : "/fi/yrityksille";
+}
+
 /** Favorites + compare page. Pass slugs to make a share link. */
 export function pathFavorites(lang: Lang, sharedSlugs?: string[]) {
   const base = lang === "en" ? "/en/favorites" : "/fi/suosikit";
   return sharedSlugs?.length ? `${base}?salit=${sharedSlugs.map(encodeURIComponent).join(",")}` : base;
 }
 
-export type FeedbackType = "suggest" | "error" | "feedback";
+export type FeedbackType = "suggest" | "error" | "feedback" | "business";
 
 /** Feedback page: suggest a gym, report an error, or general feedback. */
 export function pathFeedback(lang: Lang, type: FeedbackType = "feedback", gymSlug?: string) {
@@ -113,6 +118,7 @@ export function switchLangPath(
   } else {
     if (pathname === "/fi/ketjut" || pathname === "/en/chains") return pathChains(next);
     if (pathname === "/fi/tietoa" || pathname === "/en/about") return pathAbout(next);
+    if (pathname === "/fi/yrityksille" || pathname === "/en/for-gyms") return pathBusiness(next);
     if (pathname === "/fi/suosikit" || pathname === "/en/favorites") return pathFavorites(next) + search;
     const gymsNested = pathname.match(
       /^\/(fi|en)\/(kuntosalit|gyms)\/([^/]+)\/([^/]+)$/,

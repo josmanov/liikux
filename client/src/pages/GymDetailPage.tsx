@@ -22,6 +22,7 @@ import { readFavoriteSlugs, toggleFavoriteSlug } from "../data/favorites";
 import { cleanGymDisplayName, formatDistanceKm, formatGymStreetLine, formatPriceFrom } from "../data/format";
 import type { GeoHit } from "../data/geocode";
 import { offerPhrase } from "../data/offerText";
+import { gymSiteLink } from "../data/outLink";
 import { confirmedDaysAgo } from "../data/freshness";
 import { resolveGymOffer, type FactCheck } from "../data/types";
 import { distanceKm } from "../features/browse/utils/distanceKm";
@@ -136,6 +137,11 @@ function GymDetailPage() {
   const streetLine = formatGymStreetLine(gym) || gym.address?.trim() || "";
   const addressText = [streetLine, gym.city?.trim()].filter(Boolean).join(", ");
   const siteUrl = gym.www?.trim() || chain?.website?.trim() || getChainWebsite(chain?.slug) || null;
+  // Links to the gym's site are counted (see data/outLink.ts). The server knows
+  // the same two addresses; for anything else we link straight to the site.
+  const counted = Boolean(gym.www?.trim() || chain?.website?.trim());
+  const siteHref = (place: "button" | "contacts") =>
+    siteUrl && counted ? gymSiteLink(gym.slug, place) : siteUrl ?? "#";
   const hasPoint = gym.lat != null && gym.lng != null;
   const tripKm = from && hasPoint ? distanceKm(from.lat, from.lng, gym.lat, gym.lng) : null;
   const routeUrl =
@@ -199,7 +205,7 @@ function GymDetailPage() {
   );
 
   const siteButton = siteUrl ? (
-    <a className="btn btn-primary gp-site" href={siteUrl} target="_blank" rel="noreferrer">
+    <a className="btn btn-primary gp-site" href={siteHref("button")} target="_blank" rel="noreferrer nofollow">
       {t("gymWebsite")}
       <ArrowUpRight size={17} strokeWidth={2.4} aria-hidden="true" />
     </a>
@@ -445,7 +451,7 @@ function GymDetailPage() {
                   ) : null}
                   {siteUrl ? (
                     <li>
-                      <a href={siteUrl} target="_blank" rel="noreferrer">
+                      <a href={siteHref("contacts")} target="_blank" rel="noreferrer nofollow">
                         <ArrowUpRight size={16} strokeWidth={2.2} aria-hidden="true" />
                         {hostOf(siteUrl)}
                       </a>

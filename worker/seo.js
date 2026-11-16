@@ -179,6 +179,18 @@ export async function pageMeta(path, loadJson) {
     };
   }
 
+  // For gyms
+  if (path === "/fi/yrityksille" || path === "/en/for-gyms") {
+    return {
+      lang,
+      title: fi ? "Kuntosaleille ja ketjuille | Liikux" : "For gyms and chains | Liikux",
+      description: fi
+        ? "Onko salisi Liikuxissa? Tarkista tiedot ilmaiseksi, pyydä raportti kävijöistä, jotka siirtyivät sivuillenne, ja kysy lisänäkyvyydestä."
+        : "Is your gym on Liikux? Check its details for free, ask for a report of visitors who went on to your site, and ask about extra visibility.",
+      paths: { fi: "/fi/yrityksille", en: "/en/for-gyms" },
+    };
+  }
+
   // City page
   if ((m = /^\/(?:fi\/kuntosalit|en\/gyms)\/([^/]+)\/([^/]+)$/.exec(path))) {
     const paths = { fi: `/fi/kuntosalit/${m[1]}/${m[2]}`, en: `/en/gyms/${m[1]}/${m[2]}` };

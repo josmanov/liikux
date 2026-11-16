@@ -63,6 +63,7 @@ export const STATIC_PAGES = [
   ["/fi/kuntosalit", "/en/gyms"],
   ["/fi/ketjut", "/en/chains"],
   ["/fi/tietoa", "/en/about"],
+  ["/fi/yrityksille", "/en/for-gyms"],
   ["/fi/kayttoehdot", "/en/terms"],
   ["/fi/tietosuoja", "/en/privacy"],
   ["/fi/evasteet", "/en/cookies"],

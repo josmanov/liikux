@@ -79,6 +79,10 @@ type Run = {
   changesJson: string | null;
 };
 
+/** Clicks through to a gym's own site in the last 30 days (GET /api/admin/clicks). */
+type ClickRow = { gymId: string; slug: string; name: string; city: string; chain: string | null; clicks: number };
+type Clicks = { days: number; ready: boolean; rows: ClickRow[] };
+
 type Change = {
   gym: string;
   field: "price" | "hours";
@@ -169,6 +173,7 @@ function readStoredAdminKey() {
 function AdminDataPage() {
   const [rows, setRows] = useState<Row[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
+  const [clicks, setClicks] = useState<Clicks | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState("");
@@ -200,6 +205,11 @@ function AdminDataPage() {
       setRows(Array.isArray(rowData) ? rowData : []);
       setRuns(Array.isArray(runData) ? runData : []);
       setNeedsKey(false);
+      // Click numbers are extra: if they fail, the rest of the page still works.
+      fetch(`${API}/api/admin/clicks?days=30`, { headers })
+        .then((res) => (res.ok ? (res.json() as Promise<Clicks>) : null))
+        .then(setClicks)
+        .catch(() => setClicks(null));
     } catch {
       setError("Tietojen haku epäonnistui.");
     } finally {
@@ -544,6 +554,34 @@ function AdminDataPage() {
           </>
         ) : (
           <p className="admin-muted">Ei vielä yhtään ajoa.</p>
+        )}
+      </section>
+
+      <section className="admin-run">
+        <h2>Siirtymät salien omille sivuille (30 pv)</h2>
+        {!clicks || !clicks.ready ? (
+          <p className="admin-muted">Laskenta ei ole vielä käytössä (taulu link_clicks puuttuu).</p>
+        ) : clicks.rows.length === 0 ? (
+          <p className="admin-muted">Ei vielä yhtään siirtymää.</p>
+        ) : (
+          <>
+            <p className="admin-muted">
+              Yhteensä {clicks.rows.reduce((sum, r) => sum + r.clicks, 0)} siirtymää, {clicks.rows.length} salia.
+              Alla 20 eniten klikattua.
+            </p>
+            <ul className="admin-changes">
+              {clicks.rows.slice(0, 20).map((r) => (
+                <li key={r.gymId}>
+                  <strong>{r.clicks}</strong> ·{" "}
+                  <a href={`/fi/sali/${r.slug}`} target="_blank" rel="noreferrer">
+                    {r.name}
+                  </a>
+                  , {r.city}
+                  {r.chain ? ` (${r.chain})` : ""}
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </section>
 

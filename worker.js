@@ -5,6 +5,7 @@ import { buildSitemap } from "./worker/sitemap.js";
  * The Cloudflare Worker in front of liikux.fi. It does four things:
  *
  *   /api/*        → forwards to the API on Render, with an edge cache
+ *   /api/go/*     → counted links to a gym's own site (passed through, never cached)
  *   /sitemap.xml  → the list of all pages for Google   (worker/sitemap.js)
  *   /robots.txt   → tells crawlers where the sitemap is
  *   pages         → serves the built React app (client/dist) and fills in
@@ -40,6 +41,18 @@ async function proxyApi(request, url, env, ctx) {
   const clientIp = request.headers.get("cf-connecting-ip") ?? "";
   const cacheable =
     request.method === "GET" && !url.pathname.startsWith("/api/admin");
+
+  // /api/go/<gym> counts a click and answers with a redirect to the gym's site.
+  // Hand that redirect to the browser as it is: never follow it, never cache it.
+  if (url.pathname.startsWith("/api/go/")) {
+    return fetch(upstreamUrl, {
+      redirect: "manual",
+      headers: {
+        "x-forwarded-for": clientIp,
+        "user-agent": request.headers.get("user-agent") ?? "",
+      },
+    });
+  }
 
   if (!cacheable) {
     const fwd = new Request(upstreamUrl, request);

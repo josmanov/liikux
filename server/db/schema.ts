@@ -106,13 +106,29 @@ export const factChecks = pgTable(
 );
 
 /**
+ * How many times visitors clicked through to a gym's own website
+ * (see src/routes/go.ts). One row per day + gym + place on our page.
+ * Nothing about the visitor is stored.
+ */
+export const linkClicks = pgTable(
+    "link_clicks",
+    {
+        day: varchar("day", { length: 10 }).notNull(), // 2026-11-16
+        gymId: varchar("gym_id", { length: 64 }).notNull(),
+        src: varchar("src", { length: 16 }).notNull(), // button | contacts | bar | other
+        count: integer("count").notNull().default(0),
+    },
+    (t) => [primaryKey({ columns: [t.day, t.gymId, t.src] })],
+);
+
+/**
  * Messages from the site: "suggest a gym", "report an error" and general
  * feedback. Read them in the admin view (GET /api/admin/feedback).
  */
 export const feedback = pgTable("feedback", {
     id: varchar("id", { length: 64 }).primaryKey(),
     createdAt: varchar("created_at", { length: 32 }).notNull(),
-    type: varchar("type", { length: 16 }).notNull(), // suggest | error | feedback
+    type: varchar("type", { length: 16 }).notNull(), // suggest | error | feedback | business
     gymSlug: varchar("gym_slug", { length: 128 }),
     gymName: text("gym_name"),
     place: text("place"),

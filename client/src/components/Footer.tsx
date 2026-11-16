@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { openCookieSettings } from "../data/cookieConsent";
 import {
   pathAbout,
+  pathBusiness,
   pathFeedback,
   pathGyms,
   pathGymsCity,
@@ -68,6 +69,7 @@ function Footer() {
         <nav className="footer-col" aria-label={t("footerInfo")}>
           <h2 className="footer-h">{t("footerInfo")}</h2>
           <Link to={pathAbout(lang)}>{t("footerAbout")}</Link>
+          <Link to={pathBusiness(lang)}>{t("footerBusiness")}</Link>
           <Link to={pathFeedback(lang, "suggest")}>{t("headerMissingGym")}</Link>
           <Link to={pathFeedback(lang, "error")}>{t("reportError")}</Link>
           <Link to={pathFeedback(lang, "feedback")}>{t("footerFeedback")}</Link>

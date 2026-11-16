@@ -9,7 +9,7 @@ import { rateLimit } from "../rateLimit.js";
  * POST /api/feedback        — anyone can send (max 5 per minute per visitor)
  * GET  /api/admin/feedback  — read messages (needs ADMIN_KEY)
  */
-const TYPES = new Set(["suggest", "error", "feedback"]);
+const TYPES = new Set(["suggest", "error", "feedback", "business"]);
 
 function clean(v: unknown, max: number) {
   if (typeof v !== "string") return null;
