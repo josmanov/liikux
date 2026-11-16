@@ -97,7 +97,8 @@ function GymDetailPage() {
   const gymName = gym ? cleanGymDisplayName(gym.name) : "";
 
   usePageMeta({
-    title: gym ? `${gymName}${gym.city ? `, ${gym.city}` : ""} | Liikux` : lang === "fi" ? "Kuntosali | Liikux" : "Gym | Liikux",
+    title: gym
+      ? `${gymName}${gym.city ? `, ${gym.city}` : ""} – ${lang === "fi" ? "hinnat ja aukiolo" : "prices and hours"} | Liikux` : lang === "fi" ? "Kuntosali | Liikux" : "Gym | Liikux",
     description: gym
       ? lang === "fi"
         ? `${gymName}${gym.city ? ` – ${gym.city}` : ""}. Katso hinnat, aukioloajat, osoite ja reitti Liikuxissa.`

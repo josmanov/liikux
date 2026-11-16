@@ -1,319 +1,26 @@
-const SITEMAP = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://liikux.fi/</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/uusimaa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/varsinaissuomi</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/satakunta</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/kanta-hame</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/pirkanmaa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/paijat-hame</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/kymenlaakso</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/etela-karjala</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/etela-savo</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/pohjois-savo</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/pohjois-karjala</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/keski-suomi</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/etela-pohjanmaa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/pohjanmaa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/keski-pohjanmaa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/pohjois-pohjanmaa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/kainuu</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/lappi</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/ahvenanmaa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/uusimaa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/varsinaissuomi</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/satakunta</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/kanta-hame</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/pirkanmaa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/paijat-hame</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/kymenlaakso</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/etela-karjala</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/etela-savo</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/pohjois-savo</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/pohjois-karjala</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/keski-suomi</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/etela-pohjanmaa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/pohjanmaa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/keski-pohjanmaa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/pohjois-pohjanmaa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/kainuu</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/lappi</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/ahvenanmaa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/uusimaa/helsinki</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/uusimaa/espoo</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/uusimaa/vantaa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/uusimaa/porvoo</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/uusimaa/lohja</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/uusimaa/hyvinkaa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/uusimaa/kerava</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/uusimaa/jarvenpaa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/uusimaa/kirkkonummi</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/pirkanmaa/tampere</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/varsinaissuomi/turku</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/varsinaissuomi/salo</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/pohjois-pohjanmaa/oulu</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/keski-suomi/jyvaskyla</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/pohjois-savo/kuopio</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/paijat-hame/lahti</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/kymenlaakso/kouvola</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/kymenlaakso/kotka</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/satakunta/pori</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/pohjois-karjala/joensuu</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/etela-karjala/lappeenranta</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/kanta-hame/hameenlinna</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/kanta-hame/riihimaki</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/pohjanmaa/vaasa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/etela-pohjanmaa/seinajoki</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/lappi/rovaniemi</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kuntosalit/etela-savo/mikkeli</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/uusimaa/helsinki</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/uusimaa/espoo</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/uusimaa/vantaa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/uusimaa/porvoo</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/uusimaa/lohja</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/uusimaa/hyvinkaa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/uusimaa/kerava</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/uusimaa/jarvenpaa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/uusimaa/kirkkonummi</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/pirkanmaa/tampere</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/varsinaissuomi/turku</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/varsinaissuomi/salo</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/pohjois-pohjanmaa/oulu</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/keski-suomi/jyvaskyla</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/pohjois-savo/kuopio</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/paijat-hame/lahti</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/kymenlaakso/kouvola</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/kymenlaakso/kotka</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/satakunta/pori</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/pohjois-karjala/joensuu</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/etela-karjala/lappeenranta</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/kanta-hame/hameenlinna</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/kanta-hame/riihimaki</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/pohjanmaa/vaasa</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/etela-pohjanmaa/seinajoki</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/lappi/rovaniemi</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/gyms/etela-savo/mikkeli</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/kayttoehdot</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/tietosuoja</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/fi/evasteet</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/terms</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/privacy</loc>
-  </url>
-  <url>
-    <loc>https://liikux.fi/en/cookies</loc>
-  </url>
-</urlset>
-`;
+import { applyMeta, pageMeta } from "./worker/seo.js";
+import { buildSitemap } from "./worker/sitemap.js";
+
+/**
+ * The Cloudflare Worker in front of liikux.fi. It does four things:
+ *
+ *   /api/*        → forwards to the API on Render, with an edge cache
+ *   /sitemap.xml  → the list of all pages for Google   (worker/sitemap.js)
+ *   /robots.txt   → tells crawlers where the sitemap is
+ *   pages         → serves the built React app (client/dist) and fills in
+ *                   the title, description and structured data for that
+ *                   page before sending it               (worker/seo.js)
+ */
 
 const ROBOTS = `User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /api/
 
 Sitemap: https://liikux.fi/sitemap.xml
 `;
+
+const DEFAULT_API_ORIGIN = "https://liikux.onrender.com";
 
 /**
  * API proxy with edge cache.
@@ -325,10 +32,9 @@ Sitemap: https://liikux.fi/sitemap.xml
  * so most visitors never wait for Render or the database.
  * Admin routes are never cached.
  */
-const API_ORIGIN = "https://liikux.onrender.com";
-
-async function proxyApi(request, url, ctx) {
-  const upstreamUrl = API_ORIGIN + url.pathname + url.search;
+async function proxyApi(request, url, env, ctx) {
+  // API_ORIGIN can be set for local testing (wrangler dev --var API_ORIGIN:http://localhost:3001).
+  const upstreamUrl = (env.API_ORIGIN || DEFAULT_API_ORIGIN) + url.pathname + url.search;
   // Pass the visitor IP on, so the API rate limit stays per visitor
   // instead of treating all of Cloudflare as one user.
   const clientIp = request.headers.get("cf-connecting-ip") ?? "";
@@ -361,37 +67,68 @@ async function proxyApi(request, url, ctx) {
   return res;
 }
 
+/**
+ * Lets the SEO code read API data through the same edge cache as visitors.
+ * Returns the parsed JSON, `false` when the API says "not found" (404),
+ * or `null` when the API could not be reached.
+ */
+function makeLoadJson(request, env, ctx) {
+  const origin = new URL(request.url).origin;
+  return async function loadJson(apiPath) {
+    try {
+      const url = new URL(origin + apiPath);
+      const res = await proxyApi(new Request(url, { headers: request.headers }), url, env, ctx);
+      if (res.status === 404) return false;
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  };
+}
+
+function text(body, contentType, maxAge) {
+  return new Response(body, {
+    status: 200,
+    headers: {
+      "content-type": contentType,
+      "cache-control": `public, max-age=${maxAge}`,
+      "x-content-type-options": "nosniff",
+    },
+  });
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
 
     if (path.startsWith("/api/")) {
-      return proxyApi(request, url, ctx);
-    }
-
-    if (path === "/sitemap.xml") {
-      return new Response(SITEMAP, {
-        status: 200,
-        headers: {
-          "content-type": "application/xml; charset=utf-8",
-          "cache-control": "public, max-age=3600",
-          "x-content-type-options": "nosniff",
-        },
-      });
+      return proxyApi(request, url, env, ctx);
     }
 
     if (path === "/robots.txt") {
-      return new Response(ROBOTS, {
-        status: 200,
-        headers: {
-          "content-type": "text/plain; charset=utf-8",
-          "cache-control": "public, max-age=3600",
-          "x-content-type-options": "nosniff",
-        },
-      });
+      return text(ROBOTS, "text/plain; charset=utf-8", 3600);
     }
 
-    return env.ASSETS.fetch(request);
+    if (path === "/sitemap.xml") {
+      const { xml, complete } = await buildSitemap(makeLoadJson(request, env, ctx));
+      // A sitemap without the gyms (API was down) is only kept for a minute.
+      return text(xml, "application/xml; charset=utf-8", complete ? 3600 : 60);
+    }
+
+    const response = await env.ASSETS.fetch(request);
+
+    // Pages (not images, scripts…): fill in the SEO tags for this address.
+    const isPage =
+      request.method === "GET" && (response.headers.get("content-type") ?? "").includes("text/html");
+    if (!isPage) return response;
+
+    try {
+      const meta = await pageMeta(path, makeLoadJson(request, env, ctx));
+      return applyMeta(response, meta, path);
+    } catch {
+      return response; // never let an SEO problem break the page
+    }
   },
 };
