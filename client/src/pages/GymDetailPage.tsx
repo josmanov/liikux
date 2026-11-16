@@ -28,7 +28,7 @@ import { distanceKm } from "../features/browse/utils/distanceKm";
 import GymRouteMap from "../features/gym-detail/components/GymRouteMap";
 import { useGymDetail } from "../features/gym-detail/hooks/useGymDetail";
 import { cleanHoursValue } from "../features/gym-detail/utils/cleanHoursValue";
-import { pathChain, pathFeedback, pathGym, pathGyms, pathGymsFromLocation } from "../i18n/lang";
+import { pathAbout, pathChain, pathFeedback, pathGym, pathGyms, pathGymsFromLocation } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import { usePageMeta } from "../seo/usePageMeta";
 import "../features/home/chain-tiles.css"; // per-chain logo colours and zoom
@@ -377,7 +377,8 @@ function GymDetailPage() {
                     {hostOf(sourceUrl)}
                   </a>
                 </>
-              ) : null}
+              ) : null}{" "}
+              <Link to={pathAbout(lang)}>{t("gymHowChecked")}</Link>
             </p>
           </section>
 

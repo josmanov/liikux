@@ -225,6 +225,7 @@ const fi = {
   gymConfirmedDays: "Vahvistettu {n} pv sitten",
   gymConfirmedHint: "Tieto löytyi salin omalta sivulta, kun tarkistimme sen viimeksi.",
   gymSource: "Lähde",
+  gymHowChecked: "Näin tarkistamme tiedot",
   gymPriceNote: "Hinnat ovat salin ilmoittamia ja voivat muuttua. Tarkista ajantasainen hinta salin omalta sivulta.",
   gymNearbyTitle: "Vertaa lähellä oleviin saleihin",
   gymAwayFromThis: "{km} tästä salista",
@@ -249,6 +250,7 @@ const fi = {
   reportError: "Ilmoita virheestä",
   footerLiikux: "Liikux",
   footerFeedback: "Anna palautetta",
+  footerAbout: "Tietoa ja usein kysyttyä",
   footer247: "24/7-salit",
   footerTrial: "Ilmainen kokeilu",
   // --- Feedback page ---
@@ -517,6 +519,7 @@ const en: typeof fi = {
   gymConfirmedDays: "Confirmed {n} days ago",
   gymConfirmedHint: "This was on the gym's own page the last time we checked.",
   gymSource: "Source",
+  gymHowChecked: "How we check the data",
   gymPriceNote: "Prices are as published by the gym and may change. Check the current price on the gym’s own site.",
   gymNearbyTitle: "Compare with nearby gyms",
   gymAwayFromThis: "{km} from this gym",
@@ -541,6 +544,7 @@ const en: typeof fi = {
   reportError: "Report an error",
   footerLiikux: "Liikux",
   footerFeedback: "Send feedback",
+  footerAbout: "About and common questions",
   footer247: "24/7 gyms",
   footerTrial: "Free trial",
   // --- Feedback page ---

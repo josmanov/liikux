@@ -111,17 +111,19 @@ export function registerApiRoutes(app: express.Application) {
 });
 
   app.get("/api/stats", async (_req, res) => {
-  const { data, hit } = await cached("stats", LIST_CACHE_MS, async () => {
+  const { data, hit } = await cached("stats-v2", LIST_CACHE_MS, async () => {
     const rows = await db
-      .select({ city: gyms.city })
+      .select({ city: gyms.city, chainId: gyms.chainId })
       .from(gyms)
       .where(eq(gyms.listed, true));
-    const chainRows = await db.select({ slug: chains.slug }).from(chains);
+    const chainRows = await db.select({ id: chains.id, slug: chains.slug }).from(chains);
+    // Only chains that really have gyms on the site ("muut" = independent gyms).
+    const chainsWithGyms = new Set(rows.map((r) => r.chainId));
     const cities = new Set(rows.map((r) => r.city).filter(Boolean));
     return {
       gymCount: rows.length,
       cityCount: cities.size,
-      chainCount: chainRows.filter((c) => c.slug !== "muut").length,
+      chainCount: chainRows.filter((c) => c.slug !== "muut" && chainsWithGyms.has(c.id)).length,
     };
   });
   res.setHeader("Cache-Control", LIST_CACHE_HEADER);

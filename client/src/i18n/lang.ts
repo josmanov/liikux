@@ -68,6 +68,11 @@ export function pathChains(lang: Lang) {
   return lang === "en" ? "/en/chains" : "/fi/ketjut";
 }
 
+/** About page: where the data comes from, common questions. */
+export function pathAbout(lang: Lang) {
+  return lang === "en" ? "/en/about" : "/fi/tietoa";
+}
+
 /** Favorites + compare page. Pass slugs to make a share link. */
 export function pathFavorites(lang: Lang, sharedSlugs?: string[]) {
   const base = lang === "en" ? "/en/favorites" : "/fi/suosikit";
@@ -107,6 +112,7 @@ export function switchLangPath(
     path = pathHome(next);
   } else {
     if (pathname === "/fi/ketjut" || pathname === "/en/chains") return pathChains(next);
+    if (pathname === "/fi/tietoa" || pathname === "/en/about") return pathAbout(next);
     if (pathname === "/fi/suosikit" || pathname === "/en/favorites") return pathFavorites(next) + search;
     const gymsNested = pathname.match(
       /^\/(fi|en)\/(kuntosalit|gyms)\/([^/]+)\/([^/]+)$/,

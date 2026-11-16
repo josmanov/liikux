@@ -18,6 +18,7 @@ const AdminDataPage = lazy(() => import("./pages/AdminDataPage"));
 const FeedbackPage = lazy(() => import("./pages/FeedbackPage"));
 const ChainsPage = lazy(() => import("./pages/ChainsPage"));
 const FavoritesPage = lazy(() => import("./pages/FavoritesPage"));
+const AboutPage = lazy(() => import("./pages/AboutPage"));
 
 function RouteFallback() {
   return <div className="route-fallback" aria-hidden="true" />;
@@ -177,6 +178,22 @@ function App() {
               </Suspense>
             }
           />
+          <Route
+            path="/fi/tietoa"
+            element={
+              <Suspense fallback={<RouteFallback />}>
+                <AboutPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/en/about"
+            element={
+              <Suspense fallback={<RouteFallback />}>
+                <AboutPage />
+              </Suspense>
+            }
+          />
           <Route path="/fi/kayttoehdot" element={<LegalPage />} />
           <Route path="/fi/tietosuoja" element={<LegalPage />} />
           <Route path="/fi/evasteet" element={<LegalPage />} />
@@ -188,7 +205,7 @@ function App() {
           <Route path="/login" element={<Navigate to="/" replace />} />
           <Route path="/register" element={<Navigate to="/" replace />} />
           <Route path="/favorites" element={<Navigate to="/fi/suosikit" replace />} />
-          <Route path="/about" element={<Navigate to="/" replace />} />
+          <Route path="/about" element={<Navigate to="/fi/tietoa" replace />} />
           <Route
             path="/admin/data"
             element={

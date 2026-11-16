@@ -165,6 +165,20 @@ export async function pageMeta(path, loadJson) {
     };
   }
 
+  // About
+  if (path === "/fi/tietoa" || path === "/en/about") {
+    return {
+      lang,
+      title: fi
+        ? "Tietoa Liikuxista – näin tarkistamme salien hinnat | Liikux"
+        : "About Liikux – how we check gym prices | Liikux",
+      description: fi
+        ? "Liikux näyttää Suomen kuntosalit kartalla hintoineen. Lue, mistä tiedot tulevat, miten ne tarkistetaan ja mitä tehdä, jos jokin on väärin."
+        : "Liikux shows gyms in Finland on a map with their prices. Read where the data comes from, how it is checked and what to do if something is wrong.",
+      paths: { fi: "/fi/tietoa", en: "/en/about" },
+    };
+  }
+
   // City page
   if ((m = /^\/(?:fi\/kuntosalit|en\/gyms)\/([^/]+)\/([^/]+)$/.exec(path))) {
     const paths = { fi: `/fi/kuntosalit/${m[1]}/${m[2]}`, en: `/en/gyms/${m[1]}/${m[2]}` };

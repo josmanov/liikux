@@ -1,0 +1,252 @@
+/*
+ * About page (AboutPage.tsx).
+ *
+ * Head, a strip of three numbers, then two columns:
+ * steps on the left, questions on the right. A help band at the bottom.
+ */
+
+.about {
+  padding: 2.5rem var(--gutter) 4rem;
+}
+
+.about-title {
+  font-size: clamp(1.9rem, 1.4rem + 1.8vw, 3rem);
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+}
+
+.about-lead {
+  max-width: 46rem;
+  margin-top: 0.9rem;
+  color: var(--muted);
+  font-size: var(--text-lg);
+  line-height: 1.55;
+}
+
+/* ---------- Numbers ---------- */
+
+.about-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 2rem 0 0;
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.about-stats > div {
+  padding: 1.1rem 1.4rem 1.2rem;
+}
+
+.about-stats > div + div {
+  border-left: 1px solid var(--line);
+}
+
+.about-stats dd {
+  margin: 0;
+  color: var(--brand);
+  font-size: clamp(1.5rem, 1.2rem + 0.9vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.about-stats dt {
+  margin-top: 0.3rem;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+/* ---------- Two columns ---------- */
+
+.about-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 2.5rem 3.5rem;
+  margin-top: 3rem;
+  align-items: start;
+}
+
+.about-h {
+  font-size: var(--text-xl);
+  letter-spacing: -0.025em;
+  margin-bottom: 1.25rem;
+}
+
+/* Steps: a number in a circle, joined by a thin line */
+
+.about-steps {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.about-steps li {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr);
+  gap: 1.1rem;
+  padding-bottom: 1.75rem;
+}
+
+.about-steps li:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  top: 2.5rem;
+  bottom: 0;
+  left: calc(1.25rem - 0.5px);
+  width: 1px;
+  background: var(--line-strong);
+}
+
+.about-step-n {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-weight: 800;
+}
+
+.about-steps h3 {
+  padding-top: 0.45rem;
+  font-size: var(--text-lg);
+  letter-spacing: -0.02em;
+}
+
+.about-steps p {
+  margin-top: 0.4rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* Questions */
+
+.about-faq {
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.about-faq details + details {
+  border-top: 1px solid var(--line);
+}
+
+.about-faq summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.05rem 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+  transition: background 0.15s ease;
+}
+
+.about-faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.about-faq summary:hover {
+  background: var(--surface-2);
+}
+
+.about-faq summary:focus-visible {
+  outline: 0;
+  box-shadow: inset var(--focus-ring);
+}
+
+.about-faq summary svg {
+  flex: none;
+  color: var(--faint);
+  transition: transform 0.2s ease;
+}
+
+.about-faq details[open] summary svg {
+  transform: rotate(180deg);
+  color: var(--brand);
+}
+
+.about-faq details p {
+  padding: 0 1.3rem 1.2rem;
+  max-width: 44rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* ---------- Help band ---------- */
+
+.about-help {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem 2rem;
+  flex-wrap: wrap;
+  margin-top: 3rem;
+  padding: 1.6rem 1.75rem;
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-lg);
+}
+
+.about-help h2 {
+  font-size: var(--text-xl);
+  letter-spacing: -0.025em;
+}
+
+.about-help p {
+  margin-top: 0.3rem;
+  color: var(--muted);
+}
+
+.about-help-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.about-help-actions .btn {
+  gap: 0.45rem;
+}
+
+/* ---------- Tablet and phone ---------- */
+
+@media (max-width: 900px) {
+  .about {
+    padding-top: 1.75rem;
+  }
+
+  .about-grid {
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 2.25rem;
+  }
+
+  .about-lead {
+    font-size: var(--text-md);
+  }
+}
+
+@media (max-width: 560px) {
+  .about-stats > div {
+    padding: 0.9rem 0.9rem 1rem;
+  }
+
+  .about-help-actions,
+  .about-help-actions .btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-faq summary svg {
+    transition: none;
+  }
+}
