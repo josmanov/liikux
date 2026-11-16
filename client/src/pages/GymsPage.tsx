@@ -1971,6 +1971,15 @@ function GymsPage() {
         filtersMoreBadge={filtersMoreBadge}
         extrasLabel={extrasLabel}
         extrasOpen={extrasOpen}
+        anyFilterOn={
+          chainFilterActive ||
+          priceFilterOn ||
+          maxDistanceKm != null ||
+          filtersMoreActive ||
+          extraOnly247 ||
+          extraFreeTrial ||
+          extraDayPass
+        }
         onOpenChains={() => {
           setOpenFilter(null);
           setExtrasOpen(false);

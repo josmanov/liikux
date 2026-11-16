@@ -32,6 +32,8 @@ type BrowseFiltersProps = {
   onOpenChains: () => void;
   onOpenExtras: () => void;
   onClear: () => void;
+  /** True when at least one filter is on: only then "clear filters" is shown. */
+  anyFilterOn: boolean;
 };
 
 export function BrowseFilters({
@@ -58,6 +60,7 @@ export function BrowseFilters({
   onOpenChains,
   onOpenExtras,
   onClear,
+  anyFilterOn,
 }: BrowseFiltersProps) {
   const maxDistanceValueText =
     maxDistanceKm == null
@@ -178,9 +181,11 @@ export function BrowseFilters({
             <span className="browse-filters-badge">{filtersMoreBadge}</span>
           ) : null}
         </button>
-        <button type="button" className="browse-filters-clear" onClick={onClear}>
-          {t("clearFiltersBtn")}
-        </button>
+        {anyFilterOn ? (
+          <button type="button" className="browse-filters-clear" onClick={onClear}>
+            {t("clearFiltersBtn")}
+          </button>
+        ) : null}
       </div>
     </div>
   );

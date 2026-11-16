@@ -54,11 +54,14 @@ export function BrowseSuggestChips({
             <button
               key={item.id}
               type="button"
-              className={
-                chipOn
-                  ? "browse-search-suggest-chip is-on"
-                  : "browse-search-suggest-chip"
-              }
+              className={[
+                "browse-search-suggest-chip",
+                // Chain shortcuts ("Fressi") vs. on/off filters ("24/7").
+                "filter" in item ? "is-toggle" : "is-chain",
+                chipOn ? "is-on" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
               aria-pressed={chipOn}
               onClick={(e) => {
                 (e.currentTarget as HTMLButtonElement).blur();

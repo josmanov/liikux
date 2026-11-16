@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { LocateFixed, MapPin, Search } from "lucide-react";
+import { LocateFixed, MapPin } from "lucide-react";
 import LoadSpin from "../../components/LoadSpin";
 import { useAppLocation } from "../../context/LocationContext";
 import { useAddressSuggest, type GeoHit } from "../../data/geocode";
@@ -12,8 +12,8 @@ import "./HomeSearch.css";
 /**
  * The big address box on the home page.
  *
- * Type 3+ letters → suggestions come from /api/geocode → pick one (click,
- * Enter or the "Etsi" button) → we save it as the user's location and
+ * Type 3+ letters → suggestions come from /api/geocode → pick one (click
+ * or Enter) → we save it as the user's location and
  * open the browse page for that city.
  */
 function HomeSearch() {
@@ -98,10 +98,6 @@ function HomeSearch() {
           }}
         >
           <LocateFixed size={18} strokeWidth={2.2} />
-        </button>
-        <button type="submit" className="home-search-submit">
-          <Search size={18} strokeWidth={2.4} aria-hidden="true" />
-          <span>{t("homeSearchBtn")}</span>
         </button>
       </div>
 

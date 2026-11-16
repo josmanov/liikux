@@ -3,14 +3,15 @@
  *
  * One bar across the full width, so the list and the map start on the same line:
  *
- *   Kuntosalit  [ search ]  [Ketjut] [Hinta] [Etäisyys] [Kaikki suodattimet]  × Tyhjennä
- *   Suositut  (Fressi) (Elixia) (EasyFit) …
+ *   Kuntosalit  [ search ]  [Ketjut] [Hinta] [Etäisyys] | (24/7) (Ilmainen kokeilu) (Päivälippu)      [Kaikki suodattimet]
  *
- * One system for the controls:
- *  - search box and filter buttons: same height (--ctl-h), same fill, same hairline border
- *  - an active filter: yellow border + soft yellow fill
- *  - popular chips: smaller, quiet; the active chip is filled yellow
- *  - "clear filters": plain text button
+ * One system for every control in the bar:
+ *  - same height (--ctl-h), same fill, same hairline border
+ *  - on = yellow border + soft yellow fill
+ *  - the on/off filters sit in the same row as the dropdowns; the chain
+ *    shortcuts are hidden here, because "Ketjut" does the same job
+ *  - "Kaikki suodattimet" is pushed to the right edge
+ *  - "Tyhjennä suodatus" only shows when a filter is on
  *
  * Phones use their own layout (BrowseLayout.css / BrowsePins.css).
  */
@@ -76,17 +77,19 @@
     font-weight: 500;
   }
 
-  /* Filter buttons */
-  .browse-top .browse-chrome-filters {
+  /* Filter buttons. The two wrappers disappear so every button is placed in the bar itself. */
+  .browse-top .browse-chrome-filters,
+  .browse-top .browse-filters-actions {
+    display: contents;
+  }
+
+  .browse-top .browse-filter {
     order: 3;
-    flex: 0 1 auto;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    min-width: 0;
   }
 
   .browse-top .browse-filter-btn,
-  .browse-top .browse-filters-more {
+  .browse-top .browse-filters-more,
+  .browse-top .browse-search-suggest-chip {
     height: var(--ctl-h);
     min-height: var(--ctl-h);
     padding: 0 0.95rem;
@@ -99,15 +102,20 @@
   }
 
   .browse-top .browse-filter-btn:hover,
-  .browse-top .browse-filters-more:hover {
+  .browse-top .browse-filters-more:hover,
+  .browse-top .browse-search-suggest-chip:hover {
     border-color: var(--line-strong);
     background: var(--surface-3);
+    color: var(--ink);
   }
 
   .browse-top .browse-filter-btn.is-on,
-  .browse-top .browse-filters-more.is-active {
+  .browse-top .browse-filters-more.is-active,
+  .browse-top .browse-search-suggest-chip.is-on,
+  .browse-top .browse-search-suggest-chip.is-on:hover {
     border-color: var(--brand);
     background: var(--brand-soft);
+    color: var(--ink);
   }
 
   .browse-top .browse-filter-icon,
@@ -123,15 +131,75 @@
     color: var(--brand);
   }
 
+  /* On/off filters: same row, after a thin divider */
+  .browse-top .browse-search-suggest {
+    order: 4;
+    flex: 0 0 auto;
+    width: auto;
+    max-width: none;
+    flex-direction: row;
+    align-items: center;
+    gap: 0;
+    margin: 0 0 0 0.35rem;
+    padding-left: 0.85rem;
+    border-left: 1px solid var(--line-strong);
+  }
+
+  .browse-top .browse-search-suggest-label,
+  .browse-top .browse-search-suggest-chip.is-chain {
+    display: none;
+  }
+
+  .browse-top .browse-search-suggest-chips {
+    flex: 0 0 auto;
+    width: auto;
+    gap: 0.5rem;
+    overflow: visible;
+  }
+
+  /* The on/off filters always fit here, so none of them is hidden. */
+  .browse-top .browse-search-suggest-chip.is-toggle,
+  .browse-top .browse-search-suggest-chip.is-toggle.is-overflow {
+    display: inline-flex !important;
+    align-items: center;
+  }
+
+  /* A small dot shows the state of an on/off filter. */
+  .browse-top .browse-search-suggest-chip.is-toggle::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    margin-right: 0.5rem;
+    border-radius: 50%;
+    background: var(--faint);
+    transition: background-color 0.15s ease;
+  }
+
+  .browse-top .browse-search-suggest-chip.is-toggle.is-on::before {
+    background: var(--brand);
+  }
+
+  /* Right edge: "clear" (only when a filter is on), then "all filters" */
+  .browse-top .browse-filters-more-desk {
+    order: 6;
+    margin-left: auto;
+  }
+
   .browse-top .browse-filters-clear {
+    order: 5;
     height: var(--ctl-h);
-    margin-left: 0.25rem;
+    margin-left: auto;
     padding: 0 0.5rem;
     border: 0;
     background: transparent;
     color: var(--muted);
     font-size: 0.86rem;
     font-weight: 600;
+  }
+
+  /* When "clear" is there it takes the free space, so the two stay together. */
+  .browse-top .browse-filters-more-desk:has(+ .browse-filters-clear) {
+    margin-left: 0;
   }
 
   .browse-top .browse-filters-clear::before {
@@ -144,35 +212,6 @@
   .browse-top .browse-filters-clear:hover {
     background: transparent;
     color: var(--ink);
-  }
-
-  /* Popular chips: second row */
-  .browse-top .browse-search-suggest {
-    order: 4;
-    flex: 0 0 100%;
-    flex-direction: row;
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .browse-top .browse-search-suggest-label {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--faint);
-  }
-
-  .browse-top .browse-search-suggest-chips {
-    flex: 1 1 auto;
-    width: auto;
-    gap: 0.4rem;
-  }
-
-  .browse-top .browse-search-suggest-chip {
-    height: var(--chip-h);
-    padding: 0 0.85rem;
-    font-size: 0.82rem;
-    font-weight: 600;
-    transition: color 0.15s ease, background-color 0.15s ease;
   }
 }
 
