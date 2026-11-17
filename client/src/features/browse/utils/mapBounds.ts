@@ -65,6 +65,18 @@ export function framePadForOverlays(
     }
   }
 
+  // The full-width bars above and below the map (desktop) only take height.
+  for (const [sel, side] of [
+    [".browse-map-bar.is-top", "top"],
+    [".browse-map-bar.is-bottom", "bottom"],
+  ] as const) {
+    const el = col?.querySelector(sel);
+    if (!(el instanceof HTMLElement) || getComputedStyle(el).display === "none") continue;
+    const barH = el.getBoundingClientRect().height;
+    if (side === "top") top += barH;
+    else bottom += barH;
+  }
+
   const maxL = Math.floor(w * 0.4);
   const maxR = Math.floor(w * 0.4);
   const maxT = Math.floor(h * 0.4);

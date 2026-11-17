@@ -116,6 +116,10 @@ export function useBrowseMapMarkers(ctx: BrowseMapMarkersCtx) {
     const mapRefCurrent = mapInstanceRef.current;
     if (!mapRefCurrent || !mapReady) return;
     const map = mapRefCurrent;
+    /** true while the camera flies into a clicked cluster */
+    let clusterZooming = false;
+    /** true for the one sync right after a cluster opened: its pins fade in */
+    let splitPop = false;
 
     function clearMarkers() {
       markersRef.current.forEach((m) => m.remove());
@@ -151,6 +155,7 @@ export function useBrowseMapMarkers(ctx: BrowseMapMarkersCtx) {
         g.priceFrom != null ? "price" : "pin",
       );
       el.dataset.stackZ = String(stackZ);
+      if (splitPop) el.classList.add("is-popping");
       if (g.id === selectedIdRef.current) {
         el.classList.add("is-front");
         el.style.zIndex = "12000";
@@ -235,6 +240,7 @@ export function useBrowseMapMarkers(ctx: BrowseMapMarkersCtx) {
       );
       el.addEventListener("click", (e) => {
         e.stopPropagation();
+        if (clusterZooming) return;
         explodeClusterIdsRef.current = null;
         const bounds = new LngLatBounds([lng, lat], [lng, lat]);
         for (const g of group) {
@@ -245,28 +251,42 @@ export function useBrowseMapMarkers(ctx: BrowseMapMarkersCtx) {
           labelBottom: 80,
         });
         const cam = map.cameraForBounds(bounds, { padding: pad });
+        // Zoom only as far as needed for the pins to come apart (a little
+        // more for room), never past the point where all of them still fit.
+        const now = map.getZoom();
+        const splitAt = zoomWhereClusterSplits(map, group) + 0.5;
+        const fitAt = cam?.zoom ?? map.getMaxZoom();
         const zoom = Math.min(
           map.getMaxZoom(),
-          cam?.zoom != null
-            ? cam.zoom
-            : Math.max(map.getZoom() + 0.35, zoomWhereClusterSplits(map, group)),
+          fitAt,
+          now + 4,
+          Math.max(splitAt, now + 1.2),
         );
         const camCenter = cam?.center ? LngLat.convert(cam.center) : null;
         const center: [number, number] = camCenter
           ? [camCenter.lng, camCenter.lat]
           : [lng, lat];
+        // While the camera moves the pins are not regrouped (that made clusters
+        // flicker in and out every frame); they split once, when it stops.
+        clusterZooming = true;
+        el.classList.add("is-opening");
         cityBounceLockRef.current = true;
         map.stop();
         map.easeTo({
           center,
           zoom,
-          duration: 700,
-          easing: (t) => 1 - (1 - t) ** 2.4,
+          duration: 520,
+          easing: (t) => 1 - (1 - t) ** 3,
         });
         window.setTimeout(() => {
+          // Fallback in case "moveend" never comes (the map was stopped).
+          if (!clusterZooming) return;
+          clusterZooming = false;
           cityBounceLockRef.current = false;
+          splitPop = true;
           syncPins();
-        }, 780);
+          splitPop = false;
+        }, 900);
       });
 
       const marker = new Marker({ element: el, anchor: "center" })
@@ -391,6 +411,7 @@ export function useBrowseMapMarkers(ctx: BrowseMapMarkersCtx) {
 
     function onMapMove() {
       if (regionPickModeRef.current) return;
+      if (clusterZooming) return;
       if (pinRaf !== 0) return;
       pinRaf = requestAnimationFrame(() => {
         pinRaf = 0;
@@ -404,7 +425,13 @@ export function useBrowseMapMarkers(ctx: BrowseMapMarkersCtx) {
         cancelAnimationFrame(pinRaf);
         pinRaf = 0;
       }
+      if (clusterZooming) {
+        clusterZooming = false;
+        cityBounceLockRef.current = false;
+        splitPop = true;
+      }
       syncPins();
+      splitPop = false;
       scheduleIdleListSync(e);
     }
 

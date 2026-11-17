@@ -570,3 +570,30 @@
 .map-ctrl.is-locate svg {
   color: #2563eb;
 }
+
+/* A clicked cluster shrinks away while the map zooms in ... */
+.gym-cluster.is-opening .gym-cluster-visual {
+  transform: scale(calc(var(--pin-scale, 1) * 0.6));
+  opacity: 0.35;
+  transition: transform 0.4s ease, opacity 0.4s ease;
+}
+
+/* ... and the gyms inside it fade in where they really are. */
+.gym-pin.is-popping {
+  animation: gym-pin-pop 0.32s ease-out both;
+}
+
+@keyframes gym-pin-pop {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gym-pin.is-popping {
+    animation: none;
+  }
+}

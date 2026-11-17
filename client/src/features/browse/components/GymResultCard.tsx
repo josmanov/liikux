@@ -1,4 +1,4 @@
-import { Heart } from "lucide-react";
+import { Check, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { resolveGymOffer, type ChainSummary, type Gym } from "../../../data/types";
 import {
@@ -63,20 +63,21 @@ export function GymResultCard({
       })
     : cleanGymDisplayName(gym.name);
   const street = formatGymStreetLine(gym);
-  // "Tarkistettu 3 pv sitten": when the price was last checked.
+  // "✓ 2.10." = when the price was last checked (full sentence on hover).
   const checkedDays = daysSince(gym.checkedAt);
-  const checkedText =
+  const checkedDate =
     checkedDays == null
-      ? t("rowUnchecked")
-      : checkedDays === 0
-        ? t("rowCheckedToday")
-        : checkedDays === 1
-          ? t("rowCheckedYesterday")
-          : checkedDays <= 60
-            ? t("rowCheckedDays", { n: checkedDays })
-            : t("rowCheckedDate", {
-                date: new Date(gym.checkedAt!).toLocaleDateString(lang === "fi" ? "fi-FI" : "en-GB", { month: "numeric", year: "numeric" }),
-              });
+      ? null
+      : (() => {
+          // "2.10." this year, "2.10.2025" for an older year
+          const d = new Date(gym.checkedAt!);
+          const thisYear = d.getFullYear() === new Date().getFullYear();
+          return d.toLocaleDateString(lang === "fi" ? "fi-FI" : "en-GB", {
+            day: "numeric",
+            month: lang === "fi" ? "numeric" : "short",
+            ...(thisYear ? {} : { year: "numeric" }),
+          });
+        })();
 
   return (
     <li style={introDelayMs ? { animationDelay: `${Math.min(index, 18) * 28}ms` } : undefined}>
@@ -148,13 +149,6 @@ export function GymResultCard({
                 </span>
               ) : null}
             </div>
-            <span
-              className={["browse-row-checked", checkedDays == null ? "is-none" : checkedDays > 30 ? "is-old" : ""]
-                .filter(Boolean)
-                .join(" ")}
-            >
-              {checkedText}
-            </span>
             <span className="browse-row-meta-mobile">
               <span className="browse-row-price">
                 {priceCard ?? t("priceUnknown")}
@@ -176,6 +170,13 @@ export function GymResultCard({
             {distKm != null ? (
               <span className="browse-row-distance">
                 {formatDistanceKm(distKm)}
+              </span>
+            ) : null}
+            {checkedDate ? (
+              <span className="browse-row-checked" title={t("rowCheckedDate", { date: checkedDate })}>
+                <Check size={11} strokeWidth={3} aria-hidden="true" />
+                <span className="sr-only">{t("rowCheckedDate", { date: "" })}</span>
+                {checkedDate}
               </span>
             ) : null}
           </span>

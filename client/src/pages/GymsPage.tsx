@@ -93,6 +93,7 @@ import {
 } from "../features/browse/utils/maakuntaGeom";
 import { BrowseChainsMenu } from "../features/browse/components/BrowseChainsMenu";
 import { BrowseChainPicker } from "../features/browse/components/BrowseChainPicker";
+import { BrowseMapBars } from "../features/browse/components/BrowseMapBars";
 import { BrowseExtrasMenu } from "../features/browse/components/BrowseExtrasMenu";
 import { BrowseListHead } from "../features/browse/components/BrowseListHead";
 import { BrowseMapChrome } from "../features/browse/components/BrowseMapChrome";
@@ -914,6 +915,20 @@ function GymsPage() {
   }, [visibleGyms, regionPickMode]);
 
   inViewGymsRef.current = inViewGyms;
+
+  // For the bar above the map: gyms inside the part of the map you can see.
+  const countOnMap = useMemo(() => {
+    if (!mapBounds) return inViewGyms.length;
+    return inViewGyms.filter(
+      (g) =>
+        g.lat != null &&
+        g.lng != null &&
+        g.lat >= mapBounds.south &&
+        g.lat <= mapBounds.north &&
+        g.lng >= mapBounds.west &&
+        g.lng <= mapBounds.east,
+    ).length;
+  }, [inViewGyms, mapBounds]);
 
   pageSizeRef.current = pageSize;
 
@@ -1904,20 +1919,29 @@ function GymsPage() {
     }
   }
 
+  /**
+   * Move the map to "my location". Same city: move right away. Another city:
+   * switch the city first, and the effect above moves the map when it is ready.
+   */
+  function flyToMyPlace(place: { label: string; lat: number; lng: number }) {
+    const city = resolveCityFromPlace(place);
+    if (!city || browseCitySlugRef.current === city.slug) {
+      pendingMyLocationRef.current = null;
+      easeToMyLocation(place.lat, place.lng);
+      return;
+    }
+    pendingMyLocationRef.current = { lat: place.lat, lng: place.lng, citySlug: city.slug };
+    cityBounceLockRef.current = true;
+    applyCityForMyLocation(city);
+    setMyLocationTick((n) => n + 1);
+  }
+
   function goMyLocation() {
+    // GPS answers fast (a position up to 2 min old is reused); the map moves
+    // as soon as it does, without waiting for the street name.
     void locateMe().then((place) => {
       if (!place) return;
-      const city = resolveCityFromPlace(place);
-      pendingMyLocationRef.current = {
-        lat: place.lat,
-        lng: place.lng,
-        citySlug: city?.slug ?? browseCitySlugRef.current,
-      };
-      cityBounceLockRef.current = true;
-      if (city && browseCitySlugRef.current !== city.slug) {
-        applyCityForMyLocation(city);
-      }
-      setMyLocationTick((n) => n + 1);
+      flyToMyPlace(place);
     });
   }
 
@@ -2153,25 +2177,20 @@ function GymsPage() {
               locateDisabled={origin.lat == null || origin.lng == null}
               onLocateFab={() => {
                 if (origin.lat == null || origin.lng == null) return;
-                const place = {
-                  label: locationLabel,
-                  lat: origin.lat,
-                  lng: origin.lng,
-                };
-                const city = resolveCityFromPlace(place);
-                pendingMyLocationRef.current = {
-                  lat: place.lat,
-                  lng: place.lng,
-                  citySlug: city?.slug ?? browseCitySlugRef.current,
-                };
-                cityBounceLockRef.current = true;
-                if (city && browseCitySlugRef.current !== city.slug) {
-                  applyCityForMyLocation(city);
-                }
-                setMyLocationTick((n) => n + 1);
+                flyToMyPlace({ label: locationLabel, lat: origin.lat, lng: origin.lng });
               }}
             />
             <div className="browse-map" aria-label={t("map")} ref={mapRef} />
+            <BrowseMapBars
+              t={t}
+              countOnMap={countOnMap}
+              originLabel={locationLabel}
+              onOrigin={
+                origin.lat != null && origin.lng != null
+                  ? () => flyToMyPlace({ label: locationLabel, lat: origin.lat!, lng: origin.lng! })
+                  : null
+              }
+            />
             {selectedMapGym ? (
               <BrowseSelectedCard
                 selected={selectedMapGym}

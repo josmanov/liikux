@@ -652,3 +652,173 @@
 .gym-origin-pin {
   transition: filter 0.35s ease, opacity 0.3s ease;
 }
+
+/* ---------- Bars above and below the map (BrowseMapBars), desktop only ----------
+   Same heights as the list's head (49px) and page bar (39px), so the two panels line up. */
+.browse-map-bar {
+  display: none;
+}
+
+@media (min-width: 901px) {
+  .browse-map-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 24;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0 16px;
+    box-sizing: border-box;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 0.85rem;
+  }
+
+  .browse-map-bar.is-top {
+    top: 0;
+    height: 49px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .browse-map-bar.is-bottom {
+    bottom: 0;
+    height: 39px;
+    border-top: 1px solid var(--line);
+  }
+
+  /* Controls start under the top bar; the map's own credits move into the bottom bar. */
+  .browse-map-controls {
+    top: calc(49px + 0.55rem);
+  }
+
+  .browse-map-frame .maplibregl-ctrl-bottom-right,
+  .browse-map-frame .maplibregl-ctrl-bottom-left {
+    display: none;
+  }
+
+  .browse-map-bar-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.92rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .browse-map-bar-count svg {
+    color: var(--brand);
+  }
+
+  .browse-map-bar-origin {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+    max-width: 55%;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--outline);
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--muted);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .browse-map-bar-origin:hover {
+    border-color: var(--line-strong);
+    color: var(--ink);
+  }
+
+  .browse-map-bar-origin svg {
+    flex-shrink: 0;
+    color: var(--info);
+  }
+
+  .browse-map-bar-origin span {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .browse-map-legend {
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .browse-map-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .legend-pin {
+    display: inline-grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--outline);
+    border-radius: 4px;
+    background: var(--surface-3);
+    color: var(--ink);
+    font-size: 9px;
+    font-weight: 800;
+  }
+
+  .legend-cluster {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+  }
+
+  .legend-you {
+    width: 10px;
+    height: 10px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: var(--info);
+    box-shadow: 0 0 0 3px rgba(76, 141, 255, 0.3);
+  }
+
+  .browse-map-credits {
+    margin: 0;
+    color: var(--faint);
+    font-size: 0.7rem;
+    white-space: nowrap;
+  }
+
+  .browse-map-credits a {
+    color: var(--faint);
+    text-decoration: none;
+  }
+
+  .browse-map-credits a:hover {
+    color: var(--muted);
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1440px) {
+  .browse-map-legend li:nth-child(n + 2) {
+    display: none;
+  }
+}
+
+@media (min-width: 901px) {
+  /* Narrow map: the credits shorten instead of running past the edge. */
+  .browse-map-credits {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

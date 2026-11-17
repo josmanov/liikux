@@ -155,18 +155,16 @@ export function LocationProvider({ children }: { children: ReactNode }) {
               const nextLng = pos.coords.longitude;
               setLat(nextLat);
               setLng(nextLng);
+              // Answer at once so the map can move now; the street name
+              // (about a second from the address service) fills in after.
+              resolve({ label: "", lat: nextLat, lng: nextLng });
               fetchReverseLabel(nextLat, nextLng).then((place) => {
-                const nextLabel = (place || "").trim() || DEFAULT_LABEL;
-                if (place) setLabelState(nextLabel);
-                resolve({
-                  label: nextLabel,
-                  lat: nextLat,
-                  lng: nextLng,
-                });
+                if (place?.trim()) setLabelState(place.trim());
               });
             },
             () => resolve(null),
-            { enableHighAccuracy: false, timeout: 8000 },
+            // A position from the last 2 minutes is fine: repeat taps are instant.
+            { enableHighAccuracy: false, timeout: 8000, maximumAge: 120_000 },
           );
         });
       },

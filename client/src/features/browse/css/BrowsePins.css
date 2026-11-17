@@ -1630,18 +1630,47 @@
 
 /* "Tarkistettu 3 pv sitten" under the tags of a result row */
 .browse-row-checked {
-  display: block;
-  margin-top: 0.15rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
   color: var(--faint);
+  white-space: nowrap;
   font-size: 10px;
   font-weight: 600;
   line-height: 1.2;
 }
 
-.browse-row-checked.is-old {
-  color: var(--warn);
+.browse-row-checked svg {
+  flex-shrink: 0;
+  color: var(--good);
 }
 
 .browse-row-checked.is-none {
   opacity: 0.75;
+}
+
+/* Tags and the checked date share one line, so every row keeps its height. */
+.browse-row-tags {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.browse-row-tags .browse-tag {
+  flex-shrink: 0;
+}
+
+.browse-row-tags .browse-row-checked {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* "Tarkistettu" is read out by screen readers but not shown (the ✓ says it). */
+.browse-row-checked .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
