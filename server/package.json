@@ -16,7 +16,6 @@
     "db:seed-chain-info": "tsx src/seed-chain-info.ts",
     "db:sync-gym-audience": "tsx src/sync-gym-audience.ts",
     "db:sync-women-gyms": "tsx src/sync-women-gyms.ts",
-    "db:scrape-gym-prices": "tsx src/scrape-gym-prices.ts",
     "db:clean-gym-names": "tsx src/clean-gym-names.ts",
     "db:data-review": "tsx src/export-data-review.ts",
     "db:export-csv": "tsx src/export-gyms-csv.ts",
@@ -27,7 +26,9 @@
     "db:verify:dry": "tsx src/verify-data.ts --dry-run",
     "db:enrich": "tsx src/enrich-gyms.ts",
     "db:enrich:dry": "tsx src/enrich-gyms.ts --dry-run --limit=25",
-    "db:enrich:chains": "tsx src/enrich-gyms.ts --skip-other --only-missing"
+    "db:enrich:chains": "tsx src/enrich-gyms.ts --skip-other --only-missing",
+    "db:refresh": "tsx src/refresh-data.ts",
+    "db:refresh:dry": "tsx src/refresh-data.ts --dry-run"
   },
   "keywords": [],
   "author": "",

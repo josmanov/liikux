@@ -2,6 +2,24 @@ export type ChainMembership = {
   name: string;
   priceEur: number;
   note?: string;
+  /** 0 = no fixed term, 12 = 12-month contract (from the daily refresh). */
+  commitmentMonths?: number;
+  joiningFeeEur?: number;
+  group?: "normal" | "student" | "senior" | "youth";
+};
+
+/** A campaign the daily refresh found on the chain's or gym's own page. */
+export type GymOffer = {
+  id: string;
+  title: string;
+  text: string;
+  priceEur: number | null;
+  discountPct: number | null;
+  /** YYYY-MM-DD, or null when the page gives no end date. */
+  validUntil: string | null;
+  sourceUrl: string;
+  /** true = the offer is for every gym of the chain. */
+  chainWide: boolean;
 };
 
 export type Chain = {
@@ -72,6 +90,10 @@ export type Gym = {
   offerSourceUrl?: string | null;
   /** Results of the daily robot check. Only on the single-gym API answer. */
   checks?: { price?: FactCheck; hours?: FactCheck } | null;
+  /** Current offers. Only on the single-gym API answer. */
+  offers?: GymOffer[] | null;
+  /** The gym (or its chain) has an offer right now. On list answers. */
+  hasOffer?: boolean;
   chain?: ChainSummary | null;
 };
 

@@ -138,3 +138,60 @@ export const feedback = pgTable("feedback", {
     lang: varchar("lang", { length: 4 }),
     status: varchar("status", { length: 16 }).notNull().default("new"), // new | done
 });
+
+/**
+ * Offers and campaigns that the daily refresh (src/refresh-data.ts) found on a
+ * chain's or gym's own pages. gymId is null for an offer of the whole chain.
+ * An offer is shown while it was seen in the last 2 days, its end date has
+ * not passed and nobody hid it in the admin view.
+ */
+export const offers = pgTable("offers", {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    chainId: varchar("chain_id", { length: 64 }).notNull(),
+    gymId: varchar("gym_id", { length: 64 }),
+    title: text("title").notNull(),
+    text: text("text").notNull(),
+    priceEur: doublePrecision("price_eur"),
+    discountPct: integer("discount_pct"),
+    validUntil: varchar("valid_until", { length: 10 }), // 2026-11-30
+    sourceUrl: text("source_url").notNull(),
+    firstSeenAt: varchar("first_seen_at", { length: 32 }).notNull(),
+    lastSeenAt: varchar("last_seen_at", { length: 32 }).notNull(),
+    hiddenAt: varchar("hidden_at", { length: 32 }),
+});
+
+/**
+ * Every value the daily refresh changed (status "applied"), or wanted to
+ * change but held back because the jump was too big (status "held").
+ * The admin view can undo an applied change or approve a held one.
+ */
+export const dataChanges = pgTable("data_changes", {
+    id: varchar("id", { length: 64 }).primaryKey(),
+    runId: varchar("run_id", { length: 64 }).notNull(),
+    entityType: varchar("entity_type", { length: 8 }).notNull(), // chain | gym
+    entityId: varchar("entity_id", { length: 64 }).notNull(),
+    field: varchar("field", { length: 32 }).notNull(),
+    oldValue: text("old_value"),
+    newValue: text("new_value"),
+    sourceUrl: text("source_url"),
+    status: varchar("status", { length: 16 }).notNull(), // applied | held | reverted | approved
+    reason: text("reason"),
+    changedAt: varchar("changed_at", { length: 32 }).notNull(),
+});
+
+/**
+ * One row per page the refresh reads. "ok" says whether the chain's parser
+ * still found prices or hours there; false = the page probably changed and
+ * the parser needs a fix (shown red in the admin view).
+ */
+export const pageHealth = pgTable("page_health", {
+    url: text("url").primaryKey(),
+    chainId: varchar("chain_id", { length: 64 }).notNull(),
+    gymId: varchar("gym_id", { length: 64 }),
+    hash: varchar("hash", { length: 64 }),
+    ok: boolean("ok").notNull(),
+    detail: text("detail"),
+    lastFetchedAt: varchar("last_fetched_at", { length: 32 }).notNull(),
+    lastOkAt: varchar("last_ok_at", { length: 32 }),
+    changedAt: varchar("changed_at", { length: 32 }),
+});

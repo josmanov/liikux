@@ -15,7 +15,7 @@ const GAP_MS = 1000;
 const TIMEOUT_MS = 15000;
 
 export type Page =
-  | { ok: true; url: string; text: string; html: string }
+  | { ok: true; url: string; text: string; html: string; /** address after redirects */ finalUrl: string }
   | { ok: false; url: string; reason: "blocked" | "unreachable"; detail: string };
 
 /** host → the moment the next request to that host may start. */
@@ -127,7 +127,7 @@ async function download(url: string): Promise<Page> {
       return { ok: false, url, reason: "unreachable", detail: type.slice(0, 40) };
     }
     const html = await res.text();
-    return { ok: true, url, html, text: htmlToText(html) };
+    return { ok: true, url, html, text: htmlToText(html), finalUrl: res.url || url };
   } catch (e) {
     const detail = e instanceof Error ? e.name : "error";
     return { ok: false, url, reason: "unreachable", detail };

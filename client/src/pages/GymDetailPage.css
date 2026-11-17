@@ -829,3 +829,78 @@
     font-size: 1.15rem;
   }
 }
+
+/* ---------- 4a. Offers ---------- */
+
+.gp-offers .gp-card-head {
+  color: var(--brand);
+}
+
+.gp-offer-list {
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gp-offer-list li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 0;
+}
+
+.gp-offer-list li + li {
+  border-top: 1px solid var(--line);
+}
+
+.gp-offer-main {
+  min-width: 0;
+}
+
+.gp-offer-main strong {
+  display: block;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.gp-offer-main p {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.gp-offer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.9rem;
+  margin-top: 0.45rem;
+  color: var(--faint);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.gp-offer-meta a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: var(--brand);
+  text-decoration: none;
+}
+
+.gp-offer-meta a:hover {
+  text-decoration: underline;
+}
+
+.gp-offer-badge {
+  flex-shrink: 0;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid rgba(var(--brand-rgb), 0.45);
+  border-radius: 999px;
+  color: var(--brand);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  white-space: nowrap;
+}

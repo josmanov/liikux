@@ -13,6 +13,7 @@ import {
   MapPin,
   Navigation,
   Phone,
+  Tag,
   TriangleAlert,
 } from "lucide-react";
 import LoadSpin from "../components/LoadSpin";
@@ -161,6 +162,13 @@ function GymDetailPage() {
       ? checkedDate.toLocaleDateString(lang === "fi" ? "fi-FI" : "en-GB")
       : null;
   const sourceUrl = gym.offerSourceUrl?.split("|")[0]?.trim() || chain?.sourceUrl || null;
+  const offers = gym.offers ?? [];
+  const offerDate = (iso: string) => {
+    const d = new Date(`${iso}T12:00:00`);
+    return Number.isNaN(d.getTime())
+      ? iso
+      : d.toLocaleDateString(lang === "fi" ? "fi-FI" : "en-GB", lang === "fi" ? undefined : { day: "numeric", month: "short", year: "numeric" });
+  };
 
   // "Confirmed today": the daily robot found this value on the gym's own page.
   function confirmedLabel(check: FactCheck | undefined) {
@@ -342,6 +350,39 @@ function GymDetailPage() {
         ) : null}
 
         <div className="gp-sections">
+          {/* 4a. Current offers (found by the daily refresh on the chain's / gym's own pages) */}
+          {offers.length > 0 ? (
+            <section className="gp-card gp-offers" aria-labelledby="gp-offers-title">
+              <div className="gp-card-head">
+                <h2 id="gp-offers-title">{t("gymOffers")}</h2>
+                <Tag size={18} strokeWidth={2.2} aria-hidden="true" />
+              </div>
+              <ul className="gp-offer-list">
+                {offers.map((o) => (
+                  <li key={o.id}>
+                    <div className="gp-offer-main">
+                      {/* "Tarjous" alone says nothing: then the offer's own words are the heading. */}
+                      <strong>{/^tarjous$/i.test(o.title) ? o.text : o.title}</strong>
+                      {!/^tarjous$/i.test(o.title) && o.text !== o.title ? <p>{o.text}</p> : null}
+                      <span className="gp-offer-meta">
+                        {o.validUntil ? <span>{t("offerUntil", { date: offerDate(o.validUntil) })}</span> : null}
+                        {o.chainWide ? <span>{t("offerChainWide")}</span> : null}
+                        <a href={o.sourceUrl} target="_blank" rel="noreferrer">
+                          {t("offerSource")}
+                          <ArrowUpRight size={13} strokeWidth={2.4} aria-hidden="true" />
+                        </a>
+                      </span>
+                    </div>
+                    {o.discountPct != null ? (
+                      <span className="gp-offer-badge">−{o.discountPct} %</span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+              <p className="gp-note">{t("offerNote")}</p>
+            </section>
+          ) : null}
+
           {/* 4. Memberships and prices */}
           <section className="gp-card">
             <div className="gp-card-head">

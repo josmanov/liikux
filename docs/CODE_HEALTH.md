@@ -42,7 +42,6 @@ Generated from `npm run check:lines` after restoring the 10.10 design and re-app
 | 425 | 300 | `client/src/components/FavoritesPopup.tsx` | Popup shell, favorite rows, empty state |
 | 415 | 350 | `client/src/pages/HomePage.tsx` | Hero, search, background pattern, chain rail |
 | 402 | 300 | `client/src/components/HeaderSearch.css` | Base, suggestions, mobile |
-| 401 | 300 | `server/src/scrape-gym-prices.ts` | Fetch, parse, merge, report |
 | 375 | 300 | `client/src/i18n/messages.ts` | Split Finnish and English message files by feature |
 | 361 | 350 | `client/src/pages/AdminDataPage.css` | Gate, stats, filters, table, runs |
 | 328 | 300 | `client/src/components/AreaSelect.css` | Trigger, dropdown, mobile |

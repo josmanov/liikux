@@ -1,3 +1,8 @@
+/**
+ * First-time setup only. The daily refresh (refresh-data.ts) now keeps chain
+ * prices, memberships and hours up to date from the chains' own pages.
+ * Running this again would put these older, hand-typed values back.
+ */
 import "dotenv/config";
 import { eq } from "drizzle-orm";
 import { db } from "../db/index.js";

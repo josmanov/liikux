@@ -1,6 +1,10 @@
-# Runs the daily data check: opens every gym's own page and confirms that the
-# price and opening hours we show are still written there.
-# Results go to the fact_checks table and show up on /admin/data.
+# Every morning:
+#   1. refresh: reads each chain's and gym's own pages and updates prices,
+#      memberships, contract terms, opening hours and offers
+#      (server/src/refresh-data.ts). Big price jumps are held for approval.
+#   2. check: confirms that the price and opening hours we show are written on
+#      each gym's own page (server/src/verify-data.ts).
+# Results show up on /admin/data. Uses no AI and costs nothing to run.
 #
 # Needs one repository secret: DATABASE_URL (Settings → Secrets → Actions).
 # GitHub only runs scheduled jobs from the main branch.
@@ -18,7 +22,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -28,7 +32,14 @@ jobs:
           cache-dependency-path: server/package-lock.json
       - run: npm ci
         working-directory: server
-      - run: npm run db:verify
+      - name: Refresh prices, hours and offers
+        run: npm run db:refresh
+        working-directory: server
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - name: Check prices and hours on the gyms' own pages
+        if: always() # the check still runs if the refresh failed
+        run: npm run db:verify
         working-directory: server
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

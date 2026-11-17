@@ -12,6 +12,8 @@ import { reverseAddress, searchAddress } from "../geocode/index.js";
 import { registerFeedbackRoutes } from "./feedback.js";
 import { registerGoRoutes } from "./go.js";
 import { allChecks, checksForGym } from "../factChecks.js";
+import { activeOffers, offerLookup, offersFor } from "../offers.js";
+import { registerRefreshAdminRoutes } from "./refreshAdmin.js";
 const LIST_CACHE_MS = 2 * 60 * 1000;
 // Browsers keep lists 2 min; the Cloudflare edge (worker.js) keeps them 5 min.
 const LIST_CACHE_HEADER = "public, max-age=120, s-maxage=300";
@@ -89,7 +91,12 @@ export function registerApiRoutes(app: express.Application) {
   const { data, hit } = await cached(
     `chain-gyms:${slug}`,
     LIST_CACHE_MS,
-    () => fetchListedGymsByChainSlug(slug),
+    async () => {
+      const rows = await fetchListedGymsByChainSlug(slug);
+      if (!rows) return rows;
+      const hasOffer = offerLookup(await activeOffers());
+      return { ...rows, gyms: rows.gyms.map((g) => ({ ...g, hasOffer: hasOffer(g) })) };
+    },
   );
 
   if (!data) {
@@ -103,9 +110,11 @@ export function registerApiRoutes(app: express.Application) {
 });
 
   app.get("/api/gyms", async (_req, res) => {
-  const { data, hit } = await cached("gyms-listed-v7", LIST_CACHE_MS, () =>
-    fetchListedGymsWithChain(),
-  );
+  const { data, hit } = await cached("gyms-listed-v8", LIST_CACHE_MS, async () => {
+    const [rows, offers] = await Promise.all([fetchListedGymsWithChain(), activeOffers()]);
+    const hasOffer = offerLookup(offers);
+    return rows.map((g) => ({ ...g, hasOffer: hasOffer(g) }));
+  });
   res.setHeader("Cache-Control", LIST_CACHE_HEADER);
   res.setHeader("X-Cache", hit ? "HIT" : "MISS");
   res.json(data);
@@ -139,7 +148,7 @@ export function registerApiRoutes(app: express.Application) {
     return;
   }
 
-  const { data, hit } = await cached(`gym-v2:${slug}`, LIST_CACHE_MS, async () => {
+  const { data, hit } = await cached(`gym-v3:${slug}`, LIST_CACHE_MS, async () => {
     const rows = await db
       .select()
       .from(gyms)
@@ -154,7 +163,9 @@ export function registerApiRoutes(app: express.Application) {
       .limit(1);
     // checks = what the daily robot confirmed on the gym's own page.
     const checks = await checksForGym(gym.id);
-    return { ...gym, chain: chainRows[0] ?? null, checks };
+    // offers = campaigns the daily refresh found on the chain's or gym's own pages.
+    const offers = offersFor(await activeOffers(), gym);
+    return { ...gym, chain: chainRows[0] ?? null, checks, offers };
   });
 
   if (!data) {
@@ -180,6 +191,7 @@ function adminAllowed(req: express.Request) {
 
   registerFeedbackRoutes(app, adminAllowed);
   registerGoRoutes(app, adminAllowed);
+  registerRefreshAdminRoutes(app, adminAllowed);
 
   app.get("/api/admin/data-status", async (req, res) => {
   if (!adminAllowed(req)) {

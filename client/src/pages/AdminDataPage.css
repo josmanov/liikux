@@ -366,3 +366,24 @@
   max-width: 16rem;
   white-space: normal;
 }
+
+/* Automatic refresh panel (AdminRefreshPanel.tsx) */
+.admin-run h3 {
+  margin: 1.25rem 0 0.25rem;
+  color: var(--ink);
+  font-size: 0.95rem;
+}
+
+.admin-changes li {
+  padding: 0.2rem 0;
+}
+
+.admin-changes .admin-link-btn {
+  margin: 0 0 0 0.35rem;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.78rem;
+}
+
+.admin-changes a {
+  color: var(--brand);
+}

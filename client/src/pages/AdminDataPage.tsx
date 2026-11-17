@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import "./AdminDataPage.css";
 import LoadSpin from "../components/LoadSpin";
 import { API } from "../data/apiBase";
+import AdminRefreshPanel from "./AdminRefreshPanel";
 
 type Row = {
   id: string;
@@ -556,6 +557,8 @@ function AdminDataPage() {
           <p className="admin-muted">Ei vielä yhtään ajoa.</p>
         )}
       </section>
+
+      {!needsKey ? <AdminRefreshPanel adminKey={adminKey} /> : null}
 
       <section className="admin-run">
         <h2>Siirtymät salien omille sivuille (30 pv)</h2>

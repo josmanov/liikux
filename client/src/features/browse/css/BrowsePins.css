@@ -681,6 +681,10 @@
   color: var(--good);
 }
 
+.browse-tag.is-offer {
+  color: var(--brand);
+}
+
 @media (max-width: 900px) {
   .gym-pin.is-brand-pin {
     width: 30px;

@@ -118,6 +118,9 @@ export function GymResultCard({
             <strong className="browse-row-site">{siteName}</strong>
             <span className="browse-row-address">{street}</span>
             <div className="browse-row-tags">
+              {gym.hasOffer ? (
+                <span className="browse-tag is-offer">{t("tagOffer")}</span>
+              ) : null}
               {offer.is247 === true ? (
                 <span className="browse-tag is-247">24/7</span>
               ) : null}

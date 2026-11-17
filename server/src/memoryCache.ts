@@ -56,3 +56,8 @@ export async function cached<T>(
   const data = await loadAndStore(key, load);
   return { data, hit: false };
 }
+
+/** Forget every cached answer (after an admin changed data). */
+export function clearCache() {
+  store.clear();
+}
