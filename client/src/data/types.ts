@@ -94,6 +94,8 @@ export type Gym = {
   offers?: GymOffer[] | null;
   /** The gym (or its chain) has an offer right now. On list answers. */
   hasOffer?: boolean;
+  /** When the price was last checked (ISO). On list answers. */
+  checkedAt?: string | null;
   chain?: ChainSummary | null;
 };
 

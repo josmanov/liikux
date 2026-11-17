@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useParams } from "react-router-dom";
 import {
+  ArrowLeft,
   ArrowRight,
   ArrowUpRight,
   Check,
@@ -34,6 +35,7 @@ import { pathAbout, pathChain, pathFeedback, pathGym, pathGyms, pathGymsFromLoca
 import { useLang } from "../i18n/useLang";
 import { usePageMeta } from "../seo/usePageMeta";
 import "../features/home/chain-tiles.css"; // per-chain logo colours and zoom
+import { BackLink } from "../nav/backNav";
 import "./GymDetailPage.css";
 
 /**
@@ -225,7 +227,15 @@ function GymDetailPage() {
         <div className="gp-top">
           {/* 1. Breadcrumb */}
           <nav className="gp-crumbs" aria-label="Breadcrumb">
-            <Link to={pathGyms(lang)}>{t("backToBrowse")}</Link>
+            {/* Back to where you came from (the browse list with its filters), else to browse. */}
+            <BackLink className="gp-crumb-back" fallbackTo={pathGyms(lang)} fallbackLabel={t("backToBrowse")}>
+              {(label) => (
+                <>
+                  <ArrowLeft size={14} strokeWidth={2.4} aria-hidden="true" />
+                  {label}
+                </>
+              )}
+            </BackLink>
             {gym.city ? (
               <>
                 <ChevronRight size={14} strokeWidth={2.2} aria-hidden="true" />

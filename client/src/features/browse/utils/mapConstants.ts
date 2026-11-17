@@ -88,7 +88,7 @@ export const BROWSE_SEARCH_QUICK = [
   { id: "forever", q: "Forever" },
 ] as const;
 
-export type FilterKey = "sort" | "price" | "distance";
+export type FilterKey = "sort" | "price" | "distance" | "chains";
 
 /**
  * Base map look: the Liikux style (public/map/liikux-style.json), generated

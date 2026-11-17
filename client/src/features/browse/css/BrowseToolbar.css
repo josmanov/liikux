@@ -244,3 +244,101 @@
   background: var(--primary);
   color: var(--on-primary);
 }
+
+/* ---------- Chain tiles (BrowseChainPicker): dropdown on desktop, sheet on phones ---------- */
+
+.browse-filter-menu.browse-filter-menu-chainpick {
+  width: min(34rem, calc(100vw - 2rem));
+  padding: 0.75rem;
+}
+
+.chain-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.chain-picker .chain-picker-all.chain-picker-all {
+  align-self: flex-start;
+  width: auto;
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--outline);
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.chain-picker .chain-picker-all.chain-picker-all.chain-picker-all:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+.chain-picker .chain-picker-all.chain-picker-all.is-on.is-on {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.chain-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chain-picker .chain-picker-grid .chain-picker-tile.chain-picker-tile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid var(--outline);
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.chain-picker .chain-picker-grid .chain-picker-tile.chain-picker-tile:hover {
+  border-color: var(--line-strong);
+}
+
+.chain-picker .chain-picker-grid .chain-picker-tile.chain-picker-tile.is-on.is-on {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.chain-picker-logo.browse-row-media {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+}
+
+.chain-picker-name {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.chain-picker-check {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--brand);
+}
+
+.browse-chains-sheet {
+  padding: 0.75rem 1rem 1.25rem;
+}

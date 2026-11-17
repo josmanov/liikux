@@ -20,6 +20,7 @@ const gymListSelect = {
   membershipsJson: gyms.membershipsJson,
   servicesJson: gyms.servicesJson,
   audienceJson: gyms.audienceJson,
+  offerCheckedAt: gyms.offerCheckedAt,
   chainRowId: chains.id,
   chainSlug: chains.slug,
   chainName: chains.name,
@@ -32,6 +33,7 @@ const gymListSelect = {
   chainFreeTrial: chains.freeTrial,
   chainDayPass: chains.dayPass,
   chainAudienceJson: chains.audienceJson,
+  chainCheckedAt: chains.checkedAt,
 };
 
 function mapGymListRow(r: {
@@ -52,6 +54,7 @@ function mapGymListRow(r: {
   membershipsJson: string | null;
   servicesJson: string | null;
   audienceJson: string | null;
+  offerCheckedAt: string | null;
   chainRowId: string | null;
   chainSlug: string | null;
   chainName: string | null;
@@ -64,7 +67,12 @@ function mapGymListRow(r: {
   chainFreeTrial: boolean | null;
   chainDayPass: boolean | null;
   chainAudienceJson: string | null;
+  chainCheckedAt: string | null;
 }) {
+  // When the price was last checked: the gym's own date, or the chain's for
+  // chains with one price everywhere. The API adds the daily robot's date.
+  const shared = r.chainPricingMode === "shared" || (r.chainPricingMode === "hybrid" && r.priceFrom == null);
+  const checkedAt = r.offerCheckedAt ?? (shared ? r.chainCheckedAt : null);
   return {
     id: r.id,
     slug: r.slug,
@@ -83,6 +91,7 @@ function mapGymListRow(r: {
     membershipsJson: r.membershipsJson,
     servicesJson: r.servicesJson,
     audienceJson: r.audienceJson,
+    checkedAt,
     chain: r.chainRowId
       ? {
           id: r.chainRowId,

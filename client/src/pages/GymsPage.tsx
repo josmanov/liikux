@@ -92,6 +92,7 @@ import {
   type MaakuntaGeom,
 } from "../features/browse/utils/maakuntaGeom";
 import { BrowseChainsMenu } from "../features/browse/components/BrowseChainsMenu";
+import { BrowseChainPicker } from "../features/browse/components/BrowseChainPicker";
 import { BrowseExtrasMenu } from "../features/browse/components/BrowseExtrasMenu";
 import { BrowseListHead } from "../features/browse/components/BrowseListHead";
 import { BrowseMapChrome } from "../features/browse/components/BrowseMapChrome";
@@ -271,7 +272,6 @@ function GymsPage() {
   const [extraDayPass, setExtraDayPass] = useState(browseStart.dayPass);
   const [extrasOpen, setExtrasOpen] = useState(false);
   const [chainsOpen, setChainsOpen] = useState(false);
-  const [chainQuery, setChainQuery] = useState("");
   const [addressDraft, setAddressDraft] = useState(locationLabel);
   const [addressSuggest, setAddressSuggest] = useState(false);
   const { hits: addressHits, loading: addressLoading } = useAddressSuggest(
@@ -542,6 +542,38 @@ function GymsPage() {
 
   const chainFilterActive =
     selectedChains.length < visibleChainFilterIds.length;
+
+  // Chain tiles: nothing picked = all chains. Picking a tile shows only that
+  // chain; more tiles add to it; dropping the last one shows all again.
+  const pickChain = (id: string) => {
+    setSelectedChains((cur) => {
+      const filtering = cur.length > 0 && cur.length < visibleChainFilterIds.length;
+      if (!filtering) return [id];
+      if (!cur.includes(id)) return [...cur, id];
+      const next = cur.filter((x) => x !== id);
+      return next.length ? next : [...visibleChainFilterIds];
+    });
+    setPage(1);
+  };
+  const showAllChains = () => {
+    setSelectedChains([...visibleChainFilterIds]);
+    setPage(1);
+  };
+  const singleChainLabel =
+    chainFilterActive && selectedChains.length === 1
+      ? localizedChainFilterOptions.find((o) => o.id === selectedChains[0])?.label ?? null
+      : null;
+  const chainPicker = (
+    <BrowseChainPicker
+      t={t}
+      chains={chains}
+      options={localizedChainFilterOptions}
+      selected={selectedChains}
+      active={chainFilterActive && selectedChains.length > 0}
+      onPick={pickChain}
+      onAll={showAllChains}
+    />
+  );
   const womenOnly = selectedAudiences.includes("women");
   const distancePresetIndex = Math.max(
     0,
@@ -1111,10 +1143,7 @@ function GymsPage() {
   }, [mapSheet, locationLabel]);
 
   useEffect(() => {
-    if (!chainsOpen) {
-      setChainQuery("");
-      return;
-    }
+    if (!chainsOpen) return;
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setChainsOpen(false);
     }
@@ -1963,6 +1992,8 @@ function GymsPage() {
         t={t}
         chainFilterActive={chainFilterActive}
         selectedChainsCount={selectedChains.length}
+        singleChainLabel={singleChainLabel}
+        chainPicker={chainPicker}
         priceFilterOn={priceFilterOn}
         priceInfo={priceInfo}
         openFilter={openFilter}
@@ -1989,11 +2020,6 @@ function GymsPage() {
           extraFreeTrial ||
           extraDayPass
         }
-        onOpenChains={() => {
-          setOpenFilter(null);
-          setExtrasOpen(false);
-          setChainsOpen(true);
-        }}
         onOpenExtras={() => {
           setOpenFilter(null);
           setExtrasOpen(true);
@@ -2276,25 +2302,9 @@ function GymsPage() {
 
       {chainsOpen
         ? createPortal(
-            <BrowseChainsMenu
-              t={t}
-              chains={chains}
-              options={localizedChainFilterOptions}
-              selectedChains={selectedChains}
-              visibleChainFilterIds={visibleChainFilterIds}
-              chainQuery={chainQuery}
-              onChainQuery={setChainQuery}
-              onToggleChain={(id) => {
-                setSelectedChains((cur) =>
-                  cur.includes(id)
-                    ? cur.filter((x) => x !== id)
-                    : [...cur, id],
-                );
-              }}
-              onSelectAll={() => setSelectedChains([...visibleChainFilterIds])}
-              onClearAll={() => setSelectedChains([])}
-              onClose={() => setChainsOpen(false)}
-            />,
+            <BrowseChainsMenu t={t} onClose={() => setChainsOpen(false)}>
+              {chainPicker}
+            </BrowseChainsMenu>,
             document.body,
           )
         : null}

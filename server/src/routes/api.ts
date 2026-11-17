@@ -18,6 +18,13 @@ const LIST_CACHE_MS = 2 * 60 * 1000;
 // Browsers keep lists 2 min; the Cloudflare edge (worker.js) keeps them 5 min.
 const LIST_CACHE_HEADER = "public, max-age=120, s-maxage=300";
 
+/** The later of two ISO dates (either may be missing). */
+function latestDate(a: string | null, b: string | null) {
+  if (!a) return b;
+  if (!b) return a;
+  return a > b ? a : b;
+}
+
 export function registerApiRoutes(app: express.Application) {
   app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
@@ -111,9 +118,13 @@ export function registerApiRoutes(app: express.Application) {
 
   app.get("/api/gyms", async (_req, res) => {
   const { data, hit } = await cached("gyms-listed-v8", LIST_CACHE_MS, async () => {
-    const [rows, offers] = await Promise.all([fetchListedGymsWithChain(), activeOffers()]);
+    const [rows, offers, checks] = await Promise.all([fetchListedGymsWithChain(), activeOffers(), allChecks()]);
     const hasOffer = offerLookup(offers);
-    return rows.map((g) => ({ ...g, hasOffer: hasOffer(g) }));
+    return rows.map((g) => ({
+      ...g,
+      hasOffer: hasOffer(g),
+      checkedAt: latestDate(g.checkedAt, checks.get(g.id)?.price?.verifiedAt ?? null),
+    }));
   });
   res.setHeader("Cache-Control", LIST_CACHE_HEADER);
   res.setHeader("X-Cache", hit ? "HIT" : "MISS");

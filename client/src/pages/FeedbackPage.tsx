@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { BackLink } from "../nav/backNav";
 import { ArrowLeft, Building2, CircleCheck, MessageSquarePlus, MessagesSquare, TriangleAlert } from "lucide-react";
 import { API } from "../data/apiBase";
 import { pathGym, pathHome, type FeedbackType } from "../i18n/lang";
@@ -95,10 +96,18 @@ function FeedbackPage() {
   return (
     <main className="fb load-reveal">
       <div className="fb-inner">
-        <Link className="fb-back" to={gymSlug ? pathGym(lang, gymSlug) : pathHome(lang)}>
-          <ArrowLeft size={16} strokeWidth={2.4} aria-hidden="true" />
-          {gymSlug && gymLabel ? gymLabel : "Liikux"}
-        </Link>
+        <BackLink
+          className="fb-back"
+          fallbackTo={gymSlug ? pathGym(lang, gymSlug) : pathHome(lang)}
+          fallbackLabel={gymSlug && gymLabel ? gymLabel : "Liikux"}
+        >
+          {(label) => (
+            <>
+              <ArrowLeft size={16} strokeWidth={2.4} aria-hidden="true" />
+              {label}
+            </>
+          )}
+        </BackLink>
         <h1 className="fb-title">{title}</h1>
         <p className="fb-lead">{t("fbLead")}</p>
 
@@ -109,7 +118,7 @@ function FeedbackPage() {
           </div>
         ) : (
           <form className="fb-form" onSubmit={onSubmit}>
-            <fieldset className="fb-types">
+            <fieldset className="fb-types is-wide">
               <legend>{t("fbType")}</legend>
               {types.map(([id, label, Icon]) => (
                 <button
@@ -150,24 +159,10 @@ function FeedbackPage() {
             ) : null}
 
             {type === "error" && gymSlug && gymLabel ? (
-              <p className="fb-about">
+              <p className="fb-about is-wide">
                 {t("fbAboutGym")}: <strong>{gymLabel}</strong>
               </p>
             ) : null}
-
-            <label className="fb-field">
-              <span>
-                {t("fbMessage")}
-                {type === "suggest" ? "" : " *"}
-              </span>
-              <textarea
-                name="message"
-                rows={5}
-                maxLength={4000}
-                required={type !== "suggest"}
-                placeholder={type === "error" ? t("fbMessageHintError") : ""}
-              />
-            </label>
 
             <label className="fb-field">
               <span>
@@ -183,10 +178,24 @@ function FeedbackPage() {
               />
             </label>
 
+            <label className="fb-field is-wide">
+              <span>
+                {t("fbMessage")}
+                {type === "suggest" ? "" : " *"}
+              </span>
+              <textarea
+                name="message"
+                rows={3}
+                maxLength={4000}
+                required={type !== "suggest"}
+                placeholder={type === "error" ? t("fbMessageHintError") : ""}
+              />
+            </label>
+
             {/* Honeypot: hidden from people, bots fill it in and get ignored. */}
             <input className="fb-hp" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
 
-            {status === "failed" ? <p className="fb-error" role="alert">{t("fbFailed")}</p> : null}
+            {status === "failed" ? <p className="fb-error is-wide" role="alert">{t("fbFailed")}</p> : null}
 
             <button className="btn btn-primary fb-submit" type="submit" disabled={status === "sending"}>
               {status === "sending" ? t("fbSending") : t("fbSend")}

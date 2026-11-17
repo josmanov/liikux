@@ -11,6 +11,7 @@ import {
 import { pathGym, type Lang } from "../../../i18n/lang";
 import type { MessageKey } from "../../../i18n/messages";
 import { isListedBrandChain } from "../utils/chainFilters";
+import { daysSince } from "../../../data/freshness";
 
 type TFn = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
@@ -62,6 +63,20 @@ export function GymResultCard({
       })
     : cleanGymDisplayName(gym.name);
   const street = formatGymStreetLine(gym);
+  // "Tarkistettu 3 pv sitten": when the price was last checked.
+  const checkedDays = daysSince(gym.checkedAt);
+  const checkedText =
+    checkedDays == null
+      ? t("rowUnchecked")
+      : checkedDays === 0
+        ? t("rowCheckedToday")
+        : checkedDays === 1
+          ? t("rowCheckedYesterday")
+          : checkedDays <= 60
+            ? t("rowCheckedDays", { n: checkedDays })
+            : t("rowCheckedDate", {
+                date: new Date(gym.checkedAt!).toLocaleDateString(lang === "fi" ? "fi-FI" : "en-GB", { month: "numeric", year: "numeric" }),
+              });
 
   return (
     <li style={introDelayMs ? { animationDelay: `${Math.min(index, 18) * 28}ms` } : undefined}>
@@ -133,6 +148,13 @@ export function GymResultCard({
                 </span>
               ) : null}
             </div>
+            <span
+              className={["browse-row-checked", checkedDays == null ? "is-none" : checkedDays > 30 ? "is-old" : ""]
+                .filter(Boolean)
+                .join(" ")}
+            >
+              {checkedText}
+            </span>
             <span className="browse-row-meta-mobile">
               <span className="browse-row-price">
                 {priceCard ?? t("priceUnknown")}

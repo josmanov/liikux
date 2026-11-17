@@ -28,7 +28,8 @@
     "db:enrich:dry": "tsx src/enrich-gyms.ts --dry-run --limit=25",
     "db:enrich:chains": "tsx src/enrich-gyms.ts --skip-other --only-missing",
     "db:refresh": "tsx src/refresh-data.ts",
-    "db:refresh:dry": "tsx src/refresh-data.ts --dry-run"
+    "db:refresh:dry": "tsx src/refresh-data.ts --dry-run",
+    "db:fix-chains": "tsx src/fix-gym-chains.ts"
   },
   "keywords": [],
   "author": "",

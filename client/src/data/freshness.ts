@@ -1,5 +1,14 @@
 import type { FactCheck } from "./types";
 
+/** Whole days since an ISO date (0 = today), or null if there is no valid date. */
+export function daysSince(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  const then = new Date(iso);
+  if (Number.isNaN(then.getTime())) return null;
+  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  return Math.max(0, Math.round((startOfDay(new Date()) - startOfDay(then)) / 86_400_000));
+}
+
 /** After this many days without a new confirmation we stop saying "confirmed". */
 const MAX_AGE_DAYS = 30;
 

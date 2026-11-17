@@ -1627,3 +1627,21 @@
   }
 }
 
+
+/* "Tarkistettu 3 pv sitten" under the tags of a result row */
+.browse-row-checked {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--faint);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.browse-row-checked.is-old {
+  color: var(--warn);
+}
+
+.browse-row-checked.is-none {
+  opacity: 0.75;
+}

@@ -904,3 +904,9 @@
   font-weight: 800;
   white-space: nowrap;
 }
+
+.gp-crumb-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}

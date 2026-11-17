@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ChevronDown, Euro, Link2, Route, SlidersHorizontal } from "lucide-react";
 import type { MessageKey } from "../../../i18n/messages";
 import type { FilterKey } from "../utils/mapConstants";
@@ -12,6 +13,10 @@ type BrowseFiltersProps = {
   t: TFn;
   chainFilterActive: boolean;
   selectedChainsCount: number;
+  /** Shown next to "Ketjut" when exactly one chain is picked. */
+  singleChainLabel: string | null;
+  /** The chain tiles (BrowseChainPicker), shown in the dropdown. */
+  chainPicker: ReactNode;
   priceFilterOn: boolean;
   priceInfo: string;
   openFilter: FilterKey | null;
@@ -29,7 +34,6 @@ type BrowseFiltersProps = {
   filtersMoreBadge: number;
   extrasLabel: string;
   extrasOpen: boolean;
-  onOpenChains: () => void;
   onOpenExtras: () => void;
   onClear: () => void;
   /** True when at least one filter is on: only then "clear filters" is shown. */
@@ -40,6 +44,8 @@ export function BrowseFilters({
   t,
   chainFilterActive,
   selectedChainsCount,
+  singleChainLabel,
+  chainPicker,
   priceFilterOn,
   priceInfo,
   openFilter,
@@ -57,7 +63,6 @@ export function BrowseFilters({
   filtersMoreBadge,
   extrasLabel,
   extrasOpen,
-  onOpenChains,
   onOpenExtras,
   onClear,
   anyFilterOn,
@@ -75,15 +80,27 @@ export function BrowseFilters({
           className={["browse-filter-btn", chainFilterActive ? "is-on" : ""]
             .filter(Boolean)
             .join(" ")}
+          aria-expanded={openFilter === "chains"}
           aria-haspopup="dialog"
-          onClick={onOpenChains}
+          onClick={() => onToggleFilter("chains")}
         >
           <Link2 className="browse-filter-icon" size={18} strokeWidth={2.2} />
           <span className="browse-filter-label">{t("chains")}</span>
           <span className="browse-filter-info">
-            {chainFilterActive ? `· ${selectedChainsCount}` : ""}
+            {chainFilterActive ? `· ${singleChainLabel ?? selectedChainsCount}` : ""}
           </span>
+          <ChevronDown size={16} strokeWidth={2.2} />
         </button>
+        {openFilter === "chains" ? (
+          <div
+            className="browse-filter-menu browse-filter-menu-chainpick"
+            role="dialog"
+            aria-label={t("chains")}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {chainPicker}
+          </div>
+        ) : null}
       </div>
 
       <div className="browse-filter">
