@@ -1,6 +1,7 @@
 import {
   cityCenterForName,
   cityFromLabel,
+  nearestCityCenter,
 } from "../data/citySlug";
 import { regionForCitySlug, regionForLabel } from "../data/regionSlug";
 
@@ -43,9 +44,20 @@ export function pathGymsCity(lang: Lang, citySlug: string) {
   return pathGymsBrowse(lang, region.slug, slug);
 }
 
-export function pathGymsFromLocation(lang: Lang, locationLabel: string) {
+/**
+ * Browse page for a place. A place that is not a known city (e.g. "Asikkala",
+ * or a street address) uses the nearest city when its position is known,
+ * instead of showing all of Finland.
+ */
+export function pathGymsFromLocation(
+  lang: Lang,
+  locationLabel: string,
+  position?: { lat: number | null; lng: number | null } | null,
+) {
   const cityName = cityFromLabel(locationLabel);
-  const center = cityName ? cityCenterForName(cityName) : null;
+  const center =
+    (cityName ? cityCenterForName(cityName) : null) ||
+    (position?.lat != null && position.lng != null ? nearestCityCenter(position.lat, position.lng) : null);
   if (center) {
     const region = regionForCitySlug(center.slug);
     if (region) return pathGymsBrowse(lang, region.slug, center.slug);

@@ -42,6 +42,11 @@ export function framePadForOverlays(
     if (style.opacity === "0") continue;
     const r = el.getBoundingClientRect();
     if (r.width < 2 || r.height < 2) continue;
+    // Buttons that sit inside the top bar take no room of their own.
+    const topBar = col?.querySelector(".browse-map-bar.is-top");
+    if (topBar instanceof HTMLElement && getComputedStyle(topBar).display !== "none") {
+      if (r.bottom <= topBar.getBoundingClientRect().bottom + 1) continue;
+    }
 
     const nearTop = r.top - mapRect.top < h * 0.45;
     const nearBottom = mapRect.bottom - r.bottom < h * 0.45;

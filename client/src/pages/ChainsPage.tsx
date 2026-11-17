@@ -304,7 +304,7 @@ function ChainsPage() {
           {otherGyms > 0 ? (
             <p className="chains-others">
               {t("chainsOthers", { count: otherGyms })}{" "}
-              <Link to={pathGymsFromLocation(lang, placeLabel)}>
+              <Link to={pathGymsFromLocation(lang, placeLabel, { lat: placeLat, lng: placeLng })}>
                 {t("browseGyms")}
                 <ArrowRight size={14} strokeWidth={2.4} aria-hidden="true" />
               </Link>

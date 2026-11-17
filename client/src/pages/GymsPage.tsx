@@ -2181,16 +2181,7 @@ function GymsPage() {
               }}
             />
             <div className="browse-map" aria-label={t("map")} ref={mapRef} />
-            <BrowseMapBars
-              t={t}
-              countOnMap={countOnMap}
-              originLabel={locationLabel}
-              onOrigin={
-                origin.lat != null && origin.lng != null
-                  ? () => flyToMyPlace({ label: locationLabel, lat: origin.lat!, lng: origin.lng! })
-                  : null
-              }
-            />
+            <BrowseMapBars t={t} countOnMap={countOnMap} />
             {selectedMapGym ? (
               <BrowseSelectedCard
                 selected={selectedMapGym}

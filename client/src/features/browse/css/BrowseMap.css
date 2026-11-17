@@ -688,9 +688,29 @@
     border-top: 1px solid var(--line);
   }
 
-  /* Controls start under the top bar; the map's own credits move into the bottom bar. */
+  /* + / − / location sit in a row at the right end of the top bar;
+     the map's own credits move into the bottom bar. */
   .browse-map-controls {
-    top: calc(49px + 0.55rem);
+    top: 7px;
+    right: 12px;
+    z-index: 26;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .browse-map-controls .browse-map-ctrl {
+    width: 2.15rem;
+    height: 2.15rem;
+    border-radius: 9px;
+    background: var(--surface-2);
+    box-shadow: none;
+  }
+
+  .browse-map-controls .browse-map-locate-fab {
+    align-self: center;
+    margin-top: 0;
+    margin-left: 0.35rem;
   }
 
   .browse-map-frame .maplibregl-ctrl-bottom-right,

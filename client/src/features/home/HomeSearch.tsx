@@ -36,7 +36,7 @@ function HomeSearch() {
   function go(hit: GeoHit) {
     flushSync(() => setLocation({ label: hit.label, lat: hit.lat, lng: hit.lng }));
     setOpen(false);
-    navigate(pathGymsFromLocation(lang, hit.label), {
+    navigate(pathGymsFromLocation(lang, hit.label, hit), {
       state: { focusOrigin: true },
     });
   }

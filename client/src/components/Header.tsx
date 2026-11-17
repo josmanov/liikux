@@ -16,12 +16,12 @@ function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { lang, t } = useLang();
   const location = useLocation();
-  const { label: locationLabel } = useAppLocation();
+  const { label: locationLabel, lat: locationLat, lng: locationLng } = useAppLocation();
   const chainsPath = pathChains(lang);
   const chainsOn = location.pathname === chainsPath;
   const nextLang = lang === "fi" ? "en" : "fi";
   const homePath = pathHome(lang);
-  const gymsPath = pathGymsFromLocation(lang, locationLabel);
+  const gymsPath = pathGymsFromLocation(lang, locationLabel, { lat: locationLat, lng: locationLng });
   const gymsBase = pathGyms(lang);
   const homeOn = location.pathname === homePath;
   const gymsOn =

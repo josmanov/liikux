@@ -95,10 +95,10 @@ function useHomeData() {
 
 function HomePage() {
   const { lang, t } = useLang();
-  const { label } = useAppLocation();
+  const { label, lat, lng } = useAppLocation();
   const { topChains, chainCount, cities, numbers, cityCount } = useHomeData();
   const gymsText = numbers.gyms > 0 ? String(numbers.gyms) : lang === "fi" ? "yli 1000" : "over 1,000";
-  const browsePath = pathGymsFromLocation(lang, label);
+  const browsePath = pathGymsFromLocation(lang, label, { lat, lng });
   const dash = "–";
 
   usePageMeta({

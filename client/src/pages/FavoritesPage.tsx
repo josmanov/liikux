@@ -242,7 +242,7 @@ function FavoritesPage() {
     );
   }
 
-  const browsePath = pathGymsFromLocation(lang, placeLabel);
+  const browsePath = pathGymsFromLocation(lang, placeLabel, { lat: placeLat, lng: placeLng });
 
   return (
     <main className="fav load-reveal">

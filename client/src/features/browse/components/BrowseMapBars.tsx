@@ -1,4 +1,4 @@
-import { Map as MapIcon, Navigation } from "lucide-react";
+import { Map as MapIcon } from "lucide-react";
 import type { MessageKey } from "../../../i18n/messages";
 
 type TFn = (key: MessageKey, vars?: Record<string, string | number>) => string;
@@ -7,18 +7,15 @@ type BrowseMapBarsProps = {
   t: TFn;
   /** Gyms inside the visible part of the map (with the current filters). */
   countOnMap: number;
-  /** The start point ("you are here"): an address or "Oma sijainti". */
-  originLabel: string;
-  onOrigin: (() => void) | null;
 };
 
 /**
  * Desktop only: a bar above and below the map, the same height as the list's
  * own head (area, count, sort) and page bar, so both panels line up.
- *   top:    how many gyms are on the map now · jump to the start point
+ *   top:    how many gyms are on the map now (the + / − / location buttons sit at its right end)
  *   bottom: what the map symbols mean · map credits (required by OpenStreetMap)
  */
-export function BrowseMapBars({ t, countOnMap, originLabel, onOrigin }: BrowseMapBarsProps) {
+export function BrowseMapBars({ t, countOnMap }: BrowseMapBarsProps) {
   return (
     <>
       <div className="browse-map-bar is-top" onClick={(e) => e.stopPropagation()}>
@@ -26,12 +23,6 @@ export function BrowseMapBars({ t, countOnMap, originLabel, onOrigin }: BrowseMa
           <MapIcon size={16} strokeWidth={2.2} aria-hidden="true" />
           {countOnMap === 1 ? t("mapBarOne") : t("mapBarCount", { n: countOnMap })}
         </span>
-        {onOrigin ? (
-          <button type="button" className="browse-map-bar-origin" onClick={onOrigin} title={t("mapGoToLocation")}>
-            <Navigation size={14} strokeWidth={2.4} aria-hidden="true" />
-            <span>{originLabel}</span>
-          </button>
-        ) : null}
       </div>
       <div className="browse-map-bar is-bottom" onClick={(e) => e.stopPropagation()}>
         <ul className="browse-map-legend" aria-label={t("mapLegend")}>

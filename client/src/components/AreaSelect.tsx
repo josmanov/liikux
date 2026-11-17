@@ -100,7 +100,7 @@ function AreaSelect({
     );
     navigate(
       {
-        pathname: pathGymsFromLocation(lang, placeLabel),
+        pathname: pathGymsFromLocation(lang, placeLabel, placeLabel === label ? { lat, lng } : null),
         search: onGyms ? routeLocation.search : "",
       },
       {
@@ -180,7 +180,7 @@ function AreaSelect({
                 );
                 return;
               }
-              navigate(pathGymsFromLocation(lang, place.label), {
+              navigate(pathGymsFromLocation(lang, place.label, place), {
                 replace: true,
                 state: { focusOrigin: true },
               });
