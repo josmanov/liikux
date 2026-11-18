@@ -287,7 +287,8 @@ async function save(planned: Planned[], health: Health[], offerRows: (typeof off
       }
       if (old) await db.update(dataChanges).set({ status: "superseded" }).where(eq(dataChanges.id, old.id));
       await db.insert(dataChanges).values({
-        id: `${runId}-${p.entityId}-${c.field}-${i}`.slice(0, 64),
+        // short and unique: long gym ids cut to 64 characters made two fields collide
+        id: `${runId.slice(0, 32)}-${hashOf(`${p.entityType}|${p.entityId}|${c.field}|${i}`)}`,
         runId,
         entityType: p.entityType,
         entityId: p.entityId,
