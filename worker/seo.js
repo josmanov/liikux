@@ -165,6 +165,18 @@ export async function pageMeta(path, loadJson) {
     };
   }
 
+  // All cities
+  if (path === "/fi/kaupungit" || path === "/en/cities") {
+    return {
+      lang,
+      title: fi ? "Kuntosalit kaupungeittain – kaikki kaupungit | Liikux" : "Gyms by city – all cities in Finland | Liikux",
+      description: fi
+        ? "Kaikki Suomen kaupungit ja kunnat, joissa on kuntosaleja. Hae kaupunkia ja vertaa sen salien hintoja kartalla."
+        : "Every city and town in Finland with gyms. Search for your city and compare its gyms' prices on the map.",
+      paths: { fi: "/fi/kaupungit", en: "/en/cities" },
+    };
+  }
+
   // About
   if (path === "/fi/tietoa" || path === "/en/about") {
     return {

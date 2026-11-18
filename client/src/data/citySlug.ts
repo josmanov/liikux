@@ -1,6 +1,9 @@
+import { GENERATED_CITIES } from "./cities.generated";
+
 export type CityCenter = { name: string; slug: string; lat: number; lng: number };
 
-export const CITY_CENTERS: CityCenter[] = [
+/** The 30 biggest cities, with hand-checked centre points. */
+const MAIN_CITIES: CityCenter[] = [
   { name: "Helsinki", slug: "helsinki", lat: 60.1699, lng: 24.9384 },
   { name: "Espoo", slug: "espoo", lat: 60.2055, lng: 24.6559 },
   { name: "Vantaa", slug: "vantaa", lat: 60.2934, lng: 25.0378 },
@@ -32,6 +35,24 @@ export const CITY_CENTERS: CityCenter[] = [
   { name: "Riihimäki", slug: "riihimaki", lat: 60.737, lng: 24.7773 },
   { name: "Kauniainen", slug: "kauniainen", lat: 60.2098, lng: 24.728 },
 ];
+
+/**
+ * Every town with gyms: the main cities first, then all others from
+ * cities.generated.ts (made by `npm run db:cities` in server/).
+ */
+export const CITY_CENTERS: CityCenter[] = [
+  ...MAIN_CITIES,
+  ...GENERATED_CITIES.filter((g) => !MAIN_CITIES.some((m) => m.slug === g.slug)).map(
+    ({ name, slug, lat, lng }) => ({ name, slug, lat, lng }),
+  ),
+];
+
+/** Towns with this many gyms (or a main city) are picked automatically from a location. */
+const HUB_MIN_GYMS = 5;
+const gymsBySlug = new Map(GENERATED_CITIES.map((c) => [c.slug, c.gyms]));
+export function isHubCity(slug: string) {
+  return MAIN_CITIES.some((m) => m.slug === slug) || (gymsBySlug.get(slug) ?? 0) >= HUB_MIN_GYMS;
+}
 
 const bySlug = new Map<string, CityCenter>();
 const byName = new Map<string, CityCenter>();
@@ -78,6 +99,10 @@ export function cityFromLabel(label: string): string | null {
   return null;
 }
 
+/**
+ * Nearest city with enough gyms to be worth opening (see isHubCity), so a
+ * spot in a village opens its regional centre, not a list of one gym.
+ */
 export function nearestCityCenter(
   lat: number,
   lng: number,
@@ -87,6 +112,7 @@ export function nearestCityCenter(
   let bestKm = Infinity;
   const cos = Math.cos((lat * Math.PI) / 180);
   for (const c of CITY_CENTERS) {
+    if (!isHubCity(c.slug)) continue;
     const dLat = (c.lat - lat) * 111.32;
     const dLng = (c.lng - lng) * 111.32 * cos;
     const km = Math.hypot(dLat, dLng);

@@ -1,6 +1,7 @@
 import {
   cityCenterForName,
   cityFromLabel,
+  isHubCity,
   nearestCityCenter,
 } from "../data/citySlug";
 import { regionForCitySlug, regionForLabel } from "../data/regionSlug";
@@ -55,9 +56,13 @@ export function pathGymsFromLocation(
   position?: { lat: number | null; lng: number | null } | null,
 ) {
   const cityName = cityFromLabel(locationLabel);
+  const own = cityName ? cityCenterForName(cityName) : null;
+  const hasPos = position?.lat != null && position.lng != null;
+  // A small town (under 5 gyms) opens the nearest bigger city instead.
   const center =
-    (cityName ? cityCenterForName(cityName) : null) ||
-    (position?.lat != null && position.lng != null ? nearestCityCenter(position.lat, position.lng) : null);
+    (own && (isHubCity(own.slug) || !hasPos) ? own : null) ||
+    (hasPos ? nearestCityCenter(position!.lat!, position!.lng!) : null) ||
+    own;
   if (center) {
     const region = regionForCitySlug(center.slug);
     if (region) return pathGymsBrowse(lang, region.slug, center.slug);
@@ -78,6 +83,11 @@ export function pathChain(lang: Lang, slug: string) {
 /** The page that lists every chain. */
 export function pathChains(lang: Lang) {
   return lang === "en" ? "/en/chains" : "/fi/ketjut";
+}
+
+/** Every town with gyms, with a search. */
+export function pathCities(lang: Lang) {
+  return lang === "en" ? "/en/cities" : "/fi/kaupungit";
 }
 
 /** About page: where the data comes from, common questions. */
@@ -130,6 +140,7 @@ export function switchLangPath(
   } else {
     if (pathname === "/fi/ketjut" || pathname === "/en/chains") return pathChains(next);
     if (pathname === "/fi/tietoa" || pathname === "/en/about") return pathAbout(next);
+    if (pathname === "/fi/kaupungit" || pathname === "/en/cities") return pathCities(next);
     if (pathname === "/fi/yrityksille" || pathname === "/en/for-gyms") return pathBusiness(next);
     if (pathname === "/fi/suosikit" || pathname === "/en/favorites") return pathFavorites(next) + search;
     const gymsNested = pathname.match(

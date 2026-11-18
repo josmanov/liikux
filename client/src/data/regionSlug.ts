@@ -5,6 +5,7 @@ import {
   cityFromLabel,
   toCitySlug,
 } from "./citySlug";
+import { GENERATED_CITIES } from "./cities.generated";
 
 export type RegionInfo = { name: string; slug: string };
 
@@ -80,8 +81,11 @@ const CITY_REGION_NAME: Record<string, string> = {
   mikkeli: "Etelä-Savo",
 };
 
+const GENERATED_REGION = new Map(GENERATED_CITIES.map((c) => [c.slug, c.region]));
+
 export function regionForCitySlug(citySlug: string): RegionInfo | null {
-  const regionName = CITY_REGION_NAME[citySlug.trim().toLowerCase()];
+  const slug = citySlug.trim().toLowerCase();
+  const regionName = CITY_REGION_NAME[slug] ?? GENERATED_REGION.get(slug);
   return regionName ? regionFromName(regionName) : null;
 }
 

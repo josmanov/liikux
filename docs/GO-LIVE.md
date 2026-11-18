@@ -61,3 +61,11 @@ Do the steps in this order. Steps marked **you** need your own accounts.
 - New gyms are added by hand (from "Ehdota salia" messages).
 
 **When a chain changes its whole price list** (like Liikku on 16 November 2026), its price list page may move. If the chain's row turns red, update its address in `server/src/refresh/chainSources.ts`.
+
+## Cities
+
+Every town with gyms has its own page (`/fi/kuntosalit/<maakunta>/<kaupunki>`) and is listed on `/fi/kaupungit`. The list of towns and the dot map of Finland on the home page are made from the gyms by one command; run it after adding or moving gyms, then commit the two changed files:
+
+```
+npm run db:cities --prefix server
+```

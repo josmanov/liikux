@@ -361,3 +361,33 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* "Kaikki kaupungit" at the end of the quick city chips */
+.home-quick-all {
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.home-quick-all:hover {
+  border-style: solid;
+  color: var(--ink);
+}
+
+/* Link under a home section, e.g. "Kaikki kaupungit →" */
+.home-section-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 1rem;
+  color: var(--brand);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.home-section-more:hover svg {
+  transform: translateX(2px);
+}
+
+.home-section-more svg {
+  transition: transform 0.15s ease;
+}

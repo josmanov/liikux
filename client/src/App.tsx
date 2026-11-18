@@ -15,6 +15,7 @@ import {
 const GymsPage = lazy(() => import("./pages/GymsPage"));
 const GymDetailPage = lazy(() => import("./pages/GymDetailPage"));
 const AdminDataPage = lazy(() => import("./pages/AdminDataPage"));
+const CitiesPage = lazy(() => import("./pages/CitiesPage"));
 const FeedbackPage = lazy(() => import("./pages/FeedbackPage"));
 const ChainsPage = lazy(() => import("./pages/ChainsPage"));
 const FavoritesPage = lazy(() => import("./pages/FavoritesPage"));
@@ -176,6 +177,22 @@ function App() {
             element={
               <Suspense fallback={<RouteFallback />}>
                 <FeedbackPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/fi/kaupungit"
+            element={
+              <Suspense fallback={<RouteFallback />}>
+                <CitiesPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/en/cities"
+            element={
+              <Suspense fallback={<RouteFallback />}>
+                <CitiesPage />
               </Suspense>
             }
           />

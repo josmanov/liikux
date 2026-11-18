@@ -9,7 +9,7 @@ import { fetchChains, fetchGyms, fetchHomeStats } from "../data/api";
 import { CITY_CENTERS } from "../data/citySlug";
 import { formatPriceFrom } from "../data/format";
 import { useAppLocation } from "../context/LocationContext";
-import { pathChain, pathChains, pathGyms, pathGymsCity, pathGymsFromLocation } from "../i18n/lang";
+import { pathCities, pathChain, pathChains, pathGyms, pathGymsCity, pathGymsFromLocation } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import { usePageMeta } from "../seo/usePageMeta";
 
@@ -133,6 +133,10 @@ function HomePage() {
                 </Link>
               );
             })}
+            <Link className="chip home-quick-all" to={pathCities(lang)}>
+              {t("allCitiesLink")}
+              <ArrowRight size={14} strokeWidth={2.4} aria-hidden="true" />
+            </Link>
           </div>
           <Link className="home-browse-all" to={browsePath} state={{ focusOrigin: true }}>
             {t("homeBrowseAll")}
@@ -253,6 +257,10 @@ function HomePage() {
               </Link>
             ))}
           </div>
+          <Link className="home-section-more" to={pathCities(lang)}>
+            {t("allCitiesLink")}
+            <ArrowRight size={15} strokeWidth={2.4} aria-hidden="true" />
+          </Link>
         </div>
       </section>
 

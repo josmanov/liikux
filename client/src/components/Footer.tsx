@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { openCookieSettings } from "../data/cookieConsent";
-import {
+import { pathCities,
   pathAbout,
   pathBusiness,
   pathFeedback,
@@ -64,6 +64,7 @@ function Footer() {
               {name}
             </Link>
           ))}
+          <Link to={pathCities(lang)}>{t("allCitiesLink")} →</Link>
         </nav>
 
         <nav className="footer-col" aria-label={t("footerInfo")}>

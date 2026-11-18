@@ -29,7 +29,8 @@
     "db:enrich:chains": "tsx src/enrich-gyms.ts --skip-other --only-missing",
     "db:refresh": "tsx src/refresh-data.ts",
     "db:refresh:dry": "tsx src/refresh-data.ts --dry-run",
-    "db:fix-chains": "tsx src/fix-gym-chains.ts"
+    "db:fix-chains": "tsx src/fix-gym-chains.ts",
+    "db:cities": "tsx src/export-cities.ts"
   },
   "keywords": [],
   "author": "",
