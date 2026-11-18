@@ -387,3 +387,33 @@
 .admin-changes a {
   color: var(--brand);
 }
+
+/* Link to the review page (/admin/tarkistus) */
+.admin-review-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-bottom: 1.5rem;
+  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--outline);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.admin-review-banner strong {
+  color: var(--ink);
+}
+
+.admin-review-banner span:last-child {
+  margin-left: auto;
+  color: var(--brand);
+  font-weight: 800;
+}
+
+.admin-review-banner.is-waiting {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  color: var(--ink);
+}

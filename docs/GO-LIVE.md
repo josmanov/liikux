@@ -8,7 +8,7 @@ Do the steps in this order. Steps marked **you** need your own accounts.
 | # | What | Who | How |
 | --- | --- | --- | --- |
 | 1 | Create the new database tables | you (one command) | `npm run db:push --prefix server`. Adds `feedback`, `fact_checks`, `link_clicks`, `offers`, `data_changes`, `page_health`. It only adds tables; it does not touch gyms or chains. |
-| 2 | First data refresh | you (two commands) | `npm run db:refresh:dry --prefix server` prints every price, hours and offer change without writing (about 1 minute). If it looks right: `npm run db:refresh --prefix server`. Big price jumps (over 40 %) are held; approve them in `/admin/data`, or run once with `-- --accept-big` if you checked them in the dry run. |
+| 2 | First data refresh | you (one command) | `npm run db:refresh --prefix server` (about 1½ minutes). Nothing goes on the site: everything it finds waits in `/admin/tarkistus` until you approve it. |
 | 3 | First data check | you (one command) | `npm run db:verify --prefix server`. Takes about 4 minutes. After it, gym pages show "Vahvistettu tänään". |
 | 4 | Digitransit key (fast address search) | you | Register at https://portal-api.digitransit.fi (free), then set `DIGITRANSIT_API_KEY` in Render → Environment. Without it the address search uses a free public service that answers in about one second. |
 | 5 | Owner name for the legal pages | you | Set `LEGAL_OWNER` as described in `client/src/features/legal/types.ts`. |
@@ -31,28 +31,25 @@ Do the steps in this order. Steps marked **you** need your own accounts.
 
 ## Keeping the data up to date
 
-**What runs by itself, every morning (05:00–06:00 Finnish time) on GitHub, for free, with no AI:**
+**Nothing on the site changes by itself.** Every morning (05:00–06:00 Finnish time) GitHub runs two jobs, for free and with no AI:
 
-1. **Refresh** (`server/src/refresh-data.ts`). Reads each chain's price list and every gym page of chains where gyms have their own prices (Elixia, EasyFit, Fressi, Forever, LadyLine, Ole.Fit). It updates:
-   - price, memberships with contract terms (12 kk / no fixed term, joining fee, student/senior), opening hours,
-   - **offers**: campaigns like "1. kk -50 %" or "aloitusmaksu 0 €". They appear on the gym page and as a yellow "Tarjous" tag in the list. An offer disappears by itself when it is gone from the chain's page or its end date passes.
-2. **Check** (`server/src/verify-data.ts`). Confirms the price and hours we show are written on each gym's own page, and shows "Vahvistettu tänään".
+1. **Refresh** (`server/src/refresh-data.ts`) reads each chain's price list and the gym pages of chains where gyms have their own prices (Elixia, EasyFit, Fressi, Forever, LadyLine, Ole.Fit). It **collects** new prices, memberships with contract terms, opening hours and offers into a review queue. It does not change the site.
+2. **Check** (`server/src/verify-data.ts`) confirms that the price and hours already on the site are still written on each gym's own page, and shows "Vahvistettu tänään".
 
-**Safety rules, so nothing wrong goes live by itself:**
+**Your routine: open `/admin/tarkistus`** (it works on a phone too):
 
-- A value is never cleared: if a page gives nothing, the old value stays.
-- A price that jumps more than 40 % is **held** until you approve it.
-- If a chain's page stops giving prices (the chain redesigned its site), the old values stay and the chain turns red in the admin view.
-- Every change is logged and can be undone with one click.
+1. **Uudet tiedot:** one card per gym or chain. The current value is crossed out, the new one is green, and "Lähde" opens the page it came from.
+   - ✓ = approve, so the new value goes on the site.
+   - ✕ = reject, so the old value stays.
+   - "Hyväksy tämän kaikki" approves a whole card. The chain chips plus "Hyväksy kaikki" approve one chain at a time.
+   - A yellow warning means "look at this one": the price jumped more than 40 %.
+2. **Uudet tarjoukset:** "Näytä sivulla" or "Hylkää". A rejected offer never comes back. An approved offer disappears by itself when it is gone from the chain's page or its end date passes.
+3. **Sivuja, joita ei saatu luettua:** if a whole chain is listed, its site changed. Ask Claude: "fix the refresh parser for <chain>". That is the only time tokens are spent.
+4. **Tehdyt päätökset:** "Peru" undoes anything you approved in the last 7 days.
 
-**Your routine, about 5 minutes a day (or a few times a week):**
+Safety: a value is never cleared, the same change found again the next day is not added twice, and a price that already appears in the gym's own price list (another contract type) is not proposed as a change.
 
-1. Open `/admin/data` → "Automaattiset päivitykset".
-2. **Odottaa hyväksyntää:** open the "lähde" link, and press "Hyväksy" if the new price is right.
-3. **Ketjujen lukijat:** if a chain is red, its site changed. Ask Claude: "fix the refresh parser for <chain>". That is the only time tokens are spent: one small fix, then it runs for free again.
-4. **Tarjoukset:** glance through; "Piilota" hides one that should not be shown.
-5. **Muutokset:** "Peru" undoes any change that looks wrong.
-6. Read new messages from visitors ("Ilmoita virheestä") in the admin view.
+Also read new messages from visitors ("Ilmoita virheestä") in `/admin/data`.
 
 **What is not automatic yet:**
 
@@ -64,7 +61,7 @@ Do the steps in this order. Steps marked **you** need your own accounts.
 
 ## Cities
 
-Every town with gyms has its own page (`/fi/kuntosalit/<maakunta>/<kaupunki>`) and is listed on `/fi/kaupungit`. The list of towns and the dot map of Finland on the home page are made from the gyms by one command; run it after adding or moving gyms, then commit the two changed files:
+Every town with gyms has its own page (`/fi/kuntosalit/<maakunta>/<kaupunki>`) and is listed on `/fi/kaupungit`. The list of towns is made from the gyms by one command; run it after adding or moving gyms, then commit the changed file:
 
 ```
 npm run db:cities --prefix server

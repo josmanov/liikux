@@ -1,0 +1,423 @@
+/* Review page for new data (AdminReviewPage.tsx). Works on a phone too. */
+
+.rv {
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 1.75rem var(--gutter) 4rem;
+}
+
+.rv-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.rv-title {
+  font-size: clamp(1.6rem, 1.3rem + 1vw, 2.2rem);
+  letter-spacing: -0.03em;
+}
+
+.rv-muted {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.rv-head .rv-muted {
+  margin-top: 0.35rem;
+}
+
+.rv-link {
+  flex-shrink: 0;
+  color: var(--brand);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.rv-error {
+  margin-top: 0.75rem;
+  color: var(--bad);
+}
+
+.rv-key {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 24rem;
+  margin-top: 1.25rem;
+}
+
+.rv-key input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  color: var(--ink);
+  font: inherit;
+}
+
+/* ---------- Counts ---------- */
+
+.rv-counts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 1.25rem;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.rv-counts > div {
+  padding: 0.9rem 1.1rem;
+}
+
+.rv-counts > div + div {
+  border-left: 1px solid var(--line);
+}
+
+.rv-counts strong {
+  display: block;
+  color: var(--brand);
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.rv-counts .is-bad strong {
+  color: var(--bad);
+}
+
+.rv-counts span {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+/* ---------- Sections ---------- */
+
+.rv-section {
+  margin-top: 2.25rem;
+}
+
+.rv-section h2 {
+  font-size: var(--text-lg);
+}
+
+.rv-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.rv-bulk,
+.rv-card-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.rv-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.9rem;
+}
+
+.rv-chips .chip.is-on {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.rv-empty {
+  margin-top: 0.9rem;
+  padding: 1.1rem 1.25rem;
+  border: 1px dashed var(--outline);
+  border-radius: var(--radius-lg);
+  color: var(--muted);
+}
+
+/* ---------- Buttons ---------- */
+
+.rv-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--outline);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rv-btn.is-ok {
+  border-color: rgba(95, 211, 154, 0.5);
+  background: var(--good-soft);
+  color: var(--good);
+}
+
+.rv-btn:hover:not(:disabled) {
+  border-color: var(--line-strong);
+}
+
+.rv-btn:disabled,
+.rv-icon:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.rv-icon {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 1px solid var(--outline);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.rv-icon.is-ok {
+  border-color: rgba(95, 211, 154, 0.5);
+  color: var(--good);
+}
+
+.rv-icon:hover:not(:disabled) {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+.rv-text-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--brand);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ---------- Cards ---------- */
+
+.rv-cards {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.rv-card {
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.rv-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.rv-card-chain {
+  color: var(--faint);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.rv-card h3 {
+  margin-top: 0.15rem;
+  font-size: var(--text-md);
+}
+
+.rv-card h3 a {
+  color: var(--ink);
+}
+
+.rv-card p {
+  margin-top: 0.4rem;
+}
+
+.rv-card a {
+  color: var(--brand);
+}
+
+.rv-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.rv-card-foot {
+  margin-top: 0.8rem;
+}
+
+.rv-rows {
+  margin: 0.7rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-rows li {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.65rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.rv-row-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.rv-row-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.rv-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.rv-warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.rv-values {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: var(--text-md);
+}
+
+.rv-values s {
+  color: var(--faint);
+}
+
+.rv-values b {
+  color: var(--good);
+}
+
+.rv-lists {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 0.35rem;
+  font-size: var(--text-sm);
+}
+
+.rv-lists-h {
+  color: var(--faint);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.rv-lists ul {
+  margin: 0.2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-lists li {
+  padding: 0.1rem 0;
+}
+
+.rv-lists li.is-gone {
+  color: var(--faint);
+  text-decoration: line-through;
+}
+
+.rv-lists li.is-new {
+  color: var(--good);
+}
+
+.rv-lists em {
+  color: var(--faint);
+  font-style: normal;
+}
+
+/* ---------- Plain lists (history, live offers, broken pages) ---------- */
+
+.rv-plain {
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+}
+
+.rv-plain li {
+  padding: 0.45rem 0;
+  border-top: 1px solid var(--line);
+  color: var(--ink-2);
+}
+
+.rv-plain a {
+  color: var(--brand);
+  word-break: break-all;
+}
+
+.rv-badge {
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: var(--surface-3);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.rv-badge.is-approved {
+  background: var(--good-soft);
+  color: var(--good);
+}
+
+.rv-badge.is-rejected {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+
+@media (max-width: 640px) {
+  .rv-counts {
+    grid-template-columns: 1fr;
+  }
+
+  .rv-counts > div + div {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .rv-lists {
+    grid-template-columns: 1fr;
+  }
+}

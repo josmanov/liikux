@@ -6,6 +6,7 @@ import { offers } from "../db/schema.js";
  * Offers found by the daily refresh (see refresh-data.ts).
  *
  * An offer is shown while:
+ *   - a person approved it in the review page (status "approved"),
  *   - it was seen on the chain's or gym's page in the last 2 days,
  *   - its end date (if any) has not passed,
  *   - nobody hid it in the admin view.
@@ -31,7 +32,7 @@ const SEEN_WITHIN_MS = 2 * 24 * 60 * 60 * 1000;
 const MAX_PER_GYM = 3;
 
 export function isActive(row: Row, now = new Date()) {
-  if (row.hiddenAt) return false;
+  if (row.status !== "approved" || row.hiddenAt) return false;
   if (now.getTime() - new Date(row.lastSeenAt).getTime() > SEEN_WITHIN_MS) return false;
   const today = now.toISOString().slice(0, 10);
   return !row.validUntil || row.validUntil >= today;

@@ -22,15 +22,15 @@ import { GYM_PRICE_READERS } from "./refresh/gymParsers.js";
  *   3. Offers: collects campaigns from the same pages (refresh/offers.ts).
  *      An offer seen on 3+ gym pages of a chain is stored for the whole chain.
  *
- * Safety (refresh/apply.ts): nothing is ever cleared, a price that jumps more
- * than 40 % is held for approval in the admin view, every change is logged in
- * data_changes and can be undone there.
+ * NOTHING IS WRITTEN TO THE SITE BY ITSELF. Every new value and every new
+ * offer waits in the review page (/admin/tarkistus) until a person approves
+ * it. A value that jumps more than 40 % gets a warning there (refresh/apply.ts).
+ * The same change found again the next day is not added twice.
  *
  * Run:   npm run db:refresh          (writes)
  *        npm run db:refresh:dry      (prints what would change, writes nothing;
  *                                     also saves exports/refresh-report.json)
- * Flags: --dry-run  --chain=c2  --limit=5 (gyms per chain)  --accept-big
- *        (--accept-big also writes the big price jumps; use after reading a dry run)
+ * Flags: --dry-run  --chain=c2  --limit=5 (gyms per chain)
  */
 
 const args = process.argv.slice(2);
@@ -122,6 +122,26 @@ function keepRicherList(current: Current, facts: Facts) {
 }
 
 /**
+ * The "new" price is already in the gym's price list as another contract
+ * (e.g. Elixia's page shows only the no-commitment 49,90, while our list also
+ * has the 12-month 34,90). That is not a price change: propose nothing.
+ */
+function sameListedPrice(current: Current, facts: Facts) {
+  if (facts.priceFrom == null || current.priceFrom == null) return;
+  if (Math.abs(facts.priceFrom - current.priceFrom) < 0.005) return;
+  let list: { priceEur?: number }[] = [];
+  try {
+    list = JSON.parse(current.membershipsJson ?? "[]");
+  } catch {
+    list = [];
+  }
+  if (list.some((m) => typeof m.priceEur === "number" && Math.abs(m.priceEur - facts.priceFrom!) < 0.005)) {
+    facts.priceFrom = null;
+    facts.memberships = null;
+  }
+}
+
+/**
  * Gym parsers often know only one opening time and copy it to the weekend.
  * If we already have a different weekend time, keep it.
  */
@@ -160,9 +180,11 @@ async function refreshGyms(source: ChainSource, chainGyms: Gym[], planned: Plann
     }
     const current = currentOf(gym);
     const facts = gymFacts(source.chainId, page.html, page.text, source.gymFields);
+    // Did the reader find anything at all? (Checked before the rules below drop values.)
+    const parsedSomething = facts.priceFrom != null || facts.hoursWeekday != null || facts.is247 != null;
+    sameListedPrice(current, facts);
     keepRicherList(current, facts);
     keepOwnWeekend(current, facts);
-    const parsedSomething = facts.priceFrom != null || facts.hoursWeekday != null || facts.is247 != null;
     health.push({ url, chainId: source.chainId, gymId: gym.id, hash: hashOf(page.text), ok: parsedSomething, detail: parsedSomething ? null : "hintaa tai aukioloa ei löytynyt" });
     const { set, changes } = planChanges(current, facts, { acceptBig: ACCEPT_BIG });
     if (changes.length) planned.push({ entityType: "gym", entityId: gym.id, name: gym.name, chainId: source.chainId, sourceUrl: url, set, changes });
@@ -250,29 +272,34 @@ async function tablesExist() {
 }
 
 async function save(planned: Planned[], health: Health[], offerRows: (typeof offers.$inferInsert)[]) {
+  // Everything goes to the review queue (status "held"); nothing is written to
+  // gyms or chains here. A change already waiting with the same new value is
+  // only marked as seen again; one waiting with an older value is replaced.
+  const waiting = await db.select().from(dataChanges).where(eq(dataChanges.status, "held"));
+  const byKey = new Map(waiting.map((w) => [`${w.entityType}|${w.entityId}|${w.field}`, w]));
   for (const p of planned) {
-    const set = { ...p.set } as Record<string, unknown>;
-    if (Object.keys(set).length) {
-      if (p.entityType === "chain") {
-        await db.update(chains).set({ ...set, checkedAt: nowIso.slice(0, 10), sourceUrl: p.sourceUrl }).where(eq(chains.id, p.entityId));
-      } else {
-        await db.update(gyms).set({ ...set, offerCheckedAt: nowIso, offerSourceUrl: p.sourceUrl, offerMethod: "refresh" }).where(eq(gyms.id, p.entityId));
+    for (const [i, c] of p.changes.entries()) {
+      const key = `${p.entityType}|${p.entityId}|${c.field}`;
+      const old = byKey.get(key);
+      if (old && old.newValue === c.newValue) {
+        await db.update(dataChanges).set({ changedAt: nowIso, sourceUrl: p.sourceUrl }).where(eq(dataChanges.id, old.id));
+        continue;
       }
+      if (old) await db.update(dataChanges).set({ status: "superseded" }).where(eq(dataChanges.id, old.id));
+      await db.insert(dataChanges).values({
+        id: `${runId}-${p.entityId}-${c.field}-${i}`.slice(0, 64),
+        runId,
+        entityType: p.entityType,
+        entityId: p.entityId,
+        field: c.field,
+        oldValue: c.oldValue,
+        newValue: c.newValue,
+        sourceUrl: p.sourceUrl,
+        status: "held",
+        reason: c.reason ?? null,
+        changedAt: nowIso,
+      });
     }
-    const logRows = p.changes.map((c, i) => ({
-      id: `${runId}-${p.entityId}-${c.field}-${i}`.slice(0, 64),
-      runId,
-      entityType: p.entityType,
-      entityId: p.entityId,
-      field: c.field,
-      oldValue: c.oldValue,
-      newValue: c.newValue,
-      sourceUrl: p.sourceUrl,
-      status: c.status,
-      reason: c.reason ?? null,
-      changedAt: nowIso,
-    }));
-    if (logRows.length) await db.insert(dataChanges).values(logRows);
   }
 
   for (const h of health) {
@@ -298,6 +325,7 @@ async function save(planned: Planned[], health: Health[], offerRows: (typeof off
       .values(o)
       .onConflictDoUpdate({
         target: offers.id,
+        // status is not touched: an approved offer stays approved, a rejected one stays away.
         set: { lastSeenAt: nowIso, title: o.title, text: o.text, priceEur: o.priceEur, discountPct: o.discountPct, validUntil: o.validUntil, sourceUrl: o.sourceUrl },
       });
   }
@@ -352,7 +380,7 @@ async function main() {
   const held = planned.flatMap((p) => p.changes.filter((c) => c.status === "held").map((c) => ({ p, c })));
   console.log("\n==== Data refresh ====");
   console.log(`duration ${durationSec}s, pages ${health.length}, gyms read ${health.filter((h) => h.gymId).length}`);
-  console.log(`changes: ${applied.length} written, ${held.length} held for approval`);
+  console.log(`changes found: ${applied.length + held.length} (all go to the review page; ${held.length} with a warning)`);
   console.log("\n-- chains --");
   for (const p of planned.filter((x) => x.entityType === "chain")) {
     console.log(`${p.name} (${p.sourceUrl})`);
@@ -404,7 +432,7 @@ async function main() {
       [...applied, ...held].filter(({ c }) => c.field !== "membershipsJson").slice(0, 400).map(({ p, c }) => ({ gym: p.name, field: c.field, old: c.oldValue, new: c.newValue, status: c.status })),
     ),
   });
-  console.log(`\nSaved: ${applied.length} changes, ${held.length} held, ${offerRows.length} offers.`);
+  console.log(`\nSent to review: ${applied.length + held.length} changes, ${offerRows.length} offers seen. Approve them at /admin/tarkistus.`);
   process.exit(0);
 }
 

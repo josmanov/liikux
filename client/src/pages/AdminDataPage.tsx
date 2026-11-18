@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import "./AdminDataPage.css";
 import LoadSpin from "../components/LoadSpin";
 import { API } from "../data/apiBase";
-import AdminRefreshPanel from "./AdminRefreshPanel";
 
 type Row = {
   id: string;
@@ -162,6 +161,33 @@ function matchesView(r: Row, view: ViewFilter) {
 }
 
 const ADMIN_KEY_STORAGE = "liikux-admin-key";
+
+/** "12 new values wait for your review" → /admin/tarkistus */
+function ReviewBanner({ adminKey }: { adminKey: string }) {
+  const [counts, setCounts] = useState<{ changes: number; offers: number } | null>(null);
+  useEffect(() => {
+    fetch(`${API}/api/admin/refresh`, { headers: adminKey ? { "x-admin-key": adminKey } : {} })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { ready?: boolean; waiting?: unknown[]; offersWaiting?: unknown[] } | null) =>
+        setCounts(d?.ready ? { changes: d.waiting?.length ?? 0, offers: d.offersWaiting?.length ?? 0 } : null),
+      )
+      .catch(() => setCounts(null));
+  }, [adminKey]);
+  const total = counts ? counts.changes + counts.offers : 0;
+  return (
+    <a className={total ? "admin-review-banner is-waiting" : "admin-review-banner"} href="/admin/tarkistus">
+      <strong>Tietojen tarkistus</strong>
+      <span>
+        {counts == null
+          ? "Uudet hinnat, aukiolot ja tarjoukset odottavat hyväksyntääsi ennen kuin ne menevät sivulle."
+          : total
+            ? `${counts.changes} uutta tietoa ja ${counts.offers} tarjousta odottaa hyväksyntää`
+            : "Ei mitään tarkistettavaa"}
+      </span>
+      <span aria-hidden="true">→</span>
+    </a>
+  );
+}
 
 function readStoredAdminKey() {
   try {
@@ -558,7 +584,7 @@ function AdminDataPage() {
         )}
       </section>
 
-      {!needsKey ? <AdminRefreshPanel adminKey={adminKey} /> : null}
+      {!needsKey ? <ReviewBanner adminKey={adminKey} /> : null}
 
       <section className="admin-run">
         <h2>Siirtymät salien omille sivuille (30 pv)</h2>

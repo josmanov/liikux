@@ -15,6 +15,7 @@ import {
 const GymsPage = lazy(() => import("./pages/GymsPage"));
 const GymDetailPage = lazy(() => import("./pages/GymDetailPage"));
 const AdminDataPage = lazy(() => import("./pages/AdminDataPage"));
+const AdminReviewPage = lazy(() => import("./pages/AdminReviewPage"));
 const CitiesPage = lazy(() => import("./pages/CitiesPage"));
 const FeedbackPage = lazy(() => import("./pages/FeedbackPage"));
 const ChainsPage = lazy(() => import("./pages/ChainsPage"));
@@ -240,6 +241,14 @@ function App() {
           <Route path="/register" element={<Navigate to="/" replace />} />
           <Route path="/favorites" element={<Navigate to="/fi/suosikit" replace />} />
           <Route path="/about" element={<Navigate to="/fi/tietoa" replace />} />
+          <Route
+            path="/admin/tarkistus"
+            element={
+              <Suspense fallback={<RouteFallback />}>
+                <AdminReviewPage />
+              </Suspense>
+            }
+          />
           <Route
             path="/admin/data"
             element={

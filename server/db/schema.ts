@@ -157,13 +157,16 @@ export const offers = pgTable("offers", {
     sourceUrl: text("source_url").notNull(),
     firstSeenAt: varchar("first_seen_at", { length: 32 }).notNull(),
     lastSeenAt: varchar("last_seen_at", { length: 32 }).notNull(),
+    /** pending = waits for review, approved = shown on the site, rejected = never shown */
+    status: varchar("status", { length: 16 }).notNull().default("pending"),
     hiddenAt: varchar("hidden_at", { length: 32 }),
 });
 
 /**
- * Every value the daily refresh changed (status "applied"), or wanted to
- * change but held back because the jump was too big (status "held").
- * The admin view can undo an applied change or approve a held one.
+ * Every new value the daily refresh found. It waits as "held" until a person
+ * approves it ("approved", then written to gyms/chains) or rejects it
+ * ("rejected"). "superseded" = a newer value replaced it before review,
+ * "reverted" = approved, then undone. "reason" is a warning (e.g. big jump).
  */
 export const dataChanges = pgTable("data_changes", {
     id: varchar("id", { length: 64 }).primaryKey(),
@@ -174,7 +177,7 @@ export const dataChanges = pgTable("data_changes", {
     oldValue: text("old_value"),
     newValue: text("new_value"),
     sourceUrl: text("source_url"),
-    status: varchar("status", { length: 16 }).notNull(), // applied | held | reverted | approved
+    status: varchar("status", { length: 16 }).notNull(), // held | approved | rejected | superseded | reverted
     reason: text("reason"),
     changedAt: varchar("changed_at", { length: 32 }).notNull(),
 });
