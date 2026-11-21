@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { rateLimit } from "./rateLimit.js";
+import { failedKeyLimit, rateLimit } from "./rateLimit.js";
 import { registerApiRoutes } from "./routes/api.js";
 
 const app = express();
@@ -11,6 +11,8 @@ app.use(express.json({ limit: "20kb" }));
 
 const apiLimit = rateLimit({ windowMs: 60_000, max: 120 });
 app.use("/api", apiLimit);
+// 10 wrong admin keys in 15 minutes = that address is locked out of /api/admin for the rest of the window.
+app.use("/api/admin", failedKeyLimit({ windowMs: 15 * 60_000, max: 10 }));
 
 registerApiRoutes(app);
 
