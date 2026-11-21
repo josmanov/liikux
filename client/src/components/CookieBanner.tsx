@@ -124,7 +124,7 @@ function CookieBanner() {
   return createPortal(
     <>
       {bannerOpen ? (
-        <div className="cookie-banner-root" role="presentation">
+        <div className="cookie-banner-root" role="presentation" data-nosnippet>
           <div
             className="cookie-banner"
             role="dialog"

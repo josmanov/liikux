@@ -84,8 +84,23 @@ function useHomeData() {
       .slice(0, 12);
   }, [gyms]);
 
+  // "alk. X €/kk" for every chain: the chain's own price, or (chains where each
+  // gym has its own price: Elixia, Fressi, Ole.Fit...) the cheapest gym's price.
+  const topChains = useMemo(() => {
+    const cheapest = new Map<string, number>();
+    for (const g of gyms) {
+      const p = resolveGymOffer(g, g.chain).priceFrom;
+      if (p == null || p < 15) continue;
+      const cur = cheapest.get(g.chainId);
+      if (cur == null || p < cur) cheapest.set(g.chainId, p);
+    }
+    return listedChains
+      .slice(0, 6)
+      .map((c) => ({ ...c, shownPrice: c.priceFrom ?? cheapest.get(c.id) ?? null }));
+  }, [listedChains, gyms]);
+
   return {
-    topChains: listedChains.slice(0, 6),
+    topChains,
     chainCount: listedChains.length,
     cities,
     numbers,
@@ -236,7 +251,7 @@ function HomePage() {
                       <span className="chain-tile-name">{chain.name}</span>
                       <span className="chain-tile-meta">
                         {t("homeChainGyms", { count: chain.gymCount ?? 0 })}
-                        {chain.priceFrom != null ? ` · ${formatPriceFrom(chain.priceFrom, lang)}` : ""}
+                        {chain.shownPrice != null ? ` · ${formatPriceFrom(chain.shownPrice, lang)}` : ""}
                       </span>
                     </span>
                   </Link>
