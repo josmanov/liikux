@@ -704,8 +704,15 @@ function GymsPage() {
       !!region &&
       !!locCenter &&
       regionForCitySlug(locCenter.slug)?.slug === region.slug;
-    const locationCityDiffers =
-      locCityInRegion && locCenter!.slug !== routeCitySlug;
+    // Who decides the city? A street address or "my location" decides it (the
+    // address stays the origin and the city follows it). A plain city name
+    // does not: then the web address decides and the location follows it
+    // (the effect above). Without this rule the two chased each other and the
+    // page flipped between two cities.
+    const placeIsPlainCity =
+      !!locCenter && locationLabel.trim().toLowerCase() === locCenter.name.toLowerCase();
+    const locationDecides = locCityInRegion && !placeIsPlainCity;
+    const locationCityDiffers = locationDecides && locCenter!.slug !== routeCitySlug;
 
     if (applyingBrowseUrlRef.current && !locationCityDiffers) {
       applyingBrowseUrlRef.current = false;
@@ -727,7 +734,7 @@ function GymsPage() {
 
     if (!region) return;
     let citySlug = "";
-    if (locCityInRegion && locCenter) citySlug = locCenter.slug;
+    if (locationDecides && locCenter) citySlug = locCenter.slug;
     else if (routeCitySlug) {
       const cityRegion = regionForCitySlug(routeCitySlug);
       if (cityRegion && cityRegion.slug === region.slug) {
