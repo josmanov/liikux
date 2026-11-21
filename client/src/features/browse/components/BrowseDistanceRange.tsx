@@ -42,6 +42,7 @@ export function BrowseDistanceRange({
         step={1}
         values={[distancePresetIndex]}
         labels={[t("distanceMax")]}
+        {...(valueText ? { valueText } : {})}
         onChange={(_i, v) => {
           const next = distancePresets[v] ?? distancePresets[0];
           onDistanceFilter(next.id);

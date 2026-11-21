@@ -17,11 +17,13 @@ type Props = {
   values: number[];
   onChange: (index: number, value: number) => void;
   labels: string[];
+  /** Spoken value for screen readers (e.g. "5 km"). */
+  valueText?: string;
 };
 
 const EDGE = 14; // half a thumb: the thumb centre stays this far from the ends
 
-export function BrowseSlider({ min, max, step, values, onChange, labels }: Props) {
+export function BrowseSlider({ min, max, step, values, onChange, labels, valueText }: Props) {
   const [local, setLocal] = useState(values);
   const dragging = useRef<number | null>(null);
   const frame = useRef<number | null>(null);
@@ -143,6 +145,7 @@ export function BrowseSlider({ min, max, step, values, onChange, labels }: Props
           aria-valuemin={min}
           aria-valuemax={max}
           aria-valuenow={v}
+          aria-valuetext={valueText}
           style={{ left: pos(frac(v)), zIndex: dragging.current === i ? 6 : 3 + i }}
           onKeyDown={(e) => onKey(i, e)}
         />
