@@ -50,6 +50,19 @@ export type BrowseMapInitCtx = {
   originMarkerRef: MutableRefObject<Marker | null>;
 };
 
+/**
+ * The map is kept alive between visits to the browse page. Leaving the page
+ * does not destroy it: its container is taken out of the page and parked here,
+ * and the next visit puts the same map back (style, tiles, regions and all),
+ * so coming back does not wait for the map to start again.
+ */
+type KeptMap = {
+  map: MapLibreMap;
+  host: HTMLDivElement;
+  features: { nimi: string; maakunta: string; geometry: MaakuntaGeom }[];
+};
+let keptMap: KeptMap | null = null;
+
 export function useBrowseMapInit(ctx: BrowseMapInitCtx) {
   useEffect(() => {
     const {
@@ -80,19 +93,27 @@ export function useBrowseMapInit(ctx: BrowseMapInitCtx) {
     if (!mapRef.current) return;
 
     const start = originRef.current;
-    const map = new MapLibreMap({
-      container: mapRef.current,
-      style: MAP_STYLE_URL,
-      center: [start.lng, start.lat],
-      zoom: ORIGIN_ZOOM,
-      maxBounds: MAP_MAX_BOUNDS,
-      maxPitch: 0,
-      pitchWithRotate: false,
-      touchPitch: false,
-      dragRotate: false,
-      // Map credits are required by the OpenStreetMap licence; compact = a small (i) button.
-      attributionControl: { compact: true },
-    });
+    const reuse = keptMap;
+    keptMap = null;
+    // The map lives in its own element, which is put into the page (and taken out again).
+    const host = reuse?.host ?? document.createElement("div");
+    if (!reuse) host.style.cssText = "position:relative;width:100%;height:100%;";
+    mapRef.current.appendChild(host);
+    const map =
+      reuse?.map ??
+      new MapLibreMap({
+        container: host,
+        style: MAP_STYLE_URL,
+        center: [start.lng, start.lat],
+        zoom: ORIGIN_ZOOM,
+        maxBounds: MAP_MAX_BOUNDS,
+        maxPitch: 0,
+        pitchWithRotate: false,
+        touchPitch: false,
+        dragRotate: false,
+        // Map credits are required by the OpenStreetMap licence; compact = a small (i) button.
+        attributionControl: { compact: true },
+      });
 
     map.touchPitch.disable();
     map.dragRotate.disable();
@@ -160,7 +181,9 @@ export function useBrowseMapInit(ctx: BrowseMapInitCtx) {
 
     async function settleStartView() {
       if (dead || revealed) return;
-      await waitForMapContainerSize(map.getContainer(), map);
+      // A returning map already has a size: no need to wait for the page to settle.
+      if (reuse) map.resize();
+      else await waitForMapContainerSize(map.getContainer(), map);
       if (dead || revealed) return;
 
       const o = originRef.current;
@@ -197,6 +220,11 @@ export function useBrowseMapInit(ctx: BrowseMapInitCtx) {
         ? `route:${fromUrl}`
         : `origin:${o.lat}:${o.lng}`;
 
+      if (MAAKUNTA_MAP_ACTIVE && !nimi) {
+        for (const id of ["maakunnat-fill", "maakunnat-line", "maakunnat-label"]) {
+          if (map.getLayer(id)) map.setFilter(id, null);
+        }
+      }
       if (MAAKUNTA_MAP_ACTIVE && nimi) {
         const hideOpen = ["!=", ["get", "nimi"], nimi] as [
           "!=",
@@ -232,7 +260,7 @@ export function useBrowseMapInit(ctx: BrowseMapInitCtx) {
       }
     }
 
-    map.on("load", () => {
+    const afterLoad = () => {
       void (async () => {
         try {
           await waitForMapContainerSize(map.getContainer(), map);
@@ -244,7 +272,6 @@ export function useBrowseMapInit(ctx: BrowseMapInitCtx) {
             center: [o.lng, o.lat],
             zoom: ADDRESS_ZOOM,
           });
-
           const [maskData, outlineData, maakuntaData] = await Promise.all([
             fetchGeoJson("/geo/finland-mask.json"),
             fetchGeoJson("/geo/finland.json"),
@@ -394,7 +421,24 @@ export function useBrowseMapInit(ctx: BrowseMapInitCtx) {
           }
         }
       })();
-    });
+    };
+
+    if (!reuse) {
+      map.on("load", afterLoad);
+    } else {
+      // Back on the page with the map from last time: show it at once.
+      maakuntaFeaturesRef.current = reuse.features;
+      if (reuse.features.length > 0) {
+        setMaakunnatReady(true);
+        setRegionNames(reuse.features.map((x) => x.nimi).sort((a, b) => a.localeCompare(b, "fi")));
+      } else if (map.isStyleLoaded()) {
+        afterLoad(); // it never got to add its regions before: do it now
+      } else {
+        map.once("load", afterLoad);
+      }
+      map.resize();
+      void settleStartView();
+    }
 
     map.on("zoomend", onMaxOutView);
     map.on("moveend", onMaxOutView);
@@ -430,7 +474,10 @@ export function useBrowseMapInit(ctx: BrowseMapInitCtx) {
       originMarkerRef.current?.remove();
       originMarkerRef.current = null;
       mapInstanceRef.current = null;
-      map.remove();
+      // Keep the map for the next visit (see keptMap above).
+      map.stop();
+      host.remove();
+      keptMap = { map, host, features: maakuntaFeaturesRef.current };
     };
   }, []);
 }
