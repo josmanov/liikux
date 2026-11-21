@@ -6,6 +6,7 @@ import ScrollToTop from "./ScrollToTop";
 import CookieBanner from "./CookieBanner";
 import { LocationProvider } from "../context/LocationContext";
 import { NavTracker } from "../nav/backNav";
+import PreviewBanner from "./PreviewBanner";
 
 function AppLayout() {
   const { pathname } = useLocation();
@@ -16,6 +17,7 @@ function AppLayout() {
     <LocationProvider>
         <ScrollToTop />
         <NavTracker />
+        <PreviewBanner />
         <div className={["layout", home ? "is-home" : "", browse ? "is-browse" : ""].filter(Boolean).join(" ")}>
           <Header />
           <div className="layout-content">

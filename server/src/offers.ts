@@ -38,11 +38,14 @@ export function isActive(row: Row, now = new Date()) {
   return !row.validUntil || row.validUntil >= today;
 }
 
-/** All offers on the site right now. */
-export async function activeOffers(): Promise<Row[]> {
+/**
+ * All offers on the site right now. With includePending (preview mode only)
+ * the offers still waiting for review count as approved.
+ */
+export async function activeOffers(includePending = false): Promise<Row[]> {
   try {
     const rows = await db.select().from(offers).where(isNull(offers.hiddenAt));
-    return rows.filter((r) => isActive(r));
+    return rows.filter((r) => isActive(includePending && r.status === "pending" ? { ...r, status: "approved" } : r));
   } catch {
     return []; // table missing
   }

@@ -14,6 +14,7 @@ import { registerGoRoutes } from "./go.js";
 import { allChecks, checksForGym } from "../factChecks.js";
 import { activeOffers, offerLookup, offersFor } from "../offers.js";
 import { registerRefreshAdminRoutes } from "./refreshAdmin.js";
+import { previewTransform } from "../preview.js";
 const LIST_CACHE_MS = 2 * 60 * 1000;
 // Browsers keep lists 2 min; the Cloudflare edge (worker.js) keeps them 5 min.
 const LIST_CACHE_HEADER = "public, max-age=120, s-maxage=300";
@@ -26,6 +27,27 @@ function latestDate(a: string | null, b: string | null) {
 }
 
 export function registerApiRoutes(app: express.Application) {
+  // Preview mode: with the admin key and "x-preview: 1" the normal answers get
+  // the waiting review values laid on top (see ../preview.ts). Never cached.
+  app.use("/api", (req, res, next) => {
+    if (req.method !== "GET" || req.headers["x-preview"] !== "1" || !adminAllowed(req)) {
+      next();
+      return;
+    }
+    const path = req.path; // read now: Express resets req.path once this middleware returns
+    const original = res.json.bind(res);
+    res.json = ((body: unknown) => {
+      previewTransform(path, body)
+        .then((out) => {
+          res.setHeader("Cache-Control", "no-store");
+          original(out);
+        })
+        .catch(() => original(body));
+      return res;
+    }) as typeof res.json;
+    next();
+  });
+
   app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
 });

@@ -1,5 +1,5 @@
 import type { Chain, Gym } from "./types";
-import { API } from "./apiBase";
+import { API, previewHeaders } from "./apiBase";
 import { DISABLED_CHAIN_SLUGS } from "../features/browse/utils/mapConstants";
 const CLIENT_TTL_MS = 2 * 60 * 1000;
 
@@ -28,6 +28,7 @@ export type HomeStats = {
  * showed an empty gym list until the page was reloaded.
  */
 async function getJson(url: string, init?: RequestInit): Promise<unknown> {
+  init = { ...init, headers: { ...(init?.headers as Record<string, string> | undefined), ...previewHeaders() } };
   try {
     const r = await fetch(url, init);
     if (!r.ok) throw new Error(String(r.status));
@@ -119,7 +120,7 @@ export function fetchChainGyms(
   const existing = chainGymsCache.get(key);
   if (existing && stillFresh(existing.at)) return existing.promise;
 
-  const promise = fetch(`${API}/api/chains/${encodeURIComponent(key)}/gyms`)
+  const promise = fetch(`${API}/api/chains/${encodeURIComponent(key)}/gyms`, { headers: previewHeaders() })
     .then(async (r) => {
       if (!r.ok) return null;
       const data = await r.json();

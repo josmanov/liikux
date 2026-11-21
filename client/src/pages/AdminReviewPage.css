@@ -839,3 +839,26 @@
     overflow-wrap: anywhere;
   }
 }
+
+.rv-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.rv-btn.is-preview {
+  border-color: rgba(var(--brand-rgb), 0.6);
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+@media (max-width: 640px) {
+  .rv-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .rv-top-actions {
+    justify-content: space-between;
+  }
+}

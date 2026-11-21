@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { API } from "../../../data/apiBase";
+import { API, previewHeaders } from "../../../data/apiBase";
 import { fetchChainGyms, fetchGyms } from "../../../data/api";
 import type { Chain, Gym } from "../../../data/types";
 import { distanceKm } from "../../browse/utils/distanceKm";
@@ -39,7 +39,7 @@ export function useGymDetail(slug: string | undefined) {
     }
     let alive = true;
     setStatus("loading");
-    fetch(`${API}/api/gyms/${encodeURIComponent(slug)}`)
+    fetch(`${API}/api/gyms/${encodeURIComponent(slug)}`, { headers: previewHeaders() })
       .then((r) => (r.ok ? (r.json() as Promise<GymDetail>) : null))
       .catch(() => null)
       .then((data) => {

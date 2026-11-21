@@ -36,7 +36,7 @@ Do the steps in this order. Steps marked **you** need your own accounts.
 1. **Refresh** (`server/src/refresh-data.ts`) reads each chain's price list and the gym pages of chains where gyms have their own prices (Elixia, EasyFit, Fressi, Forever, LadyLine, Ole.Fit). It **collects** new prices, memberships with contract terms, opening hours and offers into a review queue. It does not change the site.
 2. **Check** (`server/src/verify-data.ts`) confirms that the price and hours already on the site are still written on each gym's own page, and shows "Vahvistettu tänään".
 
-**Your routine: open `/admin/tarkistus`** (it works on a phone too):
+**Your routine: open `/admin/tarkistus`** (it works on a phone too). The yellow **Esikatsele koko sivusto** button shows the whole real site with everything that waits applied (nothing is saved; a yellow ESIKATSELU bar shows on every page). On a gym card, **Esikatsele salin sivu** opens just that gym.
 
 1. **Uudet tiedot:** one card per gym or chain. The current value is crossed out, the new one is green, and "Lähde" opens the page it came from.
    - ✓ = approve, so the new value goes on the site.

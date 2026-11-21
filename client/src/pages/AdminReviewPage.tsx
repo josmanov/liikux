@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Check, ChevronRight, ExternalLink, RotateCcw, Search, TriangleAlert, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, ExternalLink, Eye, RotateCcw, Search, TriangleAlert, X } from "lucide-react";
 import { API } from "../data/apiBase";
 import "./AdminReviewPage.css";
 
@@ -79,6 +79,21 @@ const FIELD_SHORT: Record<string, string> = {
   freeTrial: "Kokeilu",
   membershipsJson: "Jäsenyydet",
 };
+
+/**
+ * Preview: the real site with everything that waits here applied (nothing is
+ * saved). A new tab (window.open) gets a copy of this tab's sessionStorage, so
+ * it has the admin key too.
+ */
+function startPreview(path: string, newTab = false) {
+  try {
+    sessionStorage.setItem("liikux-preview", "1");
+  } catch {
+    return;
+  }
+  if (newTab) window.open(path, "_blank");
+  else window.location.href = path;
+}
 
 function readKey() {
   try {
@@ -329,10 +344,10 @@ export default function AdminReviewPage() {
   const broken = data.brokenPages ?? [];
   const recent = data.recent ?? [];
   const tabs: [Tab, string, number][] = [
-    ["changes", "Muutokset", groupsAll.length],
+    ["changes", "Hinnat ja aukiolot", groupsAll.length],
     ["offers", "Tarjoukset", offersWaiting.length],
-    ["problems", "Ei luettu", broken.length],
-    ["history", "Historia", recent.length],
+    ["problems", "Robotti ei löytänyt", broken.length],
+    ["history", "Tehdyt päätökset", recent.length],
   ];
 
   return (
@@ -344,9 +359,14 @@ export default function AdminReviewPage() {
             Mikään ei mene sivulle ennen hyväksyntää · viimeisin haku {when(data.lastRun?.startedAt)}
           </p>
         </div>
-        <Link className="rv-toplink" to="/admin/data">
-          Kaikki salit <ChevronRight size={15} strokeWidth={2.4} />
-        </Link>
+        <div className="rv-top-actions">
+          <button type="button" className="rv-btn is-preview" onClick={() => startPreview("/")}>
+            <Eye size={16} strokeWidth={2.4} /> Esikatsele koko sivusto
+          </button>
+          <Link className="rv-toplink" to="/admin/data">
+            Kaikki salit <ChevronRight size={15} strokeWidth={2.4} />
+          </Link>
+        </div>
       </header>
 
       <nav className="rv-tabs" aria-label="Näkymät">
@@ -446,9 +466,9 @@ export default function AdminReviewPage() {
                       </a>
                     ) : null}
                     {current.first.slug ? (
-                      <a className="rv-btn is-ghost" href={`/fi/sali/${current.first.slug}`} target="_blank" rel="noreferrer">
-                        Salin sivu <ExternalLink size={14} strokeWidth={2.4} />
-                      </a>
+                      <button type="button" className="rv-btn is-preview" onClick={() => startPreview(`/fi/sali/${current.first.slug}`, true)}>
+                        <Eye size={14} strokeWidth={2.4} /> Esikatsele salin sivu
+                      </button>
                     ) : null}
                   </div>
                 </header>

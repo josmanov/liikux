@@ -39,8 +39,11 @@ async function proxyApi(request, url, env, ctx) {
   // Pass the visitor IP on, so the API rate limit stays per visitor
   // instead of treating all of Cloudflare as one user.
   const clientIp = request.headers.get("cf-connecting-ip") ?? "";
+  // Preview mode (admin key + x-preview header) is never cached, in either direction.
   const cacheable =
-    request.method === "GET" && !url.pathname.startsWith("/api/admin");
+    request.method === "GET" &&
+    !url.pathname.startsWith("/api/admin") &&
+    !request.headers.get("x-preview");
 
   // /api/go/<gym> counts a click and answers with a redirect to the gym's site.
   // Hand that redirect to the browser as it is: never follow it, never cache it.
