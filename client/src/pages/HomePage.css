@@ -227,16 +227,18 @@
   border-radius: var(--radius-lg);
 }
 
+/* the step number sits on the same yellow kettlebell as the map clusters, black number */
 .home-step-num {
   display: inline-grid;
   place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 50%;
-  background: var(--brand-soft);
-  color: var(--brand);
-  font-size: var(--text-sm);
+  width: 3.3rem;
+  height: 3.3rem;
+  padding-top: 0.85rem;
+  background: url("/pins/cluster-kettlebell.png") center / contain no-repeat;
+  color: #14130f;
+  font-size: var(--text-md);
   font-weight: 800;
+  line-height: 1;
 }
 
 .home-step-icon {
