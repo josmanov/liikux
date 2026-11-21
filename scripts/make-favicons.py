@@ -59,6 +59,16 @@ def paint(shape: Image.Image) -> Image.Image:
     return out
 
 
+def fill(img: Image.Image, margin: float = 0.03) -> Image.Image:
+    """Crop away the empty border so the smiley fills the icon (tab icons are tiny)."""
+    box = img.getchannel("A").getbbox()
+    cropped = img.crop(box)
+    side = round(max(cropped.size) / (1 - 2 * margin))
+    out = Image.new("RGBA", (side, side), (0, 0, 0, 0))
+    out.alpha_composite(cropped, ((side - cropped.width) // 2, (side - cropped.height) // 2))
+    return out
+
+
 def save(img: Image.Image, size: int, *names: Path) -> None:
     small = img.resize((size, size), Image.LANCZOS)
     for name in names:
@@ -66,7 +76,7 @@ def save(img: Image.Image, size: int, *names: Path) -> None:
 
 
 def main() -> None:
-    art = paint(load_shape())
+    art = fill(paint(load_shape()))  # fills the icon: the tab shows it very small
 
     for size in (48, 96, 192, 512):
         # one icon for dark and light browser themes (the yellow works on both)
@@ -85,8 +95,8 @@ def main() -> None:
 
     # iPhone home screen: solid background, the smiley a bit smaller in the middle
     tile = Image.new("RGBA", (180, 180), APPLE + (255,))
-    inner = art.resize((128, 128), Image.LANCZOS)
-    tile.alpha_composite(inner, (26, 26))
+    inner = art.resize((132, 132), Image.LANCZOS)
+    tile.alpha_composite(inner, (24, 24))
     for name in (BRAND / "apple-touch-icon.png", PUBLIC / "apple-touch-icon.png", PUBLIC / "apple-touch-icon-dark.png"):
         tile.convert("RGB").save(name)
 
