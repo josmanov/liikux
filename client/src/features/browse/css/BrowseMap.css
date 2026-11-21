@@ -842,3 +842,14 @@
     text-overflow: ellipsis;
   }
 }
+
+/* Shown over the map while it starts, so the rest of the page can appear at once */
+.browse-map-wait {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  display: grid;
+  place-items: center;
+  background: #14161b;
+  pointer-events: none;
+}

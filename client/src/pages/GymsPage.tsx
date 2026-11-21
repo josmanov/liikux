@@ -1584,6 +1584,10 @@ function GymsPage() {
   }, [favoriteSlugs]);
 
   const browseReady = dataReady && mapReady;
+  // The page (list, filters) shows as soon as the data is there; the map may
+  // still be starting (it has its own small loader). Before, everything waited
+  // for the map every time you came back.
+  const pageReady = dataReady;
 
   useLayoutEffect(() => {
     const row = suggestChipsRef.current;
@@ -2010,7 +2014,7 @@ function GymsPage() {
 
   return (
     <>
-    {!browseReady ? (
+    {!pageReady ? (
       <div className="load-cover">
         <LoadSpin />
       </div>
@@ -2018,7 +2022,7 @@ function GymsPage() {
     <main
       className={
         "browse" +
-        (browseReady ? " load-reveal" : "") +
+        (pageReady ? " load-reveal" : "") +
         (selectedId ? " is-pin-selected" : "") +
         (mobileMapOpen ? " is-mobile-map" : "")
       }
@@ -2177,7 +2181,7 @@ function GymsPage() {
             listLoading={listLoading}
             pageJumpLoading={pageJumpLoading}
             showMissing={showMissing}
-            browseReady={browseReady}
+            browseReady={pageReady}
             mobileList={mobileList}
             pageGyms={pageGyms}
             inViewCount={inViewGyms.length}
@@ -2239,6 +2243,11 @@ function GymsPage() {
               }}
             />
             <div className="browse-map" aria-label={t("map")} ref={mapRef} />
+            {!mapReady ? (
+              <div className="browse-map-wait" aria-hidden="true">
+                <LoadSpin />
+              </div>
+            ) : null}
             <BrowseMapBars t={t} countOnMap={countOnMap} />
             {selectedMapGym ? (
               <BrowseSelectedCard

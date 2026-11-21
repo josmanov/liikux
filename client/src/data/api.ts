@@ -45,37 +45,77 @@ function stillFresh(at: number) {
   return Date.now() - at < CLIENT_TTL_MS;
 }
 
+/**
+ * Gyms and chains are kept in memory for the whole visit. A page that asks for
+ * them again gets what was loaded before AT ONCE; if it is older than 2
+ * minutes, a fresh copy is fetched quietly in the background for next time.
+ * (Before, an old copy made every page wait for the 1 MB download again.)
+ */
 export function fetchGyms(): Promise<Gym[]> {
-  if (gymsCache && stillFresh(gymsCache.at)) return gymsCache.promise;
+  if (gymsCache) {
+    if (!stillFresh(gymsCache.at)) refreshGyms();
+    return gymsCache.promise;
+  }
+  return refreshGyms();
+}
 
+let gymsRefreshing: Promise<Gym[]> | null = null;
+
+function refreshGyms(): Promise<Gym[]> {
+  if (gymsRefreshing) return gymsRefreshing;
   const promise = getJson(`${API}/api/gyms`)
-    .then((data) => (Array.isArray(data) ? (data as Gym[]) : []))
-    .catch(() => {
+    .then((data) => (Array.isArray(data) ? (data as Gym[]) : null))
+    .catch(() => null)
+    .then((list) => {
+      gymsRefreshing = null;
+      if (list) {
+        const done = Promise.resolve(list);
+        gymsCache = { at: Date.now(), promise: done };
+        return list;
+      }
+      // Failed: keep showing what we have; with nothing, answer empty and try again next time.
+      if (gymsCache) return gymsCache.promise;
       gymsCache = null;
       return [] as Gym[];
     });
-
-  gymsCache = { at: Date.now(), promise };
+  gymsRefreshing = promise;
+  if (!gymsCache) gymsCache = { at: Date.now(), promise };
   return promise;
 }
 
 export function fetchChains(): Promise<Chain[]> {
-  if (chainsCache && stillFresh(chainsCache.at)) return chainsCache.promise;
+  if (chainsCache) {
+    if (!stillFresh(chainsCache.at)) refreshChains();
+    return chainsCache.promise;
+  }
+  return refreshChains();
+}
 
+let chainsRefreshing: Promise<Chain[]> | null = null;
+
+function refreshChains(): Promise<Chain[]> {
+  if (chainsRefreshing) return chainsRefreshing;
   const promise = getJson(`${API}/api/chains`)
-    .then((data) => (Array.isArray(data) ? (data as Chain[]) : []))
+    .then((data) => (Array.isArray(data) ? (data as Chain[]) : null))
     // Hide chains that are switched off or have no gyms yet (see DISABLED_CHAIN_SLUGS).
     .then((chains) =>
-      chains.filter(
-        (c) => !DISABLED_CHAIN_SLUGS.includes(c.slug) && (c.gymCount ?? 1) > 0,
-      ),
+      chains
+        ? chains.filter((c) => !DISABLED_CHAIN_SLUGS.includes(c.slug) && (c.gymCount ?? 1) > 0)
+        : null,
     )
-    .catch(() => {
+    .catch(() => null)
+    .then((list) => {
+      chainsRefreshing = null;
+      if (list) {
+        chainsCache = { at: Date.now(), promise: Promise.resolve(list) };
+        return list;
+      }
+      if (chainsCache) return chainsCache.promise;
       chainsCache = null;
       return [] as Chain[];
     });
-
-  chainsCache = { at: Date.now(), promise };
+  chainsRefreshing = promise;
+  if (!chainsCache) chainsCache = { at: Date.now(), promise };
   return promise;
 }
 
