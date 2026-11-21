@@ -5,9 +5,10 @@
  */
 
 .rv {
-  max-width: 1440px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 1.5rem var(--gutter) 2.5rem;
+  /* own side padding: the site-wide --gutter grows on wide screens and squeezed this workspace */
+  padding: 1.5rem clamp(1rem, 2.5vw, 2.5rem) 2.5rem;
 }
 
 .rv-muted {
@@ -225,9 +226,10 @@
 
 /* ---------- Two-pane workspace ---------- */
 
+/* list | detail: the list stays at 22rem, the detail takes all the rest */
 .rv-split {
   display: grid;
-  grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr);
+  grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
   gap: 1rem;
   height: calc(100vh - var(--header-h, 64px) - 11.5rem);
   min-height: 32rem;
@@ -456,7 +458,7 @@
 
 .rv-tr {
   display: grid;
-  grid-template-columns: 12rem minmax(0, 1fr) minmax(0, 1fr) 5.2rem;
+  grid-template-columns: minmax(7rem, 11rem) minmax(0, 1fr) minmax(0, 1fr) auto;
   align-items: center;
   gap: 1rem;
   padding: 0.85rem 1.3rem;
