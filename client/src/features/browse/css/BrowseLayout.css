@@ -1821,3 +1821,11 @@
 .browse-missing-suggest:hover {
   text-decoration: underline;
 }
+
+/* Phones: the popular chips ("Suositut": free trial, 24/7, day pass, women)
+   are not shown; the same choices are in the "Kaikki suodattimet" popup. */
+@media (max-width: 900px) {
+  .browse-search-suggest {
+    display: none;
+  }
+}
