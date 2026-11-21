@@ -36,7 +36,7 @@ import {
   sameIds,
 } from "../data/browseSearch";
 import { toggleFavoriteSlug, readFavoriteSlugs } from "../data/favorites";
-import { pathGyms, pathGymsBrowse } from "../i18n/lang";
+import { pathGyms, pathGymsBrowse, pathGymsFromLocation } from "../i18n/lang";
 import { useLang } from "../i18n/useLang";
 import { usePageMeta } from "../seo/usePageMeta";
 import {
@@ -599,6 +599,13 @@ function GymsPage() {
   originRef.current = origin;
 
   const applyingBrowseUrlRef = useRef(false);
+  /**
+   * City the user just picked in the menu. The address and the web address
+   * change in two steps; until the route shows this city, the effects that
+   * compare route and location must wait (they used to see the old route with
+   * the new place and undo the pick, sending e.g. Akaa to "all gyms").
+   */
+  const pendingCitySlugRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (chainSlug || !routeBrowse.legacyCityOnly) return;
@@ -633,6 +640,11 @@ function GymsPage() {
 
     const locCity = cityFromLabel(locationLabel);
     const locCenter = locCity ? cityCenterForName(locCity) : null;
+
+    if (pendingCitySlugRef.current) {
+      if (routeCitySlug !== pendingCitySlugRef.current) return;
+      pendingCitySlugRef.current = null;
+    }
 
     if (locCenter?.slug === routeCitySlug) return;
 
@@ -682,6 +694,7 @@ function GymsPage() {
     const currentPath = routeLocation.pathname.replace(/\/$/, "") || "/";
     const onGymsBrowse = /^\/(fi|en)\/(kuntosalit|gyms)/.test(currentPath);
     if (!onGymsBrowse) return;
+    if (pendingCitySlugRef.current && routeCitySlug !== pendingCitySlugRef.current) return;
 
     const region =
       selectedMaakunta != null ? regionFromName(selectedMaakunta) : null;
@@ -811,25 +824,28 @@ function GymsPage() {
 
   const activeCitySlug = browseCitySlug;
 
+  // Every city, with how many gyms it has: the biggest first, empty ones last.
   const cityOptions = useMemo(() => {
     const bySlug = new globalThis.Map<string, CityCenter>();
     for (const c of CITY_CENTERS) bySlug.set(c.slug, c);
+    const counts = new globalThis.Map<string, number>();
     for (const g of gyms) {
       const name = g.city?.trim();
       if (!name) continue;
+      const slug = toCitySlug(name);
+      counts.set(slug, (counts.get(slug) ?? 0) + 1);
       const known = cityCenterForName(name);
       if (known) {
         bySlug.set(known.slug, known);
         continue;
       }
-      const slug = toCitySlug(name);
       if (bySlug.has(slug)) continue;
       if (g.lat == null || g.lng == null) continue;
       bySlug.set(slug, { name, slug, lat: g.lat, lng: g.lng });
     }
-    return [...bySlug.values()].sort((a, b) =>
-      a.name.localeCompare(b.name, "fi"),
-    );
+    return [...bySlug.values()]
+      .map((c) => ({ ...c, count: counts.get(c.slug) ?? 0 }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "fi"));
   }, [gyms]);
 
   const filteredCityOptions = useMemo(() => {
@@ -847,6 +863,42 @@ function GymsPage() {
       routeCitySlug ? routeCitySlug.trim().toLowerCase() : null,
     );
   }, [routeCitySlug]);
+
+  // Browse always has a city: without one in the address, the city of the
+  // place you searched (street address, "my location", home page search) is
+  // chosen. A region-only address gets that city if it is in the region, else
+  // the region's biggest city.
+  useEffect(() => {
+    if (chainSlug || routeCitySlug || !dataReady || cityOptions.length === 0) return;
+    const path = routeLocation.pathname.replace(/\/$/, "") || "/";
+    if (!/^\/(fi|en)\/(kuntosalit|gyms)(\/[^/]+)?$/.test(path)) return;
+    const own = pathGymsFromLocation(lang, locationLabel, { lat: locationLat, lng: locationLng });
+    let target = own;
+    if (routeRegionSlug && !own.includes(`/${routeRegionSlug}/`)) {
+      const biggest = cityOptions.find((c) => regionForCitySlug(c.slug)?.slug === routeRegionSlug && c.count > 0);
+      if (biggest) target = pathGymsBrowse(lang, routeRegionSlug, biggest.slug);
+    }
+    // A place we cannot match to a city falls back to the biggest city.
+    if (target === pathGyms(lang)) {
+      const c = cityOptions[0]!;
+      target = pathGymsBrowse(lang, regionForCitySlug(c.slug)?.slug ?? null, c.slug);
+    }
+    if (target === path || target === pathGyms(lang)) return;
+    navigate({ pathname: target, search: routeLocation.search }, { replace: true });
+  }, [
+    chainSlug,
+    routeCitySlug,
+    routeRegionSlug,
+    dataReady,
+    lang,
+    locationLabel,
+    locationLat,
+    locationLng,
+    cityOptions,
+    routeLocation.pathname,
+    routeLocation.search,
+    navigate,
+  ]);
 
   const visibleGyms = useMemo(() => {
     return filterAndSortBrowseGyms({
@@ -1833,6 +1885,10 @@ function GymsPage() {
   }
 
   function focusCity(city: CityCenter) {
+    pendingCitySlugRef.current = city.slug;
+    window.setTimeout(() => {
+      if (pendingCitySlugRef.current === city.slug) pendingCitySlugRef.current = null;
+    }, 2000);
     setBrowseCitySlug(city.slug);
     setLocation({ label: city.name, lat: city.lat, lng: city.lng });
     cityFitDoneRef.current = null;

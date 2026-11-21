@@ -1829,3 +1829,25 @@
     display: none;
   }
 }
+
+/* City menus: name on the left, number of gyms on the right; cities with no gyms are grey (still clickable) */
+.browse-region-drop-list button,
+.browse-map-sheet-hits.is-regions button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.city-count {
+  flex-shrink: 0;
+  color: var(--faint);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.browse-region-drop-list button.is-empty,
+.browse-map-sheet-hits.is-regions button.is-empty {
+  color: var(--faint);
+  opacity: 0.65;
+}

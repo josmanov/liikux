@@ -26,7 +26,7 @@ type BrowseListHeadProps = {
   regionLabel: string;
   cityQuery: string;
   onCityQuery: (value: string) => void;
-  cityOptions: CityCenter[];
+  cityOptions: (CityCenter & { count?: number })[];
   activeCitySlug: string | null;
   onFocusCity: (city: CityCenter) => void;
   onRegionClick: () => void;
@@ -126,13 +126,17 @@ export function BrowseListHead({
                     <li key={city.slug}>
                       <button
                         type="button"
-                        className={
-                          city.slug === activeCitySlug ? "is-on" : ""
-                        }
+                        className={[
+                          city.slug === activeCitySlug ? "is-on" : "",
+                          city.count === 0 ? "is-empty" : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
                         onMouseDown={(e) => e.preventDefault()}
                         onClick={() => onFocusCity(city)}
                       >
-                        {city.name}
+                        <span>{city.name}</span>
+                        {city.count != null ? <span className="city-count">{city.count}</span> : null}
                       </button>
                     </li>
                   ))}
