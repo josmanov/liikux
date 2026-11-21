@@ -231,12 +231,14 @@
 .home-step-num {
   display: inline-grid;
   place-items: center;
-  width: 3.3rem;
-  height: 3.3rem;
-  padding-top: 0.85rem;
+  width: 2.6rem;
+  height: 2.6rem;
+  /* the picture has empty space on its left: pull it so the kettlebell lines up with the text */
+  margin-left: -0.32rem;
+  padding-top: 0.68rem;
   background: url("/pins/cluster-kettlebell.png") center / contain no-repeat;
   color: #14130f;
-  font-size: var(--text-md);
+  font-size: var(--text-sm);
   font-weight: 800;
   line-height: 1;
 }
