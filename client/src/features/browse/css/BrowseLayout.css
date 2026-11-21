@@ -1868,3 +1868,63 @@
     align-content: start;
   }
 }
+
+/* ---------- "Kaikki suodattimet": every filter lives here, each one once ---------- */
+.browse-extras-group {
+  margin: 1.1rem 0 0.5rem;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.browse-extras-group.is-new {
+  color: var(--brand);
+}
+
+.browse-extras-section-title {
+  margin: 0 0 0.5rem;
+  font-weight: 650;
+  font-size: 0.92rem;
+}
+
+@media (min-width: 901px) {
+  .browse-extras-modal {
+    width: min(660px, 100%);
+  }
+
+  .browse-extras-modal .browse-extras-mobile-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .browse-extras-modal .browse-extras-mobile-block .browse-extras-group {
+    margin-bottom: 0;
+  }
+
+  .browse-extras-modal .browse-extras-jump {
+    display: none;
+  }
+
+  .browse-extras-modal .browse-extras-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.75rem 0.9rem 0.7rem;
+    border: 1px solid var(--outline);
+    border-radius: 12px;
+    background: var(--surface-2, var(--surface));
+  }
+}
+
+@media (max-width: 900px) {
+  .browse-extras-chains-desk {
+    display: none !important;
+  }
+
+  .browse-extras-group {
+    margin-top: 0.9rem;
+  }
+}

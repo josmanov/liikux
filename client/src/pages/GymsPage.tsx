@@ -22,6 +22,7 @@ import { type Chain, type Gym, resolveGymOffer } from "../data/types";
 import { useAddressSuggest } from "../data/geocode";
 import { useLockPageScroll } from "../hooks/useLockPageScroll";
 import { chainForGym } from "../data/audience";
+import { NO_MORE_FILTERS, countMoreFilters, type MoreFilters } from "../data/moreFilters";
 import {
   cleanGymDisplayName,
   formatGymStreetLine,
@@ -271,6 +272,7 @@ function GymsPage() {
   const [extraOnly247, setExtraOnly247] = useState(browseStart.only247);
   const [extraFreeTrial, setExtraFreeTrial] = useState(browseStart.freeTrial);
   const [extraDayPass, setExtraDayPass] = useState(browseStart.dayPass);
+  const [more, setMore] = useState<MoreFilters>(NO_MORE_FILTERS);
   const [extrasOpen, setExtrasOpen] = useState(false);
   const [chainsOpen, setChainsOpen] = useState(false);
   const [addressDraft, setAddressDraft] = useState(locationLabel);
@@ -799,19 +801,21 @@ function GymsPage() {
     selectedMaakunta,
   ]);
 
-  const extrasActive = extraOnly247 || extraFreeTrial || extraDayPass;
+  const moreCount = countMoreFilters(more);
+  const extrasActive = extraOnly247 || extraFreeTrial || extraDayPass || moreCount > 0;
   const filtersMoreActive =
     extrasActive ||
     womenOnly ||
     priceFilterOn ||
     distanceFilter !== "all" ||
-    (mobileList && chainFilterActive);
+    chainFilterActive;
   const filtersMoreBadge =
     (extraOnly247 ? 1 : 0) +
     (extraFreeTrial ? 1 : 0) +
     (extraDayPass ? 1 : 0) +
+    moreCount +
     (womenOnly ? 1 : 0) +
-    (mobileList && chainFilterActive ? 1 : 0) +
+    (chainFilterActive ? 1 : 0) +
     (priceFilterOn ? 1 : 0) +
     (distanceFilter !== "all" ? 1 : 0);
   const extrasLabel = t("filtersAll");
@@ -929,6 +933,7 @@ function GymsPage() {
       extraOnly247,
       extraFreeTrial,
       extraDayPass,
+      more,
       maxDistanceKm,
       origin,
       selectedMaakunta,
@@ -948,6 +953,7 @@ function GymsPage() {
     extraOnly247,
     extraFreeTrial,
     extraDayPass,
+    more,
     maxDistanceKm,
     origin,
     selectedMaakunta,
@@ -1062,6 +1068,7 @@ function GymsPage() {
     String(extraOnly247),
     String(extraFreeTrial),
     String(extraDayPass),
+    JSON.stringify(more),
   ].join("|");
 
   useEffect(() => {
@@ -2098,6 +2105,7 @@ function GymsPage() {
           setExtraOnly247(false);
           setExtraFreeTrial(false);
           setExtraDayPass(false);
+          setMore(NO_MORE_FILTERS);
           setOpenFilter(null);
           setExtrasOpen(false);
         }}
@@ -2330,6 +2338,9 @@ function GymsPage() {
               onExtraFreeTrial={setExtraFreeTrial}
               extraDayPass={extraDayPass}
               onExtraDayPass={setExtraDayPass}
+              more={more}
+              onMore={setMore}
+              chainPicker={chainPicker}
               onClose={() => setExtrasOpen(false)}
               onOpenChains={() => {
                 setExtrasOpen(false);
@@ -2340,6 +2351,7 @@ function GymsPage() {
                 setExtraOnly247(false);
                 setExtraFreeTrial(false);
                 setExtraDayPass(false);
+                setMore(NO_MORE_FILTERS);
               }}
               onClearAll={() => {
                 setSelectedChains([...visibleChainFilterIds]);
@@ -2350,6 +2362,7 @@ function GymsPage() {
                 setExtraOnly247(false);
                 setExtraFreeTrial(false);
                 setExtraDayPass(false);
+                setMore(NO_MORE_FILTERS);
               }}
             />,
             document.body,

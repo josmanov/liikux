@@ -1,11 +1,17 @@
 import {
+  BadgeCheck,
+  CalendarX2,
   ChevronRight,
   Clock,
+  DoorOpen,
   Gift,
   Link2,
+  Tag,
   Ticket,
   X,
 } from "lucide-react";
+import type { ReactNode } from "react";
+import type { MoreFilters } from "../../../data/moreFilters";
 import UxSwitch from "../../../components/UxSwitch";
 import type { MessageKey } from "../../../i18n/messages";
 import { BrowseDistanceRange } from "./BrowseDistanceRange";
@@ -36,6 +42,10 @@ type BrowseExtrasMenuProps = {
   onExtraFreeTrial: (on: boolean) => void;
   extraDayPass: boolean;
   onExtraDayPass: (on: boolean) => void;
+  more: MoreFilters;
+  onMore: (next: MoreFilters) => void;
+  /** The chain tiles, shown inside the panel on desktop. */
+  chainPicker: ReactNode;
   onClose: () => void;
   onOpenChains: () => void;
   onClearOptions: () => void;
@@ -63,9 +73,11 @@ export function BrowseExtrasMenu({
   onExtraFreeTrial,
   extraDayPass,
   onExtraDayPass,
+  more,
+  onMore,
+  chainPicker,
   onClose,
   onOpenChains,
-  onClearOptions,
   onClearAll,
 }: BrowseExtrasMenuProps) {
   return (
@@ -95,6 +107,14 @@ export function BrowseExtrasMenu({
         </div>
 
         <div className="browse-extras-mobile-block">
+          <p className="browse-extras-group">{t("moreGroupBasics")}</p>
+          <div className="browse-extras-section browse-extras-chains-desk">
+            <p className="browse-extras-section-title">
+              {t("chains")}
+              {chainFilterActive ? ` · ${selectedChainsCount}` : ""}
+            </p>
+            {chainPicker}
+          </div>
           <button
             type="button"
             className={"browse-extras-jump" + (chainFilterActive ? " is-on" : "")}
@@ -130,6 +150,7 @@ export function BrowseExtrasMenu({
           </div>
         </div>
 
+        <p className="browse-extras-group">{t("moreGroupOptions")}</p>
         <div className="browse-extras-options">
           <label className="browse-extras-row browse-extras-women">
             <span className="browse-extras-row-copy">
@@ -191,11 +212,55 @@ export function BrowseExtrasMenu({
           </label>
         </div>
 
+        <p className="browse-extras-group is-new">{t("moreGroupNew")}</p>
+        <div className="browse-extras-options">
+          <label className="browse-extras-row">
+            <span className="browse-extras-row-copy">
+              <DoorOpen className="browse-extras-row-icon is-lucide" size={18} strokeWidth={2.2} />
+              <span>
+                <strong>{t("openNowTitle")}</strong>
+                <span className="browse-extras-desc">{t("openNowDesc")}</span>
+              </span>
+            </span>
+            <UxSwitch checked={more.openNow} onChange={(on) => onMore({ ...more, openNow: on })} />
+          </label>
+          <label className="browse-extras-row">
+            <span className="browse-extras-row-copy">
+              <CalendarX2 className="browse-extras-row-icon is-lucide" size={18} strokeWidth={2.2} />
+              <span>
+                <strong>{t("noContractTitle")}</strong>
+                <span className="browse-extras-desc">{t("noContractDesc")}</span>
+              </span>
+            </span>
+            <UxSwitch checked={more.noContract} onChange={(on) => onMore({ ...more, noContract: on })} />
+          </label>
+          <label className="browse-extras-row">
+            <span className="browse-extras-row-copy">
+              <Tag className="browse-extras-row-icon is-lucide" size={18} strokeWidth={2.2} />
+              <span>
+                <strong>{t("hasOfferTitle")}</strong>
+                <span className="browse-extras-desc">{t("hasOfferDesc")}</span>
+              </span>
+            </span>
+            <UxSwitch checked={more.hasOffer} onChange={(on) => onMore({ ...more, hasOffer: on })} />
+          </label>
+          <label className="browse-extras-row">
+            <span className="browse-extras-row-copy">
+              <BadgeCheck className="browse-extras-row-icon is-lucide" size={18} strokeWidth={2.2} />
+              <span>
+                <strong>{t("verifiedTitle")}</strong>
+                <span className="browse-extras-desc">{t("verifiedDesc")}</span>
+              </span>
+            </span>
+            <UxSwitch checked={more.verified} onChange={(on) => onMore({ ...more, verified: on })} />
+          </label>
+        </div>
+
         <div className="browse-extras-footer">
           <button
             type="button"
             className="browse-extras-btn browse-extras-btn-ghost browse-extras-clear-desk"
-            onClick={onClearOptions}
+            onClick={onClearAll}
           >
             {t("clear")}
           </button>

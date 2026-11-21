@@ -7,6 +7,7 @@ import {
   gymIs247,
   gymMatchesAudience,
 } from "../../../data/audience";
+import { gymMatchesMore, type MoreFilters } from "../../../data/moreFilters";
 import { PRICE_MAX } from "../../../data/browseSearch";
 import { toCitySlug } from "../../../data/citySlug";
 import { distanceKm } from "./distanceKm";
@@ -31,6 +32,7 @@ export type FilterAndSortBrowseGymsArgs = {
   extraOnly247: boolean;
   extraFreeTrial: boolean;
   extraDayPass: boolean;
+  more: MoreFilters;
   maxDistanceKm: number | null;
   origin: { lat: number; lng: number };
   selectedMaakunta: string | null;
@@ -52,12 +54,14 @@ export function filterAndSortBrowseGyms(args: FilterAndSortBrowseGymsArgs) {
     extraOnly247,
     extraFreeTrial,
     extraDayPass,
+    more,
     maxDistanceKm,
     origin,
     selectedMaakunta,
     gymMaakuntaMap,
     activeCitySlug,
   } = args;
+  const now = Date.now();
   const q = query.trim().toLowerCase();
 
   let list = gyms.filter((gym) => {
@@ -97,6 +101,7 @@ export function filterAndSortBrowseGyms(args: FilterAndSortBrowseGymsArgs) {
       const chain = chainForGym(gym, chains);
       if (!gymHasDayPass(gym, chain)) return false;
     }
+    if (!gymMatchesMore(gym, chainForGym(gym, chains), more, now)) return false;
     if (maxDistanceKm != null) {
       if (gym.lat == null || gym.lng == null) return false;
       const km = distanceKm(origin.lat, origin.lng, gym.lat, gym.lng);
