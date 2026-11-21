@@ -1928,3 +1928,38 @@
     margin-top: 0.9rem;
   }
 }
+
+/* The sliders (BrowseSlider): the whole track takes touch, thumbs are plain circles */
+.browse-slider {
+  touch-action: none;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.browse-slider-thumb {
+  position: absolute;
+  top: 50%;
+  width: 28px;
+  height: 28px;
+  margin-top: -14px;
+  border-radius: 50%;
+  background: var(--color-brand);
+  border: 1px solid var(--outline);
+  box-shadow: 0 1px 6px rgba(20, 22, 26, 0.12);
+  transform: translateX(-50%);
+  outline: none;
+  transition: box-shadow 0.15s ease;
+}
+
+.browse-slider-thumb:focus-visible,
+.browse-slider:active .browse-slider-thumb {
+  box-shadow: 0 0 0 5px rgba(255, 200, 61, 0.22);
+}
+
+/* A press answers at once */
+.ux-switch:active,
+.browse-search-suggest-chip:active,
+.browse-filter-btn:active {
+  transform: scale(0.96);
+}

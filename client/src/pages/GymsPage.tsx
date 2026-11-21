@@ -2,6 +2,7 @@ import "./GymsPage.css";
 import "../components/ChainPopup.css";
 import {
   useEffect,
+  useDeferredValue,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -919,8 +920,10 @@ function GymsPage() {
     navigate,
   ]);
 
-  const visibleGyms = useMemo(() => {
-    return filterAndSortBrowseGyms({
+  // The switches and chips update at once; the (heavier) list and map follow a
+  // moment later in the background, so a press never has to wait for them.
+  const filterArgs = useMemo(
+    () => ({
       gyms,
       chains,
       query,
@@ -939,27 +942,34 @@ function GymsPage() {
       selectedMaakunta,
       gymMaakuntaMap,
       activeCitySlug,
-    });
-  }, [
-    gyms,
-    chains,
-    query,
-    sortId,
-    selectedChainFilter,
-    selectedAudiences,
-    priceMin,
-    priceMax,
-    priceFilterOn,
-    extraOnly247,
-    extraFreeTrial,
-    extraDayPass,
-    more,
-    maxDistanceKm,
-    origin,
-    selectedMaakunta,
-    gymMaakuntaMap,
-    activeCitySlug,
-  ]);
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      gyms,
+      chains,
+      query,
+      sortId,
+      selectedChainFilter,
+      selectedAudiences,
+      priceMin,
+      priceMax,
+      priceFilterOn,
+      extraOnly247,
+      extraFreeTrial,
+      extraDayPass,
+      more,
+      maxDistanceKm,
+      origin,
+      selectedMaakunta,
+      gymMaakuntaMap,
+      activeCitySlug,
+    ],
+  );
+  const deferredFilterArgs = useDeferredValue(filterArgs);
+  const visibleGyms = useMemo(
+    () => filterAndSortBrowseGyms(deferredFilterArgs),
+    [deferredFilterArgs],
+  );
 
   visibleGymsRef.current = visibleGyms;
   selectedMaakuntaRef.current = selectedMaakunta;

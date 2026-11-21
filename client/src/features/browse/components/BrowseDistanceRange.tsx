@@ -1,4 +1,5 @@
 import { Route } from "lucide-react";
+import { BrowseSlider } from "./BrowseSlider";
 import type { MessageKey } from "../../../i18n/messages";
 
 type TFn = (key: MessageKey, vars?: Record<string, string | number>) => string;
@@ -35,36 +36,17 @@ export function BrowseDistanceRange({
           {maxDistanceKm == null ? t("distanceAll") : `${maxDistanceKm} km`}
         </strong>
       </div>
-      <div className="browse-dual">
-        <div className="browse-dual-rail">
-          <div
-            className="browse-dual-fill"
-            style={{
-              left: "0%",
-              width: `${
-                (distancePresetIndex /
-                  Math.max(1, distancePresets.length - 1)) *
-                100
-              }%`,
-            }}
-          />
-        </div>
-        <input
-          className="browse-dual-input is-hi"
-          type="range"
-          min={0}
-          max={distancePresets.length - 1}
-          step={1}
-          value={distancePresetIndex}
-          aria-label={t("distanceMax")}
-          aria-valuetext={valueText}
-          onChange={(e) => {
-            const next =
-              distancePresets[Number(e.target.value)] ?? distancePresets[0];
-            onDistanceFilter(next.id);
-          }}
-        />
-      </div>
+      <BrowseSlider
+        min={0}
+        max={distancePresets.length - 1}
+        step={1}
+        values={[distancePresetIndex]}
+        labels={[t("distanceMax")]}
+        onChange={(_i, v) => {
+          const next = distancePresets[v] ?? distancePresets[0];
+          onDistanceFilter(next.id);
+        }}
+      />
       <div className="browse-distance-marks">
         {distancePresets.map((opt) => (
           <button
