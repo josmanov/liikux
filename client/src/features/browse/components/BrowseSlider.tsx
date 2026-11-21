@@ -77,8 +77,12 @@ export function BrowseSlider({ min, max, step, values, onChange, labels }: Props
       i = d0 < d1 ? 0 : d1 < d0 ? 1 : target < local[0] ? 0 : 1;
     }
     dragging.current = i;
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     move(i, target);
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      /* pointer already gone: the drag still works while over the track */
+    }
   }
 
   function onPointerMove(e: React.PointerEvent) {
