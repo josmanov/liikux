@@ -1,5 +1,7 @@
 .route-fallback {
-  min-height: 40vh;
+  /* a full screen tall while a page loads, so the footer is not seen jumping up
+     from the bottom and disappearing again */
+  min-height: 100dvh;
 }
 
 /* Colours, fonts etc. live in styles/tokens.css. Only chain-logo tweaks here. */

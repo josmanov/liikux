@@ -12,7 +12,12 @@
 
 .browse.is-pin-selected .gym-pin:not(:has(.is-selected)),
 .browse.is-pin-selected .gym-cluster {
-  opacity: 0.18;
+  /* !important: the map writes opacity: 1 straight onto pins that are in view,
+     which would otherwise beat this rule */
+  opacity: 0.18 !important;
+  /* a pin that faded in keeps opacity 1 through its animation, which would
+     beat the dimming: so the animation is switched off while dimmed */
+  animation: none;
 }
 
 .browse.is-pin-selected .gym-origin-pin {

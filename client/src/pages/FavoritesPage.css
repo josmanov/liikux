@@ -102,7 +102,7 @@
 @media (min-width: 1101px) {
   .fav:has(.fav-grid) {
     display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     column-gap: 1.5rem;
     align-content: start;
   }
