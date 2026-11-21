@@ -1851,3 +1851,20 @@
   color: var(--faint);
   opacity: 0.65;
 }
+
+/* Desktop: the rows share the list's height evenly, so there is no empty strip
+   under the last row (the number of rows is set by the page, --browse-row-count). */
+@media (min-width: 901px) {
+  .browse-rows {
+    grid-template-rows: repeat(var(--browse-row-count, 3), minmax(var(--row-min), 1fr));
+    grid-auto-rows: minmax(var(--row-min), 1fr);
+    align-content: stretch;
+  }
+
+  /* a short last page keeps rows their normal size */
+  .browse-list-scroll:has(.browse-missing-slot) .browse-rows {
+    grid-template-rows: none;
+    grid-auto-rows: minmax(var(--row-min), auto);
+    align-content: start;
+  }
+}

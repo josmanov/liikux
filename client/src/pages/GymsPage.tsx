@@ -315,7 +315,13 @@ function GymsPage() {
   const mapRef = useRef<HTMLDivElement>(null);
   const listChromeRef = useRef<HTMLDivElement>(null);
   const listScrollRef = useRef<HTMLDivElement>(null);
-  const [pageSize, setPageSize] = useState(PAGE_SIZE_START);
+  // First guess of how many gyms fit, from the window height, so the first draw is
+  // already about right (it used to start at 8 and jump when the real size was measured).
+  const [pageSize, setPageSize] = useState(() => {
+    if (typeof window === "undefined" || window.matchMedia(BROWSE_MOBILE_MQ).matches) return PAGE_SIZE_START;
+    const rows = Math.max(3, Math.floor((window.innerHeight - 330) / 74));
+    return rows * 2;
+  });
   const [mobileList, setMobileList] = useState(
     () =>
       typeof window !== "undefined" &&
@@ -386,7 +392,9 @@ function GymsPage() {
     };
   }, []);
 
-  useEffect(() => {
+  // Measured before the screen is painted, and again when the data arrives (the
+  // list does not exist before that), so the list never visibly re-flows.
+  useLayoutEffect(() => {
     const mq = window.matchMedia(BROWSE_MOBILE_MQ);
 
     function fitRows() {
@@ -426,7 +434,7 @@ function GymsPage() {
       watch.disconnect();
       mq.removeEventListener("change", fitRows);
     };
-  }, []);
+  }, [dataReady]);
 
   useEffect(() => {
     const chrome = listChromeRef.current;
