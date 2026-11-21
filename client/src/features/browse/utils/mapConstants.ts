@@ -80,12 +80,6 @@ export const BROWSE_SEARCH_QUICK = [
   { id: "247", filter: "only247" as const },
   { id: "day", filter: "dayPass" as const },
   { id: "women", filter: "women" as const },
-  { id: "f24", q: "Fitness24Seven" },
-  { id: "fressi", q: "Fressi" },
-  { id: "liikku", q: "Liikku" },
-  { id: "elixia", q: "Elixia" },
-  { id: "easyfit", q: "EasyFit" },
-  { id: "forever", q: "Forever" },
 ] as const;
 
 export type FilterKey = "sort" | "price" | "distance" | "chains";

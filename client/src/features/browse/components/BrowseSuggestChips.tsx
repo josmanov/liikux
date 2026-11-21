@@ -6,7 +6,6 @@ type TFn = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 type BrowseSuggestChipsProps = {
   t: TFn;
-  query: string;
   extraOnly247: boolean;
   extraFreeTrial: boolean;
   extraDayPass: boolean;
@@ -15,13 +14,11 @@ type BrowseSuggestChipsProps = {
   onToggleExtra247: () => void;
   onToggleFreeTrial: () => void;
   onToggleDayPass: () => void;
-  onPickQuery: (q: string) => void;
   chipsRef: RefObject<HTMLDivElement | null>;
 };
 
 export function BrowseSuggestChips({
   t,
-  query,
   extraOnly247,
   extraFreeTrial,
   extraDayPass,
@@ -30,7 +27,6 @@ export function BrowseSuggestChips({
   onToggleExtra247,
   onToggleFreeTrial,
   onToggleDayPass,
-  onPickQuery,
   chipsRef,
 }: BrowseSuggestChipsProps) {
   return (
@@ -39,53 +35,33 @@ export function BrowseSuggestChips({
       <div className="browse-search-suggest-chips" ref={chipsRef}>
         {BROWSE_SEARCH_QUICK.map((item) => {
           const label =
-            "filter" in item
-              ? item.filter === "freeTrial"
-                ? t("freeTrial")
-                : item.filter === "only247"
-                  ? t("open247")
-                  : item.filter === "women"
-                    ? t("audienceWomen")
-                    : t("priceDayPass")
-              : item.q;
+            item.filter === "freeTrial"
+              ? t("freeTrial")
+              : item.filter === "only247"
+                ? t("open247")
+                : item.filter === "women"
+                  ? t("audienceWomen")
+                  : t("priceDayPass");
           const chipOn =
-            "filter" in item
-              ? item.filter === "freeTrial"
-                ? extraFreeTrial
-                : item.filter === "only247"
-                  ? extraOnly247
-                  : item.filter === "women"
-                    ? womenOnly
-                    : extraDayPass
-              : query.trim().toLowerCase() === item.q.toLowerCase();
+            item.filter === "freeTrial"
+              ? extraFreeTrial
+              : item.filter === "only247"
+                ? extraOnly247
+                : item.filter === "women"
+                  ? womenOnly
+                  : extraDayPass;
           return (
             <button
               key={item.id}
               type="button"
-              className={[
-                "browse-search-suggest-chip",
-                // Chain shortcuts ("Fressi") vs. on/off filters ("24/7").
-                "filter" in item ? "is-toggle" : "is-chain",
-                chipOn ? "is-on" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
+              className={["browse-search-suggest-chip", "is-toggle", chipOn ? "is-on" : ""].filter(Boolean).join(" ")}
               aria-pressed={chipOn}
               onClick={(e) => {
                 (e.currentTarget as HTMLButtonElement).blur();
-                if ("filter" in item) {
-                  if (item.filter === "freeTrial") {
-                    onToggleFreeTrial();
-                  } else if (item.filter === "only247") {
-                    onToggleExtra247();
-                  } else if (item.filter === "women") {
-                    onToggleWomen();
-                  } else {
-                    onToggleDayPass();
-                  }
-                  return;
-                }
-                onPickQuery(chipOn ? "" : item.q);
+                if (item.filter === "freeTrial") onToggleFreeTrial();
+                else if (item.filter === "only247") onToggleExtra247();
+                else if (item.filter === "women") onToggleWomen();
+                else onToggleDayPass();
               }}
             >
               {label}

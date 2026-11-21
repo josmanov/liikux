@@ -1983,7 +1983,6 @@ function GymsPage() {
       <div className="browse-tools">
       <BrowseSuggestChips
         t={t}
-        query={query}
         extraOnly247={extraOnly247}
         extraFreeTrial={extraFreeTrial}
         extraDayPass={extraDayPass}
@@ -2004,10 +2003,6 @@ function GymsPage() {
         }}
         onToggleDayPass={() => {
           setExtraDayPass((v) => !v);
-          setPage(1);
-        }}
-        onPickQuery={(q) => {
-          setQuery(q);
           setPage(1);
         }}
         chipsRef={suggestChipsRef}
