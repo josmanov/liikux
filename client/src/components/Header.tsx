@@ -152,6 +152,7 @@ function Header() {
           "header-nav-link header-fav" +
           (favShown > 0 ? " is-typing" : "") +
           (favHover ? " is-full" : "") +
+          (favPageOn ? " is-on" : "") +
           (favCount > 0 ? " has-count" : "")
         }
         aria-label={favCount > 0 ? `${favWord}, ${favCount}` : favWord}
@@ -178,8 +179,7 @@ function Header() {
 
       <div className="header-right">
         <HeaderFeedbackLinks />
-        {/* the home page has its own big search in the hero */}
-        {homeOn ? null : <HeaderSearch />}
+        <HeaderSearch />
         <button
           type="button"
           className="header-lang playstore-button is-plain header-lang-desktop"

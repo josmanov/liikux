@@ -1790,39 +1790,10 @@ function GymsPage() {
     if (selectedId) return;
     if (!prev) return;
 
-    const saved = preCompareCameraRef.current;
+    // Clicking away only removes the selection: the map stays exactly where it is.
     preCompareCameraRef.current = null;
-    cityBounceLockRef.current = true;
-
-    if (saved) {
-      map.stop();
-      map.easeTo({
-        center: [saved.lng, saved.lat],
-        zoom: saved.zoom,
-        duration: 700,
-        easing: (t) => 1 - (1 - t) ** 3,
-      });
-      window.setTimeout(() => {
-        map.setMinZoom(saved.minZoom);
-        if (map.getZoom() < saved.minZoom) {
-          map.setZoom(saved.minZoom);
-        }
-        cityBounceLockRef.current = false;
-      }, 750);
-      return;
-    }
-
-    if (!browseCitySlug) {
-      applyFinlandMinZoom(map);
-      cityBounceLockRef.current = false;
-      return;
-    }
-    const city =
-      cityCenterForSlug(browseCitySlug) ||
-      cityOptions.find((c) => c.slug === browseCitySlug);
-    if (city) fitToCityGyms(city);
-    else cityBounceLockRef.current = false;
-  }, [selectedId, mapReady, browseCitySlug, cityOptions]);
+    cityBounceLockRef.current = false;
+  }, [selectedId, mapReady]);
 
   function focusGymFromList(gym: Gym) {
     if (gym.lat == null || gym.lng == null) return;

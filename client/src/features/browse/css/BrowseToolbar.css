@@ -41,10 +41,11 @@
     display: contents;
   }
 
+  /* the title has its own line; search and filters are under it */
   .browse-top .browse-page-title {
-    order: 1;
-    flex: 0 0 auto;
-    margin-right: 0.75rem;
+    order: 0;
+    flex: 0 0 100%;
+    margin: 0 0 -0.1rem;
     font-size: 1.45rem;
     letter-spacing: -0.02em;
   }
@@ -341,4 +342,29 @@
 
 .browse-chains-sheet {
   padding: 0.75rem 1rem 1.25rem;
+}
+
+/* Wide screens: the search and the three menus fill exactly the left half, so the
+   thin divider (and the chips after it) start in the middle of the screen, in line
+   with the middle of the list and the map. */
+@media (min-width: 1250px) {
+  .browse-top .browse-combo {
+    flex: 0 0 calc(50% - 24.5rem);
+    width: calc(50% - 24.5rem);
+    max-width: none;
+  }
+
+  .browse-top .browse-filter {
+    flex: 0 0 7.5rem;
+    width: 7.5rem;
+  }
+
+  .browse-top .browse-filter .browse-filter-btn {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .browse-top .browse-search-suggest {
+    margin-left: 0;
+  }
 }

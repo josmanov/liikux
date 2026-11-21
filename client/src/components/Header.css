@@ -82,16 +82,17 @@
   color: var(--muted);
 }
 
+.header-nav-link.is-on,
 .header-nav-link.is-on svg {
-  color: var(--ink);
+  color: var(--color-brand);
 }
 
-.header-nav-link:hover:not(.header-fav) {
+.header-nav-link:hover:not(.header-fav):not(.is-on) {
   color: var(--muted);
   background: transparent;
 }
 
-.header-nav-link:hover:not(.header-fav) svg {
+.header-nav-link:hover:not(.header-fav):not(.is-on) svg {
   color: var(--muted);
 }
 
